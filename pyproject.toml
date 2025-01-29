@@ -1,0 +1,69 @@
+[project]
+name = "rtflite"
+version = "0.1.0"
+description = "Lightweight RTF composer for Python"
+authors = [
+    { name = "Yilong Zhang", email = "elong0527@gmail.com" },
+    { name = "Nan Xiao", email = "me@nanx.me" },
+]
+dependencies = [
+    "pydantic>=2.9.2",
+    "pandas>=2.2.3",
+    "numpy>=2.0.0",
+    "pillow>=11.0.0",
+]
+readme = "README.md"
+
+classifiers = [
+  "Development Status :: 3 - Alpha",
+
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "Intended Audience :: Healthcare Industry",
+  "Intended Audience :: Information Technology",
+
+  "Topic :: Text Processing",
+  "Topic :: Office/Business :: Office Suites",
+
+  "License :: OSI Approved :: MIT License",
+
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+]
+
+requires-python = ">= 3.10"
+
+[project.urls]
+Homepage = "https://pharmaverse.github.io/rtflite/"
+Documentation = "https://pharmaverse.github.io/rtflite/"
+Repository = "https://github.com/pharmaverse/rtflite"
+Issues = "https://github.com/pharmaverse/rtflite/issues"
+Changelog = "https://github.com/pharmaverse/rtflite/blob/main/CHANGELOG.md"
+
+[build-system]
+requires = ["hatchling==1.26.3"]
+build-backend = "hatchling.build"
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/rtflite"]
+
+[tool.rye]
+managed = true
+dev-dependencies = [
+    "pytest>=8.3.3",
+    "pytest-cov>=6.0.0",
+    "mkdocs>=1.6.1",
+    "mkdocs-autorefs==1.2.0",
+    "mkdocs-material>=9.5.45",
+    "mkdocstrings-python>=1.12.2",
+    "nbconvert>=7.16.4",
+    "jupyter>=1.1.1",
+    "ruff>=0.7.4",
+    "isort>=5.13.2",
+]

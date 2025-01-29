@@ -1,0 +1,102 @@
+# Baseline characteristics
+
+
+<!-- `.md` and `.py` files are generated from the `.qmd` file. Please edit that file. -->
+
+!!! tip
+
+    To run the code from this article as a Python script:
+
+    ```bash
+    python3 examples/example-baseline.py
+    ```
+
+This article reproduces `vignettes/example-basechar.Rmd` in the r2rtf
+package.
+
+## Imports
+
+``` python
+from importlib.resources import files
+
+import pandas as pd
+
+import rtflite as rtf
+```
+
+## Ingest data
+
+Load data from CSV file:
+
+``` python
+data_path = files("rtflite.data").joinpath("baseline.csv")
+df = pd.read_csv(data_path, na_filter=False)
+print(df)
+```
+
+                       var         1 1_pct         2 2_pct         3 3_pct      9999 9999_pct    var_label
+    0               Female        53  10.4        50   9.8        40   7.9       143     28.1       Gender
+    1                 Male        33   6.5        34   6.7        44   8.7       111     21.9       Gender
+    2                  <65        14   2.8         8   1.6        11   2.2        33      6.5  Age (Years)
+    3                65-80        42   8.3        47   9.3        55  10.8       144     28.3  Age (Years)
+    4                  >80        30   5.9        29   5.7        18   3.5        77     15.2  Age (Years)
+    5                                                                                          Age (Years)
+    6   Subjects with data        86              84              84             254           Age (Years)
+    7                 Mean      75.2            75.7            74.4            75.1           Age (Years)
+    8                   SD       8.6             8.3             7.9             8.2           Age (Years)
+    9               Median      76.0            77.5            76.0            77.0           Age (Years)
+    10               Range  52 to 89        51 to 88        56 to 88        51 to 89           Age (Years)
+    11               White        78  15.4        78  15.4        74  14.6       230     45.3         Race
+    12               Black         8   1.6         6   1.2         9   1.8        23      4.5         Race
+    13               Other         0   0.0         0   0.0         1   0.2         1      0.2         Race
+
+Create header data frames:
+
+``` python
+header1 = pd.DataFrame([["", "Placebo", "Drug Low Dose", "Drug High Dose", "Total"]])
+header2 = pd.DataFrame([["", "n", "(%)", "n", "(%)", "n", "(%)", "n", "(%)"]])
+```
+
+## Compose RTF
+
+Create RTF document:
+
+``` python
+doc = rtf.RTFDocument(
+    df=df,
+    rtf_title=rtf.RTFTitle(
+        text=["Demographic and Anthropometric Characteristics", "ITT Subjects"]
+    ),
+    rtf_column_header=[
+        rtf.RTFColumnHeader(df=header1, col_rel_width=[3] + [2] * 4),
+        rtf.RTFColumnHeader(
+            df=header2,
+            col_rel_width=[3] + [1.2, 0.8] * 4,
+            border_top=[""] + ["single"] * 8,
+            border_left=["single"] + ["single", ""] * 4,
+        ),
+    ],
+    rtf_body=rtf.RTFBody(
+        page_by=["var_label"],
+        col_rel_width=[3] + [1.2, 0.8] * 4 + [3],
+        text_justification=["l"] + ["c"] * 8 + ["l"],
+        text_format=[""] * 9 + ["b"],
+        border_left=["single"] + ["single", ""] * 4 + ["single"],
+        border_top=[""] * 9 + ["single"],
+        border_bottom=[""] * 9 + ["single"],
+    ),
+)
+
+doc.write_rtf("output.rtf")
+```
+
+## Convert to PDF
+
+``` python
+converter = rtf.LibreOfficeConverter()
+converter.convert(
+    input_files="output.rtf", output_dir=".", format="pdf", overwrite=True
+)
+```
+
+<embed src="../images/example-baseline/output.pdf" style="width:100%; height:400px" type="application/pdf">
