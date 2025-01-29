@@ -1,0 +1,86 @@
+site_name: rtflite
+site_url: http://pharmaverse.github.io/rtflite/
+
+repo_url: https://github.com/pharmaverse/rtflite
+repo_name: pharmaverse/rtflite
+edit_uri: edit/main/docs/
+
+nav:
+  - Home: index.md
+  - Articles:
+    - articles/example-baseline.md
+  - API Reference:
+    - Row: reference/row.md
+    - Input: reference/input.md
+    - Encode: reference/encode.md
+    - Convert: reference/convert.md
+    - String width: reference/strwidth.md
+  - Changelog: changelog.md
+  - Coverage: coverage/
+
+extra_css:
+  - stylesheets/extra.css
+
+extra_javascript:
+  - javascripts/fix-embed-focus.js
+
+plugins:
+  - search
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          paths: [src]
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.tasklist:
+      custom_checkbox: false
+  - toc:
+      permalink: true
+
+theme:
+  name: material
+  font:
+    text: Lato
+  logo: assets/logo.png
+  favicon: assets/favicon.png
+  icon:
+    repo: fontawesome/brands/github
+  palette:
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+  - announce.dismiss
+  - content.action.edit
+  - content.action.view
+  - content.code.annotate
+  - content.code.copy
+  - content.tooltips
+  - navigation.footer
+  - navigation.indexes
+  - navigation.sections
+  - navigation.expand
+  - navigation.top
+  - navigation.path
+  - search.highlight
+  - search.suggest
+  - toc.follow

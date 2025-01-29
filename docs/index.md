@@ -1,4 +1,4 @@
-# rtflite <img src="docs/assets/logo.png" align="right" width="120" />
+# rtflite <img src="assets/logo.png" align="right" width="120" />
 
 Lightweight RTF composer for Python.
 

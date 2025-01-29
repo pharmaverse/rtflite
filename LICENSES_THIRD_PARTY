@@ -1,0 +1,24 @@
+rtflite uses third-party Python packages which may be distributed under
+different licenses. We have listed all of these third party packages and
+their licenses below. However, the most up-to-date information can be found
+via inspecting the dependencies field in the pyproject.toml file.
+
+You must agree to the terms of these licenses, in addition to the rtflite
+source code license, in order to use this software.
+
+--------------------------------------------------
+Third party Python packages listed by license type
+[Format: Name - URL]
+--------------------------------------------------
+
+MIT License (https://opensource.org/license/mit)
+  * pydantic - https://github.com/pydantic/pydantic/blob/main/LICENSE
+
+BSD 3-Clause License (https://opensource.org/license/bsd-3-clause)
+  * pandas - https://github.com/pandas-dev/pandas/blob/main/LICENSE
+
+Modified BSD license (https://opensource.org/license/bsd-3-clause)
+  * numpy - https://github.com/numpy/numpy/blob/main/LICENSE.txt
+
+MIT-CMU License (https://opensource.org/license/cmu-license)
+  * pillow - https://github.com/python-pillow/Pillow/blob/main/LICENSE
