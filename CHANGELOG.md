@@ -2,7 +2,7 @@
 
 ## rtflite 0.1.0
 
-## New features
+### New features
 
 - Introduced core RTF document components, such as `RTFDocument`, `RTFPage`,
   `RTFTitle`, `RTFColumnHeader`, and `RTFBody`. These classes establish the
@@ -14,7 +14,7 @@
 - Implemented a LibreOffice-based document converter for RTF to PDF conversion
   with automatic LibreOffice detection mechanisms under Linux, macOS, and Windows.
 
-## Documentation
+### Documentation
 
 - Added an article on creating baseline characteristics tables.
 - Integrated code coverage reports via pytest-cov into the documentation site.
