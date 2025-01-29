@@ -19,7 +19,7 @@ pandas==2.2.3
     # via rtflite
 pillow==11.1.0
     # via rtflite
-pydantic==2.10.5
+pydantic==2.10.6
     # via rtflite
 pydantic-core==2.27.2
     # via pydantic

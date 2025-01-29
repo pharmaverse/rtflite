@@ -1,5 +1,12 @@
 # rtflite <img src="docs/assets/logo.png" align="right" width="120" />
 
+[![PyPI version](https://img.shields.io/pypi/v/rtflite)](https://pypi.org/project/rtflite/)
+![Python versions](https://img.shields.io/pypi/pyversions/rtflite)
+[![CI Tests](https://github.com/pharmaverse/rtflite/actions/workflows/ci-tests.yml/badge.svg)](https://github.com/pharmaverse/rtflite/actions/workflows/ci-tests.yml)
+[![mkdocs](https://github.com/pharmaverse/rtflite/actions/workflows/mkdocs.yml/badge.svg)](https://pharmaverse.github.io/rtflite/)
+[![PyPI Downloads](https://img.shields.io/pypi/dm/rtflite)](https://pypistats.org/packages/rtflite)
+![License](https://img.shields.io/pypi/l/rtflite)
+
 Lightweight RTF composer for Python.
 
 Specializes in precise formatting of production-quality tables and figures. Inspired by r2rtf.
@@ -19,3 +26,7 @@ git clone https://github.com/pharmaverse/rtflite.git
 cd rtflite
 python3 -m pip install -e .
 ```
+
+## License
+
+This project is licensed under the terms of the MIT license.
