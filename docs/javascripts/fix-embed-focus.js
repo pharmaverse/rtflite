@@ -1,6 +1,19 @@
-// Scroll to the top after the page has loaded to prevent jumping to the embed element
+// Check and reset scroll position if page has been auto-scrolled to embed
 document.addEventListener("DOMContentLoaded", function () {
-  setTimeout(function () {
-    window.scrollTo(0, 0);
-  }, 250);
+  let checkCount = 0;
+  const maxChecks = 100;
+
+  const checkScrollPosition = function () {
+    if (window.scrollY > 0) {
+      window.scrollTo(0, 0);
+      return;
+    }
+
+    checkCount++;
+    if (checkCount < maxChecks) {
+      setTimeout(checkScrollPosition, 10);
+    }
+  };
+
+  setTimeout(checkScrollPosition, 10);
 });
