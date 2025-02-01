@@ -1,5 +1,12 @@
 # Changelog
 
+## rtflite 0.1.1
+
+### Documentation
+
+- Use absolute URL to replace relative path for logo image in `README.md`,
+  for proper rendering on PyPI (#16).
+
 ## rtflite 0.1.0
 
 ### New features
