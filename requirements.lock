@@ -25,7 +25,7 @@ pydantic-core==2.27.2
     # via pydantic
 python-dateutil==2.9.0.post0
     # via pandas
-pytz==2024.2
+pytz==2025.1
     # via pandas
 six==1.17.0
     # via python-dateutil
