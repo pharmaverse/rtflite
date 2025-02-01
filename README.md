@@ -1,4 +1,4 @@
-# rtflite <img src="docs/assets/logo.png" align="right" width="120" />
+# rtflite <img src="https://github.com/pharmaverse/rtflite/raw/main/docs/assets/logo.png" align="right" width="120" />
 
 [![PyPI version](https://img.shields.io/pypi/v/rtflite)](https://pypi.org/project/rtflite/)
 ![Python versions](https://img.shields.io/pypi/pyversions/rtflite)
