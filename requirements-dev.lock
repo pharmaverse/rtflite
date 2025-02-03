@@ -30,10 +30,10 @@ async-lru==2.0.4
 attrs==25.1.0
     # via jsonschema
     # via referencing
-babel==2.16.0
+babel==2.17.0
     # via jupyterlab-server
     # via mkdocs-material
-beautifulsoup4==4.12.3
+beautifulsoup4==4.13.0
     # via nbconvert
 bleach==6.2.0
     # via nbconvert
@@ -264,7 +264,7 @@ pygments==2.19.1
     # via jupyter-console
     # via mkdocs-material
     # via nbconvert
-pymdown-extensions==10.14.2
+pymdown-extensions==10.14.3
     # via mkdocs-material
     # via mkdocstrings
 pytest==8.3.4
@@ -354,6 +354,7 @@ traitlets==5.14.3
 types-python-dateutil==2.9.0.20241206
     # via arrow
 typing-extensions==4.12.2
+    # via beautifulsoup4
     # via pydantic
     # via pydantic-core
 tzdata==2025.1
