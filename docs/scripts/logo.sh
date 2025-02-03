@@ -8,10 +8,20 @@ fi
 
 # Generate text image and compose with background due to
 # limited ligatures support in hexSticker and ImageMagick.
-# Requires font: Playwrite Norge Guides, install via
-# brew install font-playwrite-no-guides
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    CHROME_BIN="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+elif [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
+    CHROME_BIN="/c/Program Files/Google/Chrome/Application/chrome.exe"
+else
+    CHROME_BIN="/usr/bin/google-chrome"
+fi
 
-alias chrome="/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome"
+if [ ! -f "$CHROME_BIN" ]; then
+    echo "Chrome/Chromium not found at $CHROME_BIN"
+    exit 1
+fi
+
+alias chrome="\"$CHROME_BIN\""
 
 chrome --headless \
     --disable-gpu \
@@ -24,12 +34,16 @@ chrome --headless \
 pdfcrop --quiet \
     docs/scripts/logo-text.pdf docs/scripts/logo-text.pdf
 
-magick -density 500 docs/scripts/logo-text.pdf \
+magick -density 2000 docs/scripts/logo-text.pdf \
+    -resize 25% \
+    -alpha set -background none -channel A \
+    -evaluate multiply 1.3 +channel \
     -transparent white \
     docs/scripts/logo-text.png
 
 magick docs/assets/logo.png docs/scripts/logo-text.png \
     -gravity center \
+    -geometry +0-0 \
     -composite docs/assets/logo.png
 
 rm docs/scripts/logo-text.pdf docs/scripts/logo-text.png
