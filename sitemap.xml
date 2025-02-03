@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url>
+         <loc>http://pharmaverse.github.io/rtflite/</loc>
+         <lastmod>2025-02-03</lastmod>
+    </url>
+    <url>
+         <loc>http://pharmaverse.github.io/rtflite/changelog/</loc>
+         <lastmod>2025-02-03</lastmod>
+    </url>
+    <url>
+         <loc>http://pharmaverse.github.io/rtflite/articles/example-baseline/</loc>
+         <lastmod>2025-02-03</lastmod>
+    </url>
+    <url>
+         <loc>http://pharmaverse.github.io/rtflite/reference/convert/</loc>
+         <lastmod>2025-02-03</lastmod>
+    </url>
+    <url>
+         <loc>http://pharmaverse.github.io/rtflite/reference/encode/</loc>
+         <lastmod>2025-02-03</lastmod>
+    </url>
+    <url>
+         <loc>http://pharmaverse.github.io/rtflite/reference/input/</loc>
+         <lastmod>2025-02-03</lastmod>
+    </url>
+    <url>
+         <loc>http://pharmaverse.github.io/rtflite/reference/row/</loc>
+         <lastmod>2025-02-03</lastmod>
+    </url>
+    <url>
+         <loc>http://pharmaverse.github.io/rtflite/reference/strwidth/</loc>
+         <lastmod>2025-02-03</lastmod>
+    </url>
+</urlset>
