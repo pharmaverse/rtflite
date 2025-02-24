@@ -1,5 +1,12 @@
 # Changelog
 
+## rtflite 0.1.2
+
+### Maintenance
+
+- Manage project with uv (#19).
+- Update the logo image generation workflow to use web fonts (#18).
+
 ## rtflite 0.1.1
 
 ### Documentation
