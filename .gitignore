@@ -1,7 +1,4 @@
-# OS
-.DS_Store
-
-# Python
+# Python-generated files
 __pycache__/
 *.py[oc]
 build/
@@ -9,11 +6,14 @@ dist/
 wheels/
 *.egg-info
 
+# Virtual environments
+.venv
+
+# OS
+.DS_Store
+
 # pytest
 .coverage
-
-# venv
-.venv
 
 # r2rtf
 Rplots.pdf

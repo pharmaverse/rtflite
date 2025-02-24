@@ -44,18 +44,11 @@ Issues = "https://github.com/pharmaverse/rtflite/issues"
 Changelog = "https://github.com/pharmaverse/rtflite/blob/main/CHANGELOG.md"
 
 [build-system]
-requires = ["hatchling==1.26.3"]
+requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[tool.hatch.metadata]
-allow-direct-references = true
-
-[tool.hatch.build.targets.wheel]
-packages = ["src/rtflite"]
-
-[tool.rye]
-managed = true
-dev-dependencies = [
+[dependency-groups]
+dev = [
     "pytest>=8.3.3",
     "pytest-cov>=6.0.0",
     "mkdocs>=1.6.1",
