@@ -1,0 +1,73 @@
+/* Color scheme */
+
+/*
+ * Color palette from: https://coolors.co/palette/0d1b2a-1b263b-415a77-778da9-e0e1dd
+ */
+
+:root {
+    --md-primary-fg-color: #415A77;
+    --md-primary-fg-color--light: #0D1B2A;
+    --md-primary-fg-color--dark: #1B263B;
+    --md-primary-bg-color: hsla(0, 0%, 100%, 1);
+    --md-primary-bg-color--light: hsla(0, 0%, 100%, 0.7);
+    --md-accent-fg-color: #778DA9;
+    --md-accent-fg-color--transparent: #E0E1DD;
+    --md-accent-bg-color: hsla(0, 0%, 100%, 1);
+    --md-accent-bg-color--light: hsla(0, 0%, 100%, 0.7);
+    --md-code-font: "IBM Plex Mono";
+}
+
+/* Typography */
+
+@font-face {
+    font-display: swap;
+    font-family: "IBM Plex Mono";
+    src: url("../assets/IBMPlexMono-Text.woff2") format("woff2");
+    font-weight: 400;
+    font-style: normal;
+}
+
+@font-face {
+    font-display: swap;
+    font-family: "IBM Plex Mono";
+    src: url("../assets/IBMPlexMono-TextItalic.woff2") format("woff2");
+    font-weight: 400;
+    font-style: italic;
+}
+
+body {
+    -webkit-font-smoothing: auto;
+}
+
+.md-nav {
+    font-size: 0.9rem;
+}
+
+.md-typeset h1,
+.md-typeset h2,
+.md-typeset h3 {
+    color: var(--md-default-fg-color--dark);
+    font-weight: 600;
+}
+
+h2 h3,
+code {
+    font-weight: 400;
+}
+
+.md-typeset {
+    font-size: 0.85rem;
+}
+
+.md-typeset code {
+    font-size: 0.85em;
+}
+
+.md-typeset table:not([class]) {
+    font-size: 0.8rem;
+}
+
+.md-typeset .admonition,
+.md-typeset details {
+    font-size: 0.85rem;
+}
