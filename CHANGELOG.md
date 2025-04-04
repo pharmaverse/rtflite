@@ -1,5 +1,18 @@
 # Changelog
 
+## rtflite 0.1.3
+
+### Documentation
+
+- Add contributing guidelines to make it easy for onboarding new developers
+  to the recommended development workflow (#25).
+- Update `README.md` to add hyperlink to the R package r2rtf (#24).
+
+### Maintenance
+
+- Remove the strict version requirement for the devlopment dependency
+  mkdocs-autorefs (#21).
+
 ## rtflite 0.1.2
 
 ### Maintenance
