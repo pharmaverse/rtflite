@@ -17,6 +17,7 @@ nav:
     - String width: reference/strwidth.md
   - Changelog: changelog.md
   - Coverage: coverage/
+  - Contributing: contributing.md
 
 extra_css:
   - stylesheets/extra.css

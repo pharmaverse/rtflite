@@ -27,6 +27,15 @@ cd rtflite
 python3 -m pip install -e .
 ```
 
+## Contributing
+
+We welcome contributions to rtflite. Please read the rtflite
+[Contributing Guidelines](https://pharmaverse.github.io/rtflite/contributing/)
+to get started.
+
+All interactions within rtflite repositories and issue trackers should adhere to
+the rtflite [Contributor Code of Conduct](https://github.com/pharmaverse/rtflite/blob/main/CODE_OF_CONDUCT.md).
+
 ## License
 
 This project is licensed under the terms of the MIT license.

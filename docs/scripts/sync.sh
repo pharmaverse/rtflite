@@ -38,3 +38,6 @@ awk '{gsub("https://github.com/pharmaverse/rtflite/raw/main/docs/assets/logo.png
 
 # Sync CHANGELOG.md with docs/changelog.md
 cp CHANGELOG.md docs/changelog.md
+
+# Sync CONTRIBUTING.md with docs/contributing.md
+cp CONTRIBUTING.md docs/contributing.md
