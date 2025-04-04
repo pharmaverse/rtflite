@@ -9,7 +9,7 @@
 
 Lightweight RTF composer for Python.
 
-Specializes in precise formatting of production-quality tables and figures. Inspired by r2rtf.
+Specializes in precise formatting of production-quality tables and figures. Inspired by [r2rtf](https://merck.github.io/r2rtf/).
 
 ## Installation
 
