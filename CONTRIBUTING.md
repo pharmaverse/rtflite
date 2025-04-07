@@ -2,8 +2,12 @@
 
 ## Developer workflow
 
+### Setup
+
 First off, [install uv](https://docs.astral.sh/uv/getting-started/installation/).
 rtflite uses uv to manage the Python package development environment.
+
+### Branching
 
 Clone the repository (if you have no direct access, replace the address with
 your forked repository address):
@@ -19,6 +23,8 @@ cd rtflite
 git checkout -b my-branch
 ```
 
+### Dependencies
+
 Restore the environment using
 [uv sync](https://docs.astral.sh/uv/concepts/projects/sync/).
 This will restore the exact versions of Python and dependency packages
@@ -27,6 +33,8 @@ under the project's `.venv/` directory:
 ```bash
 uv sync
 ```
+
+### Development
 
 Open the project in VS Code:
 
@@ -53,6 +61,8 @@ If your terminal did not activate the virtual environment for some reason
 source .venv/bin/activate
 ```
 
+### Documentation
+
 If you made changes to the `.md` files in the root directory or the
 `.qmd` vignettes under `docs/articles/`, make sure to synchronize them
 for the mkdocs website:
@@ -67,6 +77,17 @@ To preview the mkdocs website:
 mkdocs serve
 ```
 
+### Formatting
+
+Use isort and ruff to sort imports and format Python code:
+
+```bash
+isort .
+ruff format
+```
+
+### Pull request
+
 Add, commit, and push to remote, then send a pull request:
 
 ```bash
@@ -76,6 +97,8 @@ git push origin my-branch
 ```
 
 ## Maintainer workflow
+
+### Updates
 
 Update local uv version:
 
@@ -91,11 +114,17 @@ uv lock --upgrade
 uv sync
 ```
 
+### Python version
+
 Pin a newer Python version in `.python-version` when appropriate:
 
 ```bash
-uv python pin 3.y.z
+uv python pin x.y.z
 ```
+
+The latest Python release versions are often promptly supported by uv.
+
+### Publishing
 
 Publish on PyPI (maintainer token required):
 
