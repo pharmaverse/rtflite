@@ -77,6 +77,18 @@ To preview the mkdocs website:
 mkdocs serve
 ```
 
+rtflite organizes vignettes using Quarto. To install Quarto on macOS:
+
+```bash
+brew install --cask quarto
+```
+
+Currently, Quarto is only used to render `.qmd` sources into `.md`
+files for the mkdocs site and `.py` files for `examples/`.
+It does not execute code. Outputs such as text, tables, images, and PDFs
+must be manually included in the `.qmd` files or put in the mkdocs site
+(`docs/articles/`).
+
 ### Formatting
 
 Use isort and ruff to sort imports and format Python code:
