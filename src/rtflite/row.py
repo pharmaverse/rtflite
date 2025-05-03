@@ -88,9 +88,7 @@ class Utils:
                 "\\fcharset1",
                 "\\fcharset0",
                 "\\fcharset2",
-            ],
-            "width_group": [1, 1, 4, 4, 4, 1, 9, 4, 9, 9],
-            
+            ],         
         }
 
     @staticmethod
