@@ -273,10 +273,11 @@ class RTFDocument(BaseModel):
         font_rtf = [f"\\f{i}" for i in range(10)]
         font_style = font_types["style"]
         font_name = font_types["name"]
+        font_charset = font_types["charset"]
 
         font_table = "{\\fonttbl"
-        for rtf, style, name in zip(font_rtf, font_style, font_name):
-            font_table += f"{{{rtf}{style}\\fcharset161\\fprq2 {name};}}\n"
+        for rtf, style, name, charset in zip(font_rtf, font_style, font_name, font_charset):
+            font_table += f"{{{rtf}{style}{charset}\\fprq2 {name};}}\n"
         font_table += "}"
 
         return font_table
