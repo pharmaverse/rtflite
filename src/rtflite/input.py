@@ -57,57 +57,35 @@ class TextAttributes(BaseModel):
     text_convert: bool | Sequence[bool] | pd.DataFrame |  None = Field(
         default=None, description="Convert special characters to RTF"
     )
-
+    
     def _encode(self, text: Sequence[str], method: str) -> str:
         """Convert the RTF title into RTF syntax using the Text class."""
 
         dim = [len(text), 1]
-
+        def get_broadcast_value(attr_name, row_idx, col_idx=0):
+            """Helper function to get broadcast value for a given attribute at specified indices."""
+            attr_value = getattr(self, attr_name)
+            return BroadcastValue(value=attr_value, dimension=dim).iloc(row_idx, col_idx)
+        
         text_components = []
-        for i in range(dim[0]):
+        for i in range(dim[0]):            
             text_components.append(
                 TextContent(
                     text=str(text[i]),
-                    font=BroadcastValue(value=self.text_font, dimension=dim).iloc(i, 0),
-                    size=BroadcastValue(value=self.text_font_size, dimension=dim).iloc(
-                        i, 0
-                    ),
-                    format=BroadcastValue(value=self.text_format, dimension=dim).iloc(
-                        i, 0
-                    ),
-                    color=BroadcastValue(value=self.text_color, dimension=dim).iloc(
-                        i, 0
-                    ),
-                    background_color=BroadcastValue(
-                        value=self.text_background_color, dimension=dim
-                    ).iloc(i, 0),
-                    justification=BroadcastValue(
-                        value=self.text_justification, dimension=dim
-                    ).iloc(i, 0),
-                    indent_first=BroadcastValue(
-                        value=self.text_indent_first, dimension=dim
-                    ).iloc(i, 0),
-                    indent_left=BroadcastValue(
-                        value=self.text_indent_left, dimension=dim
-                    ).iloc(i, 0),
-                    indent_right=BroadcastValue(
-                        value=self.text_indent_right, dimension=dim
-                    ).iloc(i, 0),
-                    space=BroadcastValue(value=self.text_space, dimension=dim).iloc(
-                        i, 0
-                    ),
-                    space_before=BroadcastValue(
-                        value=self.text_space_before, dimension=dim
-                    ).iloc(i, 0),
-                    space_after=BroadcastValue(
-                        value=self.text_space_after, dimension=dim
-                    ).iloc(i, 0),
-                    convert=BroadcastValue(value=self.text_convert, dimension=dim).iloc(
-                        i, 0
-                    ),
-                    hyphenation=BroadcastValue(
-                        value=self.text_hyphenation, dimension=dim
-                    ).iloc(i, 0),
+                    font=get_broadcast_value("text_font", i),
+                    size=get_broadcast_value("text_font_size", i),
+                    format=get_broadcast_value("text_format", i),
+                    color=get_broadcast_value("text_color", i),
+                    background_color=get_broadcast_value("text_background_color", i),
+                    justification=get_broadcast_value("text_justification", i),
+                    indent_first=get_broadcast_value("text_indent_first", i),
+                    indent_left=get_broadcast_value("text_indent_left", i),
+                    indent_right=get_broadcast_value("text_indent_right", i),
+                    space=get_broadcast_value("text_space", i),
+                    space_before=get_broadcast_value("text_space_before", i),
+                    space_after=get_broadcast_value("text_space_after", i),
+                    convert=get_broadcast_value("text_convert", i),
+                    hyphenation=get_broadcast_value("text_hyphenation", i),
                 )
             )
 
@@ -124,43 +102,22 @@ class TextAttributes(BaseModel):
                     for text_component in text_components
                 ]
             )
-
             return TextContent(
                 text=str(line),
-                font=BroadcastValue(value=self.text_font, dimension=dim).iloc(i, 0),
-                size=BroadcastValue(value=self.text_font_size, dimension=dim).iloc(
-                    i, 0
-                ),
-                format=BroadcastValue(value=self.text_format, dimension=dim).iloc(i, 0),
-                color=BroadcastValue(value=self.text_color, dimension=dim).iloc(i, 0),
-                background_color=BroadcastValue(
-                    value=self.text_background_color, dimension=dim
-                ).iloc(i, 0),
-                justification=BroadcastValue(
-                    value=self.text_justification, dimension=dim
-                ).iloc(i, 0),
-                indent_first=BroadcastValue(
-                    value=self.text_indent_first, dimension=dim
-                ).iloc(i, 0),
-                indent_left=BroadcastValue(
-                    value=self.text_indent_left, dimension=dim
-                ).iloc(i, 0),
-                indent_right=BroadcastValue(
-                    value=self.text_indent_right, dimension=dim
-                ).iloc(i, 0),
-                space=BroadcastValue(value=self.text_space, dimension=dim).iloc(i, 0),
-                space_before=BroadcastValue(
-                    value=self.text_space_before, dimension=dim
-                ).iloc(i, 0),
-                space_after=BroadcastValue(
-                    value=self.text_space_after, dimension=dim
-                ).iloc(i, 0),
-                convert=BroadcastValue(value=self.text_convert, dimension=dim).iloc(
-                    i, 0
-                ),
-                hyphenation=BroadcastValue(
-                    value=self.text_hyphenation, dimension=dim
-                ).iloc(i, 0),
+                font=get_broadcast_value("text_font", i),
+                size=get_broadcast_value("text_font_size", i),
+                format=get_broadcast_value("text_format", i),
+                color=get_broadcast_value("text_color", i),
+                background_color=get_broadcast_value("text_background_color", i),
+                justification=get_broadcast_value("text_justification", i),
+                indent_first=get_broadcast_value("text_indent_first", i),
+                indent_left=get_broadcast_value("text_indent_left", i),
+                indent_right=get_broadcast_value("text_indent_right", i),
+                space=get_broadcast_value("text_space", i),
+                space_before=get_broadcast_value("text_space_before", i),
+                space_after=get_broadcast_value("text_space_after", i),
+                convert=get_broadcast_value("text_convert", i),
+                hyphenation=get_broadcast_value("text_hyphenation", i),
             )._as_rtf(method="paragraph_format")
 
         raise ValueError(f"Invalid method: {method}")
@@ -277,7 +234,11 @@ class TableAttributes(TextAttributes):
         self, df: pd.DataFrame, col_widths: Sequence[float]
     ) -> MutableSequence[str]:
         dim = df.shape
-
+        def get_broadcast_value(attr_name, row_idx, col_idx=0):
+            """Helper function to get broadcast value for a given attribute at specified indices."""
+            attr_value = getattr(self, attr_name)
+            return BroadcastValue(value=attr_value, dimension=dim).iloc(row_idx, col_idx)
+        
         if self.cell_nrow is None:
             self.cell_nrow = np.zeros(dim)
 
@@ -313,77 +274,39 @@ class TableAttributes(TextAttributes):
                 cell = Cell(
                     text=TextContent(
                         text=str(row[col]),
-                        font=BroadcastValue(value=self.text_font, dimension=dim).iloc(
-                            i, j
-                        ),
-                        size=BroadcastValue(
-                            value=self.text_font_size, dimension=dim
-                        ).iloc(i, j),
-                        format=BroadcastValue(
-                            value=self.text_format, dimension=dim
-                        ).iloc(i, j),
-                        color=BroadcastValue(value=self.text_color, dimension=dim).iloc(
-                            i, j
-                        ),
-                        background_color=BroadcastValue(
-                            value=self.text_background_color, dimension=dim
-                        ).iloc(i, j),
-                        justification=BroadcastValue(
-                            value=self.text_justification, dimension=dim
-                        ).iloc(i, j),
-                        indent_first=BroadcastValue(
-                            value=self.text_indent_first, dimension=dim
-                        ).iloc(i, j),
-                        indent_left=BroadcastValue(
-                            value=self.text_indent_left, dimension=dim
-                        ).iloc(i, j),
-                        indent_right=BroadcastValue(
-                            value=self.text_indent_right, dimension=dim
-                        ).iloc(i, j),
-                        space=BroadcastValue(value=self.text_space, dimension=dim).iloc(
-                            i, j
-                        ),
-                        space_before=BroadcastValue(
-                            value=self.text_space_before, dimension=dim
-                        ).iloc(i, j),
-                        space_after=BroadcastValue(
-                            value=self.text_space_after, dimension=dim
-                        ).iloc(i, j),
-                        convert=BroadcastValue(
-                            value=self.text_convert, dimension=dim
-                        ).iloc(i, j),
-                        hyphenation=BroadcastValue(
-                            value=self.text_hyphenation, dimension=dim
-                        ).iloc(i, j),
+                        font=get_broadcast_value("text_font", i, j),
+                        size=get_broadcast_value("text_font_size", i, j),
+                        format=get_broadcast_value("text_format", i, j),
+                        color=get_broadcast_value("text_color", i, j),
+                        background_color=get_broadcast_value("text_background_color", i, j),
+                        justification=get_broadcast_value("text_justification", i, j),
+                        indent_first=get_broadcast_value("text_indent_first", i, j),
+                        indent_left=get_broadcast_value("text_indent_left", i, j),
+                        indent_right=get_broadcast_value("text_indent_right", i, j),
+                        space=get_broadcast_value("text_space", i, j),
+                        space_before=get_broadcast_value("text_space_before", i, j),
+                        space_after=get_broadcast_value("text_space_after", i, j),
+                        convert=get_broadcast_value("text_convert", i, j),
+                        hyphenation=get_broadcast_value("text_hyphenation", i, j),
                     ),
                     width=col_widths[j],
                     border_left=Border(
-                        style=BroadcastValue(
-                            value=self.border_left, dimension=dim
-                        ).iloc(i, j)
+                        style=get_broadcast_value("border_left", i, j)
                     ),
                     border_right=border_right,
                     border_top=Border(
-                        style=BroadcastValue(value=self.border_top, dimension=dim).iloc(
-                            i, j
-                        )
+                        style=get_broadcast_value("border_top", i, j)
                     ),
                     border_bottom=Border(
-                        style=BroadcastValue(
-                            value=self.border_bottom, dimension=dim
-                        ).iloc(i, j)
+                        style=get_broadcast_value("border_bottom", i, j)
                     ),
-                    vertical_justification=BroadcastValue(
-                        value=self.cell_vertical_justification, dimension=dim
-                    ).iloc(i, j),
+                    vertical_justification=get_broadcast_value("cell_vertical_justification", i, j),
                 )
                 cells.append(cell)
             rtf_row = Row(
                 row_cells=cells,
-                justification=BroadcastValue(
-                    value=self.cell_justification, dimension=dim
-                ).iloc(i, 0),
-                height=BroadcastValue(value=self.cell_height, dimension=dim).iloc(i, 0),
+                justification=get_broadcast_value("cell_justification", i, 0),
+                height=get_broadcast_value("cell_height", i, 0),
             )
             rows.extend(rtf_row._as_rtf())
 
