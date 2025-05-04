@@ -56,6 +56,33 @@ class RTFDocument(BaseModel):
     rtf_page_footer: RTFPageFooter | None = Field(
         default=None, description="Text to appear in the footer of each page"
     )
+    
+    def __init__(self, **data): 
+        super().__init__(**data)
+        dim = self.df.shape
+        # Set default values
+        self.rtf_body.col_rel_width = self.rtf_body.col_rel_width or [1] * dim[1]
+        self.rtf_page = self.rtf_page._set_default()
+        self.rtf_body = self.rtf_body._set_default()
+        self._table_space = int(Utils._inch_to_twip(self.rtf_page.width - self.rtf_page.col_width) / 2)
+
+        if self.rtf_subline is not None:
+            self.rtf_subline = self.rtf_subline._set_default()
+            if self.rtf_subline.text_indent_reference == "table":
+                self.rtf_subline.text_space_before = self._table_space + self.rtf_subline.text_space_before
+                self.rtf_subline.text_space_after = self._table_space + self.rtf_subline.text_space_after
+
+        if self.rtf_page_header is not None:
+            self.rtf_page_header = self.rtf_page_header._set_default()
+            if self.rtf_page_header.text_indent_reference == "table":
+                self.rtf_page_header.text_space_before = self._table_space + self.rtf_page_header.text_space_before
+                self.rtf_page_header.text_space_after = self._table_space + self.rtf_page_header.text_space_after
+        
+        if self.rtf_page_footer is not None:
+            self.rtf_page_footer = self.rtf_page_footer._set_default()
+            if self.rtf_page_footer.text_indent_reference == "table":
+                self.rtf_page_footer.text_space_before = self._table_space + self.rtf_page_footer.text_space_before
+                self.rtf_page_footer.text_space_after = self._table_space + self.rtf_page_footer.text_space_after
 
     def _rtf_page_encode(self) -> str:
         """Define RTF page settings"""
@@ -140,6 +167,15 @@ class RTFDocument(BaseModel):
 
         return self.rtf_title._encode(text=self.rtf_title.text, method=method)
 
+    def _rtf_subline_encode(self, method: str) -> str:
+        """Convert the RTF subline into RTF syntax using the Text class."""
+        if self.rtf_subline is None:
+            return None
+
+        self.rtf_subline = self.rtf_subline._set_default()
+        encode = self.rtf_subline._encode(text=self.rtf_subline.text, method=method)
+        return encode
+    
     def _page_by(self) -> list[list[tuple[int, int, int]]]:
         """Create components for page_by format.
 
@@ -340,9 +376,6 @@ class RTFDocument(BaseModel):
     def rtf_encode(self) -> str:
         """Generate RTF code"""
         dim = self.df.shape
-        # Set default values
-        self.rtf_body.col_rel_width = self.rtf_body.col_rel_width or [1] * dim[1]
-        self.rtf_body = self.rtf_body._set_default()
 
         # Title
         rtf_title = self._rtf_title_encode(method="line")
@@ -423,6 +456,7 @@ class RTFDocument(BaseModel):
                 self._rtf_page_footer_encode(method="line"),
                 rtf_title,
                 "\n",
+                self._rtf_subline_encode(method="line"),
                 "\n".join(
                     header for sublist in rtf_column_header for header in sublist
                 ) if rtf_column_header else None,

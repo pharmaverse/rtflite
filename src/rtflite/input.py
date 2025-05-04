@@ -576,7 +576,7 @@ class RTFPageHeader(TextAttributes):
     def __init__(self, **data):
         defaults = {
             "text_font": 1,
-            "text_font_size": 12,
+            "text_font_size": 9,
             "text_justification": "r",
             "text_indent_first": 0,
             "text_indent_left": 0,
@@ -613,7 +613,7 @@ class RTFPageFooter(TextAttributes):
     def __init__(self, **data):
         defaults = {
             "text_font": 1,
-            "text_font_size": 12,
+            "text_font_size": 9,
             "text_justification": "c",
             "text_indent_first": 0,
             "text_indent_left": 0,
@@ -650,14 +650,14 @@ class RTFSubline(TextAttributes):
     def __init__(self, **data):
         defaults = {
             "text_font": 1,
-            "text_font_size": 12,
+            "text_font_size": 9,
             "text_justification": "l",
             "text_indent_first": 0,
             "text_indent_left": 0,
             "text_indent_right": 0,
             "text_space": 1.0,
-            "text_space_before": 180.0,
-            "text_space_after": 180.0,
+            "text_space_before": 15.0,
+            "text_space_after": 15.0,
             "text_hyphenation": True,
             "text_convert": True,
         }
