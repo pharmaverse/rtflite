@@ -88,7 +88,7 @@ class Utils:
                 "\\fcharset1",
                 "\\fcharset0",
                 "\\fcharset2",
-            ],         
+            ],
         }
 
     @staticmethod

@@ -167,13 +167,13 @@ def test_table_attributes_invalid_dimensions():
 def test_table_attributes_update():
     """Test updating table attributes."""
     table = BroadcastValue(value=[1, 2, 3], dimension=(2, 3))
-    
+
     # Test updating value
     table.value = [4, 5, 6]
     df = table.to_dataframe()
     expected_df = pd.DataFrame([[4, 5, 6], [4, 5, 6]])
     assert (df.to_numpy() == expected_df.to_numpy()).all()
-    
+
     # Test updating dimension
     table.dimension = (3, 2)
     df = table.to_dataframe()
@@ -188,7 +188,7 @@ def test_table_attributes_edge_cases():
     df = table.to_dataframe()
     expected_df = pd.DataFrame([[1]])
     assert (df.to_numpy() == expected_df.to_numpy()).all()
-    
+
     # Test with very large dimensions
     table = BroadcastValue(value=["A"], dimension=(1000, 1000))
     assert table.iloc(999, 999) == "A"

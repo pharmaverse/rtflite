@@ -58,8 +58,6 @@ class TextAttributes(BaseModel):
         default=None, description="Convert special characters to RTF"
     )
 
-    
-
     def _encode(self, text: Sequence[str], method: str) -> str:
         """Convert the RTF title into RTF syntax using the Text class."""
 
@@ -408,17 +406,17 @@ class BroadcastValue(BaseModel):
     def validate_dimension(cls, v):
         if v is None:
             return v
-        
+
         if not isinstance(v, tuple) or len(v) != 2:
             raise TypeError("dimension must be a tuple of (rows, columns)")
-        
+
         rows, cols = v
         if not isinstance(rows, int) or not isinstance(cols, int):
             raise TypeError("dimension values must be integers")
-        
+
         if rows <= 0 or cols <= 0:
             raise ValueError("dimension values must be positive")
-        
+
         return v
 
     def iloc(self, row_index: int | slice, column_index: int | slice) -> Any:
@@ -615,6 +613,7 @@ class RTFPageHeader(TextAttributes):
         defaults.update(data)
         super().__init__(**defaults)
         self._set_default()
+
     def _set_default(self):
         for attr, value in self.__dict__.items():
             if isinstance(value, (str, int, float, bool)):
@@ -705,9 +704,7 @@ class RTFFootnote(TableAttributes):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    text: str | Sequence[str] | None = Field(
-        default=None, description="Footnote table"
-    )
+    text: str | Sequence[str] | None = Field(default=None, description="Footnote table")
 
     def __init__(self, **data):
         defaults = {
@@ -835,6 +832,7 @@ class RTFTitle(TextAttributes):
         defaults.update(data)
         super().__init__(**defaults)
         self._set_default()
+
     def _set_default(self):
         for attr, value in self.__dict__.items():
             if isinstance(value, (str, int, float, bool)):
@@ -949,6 +947,7 @@ class RTFBody(TableAttributes):
         defaults.update(data)
         super().__init__(**defaults)
         self._set_default()
+
     def _set_default(self):
         for attr, value in self.__dict__.items():
             if isinstance(value, (str, int, float, bool)) and attr not in [

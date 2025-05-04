@@ -56,28 +56,42 @@ class RTFDocument(BaseModel):
     rtf_page_footer: RTFPageFooter | None = Field(
         default=None, description="Text to appear in the footer of each page"
     )
-    
-    def __init__(self, **data): 
+
+    def __init__(self, **data):
         super().__init__(**data)
         dim = self.df.shape
         # Set default values
         self.rtf_body.col_rel_width = self.rtf_body.col_rel_width or [1] * dim[1]
-        self._table_space = int(Utils._inch_to_twip(self.rtf_page.width - self.rtf_page.col_width) / 2)
+        self._table_space = int(
+            Utils._inch_to_twip(self.rtf_page.width - self.rtf_page.col_width) / 2
+        )
 
         if self.rtf_subline is not None:
             if self.rtf_subline.text_indent_reference == "table":
-                self.rtf_subline.text_space_before = self._table_space + self.rtf_subline.text_space_before
-                self.rtf_subline.text_space_after = self._table_space + self.rtf_subline.text_space_after
+                self.rtf_subline.text_space_before = (
+                    self._table_space + self.rtf_subline.text_space_before
+                )
+                self.rtf_subline.text_space_after = (
+                    self._table_space + self.rtf_subline.text_space_after
+                )
 
         if self.rtf_page_header is not None:
             if self.rtf_page_header.text_indent_reference == "table":
-                self.rtf_page_header.text_space_before = self._table_space + self.rtf_page_header.text_space_before
-                self.rtf_page_header.text_space_after = self._table_space + self.rtf_page_header.text_space_after
-        
+                self.rtf_page_header.text_space_before = (
+                    self._table_space + self.rtf_page_header.text_space_before
+                )
+                self.rtf_page_header.text_space_after = (
+                    self._table_space + self.rtf_page_header.text_space_after
+                )
+
         if self.rtf_page_footer is not None:
             if self.rtf_page_footer.text_indent_reference == "table":
-                self.rtf_page_footer.text_space_before = self._table_space + self.rtf_page_footer.text_space_before
-                self.rtf_page_footer.text_space_after = self._table_space + self.rtf_page_footer.text_space_after
+                self.rtf_page_footer.text_space_before = (
+                    self._table_space + self.rtf_page_footer.text_space_before
+                )
+                self.rtf_page_footer.text_space_after = (
+                    self._table_space + self.rtf_page_footer.text_space_after
+                )
 
     def _rtf_page_encode(self) -> str:
         """Define RTF page settings"""
@@ -125,24 +139,30 @@ class RTFDocument(BaseModel):
         if not self.rtf_page_header:
             return None
 
-        return self.rtf_page_header._encode(text=self.rtf_page_header.text, method=method)
+        return self.rtf_page_header._encode(
+            text=self.rtf_page_header.text, method=method
+        )
 
     def _rtf_page_header_encode(self, method: str) -> str:
         """Convert the RTF page header into RTF syntax using the Text class."""
         if self.rtf_page_header is None:
             return None
 
-        encode = self.rtf_page_header._encode(text=self.rtf_page_header.text, method=method)
+        encode = self.rtf_page_header._encode(
+            text=self.rtf_page_header.text, method=method
+        )
         return f"{{\\header{encode}}}"
-    
+
     def _rtf_page_footer_encode(self, method: str) -> str:
         """Convert the RTF page footer into RTF syntax using the Text class."""
         if self.rtf_page_footer is None:
             return None
 
-        encode = self.rtf_page_footer._encode(text=self.rtf_page_footer.text, method=method)
+        encode = self.rtf_page_footer._encode(
+            text=self.rtf_page_footer.text, method=method
+        )
         return f"{{\\footer{encode}}}"
-    
+
     def _rtf_title_encode(self, method: str) -> str:
         """Convert the RTF title into RTF syntax using the Text class."""
         if not self.rtf_title:
@@ -157,7 +177,7 @@ class RTFDocument(BaseModel):
 
         encode = self.rtf_subline._encode(text=self.rtf_subline.text, method=method)
         return encode
-    
+
     def _page_by(self) -> list[list[tuple[int, int, int]]]:
         """Create components for page_by format.
 
@@ -250,7 +270,7 @@ class RTFDocument(BaseModel):
 
         if rtf_attrs is None:
             return None
-         
+
         col_total_width = self.rtf_page.col_width
         col_widths = Utils._col_widths(rtf_attrs.col_rel_width, col_total_width)
         return rtf_attrs._encode(rtf_attrs.text, col_widths)
@@ -261,11 +281,11 @@ class RTFDocument(BaseModel):
 
         if rtf_attrs is None:
             return None
-        
+
         col_total_width = self.rtf_page.col_width
         col_widths = Utils._col_widths(rtf_attrs.col_rel_width, col_total_width)
         return rtf_attrs._encode(rtf_attrs.text, col_widths)
-    
+
     def _rtf_body_encode(
         self, df: pd.DataFrame, rtf_attrs: TableAttributes | None
     ) -> MutableSequence[str]:
@@ -343,7 +363,9 @@ class RTFDocument(BaseModel):
         font_charset = font_types["charset"]
 
         font_table = "{\\fonttbl"
-        for rtf, style, name, charset in zip(font_rtf, font_style, font_name, font_charset):
+        for rtf, style, name, charset in zip(
+            font_rtf, font_style, font_name, font_charset
+        ):
             font_table += f"{{{rtf}{style}{charset}\\fprq2 {name};}}\n"
         font_table += "}"
 
@@ -402,11 +424,11 @@ class RTFDocument(BaseModel):
         # Bottom border last line update
         if self.rtf_footnote is not None:
             self.rtf_footnote.border_bottom = BroadcastValue(
-                value=self.rtf_footnote.border_bottom, dimension=(1,1)
+                value=self.rtf_footnote.border_bottom, dimension=(1, 1)
             ).update_row(0, page_border_bottom[0])
 
             self.rtf_footnote.border_bottom = BroadcastValue(
-                value=self.rtf_footnote.border_bottom, dimension=(1,1)
+                value=self.rtf_footnote.border_bottom, dimension=(1, 1)
             ).update_row(0, doc_border_bottom[0])
         else:
             self.rtf_body.border_bottom = BroadcastValue(
@@ -421,26 +443,36 @@ class RTFDocument(BaseModel):
         rtf_body = self._rtf_body_encode(df=self.df, rtf_attrs=self.rtf_body)
 
         return "\n".join(
-            [item for item in [
-                self._rtf_start_encode(),
-                self._rtf_font_table_encode(),
-                "\n",
-                self._rtf_page_encode(),
-                self._rtf_page_margin_encode(),
-                self._rtf_page_header_encode(method="line"),
-                self._rtf_page_footer_encode(method="line"),
-                rtf_title,
-                "\n",
-                self._rtf_subline_encode(method="line"),
-                "\n".join(
-                    header for sublist in rtf_column_header for header in sublist
-                ) if rtf_column_header else None,
-                "\n".join(rtf_body),
-                "\n".join(self._rtf_footnote_encode()) if self.rtf_footnote is not None else None,
-                "\n".join(self._rtf_source_encode()) if self.rtf_source is not None else None,
-                "\n\n",
-                "}",
-            ] if item is not None]
+            [
+                item
+                for item in [
+                    self._rtf_start_encode(),
+                    self._rtf_font_table_encode(),
+                    "\n",
+                    self._rtf_page_encode(),
+                    self._rtf_page_margin_encode(),
+                    self._rtf_page_header_encode(method="line"),
+                    self._rtf_page_footer_encode(method="line"),
+                    rtf_title,
+                    "\n",
+                    self._rtf_subline_encode(method="line"),
+                    "\n".join(
+                        header for sublist in rtf_column_header for header in sublist
+                    )
+                    if rtf_column_header
+                    else None,
+                    "\n".join(rtf_body),
+                    "\n".join(self._rtf_footnote_encode())
+                    if self.rtf_footnote is not None
+                    else None,
+                    "\n".join(self._rtf_source_encode())
+                    if self.rtf_source is not None
+                    else None,
+                    "\n\n",
+                    "}",
+                ]
+                if item is not None
+            ]
         )
 
     def write_rtf(self, file_path: str) -> None:
