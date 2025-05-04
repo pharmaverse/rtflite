@@ -519,34 +519,27 @@ class BroadcastValue(BaseModel):
 class RTFPage(BaseModel):
     """RTF page configuration"""
 
+    orientation: str | None = Field(
+        default="portrait", description="Page orientation ('portrait' or 'landscape')"
+    )
     width: float | None = Field(default=None, description="Page width in inches")
     height: float | None = Field(default=None, description="Page height in inches")
     margin: Sequence[float] | None = Field(
         default=None,
         description="Page margins [left, right, top, bottom, header, footer] in inches",
     )
-    orientation: str | None = Field(
-        default="portrait", description="Page orientation ('portrait' or 'landscape')"
-    )
-    col_width: float | None = Field(
-        default=None, description="Total width of table columns in inches"
-    )
     nrow: int | None = Field(default=None, description="Number of rows per page")
-    use_color: bool | None = Field(
-        default=False, description="Whether to use color in the document"
-    )
-    page_title: str | None = Field(default="all", description="Title display location")
-    page_footnote: str | None = Field(
-        default="last", description="Footnote display location"
-    )
-    page_source: str | None = Field(
-        default="last", description="Source display location"
-    )
     border_first: str | None = Field(
         default="double", description="First row border style"
     )
     border_last: str | None = Field(
         default="double", description="Last row border style"
+    )
+    col_width: float | None = Field(
+        default=None, description="Total width of table columns in inches"
+    )
+    use_color: bool | None = Field(
+        default=False, description="Whether to use color in the document"
     )
 
     def _set_default(self):
@@ -566,6 +559,216 @@ class RTFPage(BaseModel):
 
         if len(self.margin) != 6:
             raise ValueError("Margin length must be 6.")
+
+        return self
+
+
+class RTFPageHeader(TextAttributes):
+    text: str | Sequence[str] | None = Field(
+        default="Page \\pagenumber of \\pagefield",
+        description="Page header text content",
+    )
+    text_indent_reference: str | Sequence[str] | None = Field(
+        default="page",
+        description="Reference point for indentation ('page' or 'table')",
+    )
+
+    def __init__(self, **data):
+        defaults = {
+            "text_font": 1,
+            "text_font_size": 12,
+            "text_justification": "r",
+            "text_indent_first": 0,
+            "text_indent_left": 0,
+            "text_indent_right": 0,
+            "text_space": 1.0,
+            "text_space_before": 15.0,
+            "text_space_after": 15.0,
+            "text_hyphenation": True,
+            "text_convert": True,
+        }
+
+        # Update defaults with any provided values
+        defaults.update(data)
+        super().__init__(**defaults)
+
+    def _set_default(self):
+        for attr, value in self.__dict__.items():
+            if isinstance(value, (str, int, float, bool)):
+                setattr(self, attr, [value])
+            if isinstance(value, list):
+                setattr(self, attr, tuple(value))
+        return self
+
+
+class RTFPageFooter(TextAttributes):
+    text: str | Sequence[str] | None = Field(
+        default=None, description="Page footer text content"
+    )
+    text_indent_reference: str | Sequence[str] | None = Field(
+        default="page",
+        description="Reference point for indentation ('page' or 'table')",
+    )
+
+    def __init__(self, **data):
+        defaults = {
+            "text_font": 1,
+            "text_font_size": 12,
+            "text_justification": "c",
+            "text_indent_first": 0,
+            "text_indent_left": 0,
+            "text_indent_right": 0,
+            "text_space": 1.0,
+            "text_space_before": 15.0,
+            "text_space_after": 15.0,
+            "text_hyphenation": True,
+            "text_convert": True,
+        }
+
+        # Update defaults with any provided values
+        defaults.update(data)
+        super().__init__(**defaults)
+
+    def _set_default(self):
+        for attr, value in self.__dict__.items():
+            if isinstance(value, (str, int, float, bool)):
+                setattr(self, attr, [value])
+            if isinstance(value, list):
+                setattr(self, attr, tuple(value))
+        return self
+
+
+class RTFSubline(TextAttributes):
+    text: str | Sequence[str] | None = Field(
+        default=None, description="Page footer text content"
+    )
+    text_indent_reference: str | Sequence[str] | None = Field(
+        default="table",
+        description="Reference point for indentation ('page' or 'table')",
+    )
+
+    def __init__(self, **data):
+        defaults = {
+            "text_font": 1,
+            "text_font_size": 12,
+            "text_justification": "l",
+            "text_indent_first": 0,
+            "text_indent_left": 0,
+            "text_indent_right": 0,
+            "text_space": 1.0,
+            "text_space_before": 180.0,
+            "text_space_after": 180.0,
+            "text_hyphenation": True,
+            "text_convert": True,
+        }
+
+        # Update defaults with any provided values
+        defaults.update(data)
+        super().__init__(**defaults)
+
+    def _set_default(self):
+        for attr, value in self.__dict__.items():
+            if isinstance(value, (str, int, float, bool)):
+                setattr(self, attr, [value])
+            if isinstance(value, list):
+                setattr(self, attr, tuple(value))
+        return self
+
+
+class RTFFootnote(TableAttributes):
+    """Class for RTF footnote settings"""
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    df: str | Sequence[str] | pd.DataFrame | None = Field(
+        default=None, description="Footnote table"
+    )
+
+    def __init__(self, **data):
+        defaults = {
+            "border_left": "single",
+            "border_right": "single",
+            "border_top": "",
+            "border_bottom": "single",
+            "border_width": 15,
+            "cell_height": 0.15,
+            "cell_justification": "c",
+            "cell_vertical_justification": "top",
+            "text_font": 1,
+            "text_format": "",
+            "text_font_size": 9,
+            "text_justification": "l",
+            "text_indent_first": 0,
+            "text_indent_left": 0,
+            "text_indent_right": 0,
+            "text_space": 1,
+            "text_space_before": 15,
+            "text_space_after": 15,
+            "text_hyphenation": False,
+            "text_convert": True,
+        }
+
+        # Update defaults with any provided values
+        defaults.update(data)
+        super().__init__(**defaults)
+
+        # Convert df to DataFrame during initialization
+        if self.df is not None:
+            self.df = BroadcastValue(value=self.df).to_dataframe()
+
+    def _set_default(self):
+        for attr, value in self.__dict__.items():
+            if isinstance(value, (str, int, float, bool)):
+                setattr(self, attr, [value])
+
+        return self
+
+
+class RTFSource(TableAttributes):
+    """Class for RTF data source settings"""
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    df: str | Sequence[str] | pd.DataFrame | None = Field(
+        default=None, description="Data source table"
+    )
+
+    def __init__(self, **data):
+        defaults = {
+            "border_left": "single",
+            "border_right": "single",
+            "border_top": "",
+            "border_bottom": "single",
+            "border_width": 15,
+            "cell_height": 0.15,
+            "cell_justification": "c",
+            "cell_vertical_justification": "top",
+            "text_font": 1,
+            "text_format": "",
+            "text_font_size": 9,
+            "text_justification": "c",
+            "text_indent_first": 0,
+            "text_indent_left": 0,
+            "text_indent_right": 0,
+            "text_space": 1,
+            "text_space_before": 15,
+            "text_space_after": 15,
+            "text_hyphenation": False,
+            "text_convert": True,
+        }
+
+        # Update defaults with any provided values
+        defaults.update(data)
+        super().__init__(**defaults)
+
+        # Convert df to DataFrame during initialization
+        if self.df is not None:
+            self.df = BroadcastValue(value=self.df).to_dataframe()
+
+    def _set_default(self):
+        for attr, value in self.__dict__.items():
+            if isinstance(value, (str, int, float, bool)):
+                setattr(self, attr, [value])
 
         return self
 

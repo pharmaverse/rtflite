@@ -7,12 +7,16 @@ from .input import (
     BroadcastValue,
     RTFBody,
     RTFColumnHeader,
+    RTFFootnote,
     RTFPage,
+    RTFPageFooter,
+    RTFPageHeader,
+    RTFSource,
+    RTFSubline,
     RTFTitle,
     TableAttributes,
 )
-from .row import Border, Cell, Row, TextContent, Utils
-from .strwidth import get_string_width
+from .row import Utils
 
 
 class RTFDocument(BaseModel):
@@ -25,14 +29,14 @@ class RTFDocument(BaseModel):
         default_factory=lambda: RTFPage(),
         description="Page settings including size, orientation and margins",
     )
-    rtf_page_header: str | None = Field(
+    rtf_page_header: RTFPageHeader | None = Field(
         default=None, description="Text to appear in the header of each page"
     )
     rtf_title: RTFTitle | None = Field(
         default_factory=lambda: RTFTitle(),
         description="Title section settings including text and formatting",
     )
-    rtf_subline: str | None = Field(
+    rtf_subline: RTFSubline | None = Field(
         default=None, description="Subject line text to appear below the title"
     )
     rtf_column_header: list[RTFColumnHeader] = Field(
@@ -43,13 +47,13 @@ class RTFDocument(BaseModel):
         default_factory=lambda: RTFBody(),
         description="Table body section settings including column widths and formatting",
     )
-    rtf_footnote: str | None = Field(
+    rtf_footnote: RTFFootnote | None = Field(
         default=None, description="Footnote text to appear at bottom of document"
     )
-    rtf_source: str | None = Field(
+    rtf_source: RTFSource | None = Field(
         default=None, description="Data source citation text"
     )
-    rtf_page_footer: str | None = Field(
+    rtf_page_footer: RTFPageFooter | None = Field(
         default=None, description="Text to appear in the footer of each page"
     )
 
