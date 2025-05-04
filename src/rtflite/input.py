@@ -542,6 +542,10 @@ class RTFPage(BaseModel):
         default=False, description="Whether to use color in the document"
     )
 
+    def __init__(self, **data):
+        super().__init__(**data)
+        self._set_default()
+
     def _set_default(self):
         if self.orientation == "portrait":
             self.width = self.width or 8.5
@@ -591,7 +595,7 @@ class RTFPageHeader(TextAttributes):
         # Update defaults with any provided values
         defaults.update(data)
         super().__init__(**defaults)
-
+        self._set_default()
     def _set_default(self):
         for attr, value in self.__dict__.items():
             if isinstance(value, (str, int, float, bool)):
@@ -628,6 +632,7 @@ class RTFPageFooter(TextAttributes):
         # Update defaults with any provided values
         defaults.update(data)
         super().__init__(**defaults)
+        self._set_default()
 
     def _set_default(self):
         for attr, value in self.__dict__.items():
@@ -665,6 +670,7 @@ class RTFSubline(TextAttributes):
         # Update defaults with any provided values
         defaults.update(data)
         super().__init__(**defaults)
+        self._set_default()
 
     def _set_default(self):
         for attr, value in self.__dict__.items():
@@ -712,7 +718,7 @@ class RTFFootnote(TableAttributes):
         # Update defaults with any provided values
         defaults.update(data)
         super().__init__(**defaults)
-
+        self._set_default()
         # Convert text to DataFrame during initialization
         if self.text is not None:
             if isinstance(self.text, Sequence):
@@ -765,6 +771,7 @@ class RTFSource(TableAttributes):
         # Update defaults with any provided values
         defaults.update(data)
         super().__init__(**defaults)
+        self._set_default()
 
         # Convert text to DataFrame during initialization
         if self.text is not None:
@@ -808,7 +815,7 @@ class RTFTitle(TextAttributes):
         # Update defaults with any provided values
         defaults.update(data)
         super().__init__(**defaults)
-
+        self._set_default()
     def _set_default(self):
         for attr, value in self.__dict__.items():
             if isinstance(value, (str, int, float, bool)):
@@ -854,6 +861,7 @@ class RTFColumnHeader(TableAttributes):
         # Update defaults with any provided values
         defaults.update(data)
         super().__init__(**defaults)
+        self._set_default()
 
         # Convert df to DataFrame during initialization
         if self.df is not None:
@@ -921,7 +929,7 @@ class RTFBody(TableAttributes):
         # Update defaults with any provided values
         defaults.update(data)
         super().__init__(**defaults)
-
+        self._set_default()
     def _set_default(self):
         for attr, value in self.__dict__.items():
             if isinstance(value, (str, int, float, bool)) and attr not in [

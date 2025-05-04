@@ -69,7 +69,7 @@ def test_rtf_encode_with_title():
         df=TestData.df1(),
         rtf_title=RTFTitle(text=["title 1", "title 2"], text_font_size=[1, 2]),
     )
-    assert rtf_doc.rtf_title.text_font_size == [1, 2]
+    assert rtf_doc.rtf_title.text_font_size == (1.0, 2.0)
 
     expected_output = "{\\pard\\hyphpar\\sb180\\sa180\\fi0\\li0\\ri0\\qc\\fs2{\\f0 title 1}\\line\\fs4{\\f0 title 2}\\par}"
     assert rtf_doc._rtf_title_encode(method="line") == expected_output

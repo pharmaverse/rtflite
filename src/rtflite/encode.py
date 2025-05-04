@@ -62,33 +62,25 @@ class RTFDocument(BaseModel):
         dim = self.df.shape
         # Set default values
         self.rtf_body.col_rel_width = self.rtf_body.col_rel_width or [1] * dim[1]
-        self.rtf_page = self.rtf_page._set_default()
-        self.rtf_body = self.rtf_body._set_default()
         self._table_space = int(Utils._inch_to_twip(self.rtf_page.width - self.rtf_page.col_width) / 2)
 
         if self.rtf_subline is not None:
-            self.rtf_subline = self.rtf_subline._set_default()
             if self.rtf_subline.text_indent_reference == "table":
                 self.rtf_subline.text_space_before = self._table_space + self.rtf_subline.text_space_before
                 self.rtf_subline.text_space_after = self._table_space + self.rtf_subline.text_space_after
 
         if self.rtf_page_header is not None:
-            self.rtf_page_header = self.rtf_page_header._set_default()
             if self.rtf_page_header.text_indent_reference == "table":
                 self.rtf_page_header.text_space_before = self._table_space + self.rtf_page_header.text_space_before
                 self.rtf_page_header.text_space_after = self._table_space + self.rtf_page_header.text_space_after
         
         if self.rtf_page_footer is not None:
-            self.rtf_page_footer = self.rtf_page_footer._set_default()
             if self.rtf_page_footer.text_indent_reference == "table":
                 self.rtf_page_footer.text_space_before = self._table_space + self.rtf_page_footer.text_space_before
                 self.rtf_page_footer.text_space_after = self._table_space + self.rtf_page_footer.text_space_after
 
     def _rtf_page_encode(self) -> str:
         """Define RTF page settings"""
-
-        self.rtf_page = self.rtf_page._set_default()
-
         page_size = [
             f"\\paperw{Utils._inch_to_twip(self.rtf_page.width)}",
             f"\\paperh{Utils._inch_to_twip(self.rtf_page.height)}",
@@ -114,9 +106,6 @@ class RTFDocument(BaseModel):
 
     def _rtf_page_margin_encode(self) -> str:
         """Define RTF margin settings"""
-
-        self.rtf_page = self.rtf_page._set_default()
-
         margin_codes = [
             "\\margl",
             "\\margr",
@@ -136,8 +125,6 @@ class RTFDocument(BaseModel):
         if not self.rtf_page_header:
             return None
 
-        self.rtf_page_header = self.rtf_page_header._set_default()
-
         return self.rtf_page_header._encode(text=self.rtf_page_header.text, method=method)
 
     def _rtf_page_header_encode(self, method: str) -> str:
@@ -145,7 +132,6 @@ class RTFDocument(BaseModel):
         if self.rtf_page_header is None:
             return None
 
-        self.rtf_page_header = self.rtf_page_header._set_default()
         encode = self.rtf_page_header._encode(text=self.rtf_page_header.text, method=method)
         return f"{{\\header{encode}}}"
     
@@ -154,7 +140,6 @@ class RTFDocument(BaseModel):
         if self.rtf_page_footer is None:
             return None
 
-        self.rtf_page_footer = self.rtf_page_footer._set_default()
         encode = self.rtf_page_footer._encode(text=self.rtf_page_footer.text, method=method)
         return f"{{\\footer{encode}}}"
     
@@ -163,8 +148,6 @@ class RTFDocument(BaseModel):
         if not self.rtf_title:
             return None
 
-        self.rtf_title = self.rtf_title._set_default()
-
         return self.rtf_title._encode(text=self.rtf_title.text, method=method)
 
     def _rtf_subline_encode(self, method: str) -> str:
@@ -172,7 +155,6 @@ class RTFDocument(BaseModel):
         if self.rtf_subline is None:
             return None
 
-        self.rtf_subline = self.rtf_subline._set_default()
         encode = self.rtf_subline._encode(text=self.rtf_subline.text, method=method)
         return encode
     
@@ -234,10 +216,6 @@ class RTFDocument(BaseModel):
             for level, var_name in enumerate(var):
                 current_val = group[var_name]
 
-                # Check if we need to print this level's header
-                # We print if either:
-                # 1. This is the deepest level (always print)
-                # 2. The value at this level has changed
                 need_header = False
                 if level == len(var) - 1:
                     need_header = True
@@ -272,9 +250,8 @@ class RTFDocument(BaseModel):
 
         if rtf_attrs is None:
             return None
-        
-        rtf_attrs = rtf_attrs._set_default()    
-        col_total_width = self.rtf_page._set_default().col_width
+         
+        col_total_width = self.rtf_page.col_width
         col_widths = Utils._col_widths(rtf_attrs.col_rel_width, col_total_width)
         return rtf_attrs._encode(rtf_attrs.text, col_widths)
 
@@ -285,8 +262,7 @@ class RTFDocument(BaseModel):
         if rtf_attrs is None:
             return None
         
-        rtf_attrs = rtf_attrs._set_default()
-        col_total_width = self.rtf_page._set_default().col_width
+        col_total_width = self.rtf_page.col_width
         col_widths = Utils._col_widths(rtf_attrs.col_rel_width, col_total_width)
         return rtf_attrs._encode(rtf_attrs.text, col_widths)
     
@@ -307,7 +283,7 @@ class RTFDocument(BaseModel):
 
         # Initialize dimensions and widths
         dim = df.shape
-        col_total_width = self.rtf_page._set_default().col_width
+        col_total_width = self.rtf_page.col_width
         page_by = self._page_by()
 
         if page_by is None:
@@ -343,7 +319,7 @@ class RTFDocument(BaseModel):
         self, df: pd.DataFrame, rtf_attrs: TableAttributes | None
     ) -> MutableSequence[str]:
         dim = df.shape
-        col_total_width = self.rtf_page._set_default().col_width
+        col_total_width = self.rtf_page.col_width
 
         if rtf_attrs is None:
             return None
@@ -425,7 +401,6 @@ class RTFDocument(BaseModel):
 
         # Bottom border last line update
         if self.rtf_footnote is not None:
-            self.rtf_footnote = self.rtf_footnote._set_default()
             self.rtf_footnote.border_bottom = BroadcastValue(
                 value=self.rtf_footnote.border_bottom, dimension=(1,1)
             ).update_row(0, page_border_bottom[0])
