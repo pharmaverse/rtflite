@@ -14,61 +14,64 @@ class TextAttributes(BaseModel):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    text_font: int | Sequence[int] | pd.DataFrame |  None = Field(
+    text_font: int | Sequence[int] | pd.DataFrame | None = Field(
         default=None, description="Font number for text"
     )
-    text_format: str | Sequence[str] | pd.DataFrame |  None = Field(
+    text_format: str | Sequence[str] | pd.DataFrame | None = Field(
         default=None, description="Text formatting (e.g. 'bold', 'italic')"
     )
-    text_font_size: float | Sequence[float] | pd.DataFrame |  None = Field(
+    text_font_size: float | Sequence[float] | pd.DataFrame | None = Field(
         default=None, description="Font size in points"
     )
-    text_color: str | Sequence[str] | pd.DataFrame |  None = Field(
+    text_color: str | Sequence[str] | pd.DataFrame | None = Field(
         default=None, description="Text color name or RGB value"
     )
-    text_background_color: str | Sequence[str] | pd.DataFrame |  None = Field(
+    text_background_color: str | Sequence[str] | pd.DataFrame | None = Field(
         default=None, description="Background color name or RGB value"
     )
-    text_justification: str | Sequence[str] | pd.DataFrame |  None = Field(
+    text_justification: str | Sequence[str] | pd.DataFrame | None = Field(
         default=None,
         description="Text alignment ('l'=left, 'c'=center, 'r'=right, 'j'=justify)",
     )
-    text_indent_first: float | Sequence[float] | pd.DataFrame |  None = Field(
+    text_indent_first: float | Sequence[float] | pd.DataFrame | None = Field(
         default=None, description="First line indent in inches/twips"
     )
-    text_indent_left: float | Sequence[float] | pd.DataFrame |  None = Field(
+    text_indent_left: float | Sequence[float] | pd.DataFrame | None = Field(
         default=None, description="Left indent in inches/twips"
     )
-    text_indent_right: float | Sequence[float] | pd.DataFrame |  None = Field(
+    text_indent_right: float | Sequence[float] | pd.DataFrame | None = Field(
         default=None, description="Right indent in inches/twips"
     )
-    text_space: float | Sequence[float] | pd.DataFrame |  None = Field(
+    text_space: float | Sequence[float] | pd.DataFrame | None = Field(
         default=None, description="Line spacing multiplier"
     )
-    text_space_before: float | Sequence[float] | pd.DataFrame |  None = Field(
+    text_space_before: float | Sequence[float] | pd.DataFrame | None = Field(
         default=None, description="Space before paragraph in twips"
     )
-    text_space_after: float | Sequence[float] | pd.DataFrame |  None = Field(
+    text_space_after: float | Sequence[float] | pd.DataFrame | None = Field(
         default=None, description="Space after paragraph in twips"
     )
-    text_hyphenation: bool | Sequence[bool] | pd.DataFrame |  None = Field(
+    text_hyphenation: bool | Sequence[bool] | pd.DataFrame | None = Field(
         default=None, description="Enable automatic hyphenation"
     )
-    text_convert: bool | Sequence[bool] | pd.DataFrame |  None = Field(
+    text_convert: bool | Sequence[bool] | pd.DataFrame | None = Field(
         default=None, description="Convert special characters to RTF"
     )
-    
+
     def _encode(self, text: Sequence[str], method: str) -> str:
         """Convert the RTF title into RTF syntax using the Text class."""
 
         dim = [len(text), 1]
+
         def get_broadcast_value(attr_name, row_idx, col_idx=0):
             """Helper function to get broadcast value for a given attribute at specified indices."""
             attr_value = getattr(self, attr_name)
-            return BroadcastValue(value=attr_value, dimension=dim).iloc(row_idx, col_idx)
-        
+            return BroadcastValue(value=attr_value, dimension=dim).iloc(
+                row_idx, col_idx
+            )
+
         text_components = []
-        for i in range(dim[0]):            
+        for i in range(dim[0]):
             text_components.append(
                 TextContent(
                     text=str(text[i]),
@@ -131,59 +134,57 @@ class TableAttributes(TextAttributes):
     col_rel_width: float | Sequence[float] | None = Field(
         default=None, description="Relative widths of table columns"
     )
-    border_left: str | Sequence[str] | pd.DataFrame |  None = Field(
+    border_left: str | Sequence[str] | pd.DataFrame | None = Field(
         default=None, description="Left border style"
     )
-    border_right: str | Sequence[str] | pd.DataFrame |  None = Field(
+    border_right: str | Sequence[str] | pd.DataFrame | None = Field(
         default=None, description="Right border style"
     )
-    border_top: str | Sequence[str] | pd.DataFrame |  None = Field(
+    border_top: str | Sequence[str] | pd.DataFrame | None = Field(
         default=None, description="Top border style"
     )
-    border_bottom: str | Sequence[str] | pd.DataFrame |  None = Field(
+    border_bottom: str | Sequence[str] | pd.DataFrame | None = Field(
         default=None, description="Bottom border style"
     )
-    border_first: str | Sequence[str] | pd.DataFrame |  None = Field(
+    border_first: str | Sequence[str] | pd.DataFrame | None = Field(
         default=None, description="First row border style"
     )
-    border_last: str | Sequence[str] | pd.DataFrame |  None = Field(
+    border_last: str | Sequence[str] | pd.DataFrame | None = Field(
         default=None, description="Last row border style"
     )
-    border_color_left: str | Sequence[str] | pd.DataFrame |  None = Field(
+    border_color_left: str | Sequence[str] | pd.DataFrame | None = Field(
         default=None, description="Left border color"
     )
-    border_color_right: str | Sequence[str] | pd.DataFrame |  None = Field(
+    border_color_right: str | Sequence[str] | pd.DataFrame | None = Field(
         default=None, description="Right border color"
     )
-    border_color_top: str | Sequence[str] | pd.DataFrame |  None = Field(
+    border_color_top: str | Sequence[str] | pd.DataFrame | None = Field(
         default=None, description="Top border color"
     )
-    border_color_bottom: str | Sequence[str] | pd.DataFrame |  None = Field(
+    border_color_bottom: str | Sequence[str] | pd.DataFrame | None = Field(
         default=None, description="Bottom border color"
     )
-    border_color_first: str | Sequence[str] | pd.DataFrame |  None = Field(
+    border_color_first: str | Sequence[str] | pd.DataFrame | None = Field(
         default=None, description="First row border color"
     )
-    border_color_last: str | Sequence[str] | pd.DataFrame |  None = Field(
+    border_color_last: str | Sequence[str] | pd.DataFrame | None = Field(
         default=None, description="Last row border color"
     )
-    border_width: int | Sequence[int] | pd.DataFrame |  None = Field(
+    border_width: int | Sequence[int] | pd.DataFrame | None = Field(
         default=None, description="Border width in twips"
     )
-    cell_height: float | Sequence[float] | pd.DataFrame |  None = Field(
+    cell_height: float | Sequence[float] | pd.DataFrame | None = Field(
         default=None, description="Cell height in inches"
     )
-    cell_justification: str | Sequence[str] | pd.DataFrame |  None = Field(
+    cell_justification: str | Sequence[str] | pd.DataFrame | None = Field(
         default=None,
         description="Cell horizontal alignment ('l'=left, 'c'=center, 'r'=right, 'j'=justify)",
     )
-    cell_vertical_justification: str | Sequence[str] | pd.DataFrame |  None = (
-        Field(
-            default=None,
-            description="Cell vertical alignment ('top', 'center', 'bottom')",
-        )
+    cell_vertical_justification: str | Sequence[str] | pd.DataFrame | None = Field(
+        default=None,
+        description="Cell vertical alignment ('top', 'center', 'bottom')",
     )
-    cell_nrow: int | Sequence[int] | pd.DataFrame |  None = Field(
+    cell_nrow: int | Sequence[int] | pd.DataFrame | None = Field(
         default=None, description="Number of rows per cell"
     )
 
@@ -234,11 +235,14 @@ class TableAttributes(TextAttributes):
         self, df: pd.DataFrame, col_widths: Sequence[float]
     ) -> MutableSequence[str]:
         dim = df.shape
+
         def get_broadcast_value(attr_name, row_idx, col_idx=0):
             """Helper function to get broadcast value for a given attribute at specified indices."""
             attr_value = getattr(self, attr_name)
-            return BroadcastValue(value=attr_value, dimension=dim).iloc(row_idx, col_idx)
-        
+            return BroadcastValue(value=attr_value, dimension=dim).iloc(
+                row_idx, col_idx
+            )
+
         if self.cell_nrow is None:
             self.cell_nrow = np.zeros(dim)
 
@@ -278,7 +282,9 @@ class TableAttributes(TextAttributes):
                         size=get_broadcast_value("text_font_size", i, j),
                         format=get_broadcast_value("text_format", i, j),
                         color=get_broadcast_value("text_color", i, j),
-                        background_color=get_broadcast_value("text_background_color", i, j),
+                        background_color=get_broadcast_value(
+                            "text_background_color", i, j
+                        ),
                         justification=get_broadcast_value("text_justification", i, j),
                         indent_first=get_broadcast_value("text_indent_first", i, j),
                         indent_left=get_broadcast_value("text_indent_left", i, j),
@@ -290,17 +296,15 @@ class TableAttributes(TextAttributes):
                         hyphenation=get_broadcast_value("text_hyphenation", i, j),
                     ),
                     width=col_widths[j],
-                    border_left=Border(
-                        style=get_broadcast_value("border_left", i, j)
-                    ),
+                    border_left=Border(style=get_broadcast_value("border_left", i, j)),
                     border_right=border_right,
-                    border_top=Border(
-                        style=get_broadcast_value("border_top", i, j)
-                    ),
+                    border_top=Border(style=get_broadcast_value("border_top", i, j)),
                     border_bottom=Border(
                         style=get_broadcast_value("border_bottom", i, j)
                     ),
-                    vertical_justification=get_broadcast_value("cell_vertical_justification", i, j),
+                    vertical_justification=get_broadcast_value(
+                        "cell_vertical_justification", i, j
+                    ),
                 )
                 cells.append(cell)
             rtf_row = Row(
