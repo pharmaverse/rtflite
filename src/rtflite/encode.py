@@ -1,7 +1,7 @@
 from collections.abc import MutableSequence
 
 import pandas as pd
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .input import (
     BroadcastValue,
@@ -56,6 +56,27 @@ class RTFDocument(BaseModel):
     rtf_page_footer: RTFPageFooter | None = Field(
         default=None, description="Text to appear in the footer of each page"
     )
+    
+    @model_validator(mode="after")
+    def validate_column_names(self):
+        columns = self.df.columns.tolist()
+
+        if self.rtf_body.group_by is not None:
+            for column in self.rtf_body.group_by:
+                if column not in columns:
+                    raise ValueError(f"`group_by` column {column} not found in `df`")
+
+        if self.rtf_body.page_by is not None:
+            for column in self.rtf_body.page_by:
+                if column not in columns:
+                    raise ValueError(f"`page_by` column {column} not found in `df`")
+        
+        if self.rtf_body.subline_by is not None:
+            for column in self.rtf_body.subline_by:
+                if column not in columns:
+                    raise ValueError(f"`subline_by` column {column} not found in `df`")
+        
+        return self
 
     def __init__(self, **data):
         super().__init__(**data)
@@ -399,13 +420,13 @@ class RTFDocument(BaseModel):
                 value=self.rtf_body.border_top, dimension=dim
             ).update_row(0, doc_border_top)
         else:
-            if self.rtf_column_header[0].df is None and self.rtf_body.as_colheader:
+            if self.rtf_column_header[0].text is None and self.rtf_body.as_colheader:
                 columns = [
                     col
                     for col in self.df.columns
                     if col not in (self.rtf_body.page_by or [])
                 ]
-                self.rtf_column_header[0].df = pd.DataFrame([columns])
+                self.rtf_column_header[0].text = pd.DataFrame([columns])
                 self.rtf_column_header = self.rtf_column_header[:1]
 
             self.rtf_column_header[0].border_top = BroadcastValue(
@@ -413,7 +434,7 @@ class RTFDocument(BaseModel):
             ).update_row(0, doc_border_top)
 
             rtf_column_header = [
-                self._rtf_column_header_encode(df=header.df, rtf_attrs=header)
+                self._rtf_column_header_encode(df=header.text, rtf_attrs=header)
                 for header in self.rtf_column_header
             ]
 

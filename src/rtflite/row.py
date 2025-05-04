@@ -23,6 +23,30 @@ TEXT_JUSTIFICATION_CODES = {
 
 ROW_JUSTIFICATION_CODES = {"": "", "l": "\\trql", "c": "\\trqc", "r": "\\trqr"}
 
+BORDER_CODES = {
+    "single": "\\brdrs",
+    "double": "\\brdrdb",
+    "thick": "\\brdrth",
+    "dotted": "\\brdrdot",
+    "dashed": "\\brdrdash",
+    "dash-dotted": "\\brdrdashd",
+    "dash-dot-dotted": "\\brdrdashdd",
+    "triple": "\\brdrtriple",
+    "wavy": "\\brdrwavy",
+    "double-wavy": "\\brdrwavydb",
+    "striped": "\\brdrengrave",
+    "embossed": "\\brdremboss",
+    "engraved": "\\brdrengrave",
+    "frame": "\\brdrframe",
+    "": "",  # No border
+}
+
+VERTICAL_ALIGNMENT_CODES = {
+    "top": "\\clvertalt",
+    "center": "\\clvertalc",
+    "bottom": "\\clvertalb",
+}
+
 
 class Utils:
     @staticmethod
@@ -272,28 +296,10 @@ class Border(BaseModel):
 
     def _as_rtf(self) -> str:
         """Get RTF border style codes."""
-        border_codes = {
-            "single": "\\brdrs",
-            "double": "\\brdrdb",
-            "thick": "\\brdrth",
-            "dotted": "\\brdrdot",
-            "dashed": "\\brdrdash",
-            "dash-dotted": "\\brdrdashd",
-            "dash-dot-dotted": "\\brdrdashdd",
-            "triple": "\\brdrtriple",
-            "wavy": "\\brdrwavy",
-            "double-wavy": "\\brdrwavydb",
-            "striped": "\\brdrengrave",
-            "embossed": "\\brdremboss",
-            "engraved": "\\brdrengrave",
-            "frame": "\\brdrframe",
-            "": "",  # No border
-        }
-
-        if self.style not in border_codes:
+        if self.style not in BORDER_CODES:
             raise ValueError(f"Invalid border type: {self.style}")
 
-        rtf = f"{border_codes[self.style]}\\brdrw{self.width}"
+        rtf = f"{BORDER_CODES[self.style]}\\brdrw{self.width}"
 
         # Add color if specified
         if self.color is not None:
@@ -333,12 +339,7 @@ class Cell(BaseModel):
             rtf.append("\\clbrdrb" + self.border_bottom._as_rtf())
 
         # Cell vertical alignment
-        valign_codes = {
-            "top": "\\clvertalt",
-            "center": "\\clvertalc",
-            "bottom": "\\clvertalb",
-        }
-        rtf.append(valign_codes[self.vertical_justification])
+        rtf.append(VERTICAL_ALIGNMENT_CODES[self.vertical_justification])
 
         # Cell width
         rtf.append(f"\\cellx{Utils._inch_to_twip(self.width)}")

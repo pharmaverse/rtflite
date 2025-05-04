@@ -1,5 +1,8 @@
 from rtflite.encode import RTFDocument
-from rtflite.input import RTFTitle, TextAttributes, RTFPageHeader, RTFPageFooter, RTFSubline
+from rtflite.input import (
+    RTFTitle,
+    TextAttributes,
+)
 import polars as pl
 import pytest
 
@@ -111,7 +114,7 @@ def test_text_attributes_validation():
         text_font=[1, 2],
         text_format=["", "bi"],
         text_font_size=[12, 14],
-        text_justification=["l", "c"]
+        text_justification=["l", "c"],
     )
     assert attrs.text_font == [1, 2]
     assert attrs.text_format == ["", "bi"]
@@ -138,10 +141,7 @@ def test_text_attributes_validation():
 def test_text_attributes_single_value_conversion():
     """Test conversion of single values to lists."""
     attrs = TextAttributes(
-        text_font=1,
-        text_format="b",
-        text_font_size=12.0,
-        text_justification="c"
+        text_font=1, text_format="b", text_font_size=12.0, text_justification="c"
     )
     assert attrs.text_font == [1]
     assert attrs.text_format == ["b"]
@@ -165,7 +165,7 @@ def test_text_attributes_encode():
         text_space_after=1,
         text_hyphenation=True,
     )
-    
+
     # Test paragraph encoding
     text = ["Test Title"]
     result = attrs._encode(text, method="paragraph")
@@ -173,7 +173,7 @@ def test_text_attributes_encode():
     assert len(result) == 1
     assert "\\b" in result[0]  # Bold format Red color
     assert "\\qc" in result[0]  # Center justification
-    
+
     # Test line encoding
     text = ["Line 1", "Line 2"]
     result = attrs._encode(text, method="line")
