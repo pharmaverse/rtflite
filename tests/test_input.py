@@ -1,5 +1,7 @@
 from rtflite.encode import RTFDocument
 from rtflite.input import RTFTitle
+import polars as pl
+import pytest
 
 from .utils import ROutputReader, TestData
 
@@ -73,3 +75,11 @@ def test_rtf_encode_with_title():
 
     expected_output = "{\\pard\\hyphpar\\sb180\\sa180\\fi0\\li0\\ri0\\qc\\fs2{\\f0 title 1}\\line\\fs4{\\f0 title 2}\\par}"
     assert rtf_doc._rtf_title_encode(method="line") == expected_output
+
+
+def test_rtf_title_validation():
+    """Test RTFTitle validation."""
+
+    # Test with invalid text type
+    with pytest.raises(ValueError):
+        RTFTitle(text=123)

@@ -3,7 +3,7 @@ from typing import Any, Text, Tuple
 
 import numpy as np
 import pandas as pd
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from .row import Border, Cell, Row, TextContent
 from .strwidth import get_string_width
@@ -57,6 +57,8 @@ class TextAttributes(BaseModel):
     text_convert: bool | Sequence[bool] | pd.DataFrame | Tuple | None = Field(
         default=None, description="Convert special characters to RTF"
     )
+
+    
 
     def _encode(self, text: Sequence[str], method: str) -> str:
         """Convert the RTF title into RTF syntax using the Text class."""
@@ -401,6 +403,23 @@ class BroadcastValue(BaseModel):
     dimension: Tuple[int, int] | None = Field(
         None, description="Dimensions of the table (rows, columns)"
     )
+
+    @field_validator("dimension")
+    def validate_dimension(cls, v):
+        if v is None:
+            return v
+        
+        if not isinstance(v, tuple) or len(v) != 2:
+            raise TypeError("dimension must be a tuple of (rows, columns)")
+        
+        rows, cols = v
+        if not isinstance(rows, int) or not isinstance(cols, int):
+            raise TypeError("dimension values must be integers")
+        
+        if rows <= 0 or cols <= 0:
+            raise ValueError("dimension values must be positive")
+        
+        return v
 
     def iloc(self, row_index: int | slice, column_index: int | slice) -> Any:
         """

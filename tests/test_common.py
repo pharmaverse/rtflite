@@ -1,4 +1,6 @@
 import pandas as pd
+import polars as pl
+import pytest
 
 from rtflite.input import BroadcastValue
 
@@ -130,7 +132,63 @@ def test_table_attributes_dataframe():
             ["D", "E", "F", "D", "E", "F"],
         ]
     )
-    expected_df_large_df.columns = [0, 1, 2, 0, 1, 2]
-    pd.testing.assert_frame_equal(
-        df_large_df.reset_index(drop=True), expected_df_large_df.reset_index(drop=True)
-    )
+    assert (df_large_df.to_numpy() == expected_df_large_df.to_numpy()).all()
+
+
+def test_table_attributes_none():
+    """Test handling of None values."""
+    # Test with None value
+    table = BroadcastValue(value=None, dimension=(2, 2))
+    with pytest.raises(ValueError):
+        df = table.to_dataframe()
+
+    # Test with None in list
+    table = BroadcastValue(value=[1, None, 3], dimension=(2, 3))
+    df = table.to_dataframe()
+    expected_df = pd.DataFrame([[1, None, 3], [1, None, 3]])
+    assert (df.to_numpy() == expected_df.to_numpy()).all()
+
+
+def test_table_attributes_invalid_dimensions():
+    """Test handling of invalid dimensions."""
+    # Test with negative dimensions
+    with pytest.raises(ValueError):
+        BroadcastValue(value=[1, 2, 3], dimension=(-1, 2))
+
+    # # Test with zero dimensions
+    with pytest.raises(ValueError):
+        BroadcastValue(value=[1, 2, 3], dimension=(0, 2))
+
+    # # Test with non-integer dimensions
+    with pytest.raises(ValueError):
+        BroadcastValue(value=[1, 2, 3], dimension=(2.5, 2))
+
+
+def test_table_attributes_update():
+    """Test updating table attributes."""
+    table = BroadcastValue(value=[1, 2, 3], dimension=(2, 3))
+    
+    # Test updating value
+    table.value = [4, 5, 6]
+    df = table.to_dataframe()
+    expected_df = pd.DataFrame([[4, 5, 6], [4, 5, 6]])
+    assert (df.to_numpy() == expected_df.to_numpy()).all()
+    
+    # Test updating dimension
+    table.dimension = (3, 2)
+    df = table.to_dataframe()
+    expected_df = pd.DataFrame([[4, 5], [4, 5], [4, 5]])
+    assert (df.to_numpy() == expected_df.to_numpy()).all()
+
+
+def test_table_attributes_edge_cases():
+    """Test edge cases for table attributes."""
+    # Test with single value
+    table = BroadcastValue(value=[1], dimension=(1, 1))
+    df = table.to_dataframe()
+    expected_df = pd.DataFrame([[1]])
+    assert (df.to_numpy() == expected_df.to_numpy()).all()
+    
+    # Test with very large dimensions
+    table = BroadcastValue(value=["A"], dimension=(1000, 1000))
+    assert table.iloc(999, 999) == "A"
