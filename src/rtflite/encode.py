@@ -104,6 +104,33 @@ class RTFDocument(BaseModel):
         )
         return margin + "\n"
 
+    def _rtf_page_header_encode(self, method: str) -> str:
+        """Convert the RTF page header into RTF syntax using the Text class."""
+        if not self.rtf_page_header:
+            return None
+
+        self.rtf_page_header = self.rtf_page_header._set_default()
+
+        return self.rtf_page_header._encode(text=self.rtf_page_header.text, method=method)
+
+    def _rtf_page_header_encode(self, method: str) -> str:
+        """Convert the RTF page header into RTF syntax using the Text class."""
+        if self.rtf_page_header is None:
+            return None
+
+        self.rtf_page_header = self.rtf_page_header._set_default()
+        encode = self.rtf_page_header._encode(text=self.rtf_page_header.text, method=method)
+        return f"{{\\header{encode}}}"
+    
+    def _rtf_page_footer_encode(self, method: str) -> str:
+        """Convert the RTF page footer into RTF syntax using the Text class."""
+        if self.rtf_page_footer is None:
+            return None
+
+        self.rtf_page_footer = self.rtf_page_footer._set_default()
+        encode = self.rtf_page_footer._encode(text=self.rtf_page_footer.text, method=method)
+        return f"{{\\footer{encode}}}"
+    
     def _rtf_title_encode(self, method: str) -> str:
         """Convert the RTF title into RTF syntax using the Text class."""
         if not self.rtf_title:
@@ -348,21 +375,23 @@ class RTFDocument(BaseModel):
         rtf_body = self._rtf_body_encode(df=self.df, rtf_attrs=self.rtf_body)
 
         return "\n".join(
-            [
+            [item for item in [
                 self._rtf_start_encode(),
                 self._rtf_font_table_encode(),
                 "\n",
                 self._rtf_page_encode(),
                 self._rtf_page_margin_encode(),
+                self._rtf_page_header_encode(method="line"),
+                self._rtf_page_footer_encode(method="line"),
                 rtf_title,
                 "\n",
                 "\n".join(
                     header for sublist in rtf_column_header for header in sublist
-                ),
+                ) if rtf_column_header else None,
                 "\n".join(rtf_body),
                 "\n\n",
                 "}",
-            ]
+            ] if item is not None]
         )
 
     def write_rtf(self, file_path: str) -> None:
