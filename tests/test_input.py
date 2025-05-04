@@ -1,5 +1,5 @@
 from rtflite.encode import RTFDocument
-from rtflite.input import RTFTitle
+from rtflite.input import RTFTitle, TextAttributes, RTFPageHeader, RTFPageFooter, RTFSubline
 import polars as pl
 import pytest
 
@@ -83,3 +83,105 @@ def test_rtf_title_validation():
     # Test with invalid text type
     with pytest.raises(ValueError):
         RTFTitle(text=123)
+
+
+def test_text_attributes_default():
+    """Test TextAttributes with default values."""
+    attrs = TextAttributes()
+    assert attrs.text_font is None
+    assert attrs.text_format is None
+    assert attrs.text_font_size is None
+    assert attrs.text_color is None
+    assert attrs.text_background_color is None
+    assert attrs.text_justification is None
+    assert attrs.text_indent_first is None
+    assert attrs.text_indent_left is None
+    assert attrs.text_indent_right is None
+    assert attrs.text_space is None
+    assert attrs.text_space_before is None
+    assert attrs.text_space_after is None
+    assert attrs.text_hyphenation is None
+    assert attrs.text_convert is None
+
+
+def test_text_attributes_validation():
+    """Test TextAttributes field validation."""
+    # Test valid values
+    attrs = TextAttributes(
+        text_font=[1, 2],
+        text_format=["", "bi"],
+        text_font_size=[12, 14],
+        text_justification=["l", "c"]
+    )
+    assert attrs.text_font == [1, 2]
+    assert attrs.text_format == ["", "bi"]
+    assert attrs.text_font_size == [12, 14]
+    assert attrs.text_justification == ["l", "c"]
+
+    # Test invalid font
+    with pytest.raises(ValueError, match="Invalid font number"):
+        TextAttributes(text_font=[999])
+
+    # Test invalid format
+    with pytest.raises(ValueError, match="Invalid text format"):
+        TextAttributes(text_format=["invalid"])
+
+    # Test invalid font size
+    with pytest.raises(ValueError, match="Invalid font size"):
+        TextAttributes(text_font_size=[-1])
+
+    # Test invalid justification
+    with pytest.raises(ValueError, match="Invalid text justification"):
+        TextAttributes(text_justification=["invalid"])
+
+
+def test_text_attributes_single_value_conversion():
+    """Test conversion of single values to lists."""
+    attrs = TextAttributes(
+        text_font=1,
+        text_format="b",
+        text_font_size=12.0,
+        text_justification="c"
+    )
+    assert attrs.text_font == [1]
+    assert attrs.text_format == ["b"]
+    assert attrs.text_font_size == [12.0]
+    assert attrs.text_justification == ["c"]
+
+
+def test_text_attributes_encode():
+    """Test TextAttributes encoding functionality."""
+    attrs = TextAttributes(
+        text_font=1,
+        text_format="b",
+        text_font_size=12.0,
+        text_color="red",
+        text_justification="c",
+        text_indent_first=10,
+        text_indent_left=10,
+        text_indent_right=10,
+        text_space=1,
+        text_space_before=1,
+        text_space_after=1,
+        text_hyphenation=True,
+    )
+    
+    # Test paragraph encoding
+    text = ["Test Title"]
+    result = attrs._encode(text, method="paragraph")
+    assert isinstance(result, list)
+    assert len(result) == 1
+    assert "\\b" in result[0]  # Bold format Red color
+    assert "\\qc" in result[0]  # Center justification
+    
+    # Test line encoding
+    text = ["Line 1", "Line 2"]
+    result = attrs._encode(text, method="line")
+    assert isinstance(result, str)
+    assert "\\line" in result
+    assert "\\b" in result
+    assert "\\qc" in result
+
+    # Test invalid method
+    with pytest.raises(ValueError, match="Invalid method"):
+        attrs._encode(text, method="invalid")

@@ -5,8 +5,16 @@ import numpy as np
 import pandas as pd
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from .row import Border, Cell, Row, TextContent
-from .strwidth import get_string_width
+from rtflite.row import (
+    FORMAT_CODES,
+    TEXT_JUSTIFICATION_CODES,
+    Border,
+    Cell,
+    Row,
+    TextContent,
+    Utils,
+)
+from rtflite.strwidth import get_string_width
 
 
 class TextAttributes(BaseModel):
@@ -14,49 +22,110 @@ class TextAttributes(BaseModel):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    text_font: int | Sequence[int] | pd.DataFrame | None = Field(
+    text_font: Sequence[int] | None = Field(
         default=None, description="Font number for text"
     )
-    text_format: str | Sequence[str] | pd.DataFrame | None = Field(
-        default=None, description="Text formatting (e.g. 'bold', 'italic')"
+
+    @field_validator("text_font", mode="after")
+    def validate_text_font(cls, v):
+        if v is not None:
+            for font in v:
+                if font not in Utils._font_type()["type"]:
+                    raise ValueError(f"Invalid font number: {font}")
+        return v
+
+    text_format: Sequence[str] | None = Field(
+        default=None,
+        description="Text formatting (e.g. 'b' for 'bold', 'i' for'italic')",
     )
-    text_font_size: float | Sequence[float] | pd.DataFrame | None = Field(
+
+    @field_validator("text_format", mode="after")
+    def validate_text_format(cls, v):
+        if v is not None:
+            for format in v:
+                for fmt in format:
+                    if fmt not in FORMAT_CODES:
+                        raise ValueError(f"Invalid text format: {fmt}")
+        return v
+
+    text_font_size: Sequence[float] | None = Field(
         default=None, description="Font size in points"
     )
-    text_color: str | Sequence[str] | pd.DataFrame | None = Field(
+
+    @field_validator("text_font_size", mode="after")
+    def validate_text_font_size(cls, v):
+        if v is not None:
+            for size in v:
+                if size <= 0:
+                    raise ValueError(f"Invalid font size: {size}")
+        return v
+
+    text_color: Sequence[str] | None = Field(
         default=None, description="Text color name or RGB value"
     )
-    text_background_color: str | Sequence[str] | pd.DataFrame | None = Field(
+    text_background_color: Sequence[str] | None = Field(
         default=None, description="Background color name or RGB value"
     )
-    text_justification: str | Sequence[str] | pd.DataFrame | None = Field(
+    text_justification: Sequence[str] | None = Field(
         default=None,
         description="Text alignment ('l'=left, 'c'=center, 'r'=right, 'j'=justify)",
     )
-    text_indent_first: float | Sequence[float] | pd.DataFrame | None = Field(
-        default=None, description="First line indent in inches/twips"
+
+    @field_validator("text_justification", mode="after")
+    def validate_text_justification(cls, v):
+        if v is not None:
+            for justification in v:
+                if justification not in TEXT_JUSTIFICATION_CODES:
+                    raise ValueError(f"Invalid text justification: {justification}")
+        return v
+
+    text_indent_first: Sequence[int] | None = Field(
+        default=None, description="First line indent in twips"
     )
-    text_indent_left: float | Sequence[float] | pd.DataFrame | None = Field(
-        default=None, description="Left indent in inches/twips"
+    text_indent_left: Sequence[int] | None = Field(
+        default=None, description="Left indent in twips"
     )
-    text_indent_right: float | Sequence[float] | pd.DataFrame | None = Field(
-        default=None, description="Right indent in inches/twips"
+    text_indent_right: Sequence[int] | None = Field(
+        default=None, description="Right indent in twips"
     )
-    text_space: float | Sequence[float] | pd.DataFrame | None = Field(
+    text_space: Sequence[int] | None = Field(
         default=None, description="Line spacing multiplier"
     )
-    text_space_before: float | Sequence[float] | pd.DataFrame | None = Field(
+    text_space_before: Sequence[int] | None = Field(
         default=None, description="Space before paragraph in twips"
     )
-    text_space_after: float | Sequence[float] | pd.DataFrame | None = Field(
+    text_space_after: Sequence[int] | None = Field(
         default=None, description="Space after paragraph in twips"
     )
-    text_hyphenation: bool | Sequence[bool] | pd.DataFrame | None = Field(
+    text_hyphenation: Sequence[bool] | None = Field(
         default=None, description="Enable automatic hyphenation"
     )
-    text_convert: bool | Sequence[bool] | pd.DataFrame | None = Field(
+    text_convert: Sequence[bool] | None = Field(
         default=None, description="Convert special characters to RTF"
     )
+
+    @field_validator(
+        "text_font",
+        "text_format",
+        "text_font_size",
+        "text_color",
+        "text_background_color",
+        "text_justification",
+        "text_indent_first",
+        "text_indent_left",
+        "text_indent_right",
+        "text_space",
+        "text_space_before",
+        "text_space_after",
+        "text_hyphenation",
+        "text_convert",
+        mode="before",
+    )
+    def convert_to_list(cls, v):
+        """Convert single values to lists before validation."""
+        if v is not None and isinstance(v, (int, str, float, bool)):
+            return [v]
+        return v
 
     def _encode(self, text: Sequence[str], method: str) -> str:
         """Convert the RTF title into RTF syntax using the Text class."""

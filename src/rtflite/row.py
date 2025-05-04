@@ -2,6 +2,27 @@ from collections.abc import Mapping, MutableSequence, Sequence
 
 from pydantic import BaseModel, Field
 
+FORMAT_CODES = {
+    "": "",
+    "b": "\\b",
+    "i": "\\i",
+    "u": "\\ul",
+    "s": "\\strike",
+    "^": "\\super",
+    "_": "\\sub",
+}
+
+TEXT_JUSTIFICATION_CODES = {
+    "": "",
+    "l": "\\ql",
+    "c": "\\qc",
+    "r": "\\qr",
+    "d": "\\qd",
+    "j": "\\qj",
+}
+
+ROW_JUSTIFICATION_CODES = {"": "", "l": "\\trql", "c": "\\trqc", "r": "\\trqr"}
+
 
 class Utils:
     @staticmethod
@@ -163,12 +184,11 @@ class TextContent(BaseModel):
         rtf.append(f"\\ri{Utils._inch_to_twip(self.indent_right / 1440)}")
 
         # Justification
-        just_codes = {"l": "\\ql", "c": "\\qc", "r": "\\qr", "d": "\\qd", "j": "\\qj"}
-        if self.justification not in just_codes:
+        if self.justification not in TEXT_JUSTIFICATION_CODES:
             raise ValueError(
-                f"Text: Invalid justification '{self.justification}'. Must be one of: {', '.join(just_codes.keys())}"
+                f"Text: Invalid justification '{self.justification}'. Must be one of: {', '.join(TEXT_JUSTIFICATION_CODES.keys())}"
             )
-        rtf.append(just_codes[self.justification])
+        rtf.append(TEXT_JUSTIFICATION_CODES[self.justification])
 
         return "".join(rtf)
 
@@ -193,20 +213,12 @@ class TextContent(BaseModel):
 
         # Format (bold, italic, etc)
         if self.format:
-            format_codes = {
-                "b": "\\b",
-                "i": "\\i",
-                "u": "\\ul",
-                "s": "\\strike",
-                "^": "\\super",
-                "_": "\\sub",
-            }
             for fmt in sorted(list(set(self.format))):
-                if fmt in format_codes:
-                    rtf.append(format_codes[fmt])
+                if fmt in FORMAT_CODES:
+                    rtf.append(FORMAT_CODES[fmt])
                 else:
                     raise ValueError(
-                        f"Text: Invalid format character '{fmt}' in '{self.format}'. Must be one of: {', '.join(format_codes.keys())}"
+                        f"Text: Invalid format character '{fmt}' in '{self.format}'. Must be one of: {', '.join(FORMAT_CODES.keys())}"
                     )
 
         return "".join(rtf)
@@ -344,14 +356,13 @@ class Row(BaseModel):
     def _as_rtf(self) -> MutableSequence[str]:
         """Format a row of cells in RTF. Returns mutable list since we're building it."""
         # Justification
-        just_codes = {"l": "\\trql", "c": "\\trqc", "r": "\\trqr"}
-        if self.justification not in just_codes:
+        if self.justification not in ROW_JUSTIFICATION_CODES:
             raise ValueError(
-                f"Row: Invalid justification '{self.justification}'. Must be one of: {', '.join(just_codes.keys())}"
+                f"Row: Invalid justification '{self.justification}'. Must be one of: {', '.join(ROW_JUSTIFICATION_CODES.keys())}"
             )
 
         rtf = [
-            f"\\trowd\\trgaph{int(Utils._inch_to_twip(self.height) / 2)}\\trleft0{just_codes[self.justification]}"
+            f"\\trowd\\trgaph{int(Utils._inch_to_twip(self.height) / 2)}\\trleft0{ROW_JUSTIFICATION_CODES[self.justification]}"
         ]
         rtf.extend(cell._as_rtf() for cell in self.row_cells)
         rtf.extend(cell.text._as_rtf(method="cell") for cell in self.row_cells)
