@@ -1,5 +1,5 @@
 from collections.abc import MutableSequence, Sequence
-from typing import Any, Text, Tuple
+from typing import Any, Tuple
 
 import numpy as np
 import pandas as pd
@@ -14,47 +14,47 @@ class TextAttributes(BaseModel):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    text_font: int | Sequence[int] | pd.DataFrame | Tuple | None = Field(
+    text_font: int | Sequence[int] | pd.DataFrame |  None = Field(
         default=None, description="Font number for text"
     )
-    text_format: str | Sequence[str] | pd.DataFrame | Tuple | None = Field(
+    text_format: str | Sequence[str] | pd.DataFrame |  None = Field(
         default=None, description="Text formatting (e.g. 'bold', 'italic')"
     )
-    text_font_size: float | Sequence[float] | pd.DataFrame | Tuple | None = Field(
+    text_font_size: float | Sequence[float] | pd.DataFrame |  None = Field(
         default=None, description="Font size in points"
     )
-    text_color: str | Sequence[str] | pd.DataFrame | Tuple | None = Field(
+    text_color: str | Sequence[str] | pd.DataFrame |  None = Field(
         default=None, description="Text color name or RGB value"
     )
-    text_background_color: str | Sequence[str] | pd.DataFrame | Tuple | None = Field(
+    text_background_color: str | Sequence[str] | pd.DataFrame |  None = Field(
         default=None, description="Background color name or RGB value"
     )
-    text_justification: str | Sequence[str] | pd.DataFrame | Tuple | None = Field(
+    text_justification: str | Sequence[str] | pd.DataFrame |  None = Field(
         default=None,
         description="Text alignment ('l'=left, 'c'=center, 'r'=right, 'j'=justify)",
     )
-    text_indent_first: float | Sequence[float] | pd.DataFrame | Tuple | None = Field(
+    text_indent_first: float | Sequence[float] | pd.DataFrame |  None = Field(
         default=None, description="First line indent in inches/twips"
     )
-    text_indent_left: float | Sequence[float] | pd.DataFrame | Tuple | None = Field(
+    text_indent_left: float | Sequence[float] | pd.DataFrame |  None = Field(
         default=None, description="Left indent in inches/twips"
     )
-    text_indent_right: float | Sequence[float] | pd.DataFrame | Tuple | None = Field(
+    text_indent_right: float | Sequence[float] | pd.DataFrame |  None = Field(
         default=None, description="Right indent in inches/twips"
     )
-    text_space: float | Sequence[float] | pd.DataFrame | Tuple | None = Field(
+    text_space: float | Sequence[float] | pd.DataFrame |  None = Field(
         default=None, description="Line spacing multiplier"
     )
-    text_space_before: float | Sequence[float] | pd.DataFrame | Tuple | None = Field(
+    text_space_before: float | Sequence[float] | pd.DataFrame |  None = Field(
         default=None, description="Space before paragraph in twips"
     )
-    text_space_after: float | Sequence[float] | pd.DataFrame | Tuple | None = Field(
+    text_space_after: float | Sequence[float] | pd.DataFrame |  None = Field(
         default=None, description="Space after paragraph in twips"
     )
-    text_hyphenation: bool | Sequence[bool] | pd.DataFrame | Tuple | None = Field(
+    text_hyphenation: bool | Sequence[bool] | pd.DataFrame |  None = Field(
         default=None, description="Enable automatic hyphenation"
     )
-    text_convert: bool | Sequence[bool] | pd.DataFrame | Tuple | None = Field(
+    text_convert: bool | Sequence[bool] | pd.DataFrame |  None = Field(
         default=None, description="Convert special characters to RTF"
     )
 
@@ -174,59 +174,59 @@ class TableAttributes(TextAttributes):
     col_rel_width: float | Sequence[float] | None = Field(
         default=None, description="Relative widths of table columns"
     )
-    border_left: str | Sequence[str] | pd.DataFrame | Tuple | None = Field(
+    border_left: str | Sequence[str] | pd.DataFrame |  None = Field(
         default=None, description="Left border style"
     )
-    border_right: str | Sequence[str] | pd.DataFrame | Tuple | None = Field(
+    border_right: str | Sequence[str] | pd.DataFrame |  None = Field(
         default=None, description="Right border style"
     )
-    border_top: str | Sequence[str] | pd.DataFrame | Tuple | None = Field(
+    border_top: str | Sequence[str] | pd.DataFrame |  None = Field(
         default=None, description="Top border style"
     )
-    border_bottom: str | Sequence[str] | pd.DataFrame | Tuple | None = Field(
+    border_bottom: str | Sequence[str] | pd.DataFrame |  None = Field(
         default=None, description="Bottom border style"
     )
-    border_first: str | Sequence[str] | pd.DataFrame | Tuple | None = Field(
+    border_first: str | Sequence[str] | pd.DataFrame |  None = Field(
         default=None, description="First row border style"
     )
-    border_last: str | Sequence[str] | pd.DataFrame | Tuple | None = Field(
+    border_last: str | Sequence[str] | pd.DataFrame |  None = Field(
         default=None, description="Last row border style"
     )
-    border_color_left: str | Sequence[str] | pd.DataFrame | Tuple | None = Field(
+    border_color_left: str | Sequence[str] | pd.DataFrame |  None = Field(
         default=None, description="Left border color"
     )
-    border_color_right: str | Sequence[str] | pd.DataFrame | Tuple | None = Field(
+    border_color_right: str | Sequence[str] | pd.DataFrame |  None = Field(
         default=None, description="Right border color"
     )
-    border_color_top: str | Sequence[str] | pd.DataFrame | Tuple | None = Field(
+    border_color_top: str | Sequence[str] | pd.DataFrame |  None = Field(
         default=None, description="Top border color"
     )
-    border_color_bottom: str | Sequence[str] | pd.DataFrame | Tuple | None = Field(
+    border_color_bottom: str | Sequence[str] | pd.DataFrame |  None = Field(
         default=None, description="Bottom border color"
     )
-    border_color_first: str | Sequence[str] | pd.DataFrame | Tuple | None = Field(
+    border_color_first: str | Sequence[str] | pd.DataFrame |  None = Field(
         default=None, description="First row border color"
     )
-    border_color_last: str | Sequence[str] | pd.DataFrame | Tuple | None = Field(
+    border_color_last: str | Sequence[str] | pd.DataFrame |  None = Field(
         default=None, description="Last row border color"
     )
-    border_width: int | Sequence[int] | pd.DataFrame | Tuple | None = Field(
+    border_width: int | Sequence[int] | pd.DataFrame |  None = Field(
         default=None, description="Border width in twips"
     )
-    cell_height: float | Sequence[float] | pd.DataFrame | Tuple | None = Field(
+    cell_height: float | Sequence[float] | pd.DataFrame |  None = Field(
         default=None, description="Cell height in inches"
     )
-    cell_justification: str | Sequence[str] | pd.DataFrame | Tuple | None = Field(
+    cell_justification: str | Sequence[str] | pd.DataFrame |  None = Field(
         default=None,
         description="Cell horizontal alignment ('l'=left, 'c'=center, 'r'=right, 'j'=justify)",
     )
-    cell_vertical_justification: str | Sequence[str] | pd.DataFrame | Tuple | None = (
+    cell_vertical_justification: str | Sequence[str] | pd.DataFrame |  None = (
         Field(
             default=None,
             description="Cell vertical alignment ('top', 'center', 'bottom')",
         )
     )
-    cell_nrow: int | Sequence[int] | pd.DataFrame | Tuple | None = Field(
+    cell_nrow: int | Sequence[int] | pd.DataFrame |  None = Field(
         default=None, description="Number of rows per cell"
     )
 
