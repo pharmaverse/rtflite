@@ -315,15 +315,15 @@ class TableAttributes(TextAttributes):
 
         return v
 
-    # @field_validator("border_width", "cell_height", "cell_nrow", mode="after")
-    # def validate_positive_value(cls, v):
-    #     if v is not None:
-    #         for value in v:
-    #             if value <= 0:
-    #                 raise ValueError(
-    #                     f"{cls.__field_name__.capitalize()} with invalid number of rows per cell: {value}"
-    #                 )
-    #     return v
+    @field_validator("border_width", "cell_height", "cell_nrow", mode="after")
+    def validate_positive_value(cls, v):
+        if v is not None:
+            for value in v:
+                if value <= 0:
+                    raise ValueError(
+                        f"{cls.__field_name__.capitalize()} with invalid number of rows per cell: {value}"
+                    )
+        return v
 
     @field_validator(
         "border_left",
