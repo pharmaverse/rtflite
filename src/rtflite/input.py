@@ -200,62 +200,89 @@ class TableAttributes(TextAttributes):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    col_rel_width: float | Sequence[float] | None = Field(
+    col_rel_width: Sequence[float] | None = Field(
         default=None, description="Relative widths of table columns"
     )
-    border_left: str | Sequence[str] | pd.DataFrame | None = Field(
+    border_left: Sequence[str] | pd.DataFrame | None = Field(
         default=None, description="Left border style"
     )
-    border_right: str | Sequence[str] | pd.DataFrame | None = Field(
+    border_right: Sequence[str] | pd.DataFrame | None = Field(
         default=None, description="Right border style"
     )
-    border_top: str | Sequence[str] | pd.DataFrame | None = Field(
+    border_top: Sequence[str] | pd.DataFrame | None = Field(
         default=None, description="Top border style"
     )
-    border_bottom: str | Sequence[str] | pd.DataFrame | None = Field(
+    border_bottom: Sequence[str] | pd.DataFrame | None = Field(
         default=None, description="Bottom border style"
     )
-    border_first: str | Sequence[str] | pd.DataFrame | None = Field(
+    border_first: Sequence[str] | pd.DataFrame | None = Field(
         default=None, description="First row border style"
     )
-    border_last: str | Sequence[str] | pd.DataFrame | None = Field(
+    border_last: Sequence[str] | pd.DataFrame | None = Field(
         default=None, description="Last row border style"
     )
-    border_color_left: str | Sequence[str] | pd.DataFrame | None = Field(
+    border_color_left: Sequence[str] | pd.DataFrame | None = Field(
         default=None, description="Left border color"
     )
-    border_color_right: str | Sequence[str] | pd.DataFrame | None = Field(
+    border_color_right: Sequence[str] | pd.DataFrame | None = Field(
         default=None, description="Right border color"
     )
-    border_color_top: str | Sequence[str] | pd.DataFrame | None = Field(
+    border_color_top: Sequence[str] | pd.DataFrame | None = Field(
         default=None, description="Top border color"
     )
-    border_color_bottom: str | Sequence[str] | pd.DataFrame | None = Field(
+    border_color_bottom: Sequence[str] | pd.DataFrame | None = Field(
         default=None, description="Bottom border color"
     )
-    border_color_first: str | Sequence[str] | pd.DataFrame | None = Field(
+    border_color_first: Sequence[str] | pd.DataFrame | None = Field(
         default=None, description="First row border color"
     )
-    border_color_last: str | Sequence[str] | pd.DataFrame | None = Field(
+    border_color_last: Sequence[str] | pd.DataFrame | None = Field(
         default=None, description="Last row border color"
     )
-    border_width: int | Sequence[int] | pd.DataFrame | None = Field(
+    border_width: Sequence[int] | pd.DataFrame | None = Field(
         default=None, description="Border width in twips"
     )
-    cell_height: float | Sequence[float] | pd.DataFrame | None = Field(
+    cell_height: Sequence[float] | pd.DataFrame | None = Field(
         default=None, description="Cell height in inches"
     )
-    cell_justification: str | Sequence[str] | pd.DataFrame | None = Field(
+    cell_justification: Sequence[str] | pd.DataFrame | None = Field(
         default=None,
         description="Cell horizontal alignment ('l'=left, 'c'=center, 'r'=right, 'j'=justify)",
     )
-    cell_vertical_justification: str | Sequence[str] | pd.DataFrame | None = Field(
+    cell_vertical_justification: Sequence[str] | pd.DataFrame | None = Field(
         default=None,
         description="Cell vertical alignment ('top', 'center', 'bottom')",
     )
-    cell_nrow: int | Sequence[int] | pd.DataFrame | None = Field(
+    cell_nrow: Sequence[int] | pd.DataFrame | None = Field(
         default=None, description="Number of rows per cell"
     )
+
+    @field_validator(
+        "col_rel_width",
+        "border_left",
+        "border_right",
+        "border_top",
+        "border_bottom",
+        "border_first",
+        "border_last",
+        "border_color_left",
+        "border_color_right",
+        "border_color_top",
+        "border_color_bottom",
+        "border_color_first",
+        "border_color_last",
+        "border_width",
+        "cell_height",
+        "cell_justification",
+        "cell_vertical_justification",
+        "cell_nrow",
+        mode="before"
+    )
+    def convert_to_list(cls, v):
+        """Convert single values to data frame."""
+        if v is not None and isinstance(v, (int, str, float, bool)):
+            return [v]
+        return v
 
     def _get_section_attributes(self, indices) -> dict:
         """Helper method to collect all attributes for a section"""
@@ -592,17 +619,17 @@ class RTFPageHeader(TextAttributes):
 
     def __init__(self, **data):
         defaults = {
-            "text_font": 1,
-            "text_font_size": 9,
-            "text_justification": "r",
-            "text_indent_first": 0,
-            "text_indent_left": 0,
-            "text_indent_right": 0,
-            "text_space": 1.0,
-            "text_space_before": 15.0,
-            "text_space_after": 15.0,
-            "text_hyphenation": True,
-            "text_convert": True,
+            "text_font": [1],
+            "text_font_size": [9],
+            "text_justification": ["r"],
+            "text_indent_first": [0],
+            "text_indent_left": [0],
+            "text_indent_right": [0],
+            "text_space": [1.0],
+            "text_space_before": [15.0],
+            "text_space_after": [15.0],
+            "text_hyphenation": [True],
+            "text_convert": [True],
         }
 
         # Update defaults with any provided values
@@ -630,17 +657,17 @@ class RTFPageFooter(TextAttributes):
 
     def __init__(self, **data):
         defaults = {
-            "text_font": 1,
-            "text_font_size": 9,
-            "text_justification": "c",
-            "text_indent_first": 0,
-            "text_indent_left": 0,
-            "text_indent_right": 0,
-            "text_space": 1.0,
-            "text_space_before": 15.0,
-            "text_space_after": 15.0,
-            "text_hyphenation": True,
-            "text_convert": True,
+            "text_font": [1],
+            "text_font_size": [9],
+            "text_justification": ["c"],
+            "text_indent_first": [0],
+            "text_indent_left": [0],
+            "text_indent_right": [0],
+            "text_space": [1.0],
+            "text_space_before": [15.0],
+            "text_space_after": [15.0],
+            "text_hyphenation": [True],
+            "text_convert": [True],
         }
 
         # Update defaults with any provided values
@@ -668,17 +695,17 @@ class RTFSubline(TextAttributes):
 
     def __init__(self, **data):
         defaults = {
-            "text_font": 1,
-            "text_font_size": 9,
-            "text_justification": "l",
-            "text_indent_first": 0,
-            "text_indent_left": 0,
-            "text_indent_right": 0,
-            "text_space": 1.0,
-            "text_space_before": 15.0,
-            "text_space_after": 15.0,
-            "text_hyphenation": True,
-            "text_convert": True,
+            "text_font": [1],
+            "text_font_size": [9],
+            "text_justification": ["l"],
+            "text_indent_first": [0],
+            "text_indent_left": [0],
+            "text_indent_right": [0],
+            "text_space": [1.0],
+            "text_space_before": [15.0],
+            "text_space_after": [15.0],
+            "text_hyphenation": [True],
+            "text_convert": [True],
         }
 
         # Update defaults with any provided values
@@ -704,27 +731,27 @@ class RTFFootnote(TableAttributes):
 
     def __init__(self, **data):
         defaults = {
-            "col_rel_width": 1,
-            "border_left": "single",
-            "border_right": "single",
-            "border_top": "single",
-            "border_bottom": "",
-            "border_width": 15,
-            "cell_height": 0.15,
-            "cell_justification": "c",
-            "cell_vertical_justification": "top",
-            "text_font": 1,
-            "text_format": "",
-            "text_font_size": 9,
-            "text_justification": "l",
-            "text_indent_first": 0,
-            "text_indent_left": 0,
-            "text_indent_right": 0,
-            "text_space": 1,
-            "text_space_before": 15,
-            "text_space_after": 15,
-            "text_hyphenation": False,
-            "text_convert": True,
+            "col_rel_width": [1],
+            "border_left": ["single"],
+            "border_right": ["single"],
+            "border_top": ["single"],
+            "border_bottom": [""],
+            "border_width": [15],
+            "cell_height": [0.15],
+            "cell_justification": ["c"],
+            "cell_vertical_justification": ["top"],
+            "text_font": [1],
+            "text_format": [""],
+            "text_font_size": [9],
+            "text_justification": ["l"],
+            "text_indent_first": [0],
+            "text_indent_left": [0],
+            "text_indent_right": [0],
+            "text_space": [1],
+            "text_space_before": [15],
+            "text_space_after": [15],
+            "text_hyphenation": [False],
+            "text_convert": [True],
         }
 
         # Update defaults with any provided values
@@ -757,27 +784,27 @@ class RTFSource(TableAttributes):
 
     def __init__(self, **data):
         defaults = {
-            "col_rel_width": 1,
-            "border_left": "",
-            "border_right": "",
-            "border_top": "",
-            "border_bottom": "",
-            "border_width": 15,
-            "cell_height": 0.15,
-            "cell_justification": "c",
-            "cell_vertical_justification": "top",
-            "text_font": 1,
-            "text_format": "",
-            "text_font_size": 9,
-            "text_justification": "c",
-            "text_indent_first": 0,
-            "text_indent_left": 0,
-            "text_indent_right": 0,
-            "text_space": 1,
-            "text_space_before": 15,
-            "text_space_after": 15,
-            "text_hyphenation": False,
-            "text_convert": True,
+            "col_rel_width": [1],
+            "border_left": [""],
+            "border_right": [""],
+            "border_top": [""],
+            "border_bottom": [""],
+            "border_width": [15],
+            "cell_height": [0.15],
+            "cell_justification": ["c"],
+            "cell_vertical_justification": ["top"],
+            "text_font": [1],
+            "text_format": [""],
+            "text_font_size": [9],
+            "text_justification": ["c"],
+            "text_indent_first": [0],
+            "text_indent_left": [0],
+            "text_indent_right": [0],
+            "text_space": [1],
+            "text_space_before": [15],
+            "text_space_after": [15],
+            "text_hyphenation": [False],
+            "text_convert": [True],
         }
 
         # Update defaults with any provided values
@@ -811,17 +838,17 @@ class RTFTitle(TextAttributes):
 
     def __init__(self, **data):
         defaults = {
-            "text_font": 1,
-            "text_font_size": 12,
-            "text_justification": "c",
-            "text_indent_first": 0,
-            "text_indent_left": 0,
-            "text_indent_right": 0,
-            "text_space": 1.0,
-            "text_space_before": 180.0,
-            "text_space_after": 180.0,
-            "text_hyphenation": True,
-            "text_convert": True,
+            "text_font": [1],
+            "text_font_size": [12],
+            "text_justification": ["c"],
+            "text_indent_first": [0],
+            "text_indent_left": [0],
+            "text_indent_right": [0],
+            "text_space": [1.0],
+            "text_space_before": [180.0],
+            "text_space_after": [180.0],
+            "text_hyphenation": [True],
+            "text_convert": [True],
         }
 
         # Update defaults with any provided values
@@ -849,26 +876,26 @@ class RTFColumnHeader(TableAttributes):
 
     def __init__(self, **data):
         defaults = {
-            "border_left": "single",
-            "border_right": "single",
-            "border_top": "single",
-            "border_bottom": "",
-            "border_width": 15,
-            "cell_height": 0.15,
-            "cell_justification": "c",
-            "cell_vertical_justification": "bottom",
-            "text_font": 1,
-            "text_format": "",
-            "text_font_size": 9,
-            "text_justification": "c",
-            "text_indent_first": 0,
-            "text_indent_left": 0,
-            "text_indent_right": 0,
-            "text_space": 1,
-            "text_space_before": 15,
-            "text_space_after": 15,
-            "text_hyphenation": False,
-            "text_convert": True,
+            "border_left": ["single"],
+            "border_right": ["single"],
+            "border_top": ["single"],
+            "border_bottom": [""],
+            "border_width": [15],
+            "cell_height": [0.15],
+            "cell_justification": ["c"],
+            "cell_vertical_justification": ["bottom"],
+            "text_font": [1],
+            "text_format": [""],
+            "text_font_size": [9],
+            "text_justification": ["c"],
+            "text_indent_first": [0],
+            "text_indent_left": [0],
+            "text_indent_right": [0],
+            "text_space": [1],
+            "text_space_before": [15],
+            "text_space_after": [15],
+            "text_hyphenation": [False],
+            "text_convert": [True],
         }
 
         # Update defaults with any provided values
@@ -919,24 +946,24 @@ class RTFBody(TableAttributes):
 
     def __init__(self, **data):
         defaults = {
-            "border_left": "single",
-            "border_right": "single",
-            "border_first": "single",
-            "border_last": "single",
-            "border_width": 15,
-            "cell_height": 0.15,
-            "cell_justification": "c",
-            "cell_vertical_justification": "top",
-            "text_font": 1,
-            "text_font_size": 9,
-            "text_indent_first": 0,
-            "text_indent_left": 0,
-            "text_indent_right": 0,
-            "text_space": 1,
-            "text_space_before": 15,
-            "text_space_after": 15,
-            "text_hyphenation": False,
-            "text_convert": True,
+            "border_left": ["single"],
+            "border_right": ["single"],
+            "border_first": ["single"],
+            "border_last": ["single"],
+            "border_width": [15],
+            "cell_height": [0.15],
+            "cell_justification": ["c"],
+            "cell_vertical_justification": ["top"],
+            "text_font": [1],
+            "text_font_size": [9],
+            "text_indent_first": [0],
+            "text_indent_left": [0],
+            "text_indent_right": [0],
+            "text_space": [1],
+            "text_space_before": [15],
+            "text_space_after": [15],
+            "text_hyphenation": [False],
+            "text_convert": [True],
         }
 
         # Update defaults with any provided values
