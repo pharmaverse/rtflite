@@ -1,7 +1,6 @@
 from collections.abc import Sequence
 
-import pandas as pd
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from rtflite.attributes import TextAttributes, TableAttributes, BroadcastValue
 from rtflite.row import BORDER_CODES
@@ -522,14 +521,14 @@ class RTFBody(TableAttributes):
             ]:
                 setattr(self, attr, [value])
 
-        self.border_top = self.border_top or ""
-        self.border_bottom = self.border_bottom or ""
-        self.border_left = self.border_left or "single"
-        self.border_right = self.border_right or "single"
-        self.border_first = self.border_first or "single"
-        self.border_last = self.border_last or "single"
-        self.cell_vertical_justification = self.cell_vertical_justification or "c"
-        self.text_justification = self.text_justification or "c"
+        self.border_top = self.border_top or [""]
+        self.border_bottom = self.border_bottom or [""]
+        self.border_left = self.border_left or ["single"]
+        self.border_right = self.border_right or ["single"]
+        self.border_first = self.border_first or ["single"]
+        self.border_last = self.border_last or ["single"]
+        self.cell_vertical_justification = self.cell_vertical_justification or ["c"]
+        self.text_justification = self.text_justification or ["c"]
 
         if self.page_by is None:
             if self.new_page:

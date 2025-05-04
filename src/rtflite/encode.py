@@ -429,8 +429,9 @@ class RTFDocument(BaseModel):
                 self.rtf_column_header[0].text = pd.DataFrame([columns])
                 self.rtf_column_header = self.rtf_column_header[:1]
 
+            print(self.rtf_column_header)
             self.rtf_column_header[0].border_top = BroadcastValue(
-                value=self.rtf_column_header[0], dimension=dim
+                value=self.rtf_column_header[0].border_top, dimension=dim
             ).update_row(0, doc_border_top)
 
             rtf_column_header = [

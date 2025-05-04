@@ -281,7 +281,8 @@ class TableAttributes(TextAttributes):
     def convert_to_list(cls, v):
         """Convert single values to data frame."""
         if v is not None and isinstance(v, (int, str, float, bool)):
-            return [v]
+            v = [v]
+            
         return v
 
     def _get_section_attributes(self, indices) -> dict:
@@ -416,7 +417,7 @@ class TableAttributes(TextAttributes):
 class BroadcastValue(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    value: int | float | str | Tuple | Sequence[Any] | pd.DataFrame | None = Field(
+    value: Sequence[Any] | pd.DataFrame | None = Field(
         ...,
         description="The value of the table, can be various types including DataFrame.",
     )
@@ -424,7 +425,13 @@ class BroadcastValue(BaseModel):
     dimension: Tuple[int, int] | None = Field(
         None, description="Dimensions of the table (rows, columns)"
     )
-
+    
+    @field_validator("value", mode="before")
+    def convert_value(cls, v):
+        if isinstance(v, (str, int, float, bool)):
+            v = [v]
+        return v
+    
     @field_validator("dimension")
     def validate_dimension(cls, v):
         if v is None:
@@ -474,9 +481,6 @@ class BroadcastValue(BaseModel):
             values = list(self.value)
             return values[row_index % len(values)]
 
-        if isinstance(self.value, (int, float, str)):
-            return self.value
-
     def to_dataframe(self) -> pd.DataFrame:
         """
         Convert the value to a pandas DataFrame based on the dimension variable if it is not None.
@@ -494,8 +498,6 @@ class BroadcastValue(BaseModel):
                 self.dimension = (1, len(self.value))
             elif isinstance(self.value, tuple):
                 self.dimension = (len(self.value), 1)
-            elif isinstance(self.value, (int, float, str)):
-                self.dimension = (1, 1)
             else:
                 raise ValueError("Dimension must be specified to convert to DataFrame.")
 
@@ -534,9 +536,6 @@ class BroadcastValue(BaseModel):
                     for i in range(self.dimension[0])
                 ]
             )
-
-        if isinstance(self.value, (int, float, str)):
-            return pd.DataFrame([[self.value] * self.dimension[1]] * self.dimension[0])
 
         raise ValueError("Unsupported value type for DataFrame conversion.")
 
