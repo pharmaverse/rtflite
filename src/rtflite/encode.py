@@ -56,7 +56,7 @@ class RTFDocument(BaseModel):
     rtf_page_footer: RTFPageFooter | None = Field(
         default=None, description="Text to appear in the footer of each page"
     )
-    
+
     @model_validator(mode="after")
     def validate_column_names(self):
         columns = self.df.columns.tolist()
@@ -70,12 +70,12 @@ class RTFDocument(BaseModel):
             for column in self.rtf_body.page_by:
                 if column not in columns:
                     raise ValueError(f"`page_by` column {column} not found in `df`")
-        
+
         if self.rtf_body.subline_by is not None:
             for column in self.rtf_body.subline_by:
                 if column not in columns:
                     raise ValueError(f"`subline_by` column {column} not found in `df`")
-        
+
         return self
 
     def __init__(self, **data):

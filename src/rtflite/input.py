@@ -52,7 +52,9 @@ class RTFPage(BaseModel):
     @field_validator("border_first", "border_last")
     def validate_border(cls, v):
         if v not in BORDER_CODES:
-            raise ValueError(f"{cls.__field_name__.capitalize()} with invalid border style: {v}")
+            raise ValueError(
+                f"{cls.__field_name__.capitalize()} with invalid border style: {v}"
+            )
         return v
 
     @field_validator("width", "height", "nrow", "col_width")
@@ -150,7 +152,7 @@ class RTFPageFooter(TextAttributes):
             if isinstance(v, str):
                 return [v]
             return v
-        
+
     def __init__(self, **data):
         defaults = {
             "text_font": [1],
@@ -238,7 +240,7 @@ class RTFFootnote(TableAttributes):
             if isinstance(v, str):
                 return [v]
             return v
-        
+
     def __init__(self, **data):
         defaults = {
             "col_rel_width": [1],
@@ -288,9 +290,7 @@ class RTFSource(TableAttributes):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    text: Sequence[str] | None = Field(
-        default=None, description="Data source table"
-    )
+    text: Sequence[str] | None = Field(default=None, description="Data source table")
 
     @field_validator("text", mode="before")
     def convert_text(cls, v):
@@ -345,9 +345,7 @@ class RTFSource(TableAttributes):
 
 
 class RTFTitle(TextAttributes):
-    text: Sequence[str] | None = Field(
-        default=None, description="Title text content"
-    )
+    text: Sequence[str] | None = Field(default=None, description="Title text content")
     text_indent_reference: str | None = Field(
         default="table",
         description="Reference point for indentation ('page' or 'table')",
@@ -394,9 +392,7 @@ class RTFColumnHeader(TableAttributes):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    text: Sequence[str] | None = Field(
-        default=None, description="Column header table"
-    )
+    text: Sequence[str] | None = Field(default=None, description="Column header table")
 
     @field_validator("text", mode="before")
     def convert_text(cls, v):
@@ -404,7 +400,7 @@ class RTFColumnHeader(TableAttributes):
             if isinstance(v, str):
                 return [v]
             return v
-        
+
     def __init__(self, **data):
         defaults = {
             "border_left": ["single"],
@@ -480,7 +476,7 @@ class RTFBody(TableAttributes):
             if isinstance(v, str):
                 return [v]
             return v
-            
+
     def __init__(self, **data):
         defaults = {
             "border_left": ["single"],
@@ -527,7 +523,7 @@ class RTFBody(TableAttributes):
         self.border_right = self.border_right or ["single"]
         self.border_first = self.border_first or ["single"]
         self.border_last = self.border_last or ["single"]
-        self.cell_vertical_justification = self.cell_vertical_justification or ["c"]
+        self.cell_vertical_justification = self.cell_vertical_justification or [""]
         self.text_justification = self.text_justification or ["c"]
 
         if self.page_by is None:

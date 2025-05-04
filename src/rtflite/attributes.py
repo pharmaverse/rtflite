@@ -6,8 +6,10 @@ import pandas as pd
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from rtflite.row import (
+    BORDER_CODES,
     FORMAT_CODES,
     TEXT_JUSTIFICATION_CODES,
+    VERTICAL_ALIGNMENT_CODES,
     Border,
     Cell,
     Row,
@@ -203,6 +205,15 @@ class TableAttributes(TextAttributes):
     col_rel_width: Sequence[float] | None = Field(
         default=None, description="Relative widths of table columns"
     )
+
+    @field_validator("col_rel_width", mode="after")
+    def validate_col_rel_width(cls, v):
+        if v is not None:
+            for width in v:
+                if width <= 0:
+                    raise ValueError(f"Invalid column width: {width}")
+        return v
+
     border_left: Sequence[str] | pd.DataFrame | None = Field(
         default=None, description="Left border style"
     )
@@ -249,10 +260,29 @@ class TableAttributes(TextAttributes):
         default=None,
         description="Cell horizontal alignment ('l'=left, 'c'=center, 'r'=right, 'j'=justify)",
     )
+
+    @field_validator("cell_justification", mode="after")
+    def validate_cell_justification(cls, v):
+        if v is not None:
+            for justification in v:
+                if justification not in TEXT_JUSTIFICATION_CODES:
+                    raise ValueError(f"Invalid cell justification: {justification}")
+        return v
+
     cell_vertical_justification: Sequence[str] | pd.DataFrame | None = Field(
         default=None,
         description="Cell vertical alignment ('top', 'center', 'bottom')",
     )
+
+    # @field_validator("cell_vertical_justification", mode="after")
+    # def validate_cell_vertical_justification(cls, v):
+    #     if v is not None:
+    #         for justification in v:
+    #             if justification not in VERTICAL_ALIGNMENT_CODES:
+    #                 raise ValueError(
+    #                     f"Invalid cell vertical justification: {justification}"
+    #                 )
+
     cell_nrow: Sequence[int] | pd.DataFrame | None = Field(
         default=None, description="Number of rows per cell"
     )
@@ -282,7 +312,35 @@ class TableAttributes(TextAttributes):
         """Convert single values to data frame."""
         if v is not None and isinstance(v, (int, str, float, bool)):
             v = [v]
-            
+
+        return v
+
+    # @field_validator("border_width", "cell_height", "cell_nrow", mode="after")
+    # def validate_positive_value(cls, v):
+    #     if v is not None:
+    #         for value in v:
+    #             if value <= 0:
+    #                 raise ValueError(
+    #                     f"{cls.__field_name__.capitalize()} with invalid number of rows per cell: {value}"
+    #                 )
+    #     return v
+
+    @field_validator(
+        "border_left",
+        "border_right",
+        "border_top",
+        "border_bottom",
+        "border_first",
+        "border_last",
+        mode="after",
+    )
+    def validate_border(cls, v):
+        if v is not None:
+            for border in v:
+                if border not in BORDER_CODES:
+                    raise ValueError(
+                        f"{cls.__field_name__.capitalize()} with invalid border style: {border}"
+                    )
         return v
 
     def _get_section_attributes(self, indices) -> dict:
@@ -425,13 +483,13 @@ class BroadcastValue(BaseModel):
     dimension: Tuple[int, int] | None = Field(
         None, description="Dimensions of the table (rows, columns)"
     )
-    
+
     @field_validator("value", mode="before")
     def convert_value(cls, v):
         if isinstance(v, (str, int, float, bool)):
             v = [v]
         return v
-    
+
     @field_validator("dimension")
     def validate_dimension(cls, v):
         if v is None:

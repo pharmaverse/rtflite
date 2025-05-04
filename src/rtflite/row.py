@@ -45,6 +45,7 @@ VERTICAL_ALIGNMENT_CODES = {
     "top": "\\clvertalt",
     "center": "\\clvertalc",
     "bottom": "\\clvertalb",
+    "": "",
 }
 
 
@@ -313,7 +314,7 @@ class Cell(BaseModel):
 
     text: TextContent
     width: float = Field(..., description="Cell width")
-    vertical_justification: str = Field(
+    vertical_justification: str | None = Field(
         default="bottom", description="Vertical alignment"
     )
     border_top: Border | None = Field(default=Border(), description="Top border")
@@ -339,7 +340,8 @@ class Cell(BaseModel):
             rtf.append("\\clbrdrb" + self.border_bottom._as_rtf())
 
         # Cell vertical alignment
-        rtf.append(VERTICAL_ALIGNMENT_CODES[self.vertical_justification])
+        if self.vertical_justification is not None:
+            rtf.append(VERTICAL_ALIGNMENT_CODES[self.vertical_justification])
 
         # Cell width
         rtf.append(f"\\cellx{Utils._inch_to_twip(self.width)}")
