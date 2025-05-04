@@ -680,16 +680,17 @@ class RTFFootnote(TableAttributes):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    df: str | Sequence[str] | pd.DataFrame | None = Field(
+    text: str | Sequence[str] | None = Field(
         default=None, description="Footnote table"
     )
 
     def __init__(self, **data):
         defaults = {
+            "col_rel_width": 1,
             "border_left": "single",
             "border_right": "single",
-            "border_top": "",
-            "border_bottom": "single",
+            "border_top": "single",
+            "border_bottom": "",
             "border_width": 15,
             "cell_height": 0.15,
             "cell_justification": "c",
@@ -712,9 +713,12 @@ class RTFFootnote(TableAttributes):
         defaults.update(data)
         super().__init__(**defaults)
 
-        # Convert df to DataFrame during initialization
-        if self.df is not None:
-            self.df = BroadcastValue(value=self.df).to_dataframe()
+        # Convert text to DataFrame during initialization
+        if self.text is not None:
+            if isinstance(self.text, Sequence):
+                self.text = "\\line ".join(self.text)
+
+        self.text = BroadcastValue(value=self.text).to_dataframe()
 
     def _set_default(self):
         for attr, value in self.__dict__.items():
@@ -729,16 +733,17 @@ class RTFSource(TableAttributes):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    df: str | Sequence[str] | pd.DataFrame | None = Field(
+    text: str | Sequence[str] | None = Field(
         default=None, description="Data source table"
     )
 
     def __init__(self, **data):
         defaults = {
-            "border_left": "single",
-            "border_right": "single",
+            "col_rel_width": 1,
+            "border_left": "",
+            "border_right": "",
             "border_top": "",
-            "border_bottom": "single",
+            "border_bottom": "",
             "border_width": 15,
             "cell_height": 0.15,
             "cell_justification": "c",
@@ -761,9 +766,12 @@ class RTFSource(TableAttributes):
         defaults.update(data)
         super().__init__(**defaults)
 
-        # Convert df to DataFrame during initialization
-        if self.df is not None:
-            self.df = BroadcastValue(value=self.df).to_dataframe()
+        # Convert text to DataFrame during initialization
+        if self.text is not None:
+            if isinstance(self.text, Sequence):
+                self.text = "\\line ".join(self.text)
+
+        self.text = BroadcastValue(value=self.text).to_dataframe()
 
     def _set_default(self):
         for attr, value in self.__dict__.items():

@@ -230,6 +230,30 @@ class RTFDocument(BaseModel):
 
         return output
 
+    def _rtf_footnote_encode(self) -> str:
+        """Convert the RTF footnote into RTF syntax using the Text class."""
+        rtf_attrs = self.rtf_footnote
+
+        if rtf_attrs is None:
+            return None
+        
+        rtf_attrs = rtf_attrs._set_default()    
+        col_total_width = self.rtf_page._set_default().col_width
+        col_widths = Utils._col_widths(rtf_attrs.col_rel_width, col_total_width)
+        return rtf_attrs._encode(rtf_attrs.text, col_widths)
+
+    def _rtf_source_encode(self) -> str:
+        """Convert the RTF source into RTF syntax using the Text class."""
+        rtf_attrs = self.rtf_source
+
+        if rtf_attrs is None:
+            return None
+        
+        rtf_attrs = rtf_attrs._set_default()
+        col_total_width = self.rtf_page._set_default().col_width
+        col_widths = Utils._col_widths(rtf_attrs.col_rel_width, col_total_width)
+        return rtf_attrs._encode(rtf_attrs.text, col_widths)
+    
     def _rtf_body_encode(
         self, df: pd.DataFrame, rtf_attrs: TableAttributes | None
     ) -> MutableSequence[str]:
@@ -365,12 +389,25 @@ class RTFDocument(BaseModel):
         self.rtf_body.border_top = BroadcastValue(
             value=self.rtf_body.border_top, dimension=dim
         ).update_row(0, page_border_top)
-        self.rtf_body.border_bottom = BroadcastValue(
-            value=self.rtf_body.border_bottom, dimension=dim
-        ).update_row(dim[0] - 1, page_border_bottom)
-        self.rtf_body.border_bottom = BroadcastValue(
-            value=self.rtf_body.border_bottom, dimension=dim
-        ).update_row(dim[0] - 1, doc_border_bottom)
+
+        # Bottom border last line update
+        if self.rtf_footnote is not None:
+            self.rtf_footnote = self.rtf_footnote._set_default()
+            self.rtf_footnote.border_bottom = BroadcastValue(
+                value=self.rtf_footnote.border_bottom, dimension=(1,1)
+            ).update_row(0, page_border_bottom[0])
+
+            self.rtf_footnote.border_bottom = BroadcastValue(
+                value=self.rtf_footnote.border_bottom, dimension=(1,1)
+            ).update_row(0, doc_border_bottom[0])
+        else:
+            self.rtf_body.border_bottom = BroadcastValue(
+                value=self.rtf_body.border_bottom, dimension=dim
+            ).update_row(dim[0] - 1, page_border_bottom)
+
+            self.rtf_body.border_bottom = BroadcastValue(
+                value=self.rtf_body.border_bottom, dimension=dim
+            ).update_row(dim[0] - 1, doc_border_bottom)
 
         # Body
         rtf_body = self._rtf_body_encode(df=self.df, rtf_attrs=self.rtf_body)
@@ -390,6 +427,8 @@ class RTFDocument(BaseModel):
                     header for sublist in rtf_column_header for header in sublist
                 ) if rtf_column_header else None,
                 "\n".join(rtf_body),
+                "\n".join(self._rtf_footnote_encode()) if self.rtf_footnote is not None else None,
+                "\n".join(self._rtf_source_encode()) if self.rtf_source is not None else None,
                 "\n\n",
                 "}",
             ] if item is not None]
