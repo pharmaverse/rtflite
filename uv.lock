@@ -2122,7 +2122,9 @@ source = { editable = "." }
 dependencies = [
     { name = "narwhals" },
     { name = "numpy" },
+    { name = "pandas" },
     { name = "pillow" },
+    { name = "polars" },
     { name = "pydantic" },
 ]
 
@@ -2134,8 +2136,6 @@ dev = [
     { name = "mkdocs-material" },
     { name = "mkdocstrings-python" },
     { name = "nbconvert" },
-    { name = "pandas" },
-    { name = "polars" },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "ruff" },
@@ -2145,7 +2145,9 @@ dev = [
 requires-dist = [
     { name = "narwhals", specifier = ">=1.0.0" },
     { name = "numpy", specifier = ">=2.0.0" },
+    { name = "pandas", specifier = ">=2.2.3" },
     { name = "pillow", specifier = ">=11.0.0" },
+    { name = "polars", specifier = ">=1.0.0" },
     { name = "pydantic", specifier = ">=2.0.0" },
 ]
 
@@ -2157,8 +2159,6 @@ dev = [
     { name = "mkdocs-material", specifier = ">=9.5.45" },
     { name = "mkdocstrings-python", specifier = ">=1.12.2" },
     { name = "nbconvert", specifier = ">=7.16.4" },
-    { name = "pandas", specifier = ">=2.2.3" },
-    { name = "polars", specifier = ">=1.0.0" },
     { name = "pytest", specifier = ">=8.3.3" },
     { name = "pytest-cov", specifier = ">=6.0.0" },
     { name = "ruff", specifier = ">=0.7.4" },

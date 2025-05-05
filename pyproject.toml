@@ -11,6 +11,8 @@ dependencies = [
     "numpy>=2.0.0",
     "pillow>=11.0.0",
     "narwhals>=1.0.0",
+    "pandas>=2.2.3",
+    "polars>=1.0.0", 
 ]
 readme = "README.md"
 
@@ -49,8 +51,6 @@ build-backend = "hatchling.build"
 
 [dependency-groups]
 dev = [
-    "pandas>=2.2.3",
-    "polars>=1.0.0", 
     "pytest>=8.3.3",
     "pytest-cov>=6.0.0",
     "mkdocs>=1.6.1",
