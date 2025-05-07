@@ -23,87 +23,93 @@ from rtflite.strwidth import get_string_width
 class TextAttributes(BaseModel):
     """Base class for text-related attributes in RTF components"""
 
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
-    text_font: Sequence[int] | None = Field(
+    text_font: list[int] | None = Field(
         default=None, description="Font number for text"
     )
 
     @field_validator("text_font", mode="after")
     def validate_text_font(cls, v):
-        if v is not None:
-            for font in v:
-                if font not in Utils._font_type()["type"]:
-                    raise ValueError(f"Invalid font number: {font}")
+        if v is None:
+            return v
+        
+        for font in v:
+            if font not in Utils._font_type()["type"]:
+                raise ValueError(f"Invalid font number: {font}")
         return v
 
-    text_format: Sequence[str] | None = Field(
+    text_format: list[str] | None = Field(
         default=None,
         description="Text formatting (e.g. 'b' for 'bold', 'i' for'italic')",
     )
 
     @field_validator("text_format", mode="after")
     def validate_text_format(cls, v):
-        if v is not None:
-            for format in v:
-                for fmt in format:
-                    if fmt not in FORMAT_CODES:
-                        raise ValueError(f"Invalid text format: {fmt}")
+        if v is None:
+            return v
+        
+        for format in v:
+            for fmt in format:
+                if fmt not in FORMAT_CODES:
+                    raise ValueError(f"Invalid text format: {fmt}")
         return v
 
-    text_font_size: Sequence[float] | None = Field(
+    text_font_size: list[float] | None = Field(
         default=None, description="Font size in points"
     )
 
     @field_validator("text_font_size", mode="after")
     def validate_text_font_size(cls, v):
-        if v is not None:
-            for size in v:
-                if size <= 0:
-                    raise ValueError(f"Invalid font size: {size}")
+        if v is None:
+            return v
+        
+        for size in v:
+            if size <= 0:
+                raise ValueError(f"Invalid font size: {size}")
         return v
 
-    text_color: Sequence[str] | None = Field(
+    text_color: list[str] | None = Field(
         default=None, description="Text color name or RGB value"
     )
-    text_background_color: Sequence[str] | None = Field(
+    text_background_color: list[str] | None = Field(
         default=None, description="Background color name or RGB value"
     )
-    text_justification: Sequence[str] | None = Field(
+    text_justification: list[str] | None = Field(
         default=None,
         description="Text alignment ('l'=left, 'c'=center, 'r'=right, 'j'=justify)",
     )
 
     @field_validator("text_justification", mode="after")
     def validate_text_justification(cls, v):
-        if v is not None:
-            for justification in v:
-                if justification not in TEXT_JUSTIFICATION_CODES:
-                    raise ValueError(f"Invalid text justification: {justification}")
+        if v is None:
+            return v
+        
+        for justification in v:
+            if justification not in TEXT_JUSTIFICATION_CODES:
+                raise ValueError(f"Invalid text justification: {justification}")
         return v
 
-    text_indent_first: Sequence[int] | None = Field(
+    text_indent_first: list[int] | None = Field(
         default=None, description="First line indent in twips"
     )
-    text_indent_left: Sequence[int] | None = Field(
+    text_indent_left: list[int] | None = Field(
         default=None, description="Left indent in twips"
     )
-    text_indent_right: Sequence[int] | None = Field(
+    text_indent_right: list[int] | None = Field(
         default=None, description="Right indent in twips"
     )
-    text_space: Sequence[int] | None = Field(
+    text_space: list[int] | None = Field(
         default=None, description="Line spacing multiplier"
     )
-    text_space_before: Sequence[int] | None = Field(
+    text_space_before: list[int] | None = Field(
         default=None, description="Space before paragraph in twips"
     )
-    text_space_after: Sequence[int] | None = Field(
+    text_space_after: list[int] | None = Field(
         default=None, description="Space after paragraph in twips"
     )
-    text_hyphenation: Sequence[bool] | None = Field(
+    text_hyphenation: list[bool] | None = Field(
         default=None, description="Enable automatic hyphenation"
     )
-    text_convert: Sequence[bool] | None = Field(
+    text_convert: list[bool] | None = Field(
         default=None, description="Convert special characters to RTF"
     )
 
@@ -201,8 +207,6 @@ class TextAttributes(BaseModel):
 class TableAttributes(TextAttributes):
     """Base class for table-related attributes in RTF components"""
 
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
     col_rel_width: list[float] | None = Field(
         default=None, description="Relative widths of table columns"
     )
@@ -261,6 +265,9 @@ class TableAttributes(TextAttributes):
 
     @field_validator("cell_vertical_justification", mode="after")
     def validate_cell_vertical_justification(cls, v):
+        if v is None:
+            return v
+
         for row in v:
             for justification in row:
                 if justification not in VERTICAL_ALIGNMENT_CODES:
@@ -331,6 +338,9 @@ class TableAttributes(TextAttributes):
 
     @field_validator("cell_justification", mode="after")
     def validate_cell_justification(cls, v):
+        if v is None:
+            return v
+        
         for row in v:
             for justification in row:
                 if justification not in TEXT_JUSTIFICATION_CODES:
@@ -348,6 +358,9 @@ class TableAttributes(TextAttributes):
     )
     def validate_border(cls, v):
         """Validate that all border styles are valid."""
+        if v is None:
+            return v
+        
         for row in v:
             for border in row:
                 if border not in BORDER_CODES:
