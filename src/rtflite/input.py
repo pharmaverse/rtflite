@@ -515,7 +515,9 @@ class RTFBody(TableAttributes):
         self.border_right = self.border_right or ["single"]
         self.border_first = self.border_first or ["single"]
         self.border_last = self.border_last or ["single"]
-        self.cell_vertical_justification = self.cell_vertical_justification or ["center"]
+        self.cell_vertical_justification = self.cell_vertical_justification or [
+            "center"
+        ]
         self.text_justification = self.text_justification or ["c"]
 
         if self.page_by is None:

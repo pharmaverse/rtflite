@@ -19,16 +19,18 @@ from rtflite.row import (
 )
 from rtflite.strwidth import get_string_width
 
+
 def _to_nested_list(v):
     if v is None:
-        return None 
-    
+        return None
+
     if isinstance(v, (int, str, float, bool)):
         v = [[v]]
-    
+
     if isinstance(v, Sequence):
-        
-        if isinstance(v, list) and any(isinstance(item, (str, int, float, bool)) for item in v):
+        if isinstance(v, list) and any(
+            isinstance(item, (str, int, float, bool)) for item in v
+        ):
             v = [v]
         elif isinstance(v, list) and all(isinstance(item, list) for item in v):
             v = v
@@ -39,11 +41,12 @@ def _to_nested_list(v):
 
     if isinstance(v, pd.DataFrame):
         v = v.values.tolist()
-    
+
     if isinstance(v, pl.DataFrame):
         v = v.to_pandas().values.tolist()
 
     return v
+
 
 class TextAttributes(BaseModel):
     """Base class for text-related attributes in RTF components"""
@@ -56,7 +59,7 @@ class TextAttributes(BaseModel):
     def validate_text_font(cls, v):
         if v is None:
             return v
-        
+
         for font in v:
             if font not in Utils._font_type()["type"]:
                 raise ValueError(f"Invalid font number: {font}")
@@ -71,7 +74,7 @@ class TextAttributes(BaseModel):
     def validate_text_format(cls, v):
         if v is None:
             return v
-        
+
         for format in v:
             for fmt in format:
                 if fmt not in FORMAT_CODES:
@@ -86,7 +89,7 @@ class TextAttributes(BaseModel):
     def validate_text_font_size(cls, v):
         if v is None:
             return v
-        
+
         for size in v:
             if size <= 0:
                 raise ValueError(f"Invalid font size: {size}")
@@ -107,7 +110,7 @@ class TextAttributes(BaseModel):
     def validate_text_justification(cls, v):
         if v is None:
             return v
-        
+
         for justification in v:
             if justification not in TEXT_JUSTIFICATION_CODES:
                 raise ValueError(f"Invalid text justification: {justification}")
@@ -242,13 +245,11 @@ class TableAttributes(TextAttributes):
     border_right: list[list[str]] = Field(
         default=[[""]], description="Right border style"
     )
-    border_top: list[list[str]] = Field(
-        default=[[""]], description="Top border style"
-    )
+    border_top: list[list[str]] = Field(default=[[""]], description="Top border style")
     border_bottom: list[list[str]] = Field(
         default=[[""]], description="Bottom border style"
     )
-    border_first: list[list[str]]= Field(
+    border_first: list[list[str]] = Field(
         default=[[""]], description="First row border style"
     )
     border_last: list[list[str]] = Field(
@@ -334,26 +335,25 @@ class TableAttributes(TextAttributes):
     def convert_to_nested_list(cls, v):
         return _to_nested_list(v)
 
-    
-    @field_validator("col_rel_width", "border_width", "cell_height", "cell_nrow", mode="after")
+    @field_validator(
+        "col_rel_width", "border_width", "cell_height", "cell_nrow", mode="after"
+    )
     def validate_positive_value(cls, v):
         if v is not None and np.any(np.array(v) <= 0):
-            raise ValueError(
-                f"{cls.__field_name__.capitalize()} must be positive"
-            )
+            raise ValueError(f"{cls.__field_name__.capitalize()} must be positive")
         return v
 
     @field_validator("cell_justification", mode="after")
     def validate_cell_justification(cls, v):
         if v is None:
             return v
-        
+
         for row in v:
             for justification in row:
                 if justification not in TEXT_JUSTIFICATION_CODES:
                     raise ValueError(f"Invalid cell justification: {justification}")
         return v
-    
+
     @field_validator(
         "border_left",
         "border_right",
@@ -367,13 +367,15 @@ class TableAttributes(TextAttributes):
         """Validate that all border styles are valid."""
         if v is None:
             return v
-        
+
         for row in v:
             for border in row:
                 if border not in BORDER_CODES:
                     field_name = cls.__field_name__.capitalize()
-                    raise ValueError(f"{field_name} with invalid border style: {border}")
-        
+                    raise ValueError(
+                        f"{field_name} with invalid border style: {border}"
+                    )
+
         return v
 
     def _get_section_attributes(self, indices) -> dict:
@@ -381,11 +383,15 @@ class TableAttributes(TextAttributes):
         # Get all attributes that start with text_, col_, border_, or cell_
         attrs = {}
         for attr in dir(self):
-            if (attr.startswith('text_') or attr.startswith('col_') or 
-                attr.startswith('border_') or attr.startswith('cell_')):
+            if (
+                attr.startswith("text_")
+                or attr.startswith("col_")
+                or attr.startswith("border_")
+                or attr.startswith("cell_")
+            ):
                 if not callable(getattr(self, attr)):
                     attrs[attr] = getattr(self, attr)
-        
+
         # Broadcast attributes to section indices
         return {
             attr: [BroadcastValue(value=val).iloc(row, col) for row, col in indices]
@@ -514,46 +520,48 @@ class BroadcastValue(BaseModel):
     def iloc(self, row_index: int, column_index: int) -> Any:
         if self.value is None:
             return None
-        
+
         try:
-            return self.value[row_index % len(self.value)][column_index % len(self.value[0])]
+            return self.value[row_index % len(self.value)][
+                column_index % len(self.value[0])
+            ]
         except IndexError as e:
             raise ValueError(f"Invalid DataFrame index or slice: {e}")
-    
+
     def to_list(self) -> pd.DataFrame:
         if self.value is None:
             return None
-        
+
         row_count, col_count = len(self.value), len(self.value[0])
 
         row_repeats = max(1, (self.dimension[0] + row_count - 1) // row_count)
         col_repeats = max(1, (self.dimension[1] + col_count - 1) // col_count)
 
-        value =[column*col_repeats for column in self.value] * row_repeats
-        return [row[:self.dimension[1]] for row in value[:self.dimension[0]]]
-    
+        value = [column * col_repeats for column in self.value] * row_repeats
+        return [row[: self.dimension[1]] for row in value[: self.dimension[0]]]
+
     def to_numpy(self) -> np.ndarray:
         if self.value is None:
             return None
-        
+
         return np.array(self.to_list())
-    
+
     def to_pandas(self) -> pd.DataFrame:
         if self.value is None:
             return None
-        
+
         return pd.DataFrame(self.to_list())
-    
+
     def to_polars(self) -> pl.DataFrame:
         if self.value is None:
             return None
-        
+
         return pl.DataFrame(self.to_list())
 
     def update_row(self, row_index: int, row_value: list):
         if self.value is None:
             return None
-        
+
         self.value = self.to_list()
         self.value[row_index] = row_value
         return self.value
@@ -570,7 +578,7 @@ class BroadcastValue(BaseModel):
     def update_cell(self, row_index: int, column_index: int, cell_value: Any):
         if self.value is None:
             return None
-        
+
         self.value = self.to_list()
         self.value[row_index][column_index] = cell_value
         return self.value.to_pandas()
