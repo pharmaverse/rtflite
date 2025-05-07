@@ -3,12 +3,14 @@ from typing import Any, Tuple
 
 import numpy as np
 import pandas as pd
+import polars as pl
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from rtflite.row import (
     BORDER_CODES,
     FORMAT_CODES,
     TEXT_JUSTIFICATION_CODES,
+    VERTICAL_ALIGNMENT_CODES,
     Border,
     Cell,
     Row,
@@ -205,89 +207,79 @@ class TableAttributes(TextAttributes):
         default=None, description="Relative widths of table columns"
     )
 
-    @field_validator("col_rel_width", mode="after")
-    def validate_col_rel_width(cls, v):
-        if v is not None:
-            for width in v:
-                if width <= 0:
-                    raise ValueError(f"Invalid column width: {width}")
-        return v
-
-    border_left: Sequence[str] | pd.DataFrame | None = Field(
-        default=None, description="Left border style"
+    border_left: list[list[str]] = Field(
+        default=[[""]], description="Left border style"
     )
-    border_right: Sequence[str] | pd.DataFrame | None = Field(
-        default=None, description="Right border style"
+    border_right: list[list[str]] = Field(
+        default=[[""]], description="Right border style"
     )
-    border_top: Sequence[str] | pd.DataFrame | None = Field(
-        default=None, description="Top border style"
+    border_top: list[list[str]] = Field(
+        default=[[""]], description="Top border style"
     )
-    border_bottom: Sequence[str] | pd.DataFrame | None = Field(
-        default=None, description="Bottom border style"
+    border_bottom: list[list[str]] = Field(
+        default=[[""]], description="Bottom border style"
     )
-    border_first: Sequence[str] | pd.DataFrame | None = Field(
-        default=None, description="First row border style"
+    border_first: list[list[str]]= Field(
+        default=[[""]], description="First row border style"
     )
-    border_last: Sequence[str] | pd.DataFrame | None = Field(
-        default=None, description="Last row border style"
+    border_last: list[list[str]] = Field(
+        default=[[""]], description="Last row border style"
     )
-    border_color_left: Sequence[str] | pd.DataFrame | None = Field(
-        default=None, description="Left border color"
+    border_color_left: list[list[str]] = Field(
+        default=[[""]], description="Left border color"
     )
-    border_color_right: Sequence[str] | pd.DataFrame | None = Field(
-        default=None, description="Right border color"
+    border_color_right: list[list[str]] = Field(
+        default=[[""]], description="Right border color"
     )
-    border_color_top: Sequence[str] | pd.DataFrame | None = Field(
-        default=None, description="Top border color"
+    border_color_top: list[list[str]] = Field(
+        default=[[""]], description="Top border color"
     )
-    border_color_bottom: Sequence[str] | pd.DataFrame | None = Field(
-        default=None, description="Bottom border color"
+    border_color_bottom: list[list[str]] = Field(
+        default=[[""]], description="Bottom border color"
     )
-    border_color_first: Sequence[str] | pd.DataFrame | None = Field(
-        default=None, description="First row border color"
+    border_color_first: list[list[str]] = Field(
+        default=[[""]], description="First row border color"
     )
-    border_color_last: Sequence[str] | pd.DataFrame | None = Field(
-        default=None, description="Last row border color"
+    border_color_last: list[list[str]] = Field(
+        default=[[""]], description="Last row border color"
     )
-    border_width: Sequence[int] | pd.DataFrame | None = Field(
-        default=None, description="Border width in twips"
+    border_width: list[list[int]] = Field(
+        default=[[15]], description="Border width in twips"
     )
-    cell_height: Sequence[float] | pd.DataFrame | None = Field(
-        default=None, description="Cell height in inches"
+    cell_height: list[list[float]] = Field(
+        default=[[0.15]], description="Cell height in inches"
     )
-    cell_justification: Sequence[str] | pd.DataFrame | None = Field(
-        default=None,
+    cell_justification: list[list[str]] = Field(
+        default=[["l"]],
         description="Cell horizontal alignment ('l'=left, 'c'=center, 'r'=right, 'j'=justify)",
     )
 
-    @field_validator("cell_justification", mode="after")
-    def validate_cell_justification(cls, v):
-        if v is not None:
-            for justification in v:
-                if justification not in TEXT_JUSTIFICATION_CODES:
-                    raise ValueError(f"Invalid cell justification: {justification}")
-        return v
-
-    cell_vertical_justification: Sequence[str] | pd.DataFrame | None = Field(
-        default=None,
+    cell_vertical_justification: list[list[str]] = Field(
+        default=[["center"]],
         description="Cell vertical alignment ('top', 'center', 'bottom')",
     )
 
-    # @field_validator("cell_vertical_justification", mode="after")
-    # def validate_cell_vertical_justification(cls, v):
-    #     if v is not None:
-    #         for justification in v:
-    #             if justification not in VERTICAL_ALIGNMENT_CODES:
-    #                 raise ValueError(
-    #                     f"Invalid cell vertical justification: {justification}"
-    #                 )
+    @field_validator("cell_vertical_justification", mode="after")
+    def validate_cell_vertical_justification(cls, v):
+        for row in v:
+            for justification in row:
+                if justification not in VERTICAL_ALIGNMENT_CODES:
+                    raise ValueError(
+                        f"Invalid cell vertical justification: {justification}"
+                    )
+        return v
 
-    cell_nrow: Sequence[int] | pd.DataFrame | None = Field(
-        default=None, description="Number of rows per cell"
+    cell_nrow: list[list[int]] = Field(
+        default=[[1]], description="Number of rows per cell"
     )
 
+    @field_validator("col_rel_width", mode="before")
+    def convert_to_list(cls, v):
+        if v is not None and isinstance(v, (int, str, float, bool)):
+            return [v]
+        return v
+
     @field_validator(
-        "col_rel_width",
         "border_left",
         "border_right",
         "border_top",
@@ -307,23 +299,44 @@ class TableAttributes(TextAttributes):
         "cell_nrow",
         mode="before",
     )
-    def convert_to_list(cls, v):
+    def convert_to_nested_list(cls, v):
         """Convert single values to data frame."""
-        if v is not None and isinstance(v, (int, str, float, bool)):
+        if v is None:
+            return None 
+        
+        if isinstance(v, (int, str, float, bool)):
+            v = [[v]]
+        
+        if isinstance(v, Sequence):
+            if not isinstance(v, list):
+                v = list(v)
             v = [v]
 
+        if isinstance(v, pd.DataFrame):
+            v = v.values.tolist()
+        
+        if isinstance(v, pl.DataFrame):
+            v = v.to_pandas().values.tolist()
+
         return v
 
-    @field_validator("border_width", "cell_height", "cell_nrow", mode="after")
+    
+    @field_validator("col_rel_width", "border_width", "cell_height", "cell_nrow", mode="after")
     def validate_positive_value(cls, v):
-        if v is not None:
-            for value in v:
-                if value <= 0:
-                    raise ValueError(
-                        f"{cls.__field_name__.capitalize()} with invalid number of rows per cell: {value}"
-                    )
+        if v is not None and np.any(np.array(v) <= 0):
+            raise ValueError(
+                f"{cls.__field_name__.capitalize()} must be positive"
+            )
         return v
 
+    @field_validator("cell_justification", mode="after")
+    def validate_cell_justification(cls, v):
+        for row in v:
+            for justification in row:
+                if justification not in TEXT_JUSTIFICATION_CODES:
+                    raise ValueError(f"Invalid cell justification: {justification}")
+        return v
+    
     @field_validator(
         "border_left",
         "border_right",
@@ -334,12 +347,13 @@ class TableAttributes(TextAttributes):
         mode="after",
     )
     def validate_border(cls, v):
-        if v is not None:
-            for border in v:
+        """Validate that all border styles are valid."""
+        for row in v:
+            for border in row:
                 if border not in BORDER_CODES:
-                    raise ValueError(
-                        f"{cls.__field_name__.capitalize()} with invalid border style: {border}"
-                    )
+                    field_name = cls.__field_name__.capitalize()
+                    raise ValueError(f"{field_name} with invalid border style: {border}")
+        
         return v
 
     def _get_section_attributes(self, indices) -> dict:
@@ -487,6 +501,14 @@ class BroadcastValue(BaseModel):
     def convert_value(cls, v):
         if isinstance(v, (str, int, float, bool)):
             v = [v]
+        
+        # Check if v is a list of lists
+        if isinstance(v, list) and isinstance(v[0], list):
+            v = pd.DataFrame(v)
+ 
+        if isinstance(v, pl.DataFrame):
+            v = v.to_pandas()
+
         return v
 
     @field_validator("dimension")
