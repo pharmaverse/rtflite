@@ -45,6 +45,9 @@ def _to_nested_list(v):
     if isinstance(v, pl.DataFrame):
         v = v.to_pandas().values.tolist()
 
+    if isinstance(v, np.ndarray):
+        v = v.tolist()
+
     return v
 
 
@@ -573,7 +576,7 @@ class BroadcastValue(BaseModel):
         self.value = self.to_list()
         for i, row in enumerate(self.value):
             row[column_index] = column_value[i]
-        return self.value.to_pandas()
+        return self.value
 
     def update_cell(self, row_index: int, column_index: int, cell_value: Any):
         if self.value is None:
@@ -581,4 +584,4 @@ class BroadcastValue(BaseModel):
 
         self.value = self.to_list()
         self.value[row_index][column_index] = cell_value
-        return self.value.to_pandas()
+        return self.value
