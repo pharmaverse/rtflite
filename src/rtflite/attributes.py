@@ -315,9 +315,14 @@ class TableAttributes(TextAttributes):
             v = [[v]]
         
         if isinstance(v, Sequence):
-            if not isinstance(v, list):
-                v = list(v)
-            v = [v]
+            if isinstance(v, list) and v and all(isinstance(item, (str, int, float, bool)) for item in v):
+                v = [v]
+            elif isinstance(v, list) and v and all(isinstance(item, list) for item in v):
+                v = v
+            elif isinstance(v, tuple):
+                v = [[item] for item in v]
+            else:
+                raise TypeError("Invalid value type. Must be a list or tuple.")
 
         if isinstance(v, pd.DataFrame):
             v = v.values.tolist()
@@ -488,6 +493,9 @@ class BroadcastValue(BaseModel):
         if isinstance(v, (str, int, float, bool)):
             v = [v]
         
+        # if isinstance(v, list) and v and all(isinstance(item, (str, int, float, bool)) for item in v):
+        #     v = [v]
+
         # Check if v is a list of lists
         if isinstance(v, list) and isinstance(v[0], list):
             v = pd.DataFrame(v)
