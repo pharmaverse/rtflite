@@ -9,7 +9,6 @@ from rtflite.row import (
     BORDER_CODES,
     FORMAT_CODES,
     TEXT_JUSTIFICATION_CODES,
-    VERTICAL_ALIGNMENT_CODES,
     Border,
     Cell,
     Row,
@@ -202,7 +201,7 @@ class TableAttributes(TextAttributes):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    col_rel_width: Sequence[float] | None = Field(
+    col_rel_width: list[float] | None = Field(
         default=None, description="Relative widths of table columns"
     )
 
