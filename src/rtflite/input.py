@@ -275,8 +275,6 @@ class RTFFootnote(TableAttributes):
             if isinstance(self.text, Sequence):
                 self.text = "\\line ".join(self.text)
 
-        self.text = BroadcastValue(value=self.text).to_dataframe()
-
     def _set_default(self):
         for attr, value in self.__dict__.items():
             if isinstance(value, (str, int, float, bool)):
@@ -333,8 +331,6 @@ class RTFSource(TableAttributes):
         if self.text is not None:
             if isinstance(self.text, Sequence):
                 self.text = "\\line ".join(self.text)
-
-        self.text = BroadcastValue(value=self.text).to_dataframe()
 
     def _set_default(self):
         for attr, value in self.__dict__.items():
@@ -429,10 +425,6 @@ class RTFColumnHeader(TableAttributes):
         defaults.update(data)
         super().__init__(**defaults)
         self._set_default()
-
-        # Convert text to DataFrame during initialization
-        if self.text is not None:
-            self.text = BroadcastValue(value=self.text).to_dataframe()
 
     def _set_default(self):
         for attr, value in self.__dict__.items():

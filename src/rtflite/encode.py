@@ -402,16 +402,16 @@ class RTFDocument(BaseModel):
         # Page Border
         doc_border_top = BroadcastValue(
             value=self.rtf_page.border_first, dimension=(1, dim[1])
-        ).to_dataframe()
+        ).to_list()[0]
         doc_border_bottom = BroadcastValue(
             value=self.rtf_page.border_last, dimension=(1, dim[1])
-        ).to_dataframe()
+        ).to_list()[0]
         page_border_top = BroadcastValue(
             value=self.rtf_body.border_first, dimension=(1, dim[1])
-        ).to_dataframe()
+        ).to_list()[0]
         page_border_bottom = BroadcastValue(
             value=self.rtf_body.border_last, dimension=(1, dim[1])
-        ).to_dataframe()
+        ).to_list()[0]
 
         # Column header
         if self.rtf_column_header is None:

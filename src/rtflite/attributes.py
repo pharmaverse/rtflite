@@ -19,6 +19,31 @@ from rtflite.row import (
 )
 from rtflite.strwidth import get_string_width
 
+def _to_nested_list(v):
+    if v is None:
+        return None 
+    
+    if isinstance(v, (int, str, float, bool)):
+        v = [[v]]
+    
+    if isinstance(v, Sequence):
+        
+        if isinstance(v, list) and any(isinstance(item, (str, int, float, bool)) for item in v):
+            v = [v]
+        elif isinstance(v, list) and all(isinstance(item, list) for item in v):
+            v = v
+        elif isinstance(v, tuple):
+            v = [[item] for item in v]
+        else:
+            raise TypeError("Invalid value type. Must be a list or tuple.")
+
+    if isinstance(v, pd.DataFrame):
+        v = v.values.tolist()
+    
+    if isinstance(v, pl.DataFrame):
+        v = v.to_pandas().values.tolist()
+
+    return v
 
 class TextAttributes(BaseModel):
     """Base class for text-related attributes in RTF components"""
@@ -307,30 +332,7 @@ class TableAttributes(TextAttributes):
         mode="before",
     )
     def convert_to_nested_list(cls, v):
-        """Convert single values to data frame."""
-        if v is None:
-            return None 
-        
-        if isinstance(v, (int, str, float, bool)):
-            v = [[v]]
-        
-        if isinstance(v, Sequence):
-            if isinstance(v, list) and v and all(isinstance(item, (str, int, float, bool)) for item in v):
-                v = [v]
-            elif isinstance(v, list) and v and all(isinstance(item, list) for item in v):
-                v = v
-            elif isinstance(v, tuple):
-                v = [[item] for item in v]
-            else:
-                raise TypeError("Invalid value type. Must be a list or tuple.")
-
-        if isinstance(v, pd.DataFrame):
-            v = v.values.tolist()
-        
-        if isinstance(v, pl.DataFrame):
-            v = v.to_pandas().values.tolist()
-
-        return v
+        return _to_nested_list(v)
 
     
     @field_validator("col_rel_width", "border_width", "cell_height", "cell_nrow", mode="after")
@@ -479,7 +481,7 @@ class TableAttributes(TextAttributes):
 class BroadcastValue(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    value: Sequence[Any] | pd.DataFrame | None = Field(
+    value: list[list[Any]] | None = Field(
         ...,
         description="The value of the table, can be various types including DataFrame.",
     )
@@ -490,20 +492,7 @@ class BroadcastValue(BaseModel):
 
     @field_validator("value", mode="before")
     def convert_value(cls, v):
-        if isinstance(v, (str, int, float, bool)):
-            v = [v]
-        
-        # if isinstance(v, list) and v and all(isinstance(item, (str, int, float, bool)) for item in v):
-        #     v = [v]
-
-        # Check if v is a list of lists
-        if isinstance(v, list) and isinstance(v[0], list):
-            v = pd.DataFrame(v)
- 
-        if isinstance(v, pl.DataFrame):
-            v = v.to_pandas()
-
-        return v
+        return _to_nested_list(v)
 
     @field_validator("dimension")
     def validate_dimension(cls, v):
@@ -522,107 +511,66 @@ class BroadcastValue(BaseModel):
 
         return v
 
-    def iloc(self, row_index: int | slice, column_index: int | slice) -> Any:
-        """
-        Access a value using row and column indices, based on the data type.
+    def iloc(self, row_index: int, column_index: int) -> Any:
+        if self.value is None:
+            return None
+        
+        try:
+            return self.value[row_index % len(self.value)][column_index % len(self.value[0])]
+        except IndexError as e:
+            raise ValueError(f"Invalid DataFrame index or slice: {e}")
+    
+    def to_list(self) -> pd.DataFrame:
+        if self.value is None:
+            return None
+        
+        row_count, col_count = len(self.value), len(self.value[0])
 
-        Parameters:
-        - row_index: The row index or slice (for lists and DataFrames).
-        - column_index: The column index or slice (for DataFrames and dictionaries). Optional for lists.
+        row_repeats = max(1, (self.dimension[0] + row_count - 1) // row_count)
+        col_repeats = max(1, (self.dimension[1] + col_count - 1) // col_count)
 
-        Returns:
-        - The accessed value or an appropriate error message.
-        """
+        value =[column*col_repeats for column in self.value] * row_repeats
+        return [row[:self.dimension[1]] for row in value[:self.dimension[0]]]
+    
+    def to_numpy(self) -> np.ndarray:
+        if self.value is None:
+            return None
+        
+        return np.array(self.to_list())
+    
+    def to_pandas(self) -> pd.DataFrame:
+        if self.value is None:
+            return None
+        
+        return pd.DataFrame(self.to_list())
+    
+    def to_polars(self) -> pl.DataFrame:
+        if self.value is None:
+            return None
+        
+        return pl.DataFrame(self.to_list())
+
+    def update_row(self, row_index: int, row_value: list):
+        if self.value is None:
+            return None
+        
+        self.value = self.to_list()
+        self.value[row_index] = row_value
+        return self.value
+
+    def update_column(self, column_index: int, column_value: list):
         if self.value is None:
             return None
 
-        if isinstance(self.value, pd.DataFrame):
-            # Handle DataFrame as is
-            try:
-                return self.value.iloc[
-                    row_index % self.value.shape[0], column_index % self.value.shape[1]
-                ]
-            except IndexError as e:
-                raise ValueError(f"Invalid DataFrame index or slice: {e}")
-
-        if isinstance(self.value, list):
-            # Handle list as column based broadcast data frame
-            return self.value[column_index % len(self.value)]
-
-        if isinstance(self.value, tuple):
-            # Handle Tuple as row based broadcast data frame
-            values = list(self.value)
-            return values[row_index % len(values)]
-
-    def to_dataframe(self) -> pd.DataFrame:
-        """
-        Convert the value to a pandas DataFrame based on the dimension variable if it is not None.
-
-        Returns:
-        - A pandas DataFrame representation of the value.
-
-        Raises:
-        - ValueError: If the dimension is None or if the value cannot be converted to a DataFrame.
-        """
-        if self.dimension is None:
-            if isinstance(self.value, pd.DataFrame):
-                self.dimension = self.value.shape
-            elif isinstance(self.value, list):
-                self.dimension = (1, len(self.value))
-            elif isinstance(self.value, tuple):
-                self.dimension = (len(self.value), 1)
-            else:
-                raise ValueError("Dimension must be specified to convert to DataFrame.")
-
-        if isinstance(self.value, pd.DataFrame):
-            # Ensure the DataFrame can be recycled to match the specified dimensions
-            row_count, col_count = self.value.shape
-            row_repeats = max(1, (self.dimension[0] + row_count - 1) // row_count)
-            recycled_rows = pd.concat(
-                [self.value] * row_repeats, ignore_index=True
-            ).head(self.dimension[0])
-
-            col_repeats = max(1, (self.dimension[1] + col_count - 1) // col_count)
-            recycled_df = pd.concat([recycled_rows] * col_repeats, axis=1).iloc[
-                :, : self.dimension[1]
-            ]
-
-            return recycled_df.reset_index(drop=True)
-
-        if isinstance(self.value, (list, MutableSequence)):
-            recycled_values = self.value * (self.dimension[1] // len(self.value) + 1)
-            return pd.DataFrame(
-                [
-                    [
-                        recycled_values[i % len(recycled_values)]
-                        for i in range(self.dimension[1])
-                    ]
-                ]
-                * self.dimension[0]
-            )
-
-        if isinstance(self.value, tuple):
-            values = list(self.value)
-            return pd.DataFrame(
-                [
-                    [values[i % len(values)]] * self.dimension[1]
-                    for i in range(self.dimension[0])
-                ]
-            )
-
-        raise ValueError("Unsupported value type for DataFrame conversion.")
-
-    def update_row(self, row_index: int, row_value: list):
-        value = self.to_dataframe()
-        value.iloc[row_index] = row_value
-        return value
-
-    def update_column(self, column_index: int, column_value: list):
-        value = self.to_dataframe()
-        value.iloc[:, column_index] = column_value
-        return value
+        self.value = self.to_list()
+        for i, row in enumerate(self.value):
+            row[column_index] = column_value[i]
+        return self.value.to_pandas()
 
     def update_cell(self, row_index: int, column_index: int, cell_value: Any):
-        value = self.to_dataframe()
-        value.iloc[row_index, column_index] = cell_value
-        return value
+        if self.value is None:
+            return None
+        
+        self.value = self.to_list()
+        self.value[row_index][column_index] = cell_value
+        return self.value.to_pandas()
