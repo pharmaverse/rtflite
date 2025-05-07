@@ -371,45 +371,18 @@ class TableAttributes(TextAttributes):
 
     def _get_section_attributes(self, indices) -> dict:
         """Helper method to collect all attributes for a section"""
-        text_attrs = {
-            "text_font": self.text_font,
-            "text_format": self.text_format,
-            "text_font_size": self.text_font_size,
-            "text_color": self.text_color,
-            "text_background_color": self.text_background_color,
-            "text_justification": self.text_justification,
-            "text_indent_first": self.text_indent_first,
-            "text_indent_left": self.text_indent_left,
-            "text_indent_right": self.text_indent_right,
-            "text_space": self.text_space,
-            "text_space_before": self.text_space_before,
-            "text_space_after": self.text_space_after,
-            "text_hyphenation": self.text_hyphenation,
-            "text_convert": self.text_convert,
-            "col_rel_width": self.col_rel_width,
-            "border_left": self.border_left,
-            "border_right": self.border_right,
-            "border_top": self.border_top,
-            "border_bottom": self.border_bottom,
-            "border_first": self.border_first,
-            "border_last": self.border_last,
-            "border_color_left": self.border_color_left,
-            "border_color_right": self.border_color_right,
-            "border_color_top": self.border_color_top,
-            "border_color_bottom": self.border_color_bottom,
-            "border_color_first": self.border_color_first,
-            "border_color_last": self.border_color_last,
-            "border_width": self.border_width,
-            "cell_height": self.cell_height,
-            "cell_justification": self.cell_justification,
-            "cell_vertical_justification": self.cell_vertical_justification,
-            "cell_nrow": self.cell_nrow,
-        }
-
+        # Get all attributes that start with text_, col_, border_, or cell_
+        attrs = {}
+        for attr in dir(self):
+            if (attr.startswith('text_') or attr.startswith('col_') or 
+                attr.startswith('border_') or attr.startswith('cell_')):
+                if not callable(getattr(self, attr)):
+                    attrs[attr] = getattr(self, attr)
+        
         # Broadcast attributes to section indices
         return {
             attr: [BroadcastValue(value=val).iloc(row, col) for row, col in indices]
-            for attr, val in text_attrs.items()
+            for attr, val in attrs.items()
         }
 
     def _encode(
