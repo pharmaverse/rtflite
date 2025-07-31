@@ -7,6 +7,11 @@ rtflite is a lightweight RTF (Rich Text Format) composer for Python that special
 
 ## Development Commands
 
+### Activate Virtual Environment
+```bash
+source .venv/bin/activate
+```
+
 ### Testing
 ```bash
 # Run tests with coverage
@@ -21,6 +26,9 @@ pytest -v
 
 ### Code Quality
 ```bash
+# Sort imports
+isort .
+
 # Format code
 ruff format
 
@@ -49,28 +57,10 @@ We use pytest for unit testing. To run tests and get an HTML preview of
 code coverage, open the
 [VS Code terminal](https://code.visualstudio.com/docs/terminal/basics):
 
-```bash
-pytest
-pytest tests/specific_test.py
-pytest --cov=rtflite --cov-report=html:docs/coverage/
-```
-
-If your terminal did not activate the virtual environment for some reason
-(with symptoms like not finding pytest commands), activate it manually:
-
-```bash
-source .venv/bin/activate
-```
-
-### Documentation
-
-If you made changes to the `.md` files in the root directory or the
-`.qmd` vignettes under `docs/articles/`, make sure to synchronize them
-for the mkdocs website:
-
-```bash
-sh docs/scripts/sync.sh
-```
+# Sync source document
+# source: docs/scripts/quarto/example-*.qmd
+# output: docs/scripts/*.md; docs/scripts/py/*.py
+bash docs/scripts/sync.sh
 
 ## Architecture Overview
 
