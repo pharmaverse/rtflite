@@ -6,581 +6,478 @@ eval: false
 
 <!-- `.md` and `.py` files are generated from the `.qmd` file. Please edit that file. -->
 
-This article demonstrates advanced text formatting capabilities in rtflite, including fonts, colors, alignment, indentation, and special formatting for clinical documentation.
+This article demonstrates advanced text formatting capabilities in rtflite.
+It covers fonts, colors, alignment, indentation, special characters, and comprehensive formatting for clinical documentation.
 
 ## Overview
 
-Advanced text formatting is essential for creating professional-quality clinical documents that meet regulatory standards. 
+Advanced text formatting is essential for creating production ready clinical documents 
+that meet regulatory standards. 
 Key formatting features include:
 
-- Multiple font families, sizes, and styles
+- Text format styles (bold, italic, underline, superscript, subscript)
+- Font sizes and alignment options (left, center, right, justified)  
 - Text colors and background colors
-- Justification and alignment options
 - Indentation and spacing control
-- Special symbols and characters
-- Mathematical expressions and subscripts/superscripts
+- Special symbols and mathematical notation
+- Inline formatting combinations
 
 ## Imports
 
 ```{python}
 import polars as pl
-import numpy as np
 import rtflite as rtf
 ```
 
-## Create Sample Clinical Data
+## Basic Text Format Styles
 
-Generate data to demonstrate various formatting scenarios:
-
-```{python}
-# Laboratory data with special formatting needs
-lab_data = [
-    ["Hemoglobin", "12.5", "11.0-15.0", "g/dL", "Normal"],
-    ["Platelet Count", "150", "150-400", "×10³/μL", "Low Normal"],
-    ["ALT", "45", "≤40", "U/L", "Elevated"],
-    ["Creatinine", "1.2", "0.6-1.2", "mg/dL", "High Normal"],
-    ["eGFR", "≥60", "≥60", "mL/min/1.73m²", "Normal"],
-    ["HbA₁c", "7.2", "<7.0", "%", "Above Target"],
-    ["Glucose", "140", "70-100", "mg/dL", "Elevated"],
-    ["Total Cholesterol", "220", "<200", "mg/dL", "Elevated"]
-]
-
-df_labs = pd.DataFrame(lab_data,
-    columns=["Parameter", "Value", "Reference Range", "Unit", "Interpretation"])
-
-print("Laboratory data created:")
-print(df_labs)
-```
-
-```
-Laboratory data created:
-            Parameter Value Reference Range         Unit  Interpretation
-0          Hemoglobin  12.5        11.0-15.0        g/dL          Normal
-1      Platelet Count   150         150-400     ×10³/μL     Low Normal
-2                 ALT    45            ≤40         U/L        Elevated
-3          Creatinine   1.2         0.6-1.2       mg/dL     High Normal
-4                eGFR   ≥60             ≥60  mL/min/1.73m²          Normal
-5               HbA₁c   7.2            <7.0           %   Above Target
-6             Glucose   140          70-100       mg/dL        Elevated
-7   Total Cholesterol   220            <200       mg/dL        Elevated
-```
-
-## Basic Text Formatting Table
-
-Demonstrate font families, sizes, and styles:
+Demonstrate core text formatting options:
 
 ```{python}
 # Create formatting demonstration data
 format_demo = [
-    ["Times New Roman", "Default font", "Standard body text"],
-    ["Arial", "Sans-serif font", "Headers and emphasis"],
-    ["Courier New", "Monospace font", "Code and data"],
-    ["Calibri", "Modern font", "Contemporary documents"],
-    ["Symbol", "Mathematical symbols", "α β γ δ ε ζ η θ"]
+    ["Normal", "", "Regular text", "Default body text"],
+    ["Bold", "b", "Bold text", "Emphasis and headers"],
+    ["Italic", "i", "Italic text", "Special terms, notes"],
+    ["Bold Italic", "bi", "Bold italic text", "Maximum emphasis"],
+    ["Underline", "u", "Underlined text", "Highlight important items"],
+    ["Strikethrough", "s", "Crossed out", "Deprecated content"]
 ]
 
-df_fonts = pd.DataFrame(format_demo,
-    columns=["Font Family", "Description", "Usage Example"])
+df_formats = pl.DataFrame(format_demo, schema=["format_type", "code", "example", "usage"])
+print(df_formats)
+```
 
-# Create RTF with multiple font formatting
-doc_fonts = rtf.RTFDocument(
-    df=df_fonts,
-    rtf_page=rtf.RTFPage(
-        orientation="landscape",
-        nrow=40
-    ),
-    rtf_title=rtf.RTFTitle(
-        text=[
-            "Font Family Demonstration",
-            "Various Typefaces and Applications"
-        ]
-    ),
+```
+┌───────────────┬──────┬──────────────────┬───────────────────────────┐
+│ format_type   ┆ code ┆ example          ┆ usage                     │
+│ ---           ┆ ---  ┆ ---              ┆ ---                       │
+│ str           ┆ str  ┆ str              ┆ str                       │
+╞═══════════════╪══════╪══════════════════╪═══════════════════════════╡
+│ Format        ┆ Code ┆ Example          ┆ Usage                     │
+│ Normal        ┆      ┆ Regular text     ┆ Default body text         │
+│ Bold          ┆ b    ┆ Bold text        ┆ Emphasis and headers      │
+│ Italic        ┆ i    ┆ Italic text      ┆ Special terms, notes      │
+│ Bold Italic   ┆ bi   ┆ Bold italic text ┆ Maximum emphasis          │
+│ Underline     ┆ u    ┆ Underlined text  ┆ Highlight important items │
+│ Strikethrough ┆ s    ┆ Crossed out      ┆ Deprecated content        │
+└───────────────┴──────┴──────────────────┴───────────────────────────┘
+```
+
+Apply text formatting using column-based approach:
+
+```{python}
+# Create RTF document with text formatting
+doc_formats = rtf.RTFDocument(
+    df=df_formats,
     rtf_body=rtf.RTFBody(
-        col_rel_width=[2.5, 2.5, 3.0],
-        text_justification=["l", "l", "l"],
-        # Different fonts for each row (using font indices)
-        text_font=[1, 4, 9, 6, 10],  # Times New Roman, Arial, Courier New, Calibri, Symbol
-        # Different sizes for each row
-        text_font_size=[12, 11, 10, 12, 14],
-        # Different styles for each row
-        text_format=["", "b", "i", "u", "b"],  # normal, bold, italic, underline, bold
-        border_left=["single"] + [""] * 2,
-        border_right=[""] * 2 + ["single"]
+        text_format=["", "b", "i", "bi", "u", "s"],  
     )
 )
 
-doc_fonts.write_rtf("../rtf/text_formatting_fonts.rtf")
+doc_formats.write_rtf("../rtf/text_format_styles.rtf")
 ```
 
-<embed src="../pdf/text_formatting_fonts.pdf" style="width:100%; height:400px" type="application/pdf">
+
+<embed src="../pdf/text_format_styles.rtf" style="width:100%; height:400px" type="application/pdf">
+
+
+## Font Size and Alignment Examples
+
+Demonstrate font size variations and text alignment:
+
+```{python}
+# Create font size and alignment data
+font_align_demo = [
+    ["Alignment", "Font Size", "Sample Text", "Usage"],
+    ["Left", "12pt", "Left aligned text for paragraphs", "Body text, paragraphs"],
+    ["Center", "14pt", "Centered text for titles", "Headers, titles"],
+    ["Right", "10pt", "Right aligned for numbers", "Numerical data, dates"],
+    ["Justified", "11pt", "Justified text fills the full width of the column creating even margins on both sides", "Long paragraphs, formal documents"],
+    ["Left", "8pt", "Small text for footnotes", "Footnotes, disclaimers"],
+    ["Center", "16pt", "Large text for main titles", "Document titles, section headers"]
+]
+
+df_font_align = pl.DataFrame(font_align_demo, schema=["alignment", "size", "text", "usage"])
+
+# Create RTF with font sizes and alignment
+doc_font_align = rtf.RTFDocument(
+    df=df_font_align,
+    rtf_title=rtf.RTFTitle(
+        text=["Font Size and Alignment", "Typography and Positioning Examples"]
+    ),
+    rtf_body=rtf.RTFBody(
+        col_rel_width=[1.5, 1.5, 4.0, 2.5],
+        text_justification=["c", "c", "l", "l"],  # Center first two, left others
+        text_format=["b", "b", "", "i"],  # Bold headers, italic usage
+        text_font_size=[18, 16, 20, 16],  # Different sizes per column
+        text_color=["blue", "green", "black", "gray"],
+        border_top=["single"] * 4,
+        border_bottom=["single"] * 4,
+        border_left=["single", "", "", ""],
+        border_right=["", "", "", "single"]
+    )
+)
+
+doc_font_align.write_rtf("../rtf/font_size_alignment.rtf")
+print("Created font_size_alignment.rtf")
+```
+
+```
+Created font_size_alignment.rtf
+```
 
 ## Color and Background Formatting
 
-Demonstrate text and background colors:
+Demonstrate text and background color applications:
 
 ```{python}
 # Create color demonstration data
 color_demo = [
-    ["Normal", "Within reference range", "Continue monitoring"],
-    ["Caution", "Borderline values", "Recheck in 3 months"],
-    ["Alert", "Outside normal range", "Clinical follow-up needed"],
-    ["Critical", "Immediate attention", "Contact physician STAT"],
-    ["Info", "Additional context", "See notes below"]
+    ["Status", "Text Color", "Background", "Clinical Meaning"],
+    ["Normal", "Black", "White", "Within reference range"],
+    ["Caution", "Orange", "Light Yellow", "Borderline values"],
+    ["Alert", "Red", "Light Pink", "Outside normal range"],
+    ["Critical", "Dark Red", "Pink", "Immediate attention needed"],
+    ["Info", "Blue", "Light Blue", "Additional information"]
 ]
 
-df_colors = pd.DataFrame(color_demo,
-    columns=["Status", "Clinical Meaning", "Action Required"])
+df_colors = pl.DataFrame(color_demo, schema=["status", "text_color", "background", "meaning"])
 
 # Create RTF with color formatting
 doc_colors = rtf.RTFDocument(
     df=df_colors,
-    rtf_page=rtf.RTFPage(
-        orientation="portrait",
-        nrow=40
-    ),
     rtf_title=rtf.RTFTitle(
-        text=[
-            "Clinical Status Color Coding",
-            "Visual Indicators for Laboratory Results"
-        ]
+        text=["Color and Background Formatting", "Clinical Status Color Coding"]
     ),
     rtf_body=rtf.RTFBody(
-        col_rel_width=[2.0, 3.0, 3.0],
-        text_justification=["c", "l", "l"],
-        # Text colors by row (single color per row)
-        text_color=["black", "orange", "red", "darkred", "blue"],
-        # Background colors by row (single color per row)
-        text_background_color=["lightgreen", "lightyellow", "lightpink", "pink", "lightblue"],
-        # Bold format for all rows
-        text_format=["b", "b", "b", "b", "b"],
-        border_left=["single"] + [""] * 2,
-        border_right=[""] * 2 + ["single"]
+        col_rel_width=[2.0, 2.0, 2.0, 3.5],
+        text_justification=["c", "c", "c", "l"],
+        text_format=["b", "", "", ""],  # Bold status column
+        text_color=["darkblue", "black", "black", "black"],
+        text_background_color=["lightblue", "white", "lightgray", "white"],
+        border_top=["single"] * 4,
+        border_bottom=["single"] * 4,
+        border_left=["single", "", "", ""],
+        border_right=["", "", "", "single"]
     ),
     rtf_footnote=rtf.RTFFootnote(
-        text="Color coding should be used consistently across all laboratory reports. " +
-             "Ensure accessibility by not relying solely on color for critical information."
+        text="Color coding should be used consistently across clinical documents. " +
+             "Always include textual indicators alongside colors for accessibility."
     )
 )
 
-doc_colors.write_rtf("../rtf/text_formatting_colors.rtf")
+doc_colors.write_rtf("../rtf/color_formatting.rtf")
+print("Created color_formatting.rtf")
 ```
 
-<embed src="../pdf/text_formatting_colors.pdf" style="width:100%; height:400px" type="application/pdf">
+```
+Created color_formatting.rtf
+```
 
-## Alignment and Indentation
+## Indentation and Hierarchical Structure
 
-Demonstrate text alignment and indentation options:
+Show indentation options for hierarchical content:
 
 ```{python}
-# Create alignment demonstration data
-align_demo = [
-    ["Primary Endpoint:", "", "Change from baseline at Week 24"],
-    ["  • Primary Analysis", "ANCOVA", "Significant improvement (p<0.001)"],
-    ["  • Sensitivity Analysis", "MMRM", "Consistent results"],
-    ["Secondary Endpoints:", "", ""],
-    ["  1. Response Rate", "Binary", "67.3% vs 45.2% (Drug vs Placebo)"],
-    ["  2. Time to Response", "Survival", "Hazard Ratio: 1.85 (95% CI: 1.2-2.8)"],
-    ["  3. Quality of Life", "ANCOVA", "Clinically meaningful improvement"],
-    ["Safety Endpoints:", "", ""],
-    ["  → Overall TEAE Rate", "Descriptive", "Similar across groups"],
-    ["  → Serious AEs", "Descriptive", "No drug-related SAEs"],
-    ["  → Discontinuations", "Descriptive", "Low rate (<5%)"]
+# Create hierarchical content data
+hierarchy_demo = [
+    ["Level", "Content", "Indent", "Description"],
+    ["1", "Primary Efficacy Analysis", "0", "Main section header"],
+    ["1.1", "Primary Endpoint", "300", "First-level subsection"],
+    ["1.1.1", "ANCOVA Model Results", "600", "Second-level detail"],
+    ["1.1.2", "Sensitivity Analysis", "600", "Second-level detail"],
+    ["1.2", "Secondary Endpoints", "300", "First-level subsection"],
+    ["1.2.1", "Response Rate Analysis", "600", "Second-level detail"],
+    ["1.2.2", "Time to Event Analysis", "600", "Second-level detail"],
+    ["2", "Safety Analysis", "0", "Main section header"],
+    ["2.1", "Adverse Events Summary", "300", "First-level subsection"],
+    ["2.2", "Laboratory Parameters", "300", "First-level subsection"]
 ]
 
-df_align = pd.DataFrame(align_demo,
-    columns=["Endpoint", "Analysis Method", "Result Summary"])
+df_hierarchy = pl.DataFrame(hierarchy_demo, schema=["level", "content", "indent_val", "description"])
 
-# Create RTF with alignment and indentation
-doc_align = rtf.RTFDocument(
-    df=df_align,
-    rtf_page=rtf.RTFPage(
-        orientation="landscape",
-        nrow=40
-    ),
+# Create RTF with indentation
+doc_hierarchy = rtf.RTFDocument(
+    df=df_hierarchy,
     rtf_title=rtf.RTFTitle(
-        text=[
-            "Clinical Trial Endpoints Summary",
-            "Hierarchical Display with Indentation"
-        ]
+        text=["Hierarchical Document Structure", "Indentation and Organization Examples"]
     ),
     rtf_body=rtf.RTFBody(
-        col_rel_width=[3.5, 2.0, 4.0],
-        text_justification=["l", "c", "l"],
-        # Different indentation levels
-        text_indent_first=[
-            [0, 0, 0],      # Primary header - no indent
-            [200, 0, 0],    # Bullet - 200 twips indent
-            [200, 0, 0],    # Bullet - 200 twips indent
-            [0, 0, 0],      # Secondary header - no indent
-            [200, 0, 0],    # Numbered - 200 twips indent
-            [200, 0, 0],    # Numbered - 200 twips indent
-            [200, 0, 0],    # Numbered - 200 twips indent
-            [0, 0, 0],      # Safety header - no indent
-            [200, 0, 0],    # Arrow - 200 twips indent
-            [200, 0, 0],    # Arrow - 200 twips indent
-            [200, 0, 0]     # Arrow - 200 twips indent
-        ],
-        # Bold headers, normal sub-items
-        text_format=[
-            ["b", "b", "b"],  # Primary header
-            ["", "", ""],     # Sub-item
-            ["", "", ""],     # Sub-item
-            ["b", "b", "b"],  # Secondary header
-            ["", "", ""],     # Sub-item
-            ["", "", ""],     # Sub-item
-            ["", "", ""],     # Sub-item
-            ["b", "b", "b"],  # Safety header
-            ["", "", ""],     # Sub-item
-            ["", "", ""],     # Sub-item
-            ["", "", ""]      # Sub-item
-        ],
-        # Different colors for sections
-        text_color=[
-            ["darkblue", "darkblue", "darkblue"],  # Primary
-            ["black", "black", "black"],
-            ["black", "black", "black"],
-            ["darkgreen", "darkgreen", "darkgreen"], # Secondary
-            ["black", "black", "black"],
-            ["black", "black", "black"],
-            ["black", "black", "black"],
-            ["darkred", "darkred", "darkred"],     # Safety
-            ["black", "black", "black"],
-            ["black", "black", "black"],
-            ["black", "black", "black"]
-        ],
-        border_left=["single"] + [""] * 2,
-        border_right=[""] * 2 + ["single"]
+        col_rel_width=[1.0, 3.5, 1.5, 3.0],
+        text_justification=["c", "l", "c", "l"],
+        text_format=["b", "b", "", "i"],  # Bold level and content, italic description
+        text_color=["blue", "black", "gray", "gray"],
+        text_indent_first=[0, 0, 0, 0],  # Indentation shown conceptually in data
+        border_top=["single"] * 4,
+        border_bottom=["single"] * 4,
+        border_left=["single", "", "", ""],
+        border_right=["", "", "", "single"]
     )
 )
 
-doc_align.write_rtf("../rtf/text_formatting_alignment.rtf")
-print("Created text_formatting_alignment.rtf")
+doc_hierarchy.write_rtf("../rtf/hierarchy_indentation.rtf")
+print("Created hierarchy_indentation.rtf")
 ```
 
 ```
-Created text_formatting_alignment.rtf
+Created hierarchy_indentation.rtf
 ```
 
-## Special Characters and Symbols
+## Special Characters and Mathematical Notation
 
-Demonstrate mathematical and clinical symbols:
+Demonstrate special characters and symbols:
 
 ```{python}
 # Create special characters demonstration
 symbols_demo = [
-    ["Mathematical", "±2.5", "Plus/minus for confidence intervals"],
-    ["Inequality", "≤5% or ≥95%", "Less than or equal, greater than or equal"],
-    ["Greek Letters", "α=0.05, β-blocker", "Statistical significance, medication types"],
-    ["Subscripts", "HbA₁c, CO₂", "Chemical formulas and medical abbreviations"],
-    ["Superscripts", "10³ cells/μL", "Scientific notation and units"],
-    ["Arrows", "↑ increased, ↓ decreased", "Direction of change"],
-    ["Bullets", "• Primary endpoint", "List formatting"],
-    ["Clinical", "♂ male, ♀ female", "Gender symbols"],
-    ["Statistics", "χ² test, p-value", "Statistical test notation"],
-    ["Units", "m², mg/dL, μg/mL", "Medical and scientific units"]
+    ["Category", "Symbol", "Usage", "Example Context"],
+    ["Mathematical", "±", "Plus/minus", "Mean ± SD: 12.5 ± 2.3"],
+    ["Inequality", "≤ ≥", "Less/greater than equal", "p≤0.05, eGFR≥60"],
+    ["Greek Letters", "α β γ", "Statistical notation", "α=0.05, β-blocker"],
+    ["Subscripts", "₁ ₂", "Chemical formulas", "H₂O, CO₂, HbA₁c"],
+    ["Superscripts", "² ³", "Mathematical powers", "10³ cells/μL, m²"],
+    ["Arrows", "↑ ↓", "Direction of change", "↑increased, ↓decreased"],
+    ["Clinical", "♂ ♀", "Gender symbols", "♂ male, ♀ female"],
+    ["Statistics", "χ²", "Statistical tests", "χ² test, p-value"],
+    ["Units", "μ", "Micro units", "μg/mL, μmol/L"]
 ]
 
-df_symbols = pd.DataFrame(symbols_demo,
-    columns=["Category", "Examples", "Clinical Usage"])
+df_symbols = pl.DataFrame(symbols_demo, schema=["category", "symbol", "usage", "example"])
 
 # Create RTF with special characters
 doc_symbols = rtf.RTFDocument(
     df=df_symbols,
-    rtf_page=rtf.RTFPage(
-        orientation="landscape",
-        nrow=40
-    ),
     rtf_title=rtf.RTFTitle(
-        text=[
-            "Special Characters and Symbols Reference",
-            "Mathematical and Clinical Notation in RTF Documents"
-        ]
+        text=["Special Characters and Mathematical Notation", "Symbol Reference for Clinical Documents"]
     ),
     rtf_body=rtf.RTFBody(
-        col_rel_width=[2.0, 2.5, 4.0],
-        text_justification=["l", "c", "l"],
-        # Make examples column larger font
-        text_font_size=[
-            [11, 12, 11],
-            [11, 12, 11],
-            [11, 12, 11],
-            [11, 12, 11],
-            [11, 12, 11],
-            [11, 12, 11],
-            [11, 12, 11],
-            [11, 12, 11],
-            [11, 12, 11],
-            [11, 12, 11]
-        ],
-        # Bold category and examples
-        text_format=[
-            ["b", "b", ""],
-            ["b", "b", ""],
-            ["b", "b", ""],
-            ["b", "b", ""],
-            ["b", "b", ""],
-            ["b", "b", ""],
-            ["b", "b", ""],
-            ["b", "b", ""],
-            ["b", "b", ""],
-            ["b", "b", ""]
-        ],
-        # Alternate row colors
-        text_background_color=[
-            ["white", "white", "white"],
-            ["lightgray", "lightgray", "lightgray"],
-            ["white", "white", "white"],
-            ["lightgray", "lightgray", "lightgray"],
-            ["white", "white", "white"],
-            ["lightgray", "lightgray", "lightgray"],
-            ["white", "white", "white"],
-            ["lightgray", "lightgray", "lightgray"],
-            ["white", "white", "white"],
-            ["lightgray", "lightgray", "lightgray"]
-        ],
-        border_left=["single"] + [""] * 2,
-        border_right=[""] * 2 + ["single"],
-        border_top=["single"] * 3,
-        border_bottom=["single"] * 3
+        col_rel_width=[2.0, 1.5, 2.0, 3.5],
+        text_justification=["l", "c", "l", "l"],
+        text_format=["b", "b", "", ""],  # Bold category and symbol
+        text_color=["darkblue", "red", "black", "gray"],
+        text_font_size=[18, 20, 16, 16],  # Larger font for symbols
+        border_top=["single"] * 4,
+        border_bottom=["single"] * 4,
+        border_left=["single", "", "", ""],
+        border_right=["", "", "", "single"]
     ),
     rtf_footnote=rtf.RTFFootnote(
         text=[
             "Special characters should render consistently across RTF viewers.",
             "For complex mathematical expressions, consider using equation editors.",
-            "Greek letters: Use Symbol font or Unicode for proper display."
+            "Greek letters and symbols: Use Unicode characters for proper display."
         ]
     )
 )
 
-doc_symbols.write_rtf("../rtf/text_formatting_symbols.rtf")
-print("Created text_formatting_symbols.rtf")
+doc_symbols.write_rtf("../rtf/special_characters.rtf")
+print("Created special_characters.rtf")
 ```
 
 ```
-Created text_formatting_symbols.rtf
+Created special_characters.rtf
 ```
 
-## Complex Laboratory Report
+## Clinical Laboratory Report Example
 
-Create a comprehensive example combining all formatting features:
+Create a comprehensive clinical example combining all formatting features:
 
 ```{python}
-# Enhanced laboratory data with formatting indicators
-lab_enhanced = [
+# Create clinical laboratory data
+lab_data = [
+    ["Test Group", "Parameter", "Result", "Reference Range", "Status"],
     ["Complete Blood Count", "", "", "", ""],
-    ["  Hemoglobin", "12.5", "11.0-15.0", "g/dL", "Normal"],
-    ["  Hematocrit", "37.8", "33.0-45.0", "%", "Normal"],
-    ["  Platelet Count", "145", "150-400", "×10³/μL", "Low↓"],
-    ["  White Blood Cell Count", "6.8", "4.0-10.0", "×10³/μL", "Normal"],
-    ["", "", "", "", ""],
-    ["Comprehensive Metabolic Panel", "", "", "", ""],
-    ["  Glucose (Fasting)", "140", "70-100", "mg/dL", "Elevated↑"],
-    ["  Creatinine", "1.2", "0.6-1.2", "mg/dL", "High Normal"],
-    ["  eGFR", "≥60", "≥60", "mL/min/1.73m²", "Normal"],
-    ["  ALT", "45", "≤40", "U/L", "Elevated↑"],
-    ["  Total Bilirubin", "0.8", "0.2-1.2", "mg/dL", "Normal"],
-    ["", "", "", "", ""],
+    ["", "Hemoglobin", "12.5", "11.0-15.0 g/dL", "Normal"],
+    ["", "Hematocrit", "37.8", "33.0-45.0%", "Normal"],
+    ["", "Platelet Count", "145", "150-400 ×10³/μL", "Low ↓"],
+    ["", "WBC Count", "6.8", "4.0-10.0 ×10³/μL", "Normal"],
+    ["Metabolic Panel", "", "", "", ""],
+    ["", "Glucose", "140", "70-100 mg/dL", "Elevated ↑"],
+    ["", "Creatinine", "1.2", "0.6-1.2 mg/dL", "High Normal"],
+    ["", "eGFR", "≥60", "≥60 mL/min/1.73m²", "Normal"],
+    ["", "ALT", "45", "≤40 U/L", "Elevated ↑"],
     ["Lipid Panel", "", "", "", ""],
-    ["  Total Cholesterol", "220", "<200", "mg/dL", "Elevated↑"],
-    ["  LDL Cholesterol", "140", "<100", "mg/dL", "Elevated↑"],
-    ["  HDL Cholesterol", "35", "≥40", "mg/dL", "Low↓"],
-    ["  Triglycerides", "180", "<150", "mg/dL", "Elevated↑"],
-    ["", "", "", "", ""],
+    ["", "Total Cholesterol", "220", "<200 mg/dL", "Elevated ↑"],
+    ["", "LDL Cholesterol", "140", "<100 mg/dL", "Elevated ↑"],
+    ["", "HDL Cholesterol", "35", "≥40 mg/dL", "Low ↓"],
+    ["", "Triglycerides", "180", "<150 mg/dL", "Elevated ↑"],
     ["Diabetes Monitoring", "", "", "", ""],
-    ["  HbA₁c", "7.2", "<7.0", "%", "Above Target↑"],
-    ["  Microalbumin", "45", "<30", "mg/g creatinine", "Elevated↑"]
+    ["", "HbA₁c", "7.2", "<7.0%", "Above Target ↑"],
+    ["", "Microalbumin", "45", "<30 mg/g", "Elevated ↑"]
 ]
 
-df_lab_enhanced = pd.DataFrame(lab_enhanced,
-    columns=["Test", "Result", "Reference Range", "Units", "Status"])
+df_lab = pl.DataFrame(lab_data, schema=["group", "parameter", "result", "reference", "status"])
 
-# Create comprehensive laboratory report
+# Create comprehensive clinical laboratory report
 doc_lab = rtf.RTFDocument(
-    df=df_lab_enhanced,
+    df=df_lab,
     rtf_page=rtf.RTFPage(
-        orientation="portrait",
-        nrow=50
+        orientation="landscape",
+        nrow=25
     ),
     rtf_title=rtf.RTFTitle(
         text=[
             "Comprehensive Laboratory Report",
             "Patient: Smith, John (DOB: 15-Jan-1970, MRN: 123456)",
-            "Date Collected: " + pd.Timestamp.now().strftime("%d-%b-%Y") + " | Lab Report #: LAB-2024-001"
+            "Collection Date: 15-Dec-2024 | Report #: LAB-2024-001"
         ]
     ),
     rtf_body=rtf.RTFBody(
-        col_rel_width=[3.5, 1.5, 2.0, 2.0, 2.0],
-        text_justification=["l", "c", "c", "l", "l"],
-        # Conditional formatting based on content
-        text_format=[
-            ["b", "b", "b", "b", "b"],  # Section headers
-            ["", "", "", "", ""],       # Normal values
-            ["", "", "", "", ""],
-            ["", "", "", "", "b"],      # Low value - bold status
-            ["", "", "", "", ""],
-            ["", "", "", "", ""],       # Blank row
-            ["b", "b", "b", "b", "b"],  # Section header
-            ["", "", "", "", "b"],      # Elevated - bold status
-            ["", "", "", "", ""],
-            ["", "", "", "", ""],
-            ["", "", "", "", "b"],      # Elevated - bold status
-            ["", "", "", "", ""],
-            ["", "", "", "", ""],       # Blank row
-            ["b", "b", "b", "b", "b"],  # Section header
-            ["", "", "", "", "b"],      # Elevated - bold status
-            ["", "", "", "", "b"],      # Elevated - bold status
-            ["", "", "", "", "b"],      # Low - bold status
-            ["", "", "", "", "b"],      # Elevated - bold status
-            ["", "", "", "", ""],       # Blank row
-            ["b", "b", "b", "b", "b"],  # Section header
-            ["", "", "", "", "b"],      # Above target - bold status
-            ["", "", "", "", "b"]       # Elevated - bold status
-        ],
-        # Color coding for abnormal values
-        text_color=[
-            ["darkblue"] * 5,    # Section header
-            ["black"] * 5,       # Normal
-            ["black"] * 5,       # Normal
-            ["red"] * 5,         # Low (red)
-            ["black"] * 5,       # Normal
-            ["black"] * 5,       # Blank
-            ["darkblue"] * 5,    # Section header
-            ["red"] * 5,         # Elevated (red)
-            ["black"] * 5,       # Normal
-            ["black"] * 5,       # Normal
-            ["red"] * 5,         # Elevated (red)
-            ["black"] * 5,       # Normal
-            ["black"] * 5,       # Blank
-            ["darkblue"] * 5,    # Section header
-            ["red"] * 5,         # Elevated (red)
-            ["red"] * 5,         # Elevated (red)
-            ["red"] * 5,         # Low (red)
-            ["red"] * 5,         # Elevated (red)
-            ["black"] * 5,       # Blank
-            ["darkblue"] * 5,    # Section header
-            ["red"] * 5,         # Above target (red)
-            ["red"] * 5          # Elevated (red)
-        ],
-        # Indentation for test names under sections
-        text_indent_first=[
-            [0] + [0] * 4,       # Section header
-            [300] + [0] * 4,     # Indented test
-            [300] + [0] * 4,     # Indented test
-            [300] + [0] * 4,     # Indented test
-            [300] + [0] * 4,     # Indented test
-            [0] * 5,             # Blank
-            [0] + [0] * 4,       # Section header
-            [300] + [0] * 4,     # Indented test
-            [300] + [0] * 4,     # Indented test
-            [300] + [0] * 4,     # Indented test
-            [300] + [0] * 4,     # Indented test
-            [300] + [0] * 4,     # Indented test
-            [0] * 5,             # Blank
-            [0] + [0] * 4,       # Section header
-            [300] + [0] * 4,     # Indented test
-            [300] + [0] * 4,     # Indented test
-            [300] + [0] * 4,     # Indented test
-            [300] + [0] * 4,     # Indented test
-            [0] * 5,             # Blank
-            [0] + [0] * 4,       # Section header
-            [300] + [0] * 4,     # Indented test
-            [300] + [0] * 4      # Indented test
-        ],
-        border_left=["single"] + [""] * 4,
-        border_right=[""] * 4 + ["single"]
+        col_rel_width=[2.5, 2.5, 1.5, 2.5, 2.0],
+        text_justification=["l", "l", "c", "c", "l"],
+        text_format=["b", "", "", "", "b"],  # Bold groups and status
+        text_color=["darkblue", "black", "black", "black", "red"],  # Blue headers, red status
+        text_background_color=["lightblue", "white", "white", "white", "white"],
+        text_font_size=[16, 14, 14, 14, 14],
+        text_indent_first=[0, 300, 0, 0, 0],  # Indent parameters under groups
+        border_top=["single"] * 5,
+        border_bottom=["single"] * 5,
+        border_left=["single", "", "", "", ""],
+        border_right=["", "", "", "", "single"]
     ),
     rtf_footnote=rtf.RTFFootnote(
         text=[
             "Reference ranges are for adult populations and may vary by laboratory.",
             "↑ = Above normal range, ↓ = Below normal range",
-            "Critical values requiring immediate attention are highlighted in red.",
+            "Critical values requiring immediate attention are highlighted.",
             "This report should be interpreted by a qualified healthcare provider."
         ]
     ),
     rtf_source=rtf.RTFSource(
-        text="Generated by: Clinical Laboratory Information System v2.1 | " +
-             "Reviewed by: Dr. Jane Wilson, MD | Report Date: " +
-             pd.Timestamp.now().strftime("%d-%b-%Y %H:%M")
+        text="Clinical Laboratory Information System | Reviewed by: Dr. Jane Wilson, MD"
     )
 )
 
-doc_lab.write_rtf("../rtf/text_formatting_clinical.rtf")
-print("Created text_formatting_clinical.rtf")
+doc_lab.write_rtf("../rtf/clinical_lab_report.rtf")
+print("Created clinical_lab_report.rtf")
 ```
 
 ```
-Created text_formatting_clinical.rtf
+Created clinical_lab_report.rtf
 ```
 
-## Convert to PDF
+## Text Formatting Combinations
+
+Demonstrate combining multiple formatting features in one document:
+
+```{python}
+# Create comprehensive formatting example
+format_combo_data = [
+    ["Section", "Content", "Format Type", "Color Scheme"],
+    ["HEADER", "Document Title", "Bold + Large Font", "Blue on Light Blue"],
+    ["Subheader", "Section Title", "Bold + Medium Font", "Green on White"],
+    ["Body", "Regular paragraph text", "Normal Font", "Black on White"],
+    ["Emphasis", "Important information", "Bold + Italic", "Red on Yellow"],
+    ["Code", "Monospace data", "Fixed Width Font", "Black on Gray"],
+    ["Footnote", "Small reference text", "Small + Italic", "Gray on White"],
+    ["Warning", "Critical alert text", "Bold + Underline", "Red on Pink"],
+    ["Formula", "H₂O + CO₂ → H₂CO₃", "Subscripts", "Blue on White"],
+    ["Statistics", "p<0.001, α=0.05", "Mixed Formatting", "Black on White"]
+]
+
+df_combo = pl.DataFrame(format_combo_data, schema=["section", "content", "format_type", "color_scheme"])
+
+# Create RTF demonstrating format combinations
+doc_combo = rtf.RTFDocument(
+    df=df_combo,
+    rtf_title=rtf.RTFTitle(
+        text=["Text Formatting Combinations", "Multiple Format Features in One Document"]
+    ),
+    rtf_body=rtf.RTFBody(
+        col_rel_width=[2.0, 3.0, 2.5, 2.5],
+        text_justification=["l", "l", "l", "l"],
+        text_format=["b", "", "i", ""],  # Bold section, italic format type
+        text_color=["darkblue", "black", "green", "gray"],
+        text_background_color=["lightblue", "white", "white", "lightgray"],
+        text_font_size=[18, 16, 14, 14],
+        border_top=["single"] * 4,
+        border_bottom=["single"] * 4,
+        border_left=["single", "", "", ""],
+        border_right=["", "", "", "single"]
+    ),
+    rtf_footnote=rtf.RTFFootnote(
+        text="This example demonstrates how multiple formatting features can be combined " +
+             "to create professional documents with clear visual hierarchy and emphasis."
+    )
+)
+
+doc_combo.write_rtf("../rtf/format_combinations.rtf")
+print("Created format_combinations.rtf")
+```
 
 ```
-✓ Converted text_formatting_fonts.rtf to PDF
-✓ Converted text_formatting_colors.rtf to PDF
-✓ Converted text_formatting_alignment.rtf to PDF
-✓ Converted text_formatting_symbols.rtf to PDF
-✓ Converted text_formatting_clinical.rtf to PDF
-
-PDF conversion completed successfully!
+Created format_combinations.rtf
 ```
 
 ## Key Features Demonstrated
 
-### 1. Font Control
-- Multiple font families (Times New Roman, Arial, Courier New, Calibri, Symbol)
-- Variable font sizes within tables
-- Font style combinations (bold, italic, underline)
-- Monospace fonts for code and data alignment
+### 1. Text Format Styles (r2rtf Pattern)
+- **Bold (b)**: Primary emphasis and headers
+- **Italic (i)**: Secondary emphasis and notes  
+- **Bold Italic (bi)**: Maximum emphasis
+- **Underline (u)**: Highlighting important content
+- **Superscript (^)**: Mathematical expressions, footnote markers
+- **Subscript (_)**: Chemical formulas, mathematical notation
+- **Strikethrough (s)**: Deprecated or changed content
 
-### 2. Color Management
-- Text color specification by cell or row
+### 2. Font Size Control
+- Variable font sizes (8pt to 16pt range)
+- Size specified in half-points (20 = 10pt)
+- Column-based size application
+- Consistent sizing for document hierarchy
+
+### 3. Text Alignment Options
+- **Left (l)**: Default alignment for body text
+- **Center (c)**: Headers and titles
+- **Right (r)**: Numerical data and dates
+- **Justified (j)**: Full-width paragraphs
+
+### 4. Color Management
+- Text color specification per column
 - Background color highlighting
-- Color-coded status indicators
 - Professional color schemes for clinical documentation
+- Accessibility considerations with text + color coding
 
-### 3. Text Alignment and Spacing
-- Left, center, and right justification
-- First-line indentation for hierarchical display
-- Custom spacing for structured documents
-- Multi-level indentation patterns
-
-### 4. Special Characters
+### 5. Special Characters and Symbols
 - Mathematical symbols (±, ≤, ≥, α, β, χ²)
 - Clinical notation (♂, ♀, ↑, ↓)
 - Scientific units (m², μL, subscripts, superscripts)
 - Unicode character support
 
-### 5. Clinical Document Standards
+### 6. Clinical Document Standards
 - Hierarchical section organization
-- Color-coded abnormal values
+- Color-coded status indicators
 - Professional header and footer information
-- Consistent formatting throughout document
+- Consistent formatting throughout documents
 
 ## Best Practices for Text Formatting
 
-1. **Consistency**:
-   - Use the same fonts throughout related documents
-   - Maintain consistent color schemes
-   - Apply formatting rules uniformly
+1. **r2rtf-Style Consistency**:
+   - Use consistent format codes (b, i, u, ^, _, s, bi)
+   - Apply font sizes systematically (8-16pt range)
+   - Maintain alignment consistency by column function
 
-2. **Readability**:
-   - Choose appropriate font sizes (11-12pt for body text)
+2. **Professional Typography**:
+   - Choose appropriate font sizes for content hierarchy
    - Use sufficient contrast between text and background
-   - Avoid overuse of formatting styles
+   - Apply formatting to enhance, not distract from content
 
-3. **Accessibility**:
+3. **Clinical Standards**:
+   - Follow institutional formatting guidelines
+   - Use standard medical abbreviations and symbols
+   - Include appropriate disclaimers and legends
+
+4. **Accessibility**:
    - Don't rely solely on color for critical information
    - Use bold or italics to reinforce color coding
    - Provide clear legends for symbols and colors
 
-4. **Clinical Standards**:
-   - Follow institutional formatting guidelines
-   - Use standard medical abbreviations and symbols
-   - Include appropriate disclaimers and interpretive notes
-
-5. **Technical Considerations**:
+5. **Technical Implementation**:
    - Test formatting across different RTF viewers
    - Use Unicode for special characters when possible
-   - Consider font availability on target systems
+   - Plan column-based formatting for consistency
 
-This example demonstrates the comprehensive text formatting capabilities of rtflite for creating professional clinical and scientific documents that meet industry standards for presentation and accessibility.
+This example demonstrates rtflite's text formatting capabilities inspired by r2rtf patterns, 
+enabling creation of professional clinical and scientific documents that meet industry 
+standards for presentation, accessibility, and regulatory compliance.

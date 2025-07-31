@@ -6,839 +6,449 @@ eval: false
 
 <!-- `.md` and `.py` files are generated from the `.qmd` file. Please edit that file. -->
 
-This article demonstrates advanced row-level formatting in rtflite, 
-including conditional formatting, alternating row styles, grouped data presentation, 
-and complex multi-row headers commonly used in clinical trial reporting.
+This article demonstrates row-level formatting in rtflite, inspired by r2rtf row formatting patterns. 
+It covers borders, cell justification, column widths, text appearance, and advanced styling 
+for creating professional clinical and regulatory documents.
 
 ## Overview
 
-Row-level formatting is essential for 
-creating professional clinical TLFs that guide the reader's attention 
-and present complex data clearly. 
-Key features include:
+Row-level formatting provides granular control over table appearance and structure. 
+Key capabilities based on r2rtf patterns include:
 
-- Conditional formatting based on data values
-- Group headers and subheaders
-- Multi-level hierarchical displays
-- Highlighting of critical values or summary rows
+- Border customization (top, left, right, bottom borders)
+- Cell justification and alignment (left, center, right, decimal)
+- Column width control with relative sizing
+- Text appearance (bold, italic, underline, strikethrough, combinations)
+- Advanced styling (font sizes, colors, background colors)
+- Conditional formatting based on content
 
 ## Imports
 
 ```{python}
 import polars as pl
-import numpy as np
 import rtflite as rtf
 ```
 
-## Generate Clinical Trial Demographics Data
+## Border Formatting Examples
 
-Create comprehensive demographics data for formatting demonstration:
-
-```{python}
-# Set seed for reproducibility
-np.random.seed(321)
-
-# Generate subject demographics
-n_subjects = {'Placebo': 150, 'Drug 25mg': 148, 'Drug 50mg': 152}
-
-demo_data = []
-for trt, n in n_subjects.items():
-    for i in range(n):
-        age = max(18, int(np.random.normal(65, 12)))
-        sex = np.random.choice(['Male', 'Female'], p=[0.6, 0.4])
-        race = np.random.choice(['White', 'Black or African American', 'Asian', 'Other'],
-                               p=[0.75, 0.15, 0.08, 0.02])
-        weight = np.random.normal(75 + (10 if sex == 'Male' else -5), 15)
-        height = np.random.normal(170 + (8 if sex == 'Male' else -8), 10)
-        bmi = weight / ((height/100) ** 2)
-
-        demo_data.append({
-            'TREATMENT': trt,
-            'USUBJID': f"{trt[:4].upper()}-{i+1:03d}",
-            'AGE': age,
-            'SEX': sex,
-            'RACE': race,
-            'WEIGHT': round(weight, 1),
-            'HEIGHT': round(height, 1),
-            'BMI': round(bmi, 1)
-        })
-
-df_demo = pd.DataFrame(demo_data)
-print(f"Generated demographics for {len(df_demo)} subjects")
-print(f"Sample data:\n{df_demo.head()}")
-```
-
-```
-Generated demographics for 450 subjects
-Sample data:
-   TREATMENT    USUBJID  AGE     SEX                     RACE  WEIGHT  HEIGHT   BMI
-0    Placebo  PLAC-001   49  Female                    White    65.2   155.4  27.0
-1    Placebo  PLAC-002   70    Male                    White    91.1   184.7  26.7
-2    Placebo  PLAC-003   77    Male  Black or African American    72.4   166.8  26.0
-3    Placebo  PLAC-004   64  Female                    White    59.7   158.6  23.7
-4    Placebo  PLAC-005   58    Male                    White    89.3   175.2  29.1
-```
-
-## Create Demographics Summary Table
-
-Generate demographics summary with conditional formatting:
+Demonstrate various border styles and patterns:
 
 ```{python}
-# Calculate demographics summary statistics
-def calculate_stats(data, var, var_type='continuous'):
-    if var_type == 'continuous':
-        return {
-            'n': len(data),
-            'mean': data.mean(),
-            'std': data.std(),
-            'median': data.median(),
-            'min': data.min(),
-            'max': data.max()
-        }
-    else:
-        counts = data.value_counts()
-        total = len(data)
-        return {cat: {'n': count, 'pct': count/total*100}
-                for cat, count in counts.items()}
-
-# Build demographics table
-demo_summary = []
-
-# Age statistics
-demo_summary.append(['DEMOGRAPHICS', '', 'Placebo', 'Drug 25mg', 'Drug 50mg', 'Total'])
-demo_summary.append(['', '', f'(N={n_subjects["Placebo"]})',
-                    f'(N={n_subjects["Drug 25mg"]})',
-                    f'(N={n_subjects["Drug 50mg"]})',
-                    f'(N={sum(n_subjects.values())})'])
-demo_summary.append(['', '', '', '', '', ''])
-
-# Age
-age_stats = {trt: calculate_stats(df_demo[df_demo['TREATMENT'] == trt]['AGE'], 'AGE')
-             for trt in n_subjects.keys()}
-age_total = calculate_stats(df_demo['AGE'], 'AGE')
-
-demo_summary.append(['Age (years)', '', '', '', '', ''])
-demo_summary.append(['  Mean (SD)', '',
-                    f"{age_stats['Placebo']['mean']:.1f} ({age_stats['Placebo']['std']:.1f})",
-                    f"{age_stats['Drug 25mg']['mean']:.1f} ({age_stats['Drug 25mg']['std']:.1f})",
-                    f"{age_stats['Drug 50mg']['mean']:.1f} ({age_stats['Drug 50mg']['std']:.1f})",
-                    f"{age_total['mean']:.1f} ({age_total['std']:.1f})"])
-demo_summary.append(['  Median', '',
-                    f"{age_stats['Placebo']['median']:.0f}",
-                    f"{age_stats['Drug 25mg']['median']:.0f}",
-                    f"{age_stats['Drug 50mg']['median']:.0f}",
-                    f"{age_total['median']:.0f}"])
-demo_summary.append(['  Range', '',
-                    f"{age_stats['Placebo']['min']:.0f}-{age_stats['Placebo']['max']:.0f}",
-                    f"{age_stats['Drug 25mg']['min']:.0f}-{age_stats['Drug 25mg']['max']:.0f}",
-                    f"{age_stats['Drug 50mg']['min']:.0f}-{age_stats['Drug 50mg']['max']:.0f}",
-                    f"{age_total['min']:.0f}-{age_total['max']:.0f}"])
-
-# Sex
-demo_summary.append(['', '', '', '', '', ''])
-demo_summary.append(['Sex, n (%)', '', '', '', '', ''])
-sex_stats = {trt: calculate_stats(df_demo[df_demo['TREATMENT'] == trt]['SEX'], 'SEX', 'categorical')
-             for trt in n_subjects.keys()}
-sex_total = calculate_stats(df_demo['SEX'], 'SEX', 'categorical')
-
-for sex in ['Male', 'Female']:
-    demo_summary.append([f'  {sex}', '',
-                        f"{sex_stats['Placebo'].get(sex, {'n': 0, 'pct': 0})['n']} ({sex_stats['Placebo'].get(sex, {'n': 0, 'pct': 0})['pct']:.1f})",
-                        f"{sex_stats['Drug 25mg'].get(sex, {'n': 0, 'pct': 0})['n']} ({sex_stats['Drug 25mg'].get(sex, {'n': 0, 'pct': 0})['pct']:.1f})",
-                        f"{sex_stats['Drug 50mg'].get(sex, {'n': 0, 'pct': 0})['n']} ({sex_stats['Drug 50mg'].get(sex, {'n': 0, 'pct': 0})['pct']:.1f})",
-                        f"{sex_total.get(sex, {'n': 0, 'pct': 0})['n']} ({sex_total.get(sex, {'n': 0, 'pct': 0})['pct']:.1f})"])
-
-# BMI categories
-demo_summary.append(['', '', '', '', '', ''])
-demo_summary.append(['BMI Category, n (%)', '', '', '', '', ''])
-
-# Categorize BMI
-def categorize_bmi(bmi):
-    if bmi < 18.5:
-        return 'Underweight'
-    elif bmi < 25:
-        return 'Normal'
-    elif bmi < 30:
-        return 'Overweight'
-    else:
-        return 'Obese'
-
-df_demo['BMI_CAT'] = df_demo['BMI'].apply(categorize_bmi)
-bmi_stats = {trt: calculate_stats(df_demo[df_demo['TREATMENT'] == trt]['BMI_CAT'], 'BMI_CAT', 'categorical')
-             for trt in n_subjects.keys()}
-bmi_total = calculate_stats(df_demo['BMI_CAT'], 'BMI_CAT', 'categorical')
-
-for bmi_cat in ['Underweight', 'Normal', 'Overweight', 'Obese']:
-    demo_summary.append([f'  {bmi_cat}', '',
-                        f"{bmi_stats['Placebo'].get(bmi_cat, {'n': 0, 'pct': 0})['n']} ({bmi_stats['Placebo'].get(bmi_cat, {'n': 0, 'pct': 0})['pct']:.1f})",
-                        f"{bmi_stats['Drug 25mg'].get(bmi_cat, {'n': 0, 'pct': 0})['n']} ({bmi_stats['Drug 25mg'].get(bmi_cat, {'n': 0, 'pct': 0})['pct']:.1f})",
-                        f"{bmi_stats['Drug 50mg'].get(bmi_cat, {'n': 0, 'pct': 0})['n']} ({bmi_stats['Drug 50mg'].get(bmi_cat, {'n': 0, 'pct': 0})['pct']:.1f})",
-                        f"{bmi_total.get(bmi_cat, {'n': 0, 'pct': 0})['n']} ({bmi_total.get(bmi_cat, {'n': 0, 'pct': 0})['pct']:.1f})"])
-
-df_demo_table = pd.DataFrame(demo_summary,
-    columns=['Characteristic', 'Statistic', 'Placebo', 'Drug 25mg', 'Drug 50mg', 'Total'])
-
-print(f"\nDemographics table has {len(df_demo_table)} rows")
-```
-
-```
-Demographics table has 18 rows
-```
-
-## Create Demographics Table with Advanced Row Formatting
-
-Apply sophisticated row-level formatting:
-
-```{python}
-# Define formatting rules based on row content and position
-def get_row_formatting(row_index, row_data):
-    """Determine formatting for each row based on content and position."""
-    characteristic = row_data[0] if len(row_data) > 0 else ""
-
-    # Main section headers (DEMOGRAPHICS)
-    if characteristic == 'DEMOGRAPHICS':
-        return {
-            'text_format': ['b', 'b', 'b', 'b', 'b', 'b'],
-            'text_color': ['darkblue'] * 6,
-            'text_background_color': ['lightblue'] * 6,
-            'text_font_size': [12] * 6,
-            'border_top': ['single'] * 6,
-            'border_bottom': ['single'] * 6
-        }
-
-    # N values row
-    elif '(N=' in str(characteristic):
-        return {
-            'text_format': ['b', 'b', 'b', 'b', 'b', 'b'],
-            'text_color': ['black'] * 6,
-            'text_background_color': ['lightgray'] * 6,
-            'text_font_size': [10] * 6,
-            'border_bottom': ['single'] * 6
-        }
-
-    # Subsection headers (Age, Sex, BMI Category)
-    elif characteristic in ['Age (years)', 'Sex, n (%)', 'BMI Category, n (%)']:
-        return {
-            'text_format': ['b', 'b', 'b', 'b', 'b', 'b'],
-            'text_color': ['darkgreen'] * 6,
-            'text_background_color': ['lightgreen'] * 6,
-            'text_font_size': [11] * 6,
-            'border_top': ['single'] * 6
-        }
-
-    # Sub-items (indented with spaces)
-    elif characteristic.startswith('  '):
-        # Alternate row colors for readability
-        if row_index % 2 == 0:
-            bg_color = 'white'
-        else:
-            bg_color = 'lightyellow'
-
-        return {
-            'text_format': ['', '', '', '', '', ''],
-            'text_color': ['black'] * 6,
-            'text_background_color': [bg_color] * 6,
-            'text_font_size': [10] * 6,
-            'text_indent_first': [300, 0, 0, 0, 0, 0]  # Indent sub-items
-        }
-
-    # Blank rows
-    elif characteristic == '':
-        return {
-            'text_format': [''] * 6,
-            'text_color': ['black'] * 6,
-            'text_background_color': ['white'] * 6,
-            'text_font_size': [8] * 6
-        }
-
-    # Default formatting
-    else:
-        return {
-            'text_format': [''] * 6,
-            'text_color': ['black'] * 6,
-            'text_background_color': ['white'] * 6,
-            'text_font_size': [10] * 6
-        }
-
-# Apply formatting to each row
-text_formats = []
-text_colors = []
-text_bg_colors = []
-text_font_sizes = []
-text_indents = []
-border_tops = []
-border_bottoms = []
-
-for i, row in df_demo_table.iterrows():
-    formatting = get_row_formatting(i, row.values)
-
-    text_formats.append(formatting.get('text_format', [''] * 6))
-    text_colors.append(formatting.get('text_color', ['black'] * 6))
-    text_bg_colors.append(formatting.get('text_background_color', ['white'] * 6))
-    text_font_sizes.append(formatting.get('text_font_size', [10] * 6))
-    text_indents.append(formatting.get('text_indent_first', [0] * 6))
-    border_tops.append(formatting.get('border_top', [''] * 6))
-    border_bottoms.append(formatting.get('border_bottom', [''] * 6))
-
-# Create RTF document with advanced row formatting
-doc_demo = rtf.RTFDocument(
-    df=df_demo_table,
-    rtf_page=rtf.RTFPage(
-        orientation="landscape",
-        nrow=40
-    ),
-    rtf_title=rtf.RTFTitle(
-        text=[
-            "Table 14.1.1: Demographics and Baseline Characteristics",
-            "Safety Population",
-            "Study XYZ-2024-001"
-        ]
-    ),
-    rtf_body=rtf.RTFBody(
-        col_rel_width=[3.0, 1.5, 1.8, 1.8, 1.8, 1.8],
-        text_justification=["l", "c", "c", "c", "c", "c"],
-        text_format=text_formats,
-        text_color=text_colors,
-        text_background_color=text_bg_colors,
-        text_font_size=text_font_sizes,
-        text_indent_first=text_indents,
-        border_top=border_tops,
-        border_bottom=border_bottoms,
-        border_left=["single"] + [""] * 5,
-        border_right=[""] * 5 + ["single"]
-    ),
-    rtf_footnote=rtf.RTFFootnote(
-        text=[
-            "Values are presented as mean (standard deviation) for continuous variables and n (%) for categorical variables.",
-            "BMI = Body Mass Index calculated as weight (kg) / height (m)²",
-            "Safety Population includes all randomized subjects who received at least one dose of study medication."
-        ]
-    ),
-    rtf_source=rtf.RTFSource(
-        text="Source: ADSL Dataset | Program: t-demo.py | Generated: " +
-             pd.Timestamp.now().strftime("%d%b%Y:%H:%M")
-    )
-)
-
-doc_demo.write_rtf("../rtf/row_formatting_demographics.rtf")
-print("Created row_formatting_demographics.rtf")
-```
-
-```
-Created row_formatting_demographics.rtf
-```
-
-## Vital Signs Table with Conditional Formatting
-
-Create a vital signs table with value-based conditional formatting:
-
-```{python}
-# Generate vital signs data
-vital_data = []
-visit_weeks = [0, 4, 8, 12, 16, 20, 24]
-
-for trt in n_subjects.keys():
-    n = min(50, n_subjects[trt])  # Sample subset for demo
-    for i in range(n):
-        subject_id = f"{trt[:4].upper()}-{i+1:03d}"
-
-        # Baseline values
-        baseline_sbp = np.random.normal(130, 15)
-        baseline_dbp = np.random.normal(80, 10)
-        baseline_hr = np.random.normal(72, 12)
-
-        for week in visit_weeks:
-            # Treatment effect over time
-            if trt == 'Placebo':
-                sbp_change = np.random.normal(0, 5)
-                dbp_change = np.random.normal(0, 3)
-                hr_change = np.random.normal(0, 4)
-            else:
-                # Drug effect: gradual BP reduction
-                drug_effect = 5 if 'Drug 25mg' in trt else 8
-                time_factor = min(week / 12, 1.0)  # Max effect at week 12
-                sbp_change = np.random.normal(-drug_effect * time_factor, 6)
-                dbp_change = np.random.normal(-drug_effect * 0.6 * time_factor, 4)
-                hr_change = np.random.normal(2 * time_factor, 4)  # Slight HR increase
-
-            vital_data.append({
-                'TREATMENT': trt,
-                'USUBJID': subject_id,
-                'WEEK': week,
-                'VISIT': f'Week {week}' if week > 0 else 'Baseline',
-                'SBP': round(baseline_sbp + sbp_change),
-                'DBP': round(baseline_dbp + dbp_change),
-                'HR': round(baseline_hr + hr_change)
-            })
-
-df_vitals = pd.DataFrame(vital_data)
-
-# Calculate vital signs summary by visit and treatment
-vital_summary = []
-
-for week in visit_weeks:
-    visit_name = f'Week {week}' if week > 0 else 'Baseline'
-    vital_summary.append([visit_name, '', '', '', ''])
-
-    # SBP
-    sbp_row = ['  Systolic BP (mmHg)']
-    for trt in ['Placebo', 'Drug 25mg', 'Drug 50mg']:
-        trt_data = df_vitals[(df_vitals['TREATMENT'] == trt) & (df_vitals['WEEK'] == week)]['SBP']
-        mean_val = trt_data.mean()
-        std_val = trt_data.std()
-        sbp_row.append(f"{mean_val:.1f} ({std_val:.1f})")
-    vital_summary.append(sbp_row)
-
-    # DBP
-    dbp_row = ['  Diastolic BP (mmHg)']
-    for trt in ['Placebo', 'Drug 25mg', 'Drug 50mg']:
-        trt_data = df_vitals[(df_vitals['TREATMENT'] == trt) & (df_vitals['WEEK'] == week)]['DBP']
-        mean_val = trt_data.mean()
-        std_val = trt_data.std()
-        dbp_row.append(f"{mean_val:.1f} ({std_val:.1f})")
-    vital_summary.append(dbp_row)
-
-    # Heart Rate
-    hr_row = ['  Heart Rate (bpm)']
-    for trt in ['Placebo', 'Drug 25mg', 'Drug 50mg']:
-        trt_data = df_vitals[(df_vitals['TREATMENT'] == trt) & (df_vitals['WEEK'] == week)]['HR']
-        mean_val = trt_data.mean()
-        std_val = trt_data.std()
-        hr_row.append(f"{mean_val:.1f} ({std_val:.1f})")
-    vital_summary.append(hr_row)
-
-df_vitals_table = pd.DataFrame(vital_summary,
-    columns=['Visit', 'Placebo', 'Drug 25mg', 'Drug 50mg'])
-
-# Add conditional formatting based on clinical significance
-def get_vital_formatting(row_index, row_data):
-    """Apply conditional formatting based on vital sign values and clinical significance."""
-    visit = row_data[0] if len(row_data) > 0 else ""
-
-    # Visit headers
-    if 'Week' in visit or visit == 'Baseline':
-        color = 'darkblue' if visit == 'Baseline' else 'darkgreen'
-        bg_color = 'lightblue' if visit == 'Baseline' else 'lightgreen'
-        return {
-            'text_format': ['b', 'b', 'b', 'b'],
-            'text_color': [color] * 4,
-            'text_background_color': [bg_color] * 4,
-            'text_font_size': [11] * 4,
-            'border_top': ['single'] * 4
-        }
-
-    # Vital sign rows - conditional formatting based on parameter type
-    elif visit.startswith('  '):
-        # Extract parameter type
-        if 'Systolic' in visit:
-            # Highlight if any treatment shows significant change from baseline
-            bg_colors = []
-            text_colors = []
-            for i, val_str in enumerate(row_data[1:], 1):
-                if val_str:
-                    try:
-                        mean_val = float(val_str.split(' ')[0])
-                        if mean_val < 120:  # Optimal
-                            text_colors.append('darkgreen')
-                            bg_colors.append('lightgreen')
-                        elif mean_val < 140:  # Normal/elevated
-                            text_colors.append('black')
-                            bg_colors.append('white')
-                        else:  # High
-                            text_colors.append('red')
-                            bg_colors.append('lightpink')
-                    except:
-                        text_colors.append('black')
-                        bg_colors.append('white')
-                else:
-                    text_colors.append('black')
-                    bg_colors.append('white')
-
-            return {
-                'text_format': ['', '', '', ''],
-                'text_color': ['black'] + text_colors,
-                'text_background_color': ['white'] + bg_colors,
-                'text_font_size': [10] * 4,
-                'text_indent_first': [300, 0, 0, 0]
-            }
-
-        # Standard formatting for other parameters
-        return {
-            'text_format': ['', '', '', ''],
-            'text_color': ['black'] * 4,
-            'text_background_color': ['white'] * 4,
-            'text_font_size': [10] * 4,
-            'text_indent_first': [300, 0, 0, 0]
-        }
-
-    # Default
-    return {
-        'text_format': [''] * 4,
-        'text_color': ['black'] * 4,
-        'text_background_color': ['white'] * 4,
-        'text_font_size': [10] * 4
-    }
-
-# Apply vital signs formatting
-vital_formats = []
-vital_colors = []
-vital_bg_colors = []
-vital_font_sizes = []
-vital_indents = []
-vital_border_tops = []
-
-for i, row in df_vitals_table.iterrows():
-    formatting = get_vital_formatting(i, row.values)
-
-    vital_formats.append(formatting.get('text_format', [''] * 4))
-    vital_colors.append(formatting.get('text_color', ['black'] * 4))
-    vital_bg_colors.append(formatting.get('text_background_color', ['white'] * 4))
-    vital_font_sizes.append(formatting.get('text_font_size', [10] * 4))
-    vital_indents.append(formatting.get('text_indent_first', [0] * 4))
-    vital_border_tops.append(formatting.get('border_top', [''] * 4))
-
-# Create vital signs RTF
-doc_vitals = rtf.RTFDocument(
-    df=df_vitals_table,
-    rtf_page=rtf.RTFPage(
-        orientation="portrait",
-        nrow=50
-    ),
-    rtf_title=rtf.RTFTitle(
-        text=[
-            "Table 14.1.5: Vital Signs Summary Over Time",
-            "Mean (Standard Deviation) by Treatment Group",
-            "Safety Population"
-        ]
-    ),
-    rtf_body=rtf.RTFBody(
-        col_rel_width=[3.0, 2.2, 2.2, 2.2],
-        text_justification=["l", "c", "c", "c"],
-        text_format=vital_formats,
-        text_color=vital_colors,
-        text_background_color=vital_bg_colors,
-        text_font_size=vital_font_sizes,
-        text_indent_first=vital_indents,
-        border_top=vital_border_tops,
-        border_left=["single"] + [""] * 3,
-        border_right=[""] * 3 + ["single"]
-    ),
-    rtf_footnote=rtf.RTFFootnote(
-        text=[
-            "BP = Blood Pressure; bpm = beats per minute",
-            "Color coding: Green = Optimal (<120 mmHg SBP), Red = High (≥140 mmHg SBP)",
-            "Values shown as mean (standard deviation) based on available data at each visit"
-        ]
-    )
-)
-
-doc_vitals.write_rtf("../rtf/row_formatting_vitals.rtf")
-print("Created row_formatting_vitals.rtf")
-```
-
-```
-Created row_formatting_vitals.rtf
-```
-
-## Summary Statistics with Hierarchical Formatting
-
-Create a complex summary table with multiple levels of grouping:
-
-```{python}
-# Create a comprehensive analysis summary table
-analysis_summary = [
-    # Primary Analysis Section
-    ['PRIMARY EFFICACY ANALYSIS', '', '', '', ''],
-    ['Endpoint: Change from Baseline at Week 24', '', '', '', ''],
-    ['', '', 'Drug 25mg vs Placebo', 'Drug 50mg vs Placebo', 'Overall p-value'],
-    ['', '', '', '', ''],
-    ['Primary Population (ITT)', '', '', '', ''],
-    ['  ANCOVA (Baseline adjusted)', 'LS Mean Difference', '-2.3', '-4.7', '<0.001'],
-    ['  ', '95% CI', '(-3.1, -1.5)', '(-5.5, -3.9)', ''],
-    ['  ', 'p-value', '0.0012', '<0.0001', ''],
-    ['', '', '', '', ''],
-    ['Per-Protocol Population', '', '', '', ''],
-    ['  ANCOVA (Baseline adjusted)', 'LS Mean Difference', '-2.8', '-5.2', '<0.001'],
-    ['  ', '95% CI', '(-3.7, -1.9)', '(-6.1, -4.3)', ''],
-    ['  ', 'p-value', '0.0008', '<0.0001', ''],
-    ['', '', '', '', ''],
-
-    # Secondary Analysis Section
-    ['SECONDARY EFFICACY ANALYSES', '', '', '', ''],
-    ['', '', '', '', ''],
-    ['Response Rate Analysis', '', '', '', ''],
-    ['  Responders, n (%)', '', '67 (45.3)', '89 (58.6)', '0.023'],
-    ['  Odds Ratio vs Placebo', '', '1.85', '2.47', ''],
-    ['  95% CI', '', '(1.2, 2.8)', '(1.6, 3.8)', ''],
-    ['', '', '', '', ''],
-    ['Time to Response', '', '', '', ''],
-    ['  Median (days)', '', '42', '28', '0.015'],
-    ['  Hazard Ratio vs Placebo', '', '1.43', '1.89', ''],
-    ['  95% CI', '', '(1.1, 1.9)', '(1.4, 2.6)', ''],
-    ['', '', '', '', ''],
-
-    # Safety Section
-    ['SAFETY SUMMARY', '', '', '', ''],
-    ['', '', '', '', ''],
-    ['Overall TEAE Rate', '', '', '', ''],
-    ['  Any TEAE, n (%)', '', '98 (66.2)', '103 (67.8)', '0.845'],
-    ['  Serious AEs, n (%)', '', '8 (5.4)', '12 (7.9)', '0.287'],
-    ['  Discontinuations due to AEs', '', '5 (3.4)', '9 (5.9)', '0.198'],
-    ['', '', '', '', ''],
-    ['Most Common TEAEs (≥5%)', '', '', '', ''],
-    ['  Headache', '', '23 (15.5)', '28 (18.4)', ''],
-    ['  Nausea', '', '18 (12.2)', '25 (16.4)', ''],
-    ['  Dizziness', '', '12 (8.1)', '19 (12.5)', '']
+# Create border demonstration data
+border_demo = [
+    ["Border Type", "Description", "Usage", "Example"],
+    ["Single", "Standard single line", "Table structure", "Default borders"],
+    ["Double", "Double line border", "Headers, emphasis", "Section separators"],  
+    ["Thick", "Thick single line", "Outer boundaries", "Document frames"],
+    ["None", "No border", "Clean appearance", "Seamless sections"],
+    ["Mixed", "Combination styles", "Complex layouts", "Professional tables"]
 ]
 
-df_analysis = pd.DataFrame(analysis_summary,
-    columns=['Analysis', 'Statistic', 'Drug 25mg', 'Drug 50mg', 'p-value'])
+df_borders = pl.DataFrame(border_demo, schema=["type", "description", "usage", "example"])
 
-# Complex hierarchical formatting function
-def get_analysis_formatting(row_index, row_data):
-    """Apply complex hierarchical formatting based on analysis type and level."""
-    analysis = row_data[0] if len(row_data) > 0 else ""
-    statistic = row_data[1] if len(row_data) > 1 else ""
-
-    # Main section headers
-    if analysis in ['PRIMARY EFFICACY ANALYSIS', 'SECONDARY EFFICACY ANALYSES', 'SAFETY SUMMARY']:
-        section_colors = {
-            'PRIMARY EFFICACY ANALYSIS': ('darkblue', 'lightblue'),
-            'SECONDARY EFFICACY ANALYSES': ('darkgreen', 'lightgreen'),
-            'SAFETY SUMMARY': ('darkred', 'lightpink')
-        }
-        text_color, bg_color = section_colors.get(analysis, ('black', 'white'))
-
-        return {
-            'text_format': ['b', 'b', 'b', 'b', 'b'],
-            'text_color': [text_color] * 5,
-            'text_background_color': [bg_color] * 5,
-            'text_font_size': [12] * 5,
-            'border_top': ['double'] * 5,
-            'border_bottom': ['single'] * 5
-        }
-
-    # Endpoint descriptions
-    elif analysis.startswith('Endpoint:') or analysis.startswith('Response Rate') or analysis.startswith('Time to Response') or analysis.startswith('Overall TEAE') or analysis.startswith('Most Common'):
-        return {
-            'text_format': ['b', 'b', 'b', 'b', 'b'],
-            'text_color': ['darkorange'] * 5,
-            'text_background_color': ['lightyellow'] * 5,
-            'text_font_size': [11] * 5,
-            'border_top': ['single'] * 5
-        }
-
-    # Population/subgroup headers
-    elif analysis in ['Primary Population (ITT)', 'Per-Protocol Population']:
-        return {
-            'text_format': ['b', '', '', '', ''],
-            'text_color': ['purple'] * 5,
-            'text_background_color': ['white'] * 5,
-            'text_font_size': [10] * 5,
-            'text_indent_first': [200, 0, 0, 0, 0]
-        }
-
-    # Statistical results (indented with spaces)
-    elif analysis.startswith('  '):
-        # Highlight significant p-values
-        p_value_col = row_data[4] if len(row_data) > 4 else ""
-        is_significant = False
-        try:
-            if p_value_col and p_value_col not in ['', 'Overall p-value']:
-                if '<' in p_value_col:
-                    p_val = float(p_value_col.replace('<', ''))
-                    is_significant = p_val < 0.05
-                else:
-                    p_val = float(p_value_col)
-                    is_significant = p_val < 0.05
-        except:
-            pass
-
-        # Color for significant results
-        if is_significant:
-            p_color = 'red'
-            p_bg = 'lightpink'
-        else:
-            p_color = 'black'
-            p_bg = 'white'
-
-        return {
-            'text_format': ['', '', '', '', 'b' if is_significant else ''],
-            'text_color': ['black', 'black', 'black', 'black', p_color],
-            'text_background_color': ['white', 'white', 'white', 'white', p_bg],
-            'text_font_size': [9] * 5,
-            'text_indent_first': [400, 0, 0, 0, 0]
-        }
-
-    # Header row with treatment comparisons
-    elif 'vs Placebo' in str(row_data):
-        return {
-            'text_format': ['', 'b', 'b', 'b', 'b'],
-            'text_color': ['black'] * 5,
-            'text_background_color': ['lightgray'] * 5,
-            'text_font_size': [9] * 5,
-            'border_bottom': ['single'] * 5
-        }
-
-    # Blank rows
-    elif analysis == '':
-        return {
-            'text_format': [''] * 5,
-            'text_color': ['black'] * 5,
-            'text_background_color': ['white'] * 5,
-            'text_font_size': [6] * 5
-        }
-
-    # Default formatting
-    else:
-        return {
-            'text_format': [''] * 5,
-            'text_color': ['black'] * 5,
-            'text_background_color': ['white'] * 5,
-            'text_font_size': [10] * 5
-        }
-
-# Apply complex formatting
-analysis_formats = []
-analysis_colors = []
-analysis_bg_colors = []
-analysis_font_sizes = []
-analysis_indents = []
-analysis_border_tops = []
-analysis_border_bottoms = []
-
-for i, row in df_analysis.iterrows():
-    formatting = get_analysis_formatting(i, row.values)
-
-    analysis_formats.append(formatting.get('text_format', [''] * 5))
-    analysis_colors.append(formatting.get('text_color', ['black'] * 5))
-    analysis_bg_colors.append(formatting.get('text_background_color', ['white'] * 5))
-    analysis_font_sizes.append(formatting.get('text_font_size', [10] * 5))
-    analysis_indents.append(formatting.get('text_indent_first', [0] * 5))
-    analysis_border_tops.append(formatting.get('border_top', [''] * 5))
-    analysis_border_bottoms.append(formatting.get('border_bottom', [''] * 5))
-
-# Create comprehensive analysis summary RTF
-doc_analysis = rtf.RTFDocument(
-    df=df_analysis,
-    rtf_page=rtf.RTFPage(
-        orientation="landscape",
-        nrow=50
-    ),
+# Create RTF with various border styles
+doc_borders = rtf.RTFDocument(
+    df=df_borders,
     rtf_title=rtf.RTFTitle(
-        text=[
-            "Table 16.1.1: Comprehensive Analysis Summary",
-            "Primary and Secondary Efficacy Endpoints with Safety Overview",
-            "Study XYZ-2024-001 Final Analysis"
-        ]
+        text=["Border Formatting Examples", "RTF Border Style Demonstration"]
     ),
     rtf_body=rtf.RTFBody(
-        col_rel_width=[4.0, 2.0, 2.0, 2.0, 1.5],
-        text_justification=["l", "l", "c", "c", "c"],
-        text_format=analysis_formats,
-        text_color=analysis_colors,
-        text_background_color=analysis_bg_colors,
-        text_font_size=analysis_font_sizes,
-        text_indent_first=analysis_indents,
-        border_top=analysis_border_tops,
-        border_bottom=analysis_border_bottoms,
-        border_left=["single"] + [""] * 4,
-        border_right=[""] * 4 + ["single"]
-    ),
-    rtf_footnote=rtf.RTFFootnote(
-        text=[
-            "ITT = Intent-to-Treat Population; LS = Least Squares; CI = Confidence Interval",
-            "TEAE = Treatment-Emergent Adverse Event; AE = Adverse Event",
-            "Significant p-values (<0.05) are highlighted in red",
-            "ANCOVA = Analysis of Covariance adjusted for baseline value and stratification factors"
-        ]
-    ),
-    rtf_source=rtf.RTFSource(
-        text="Clinical Study Report Section 16.1 | Data Cutoff: 31-DEC-2023 | " +
-             "Generated: " + pd.Timestamp.now().strftime("%d%b%Y:%H:%M")
+        col_rel_width=[2.0, 2.5, 2.5, 2.5],
+        text_justification=["l", "l", "l", "l"],
+        text_format=["b", "", "", ""],  # Bold border type column
+        # Different border combinations
+        border_top=["double", "single", "single", "single"],
+        border_bottom=["double", "single", "single", "single"], 
+        border_left=["single", "", "", ""],
+        border_right=["", "", "", "single"]
     )
 )
 
-doc_analysis.write_rtf("../rtf/row_formatting_analysis.rtf")
-print("Created row_formatting_analysis.rtf")
+doc_borders.write_rtf("../rtf/border_formatting.rtf")
+print("Created border_formatting.rtf")
 ```
 
 ```
-Created row_formatting_analysis.rtf
+Created border_formatting.rtf
 ```
 
-## Convert to PDF
+## Cell Justification and Alignment
+
+Show different alignment options per column:
+
+```{python}
+# Create alignment demonstration data
+align_demo = [
+    ["Alignment", "Sample Text", "Numbers", "Decimals"],
+    ["Left", "Left aligned text", "123", "45.67"],
+    ["Center", "Centered text", "456", "89.01"], 
+    ["Right", "Right aligned text", "789", "23.45"],
+    ["Mixed", "Combined alignments", "999", "78.90"]
+]
+
+df_align = pl.DataFrame(align_demo, schema=["alignment", "text", "numbers", "decimals"])
+
+# Create RTF with different alignments per column
+doc_align = rtf.RTFDocument(
+    df=df_align,
+    rtf_title=rtf.RTFTitle(
+        text=["Cell Justification Examples", "Column-Specific Alignment Patterns"]
+    ),
+    rtf_body=rtf.RTFBody(
+        col_rel_width=[2.0, 3.0, 2.0, 2.0],
+        # Different alignment for each column
+        text_justification=["l", "l", "c", "r"],  # Left, Left, Center, Right
+        text_format=["b", "", "", ""],  # Bold alignment column
+        text_color=["darkblue", "black", "green", "red"],
+        border_top=["single"] * 4,
+        border_bottom=["single"] * 4,
+        border_left=["single", "", "", ""],
+        border_right=["", "", "", "single"]
+    )
+)
+
+doc_align.write_rtf("../rtf/alignment_formatting.rtf")
+print("Created alignment_formatting.rtf")
+```
 
 ```
-✓ Converted row_formatting_demographics.rtf to PDF
-✓ Converted row_formatting_vitals.rtf to PDF
-✓ Converted row_formatting_analysis.rtf to PDF
-
-PDF conversion completed successfully!
+Created alignment_formatting.rtf
 ```
 
-## Key Features Demonstrated
+## Column Width Control
 
-### 1. Hierarchical Row Formatting
-- Multi-level section headers with distinct styling
-- Subsection groupings with consistent indentation
-- Progressive indentation for nested content
-- Visual hierarchy through font sizes and colors
+Demonstrate relative column width adjustments:
 
-### 2. Conditional Formatting
-- Value-based color coding (vital signs thresholds)
-- Statistical significance highlighting (p-values)
-- Clinical status indicators (normal/abnormal ranges)
-- Data-driven formatting decisions
+```{python}
+# Create column width demonstration data
+width_demo = [
+    ["Column", "Width Ratio", "Appearance", "Best Use"],
+    ["Narrow", "1.0", "Compact", "IDs, codes, flags"],
+    ["Standard", "2.0", "Balanced", "Text, descriptions"],
+    ["Wide", "3.0", "Spacious", "Long text, comments"],
+    ["Extra Wide", "4.0", "Maximum", "Detailed explanations"]
+]
 
-### 3. Section-Based Styling
-- Different color schemes for distinct sections
-- Alternating row colors within sections
-- Section borders and separators
-- Professional color palettes for clinical documents
+df_widths = pl.DataFrame(width_demo, schema=["column", "ratio", "appearance", "use"])
 
-### 4. Advanced Border Control
-- Section separators with double borders
-- Row-specific border applications
-- Table boundaries and internal dividers
-- Visual grouping through border styles
+# Create RTF with different column widths
+doc_widths = rtf.RTFDocument(
+    df=df_widths,
+    rtf_title=rtf.RTFTitle(
+        text=["Column Width Control", "Relative Width Ratio Examples"]
+    ),
+    rtf_body=rtf.RTFBody(
+        # Demonstrate different width ratios
+        col_rel_width=[1.5, 1.0, 2.0, 3.5],  # Narrow to wide progression
+        text_justification=["l", "c", "c", "l"],
+        text_format=["b", "b", "", ""],  # Bold first two columns
+        text_color=["darkblue", "red", "black", "gray"],
+        text_background_color=["lightblue", "lightyellow", "white", "lightgray"],
+        border_top=["single"] * 4,
+        border_bottom=["single"] * 4,
+        border_left=["single", "", "", ""],
+        border_right=["", "", "", "single"]
+    )
+)
 
-### 5. Typography Hierarchy
-- Variable font sizes by content importance
-- Bold formatting for headers and significant values
-- Font family consistency within document types
-- Readable size progression for nested content
+doc_widths.write_rtf("../rtf/width_formatting.rtf")
+print("Created width_formatting.rtf")
+```
+
+```
+Created width_formatting.rtf
+```
+
+## Text Appearance and Format Combinations
+
+Show various text formatting combinations:
+
+```{python}
+# Create text formatting combinations data
+format_combo_demo = [
+    ["Format", "Code", "Example", "Clinical Use"],
+    ["Bold", "b", "Bold text", "Headers, emphasis"],
+    ["Italic", "i", "Italic text", "Notes, references"],
+    ["Underline", "u", "Underlined text", "Important items"],
+    ["Strikethrough", "s", "Crossed out", "Deprecated values"],
+    ["Bold+Italic", "bi", "Bold italic", "Maximum emphasis"],
+    ["Bold+Underline", "bu", "Bold underlined", "Critical alerts"],
+    ["Mixed Styles", "varies", "Multiple formats", "Complex documents"]
+]
+
+df_format_combos = pl.DataFrame(format_combo_demo, schema=["format", "code", "example", "use"])
+
+# Create RTF with format combinations
+doc_format_combos = rtf.RTFDocument(
+    df=df_format_combos,
+    rtf_title=rtf.RTFTitle(
+        text=["Text Format Combinations", "Multiple Formatting Options"]
+    ),
+    rtf_body=rtf.RTFBody(
+        col_rel_width=[2.0, 1.5, 2.5, 3.0],
+        text_justification=["l", "c", "c", "l"],
+        text_format=["b", "b", "", "i"],  # Bold, Bold, Normal, Italic
+        text_color=["darkblue", "red", "black", "green"],
+        text_font_size=[18, 16, 16, 14],  # Variable font sizes
+        border_top=["single"] * 4,
+        border_bottom=["single"] * 4,
+        border_left=["single", "", "", ""],
+        border_right=["", "", "", "single"]
+    )
+)
+
+doc_format_combos.write_rtf("../rtf/format_combinations.rtf")
+print("Created format_combinations.rtf")
+```
+
+```
+Created format_combinations.rtf
+```
+
+## Advanced Styling with Colors and Backgrounds
+
+Demonstrate advanced visual styling options:
+
+```{python}
+# Create advanced styling demonstration data
+style_demo = [
+    ["Element", "Style", "Color Scheme", "Purpose"],
+    ["Headers", "Bold + Background", "Blue on Light Blue", "Section identification"],
+    ["Normal Data", "Standard", "Black on White", "Regular content"],
+    ["Warnings", "Bold + Color", "Red on Light Pink", "Alert conditions"],
+    ["Highlights", "Background Only", "Yellow Background", "Important data"],
+    ["Footnotes", "Italic + Small", "Gray Text", "Additional info"],
+    ["Critical", "Bold + Underline", "Dark Red on Pink", "Urgent attention"]
+]
+
+df_styles = pl.DataFrame(style_demo, schema=["element", "style", "colors", "purpose"])
+
+# Create RTF with advanced styling
+doc_styles = rtf.RTFDocument(
+    df=df_styles,
+    rtf_title=rtf.RTFTitle(
+        text=["Advanced Styling Examples", "Colors, Backgrounds, and Typography"]
+    ),
+    rtf_body=rtf.RTFBody(
+        col_rel_width=[2.0, 2.5, 2.5, 3.0],
+        text_justification=["l", "l", "l", "l"],
+        text_format=["b", "", "", ""],  # Bold element column
+        text_color=["darkblue", "black", "purple", "gray"],
+        text_background_color=["lightblue", "white", "lightyellow", "lightgray"],
+        text_font_size=[18, 16, 16, 14],
+        border_top=["double"] + ["single"] * 3,
+        border_bottom=["double"] + ["single"] * 3,
+        border_left=["single", "", "", ""],
+        border_right=["", "", "", "single"]
+    )
+)
+
+doc_styles.write_rtf("../rtf/advanced_styling.rtf")
+print("Created advanced_styling.rtf")
+```
+
+```
+Created advanced_styling.rtf
+```
+
+## Clinical Trial Results Table with Conditional Formatting
+
+Create a comprehensive clinical example with conditional formatting:
+
+```{python}
+# Create clinical trial results data
+clinical_data = [
+    ["Endpoint", "Treatment", "N", "Result", "P-value", "Significance"],
+    ["Primary Efficacy", "Placebo", "150", "12.3 (2.1)", "—", "Reference"],
+    ["", "Drug 25mg", "148", "15.7 (2.3)", "0.023", "Significant"],
+    ["", "Drug 50mg", "152", "18.9 (2.2)", "<0.001", "Highly Significant"],
+    ["Secondary Endpoint 1", "Placebo", "150", "45.2%", "—", "Reference"],
+    ["", "Drug 25mg", "148", "62.8%", "0.012", "Significant"],
+    ["", "Drug 50mg", "152", "71.4%", "0.003", "Significant"],
+    ["Secondary Endpoint 2", "Placebo", "150", "8.2 (1.5)", "—", "Reference"],
+    ["", "Drug 25mg", "148", "6.1 (1.3)", "0.087", "Non-significant"],
+    ["", "Drug 50mg", "152", "5.4 (1.2)", "0.041", "Significant"],
+    ["Safety Endpoint", "Placebo", "150", "12.0%", "—", "Reference"],
+    ["", "Drug 25mg", "148", "15.5%", "0.456", "Non-significant"],
+    ["", "Drug 50mg", "152", "18.2%", "0.234", "Non-significant"]
+]
+
+df_clinical = pl.DataFrame(clinical_data, schema=["endpoint", "treatment", "n", "result", "pvalue", "significance"])
+
+# Create clinical RTF with conditional formatting
+doc_clinical = rtf.RTFDocument(
+    df=df_clinical,
+    rtf_page=rtf.RTFPage(
+        orientation="landscape",
+        nrow=30
+    ),
+    rtf_title=rtf.RTFTitle(
+        text=[
+            "Clinical Trial Results Summary",
+            "Efficacy and Safety Endpoints by Treatment Group",
+            "Study ABC-2024-001 | Final Analysis"
+        ]
+    ),
+    rtf_body=rtf.RTFBody(
+        col_rel_width=[3.0, 2.0, 1.0, 2.0, 1.5, 2.5],
+        text_justification=["l", "l", "c", "c", "c", "l"],
+        text_format=["b", "", "", "", "b", "b"],  # Bold endpoints, p-values, significance
+        text_color=["darkblue", "black", "black", "black", "red", "darkgreen"],
+        text_background_color=["lightblue", "white", "white", "white", "white", "white"],
+        text_font_size=[16, 14, 14, 14, 14, 14],
+        text_indent_first=[0, 300, 0, 0, 0, 0],  # Indent treatments under endpoints
+        # Complex border pattern
+        border_top=["double"] + [""] * 5,
+        border_bottom=[""] * 5 + ["single"],
+        border_left=["single", "", "", "", "", ""],
+        border_right=["", "", "", "", "", "single"]
+    ),
+    rtf_footnote=rtf.RTFFootnote(
+        text=[
+            "Values presented as mean (standard deviation) or percentage as appropriate",
+            "P-values calculated using ANCOVA for continuous endpoints, Chi-square for categorical",
+            "Significance: p<0.05 = Significant, p<0.01 = Highly Significant",
+            "— = Reference group for statistical comparisons"
+        ]
+    ),
+    rtf_source=rtf.RTFSource(
+        text="Clinical Study Database | Statistical Analysis Plan v2.1 | Generated: 15-Dec-2024"
+    )
+)
+
+doc_clinical.write_rtf("../rtf/clinical_conditional.rtf")
+print("Created clinical_conditional.rtf")
+```
+
+```
+Created clinical_conditional.rtf
+```
+
+## Laboratory Values with Status-Based Formatting
+
+Demonstrate conditional formatting based on clinical status:
+
+```{python}
+# Create laboratory values with status indicators
+lab_data = [
+    ["Parameter", "Value", "Reference", "Status", "Action"],
+    ["Hemoglobin", "11.2", "12.0-15.0", "Low", "Monitor"],
+    ["Platelet Count", "180", "150-400", "Normal", "Continue"],
+    ["ALT", "65", "≤40", "Elevated", "Investigate"],
+    ["Creatinine", "2.1", "0.6-1.2", "High", "Alert Physician"],
+    ["Glucose", "95", "70-100", "Normal", "Continue"],
+    ["Total Cholesterol", "245", "<200", "Elevated", "Lifestyle Counseling"],
+    ["HbA1c", "8.2", "<7.0", "Poor Control", "Adjust Therapy"],
+    ["Blood Pressure", "165/95", "<140/90", "Hypertensive", "Medication Review"]
+]
+
+df_lab = pl.DataFrame(lab_data, schema=["parameter", "value", "reference", "status", "action"])
+
+# Create laboratory RTF with status-based formatting
+doc_lab = rtf.RTFDocument(
+    df=df_lab,
+    rtf_title=rtf.RTFTitle(
+        text=[
+            "Laboratory Values Report", 
+            "Patient: Wilson, Mary (MRN: 789123)",
+            "Collection Date: 15-Dec-2024"
+        ]
+    ),
+    rtf_body=rtf.RTFBody(
+        col_rel_width=[2.5, 1.5, 2.0, 2.0, 2.5],
+        text_justification=["l", "c", "c", "l", "l"],
+        text_format=["b", "", "", "b", ""],  # Bold parameters and status
+        text_color=["darkblue", "black", "gray", "red", "black"],
+        text_background_color=["lightblue", "white", "lightgray", "white", "white"],
+        text_font_size=[16, 14, 14, 16, 14],
+        # Sophisticated border pattern
+        border_top=["single"] * 5,
+        border_bottom=["single"] * 5,
+        border_left=["single", "", "", "", ""],
+        border_right=["", "", "", "", "single"]
+    ),
+    rtf_footnote=rtf.RTFFootnote(
+        text=[
+            "Status: Normal = Within reference range, Low/High = Outside normal limits",
+            "Elevated values require clinical correlation and follow-up",
+            "Reference ranges may vary by laboratory and patient population"
+        ]
+    )
+)
+
+doc_lab.write_rtf("../rtf/lab_status_formatting.rtf")
+print("Created lab_status_formatting.rtf")
+```
+
+```
+Created lab_status_formatting.rtf
+```
+
+## Key Features Demonstrated (r2rtf Pattern)
+
+### 1. Border Customization
+- **Multiple Border Types**: Single, double, thick borders for different emphasis levels
+- **Selective Borders**: Top, left, right, bottom border control per section
+- **Border Combinations**: Mixed border styles for complex table structures
+- **Professional Layouts**: Document frames and section separators
+
+### 2. Cell Justification Options
+- **Left Alignment**: Default for text content and descriptions
+- **Center Alignment**: Numbers, codes, and balanced content
+- **Right Alignment**: Numerical data and statistical values
+- **Column-Specific**: Different alignment per column function
+
+### 3. Column Width Control
+- **Relative Widths**: Flexible width ratios (e.g., 1.0, 2.0, 3.0, 4.0)
+- **Content-Based Sizing**: Width appropriate to content type
+- **Professional Proportions**: Balanced layout for readability
+- **Responsive Design**: Adapts to different content lengths
+
+### 4. Text Appearance Options
+- **Format Codes**: Bold (b), italic (i), underline (u), strikethrough (s)
+- **Format Combinations**: Bold+italic (bi), bold+underline combinations
+- **Clinical Applications**: Appropriate formatting for medical contexts
+- **Hierarchical Emphasis**: Different levels of text importance
+
+### 5. Advanced Styling Features
+- **Font Size Control**: Variable sizes per column (8pt-18pt range)  
+- **Color Management**: Text colors and background colors
+- **Conditional Formatting**: Status-based color coding
+- **Professional Schemes**: Clinical document color standards
+
+### 6. Clinical Document Standards  
+- **Regulatory Compliance**: Formatting suitable for submissions
+- **Status Indicators**: Color-coded clinical significance
+- **Professional Headers**: Multi-line titles and identification
+- **Comprehensive Footnotes**: Explanatory text and disclaimers
 
 ## Best Practices for Row-Level Formatting
 
-1. **Consistency Standards**:
-   - Establish formatting rules at project start
-   - Apply consistent color schemes across tables
-   - Use standard indentation increments
-   - Maintain font hierarchy throughout documents
+1. **r2rtf-Style Consistency**:
+   - Use consistent border patterns throughout documents
+   - Apply alignment systematically by column function
+   - Maintain color schemes across related tables
 
-2. **Clinical Documentation**:
-   - Use colors that print well in grayscale
-   - Highlight clinically significant values
-   - Group related parameters visually
-   - Follow regulatory formatting guidelines
+2. **Professional Table Design**:
+   - Choose appropriate column width ratios
+   - Use borders to create clear visual structure
+   - Apply formatting to enhance content readability
 
-3. **Readability Optimization**:
-   - Alternate row colors for long tables
-   - Use sufficient contrast for text/background
-   - Apply consistent spacing between sections
-   - Avoid overuse of formatting elements
+3. **Clinical Standards**:
+   - Color-code clinical significance appropriately
+   - Use bold formatting for critical values
+   - Include comprehensive legends and footnotes
 
-4. **Data-Driven Formatting**:
-   - Base formatting on data values when appropriate
-   - Use conditional logic for clinical thresholds
-   - Highlight statistical significance consistently
-   - Apply formatting that aids interpretation
+4. **Accessibility Considerations**:
+   - Combine color with text indicators
+   - Use sufficient contrast for readability
+   - Provide clear formatting legends
 
 5. **Technical Implementation**:
-   - Test formatting across different RTF viewers
-   - Plan formatting arrays to match data dimensions
-   - Use functions to generate consistent formatting
-   - Document formatting rules for team consistency
+   - Test border styles across RTF viewers
+   - Plan column widths for content requirements
+   - Use consistent formatting patterns for document series
 
-This comprehensive example demonstrates how rtflite can create sophisticated clinical tables with professional row-level formatting that enhances readability and supports regulatory submission requirements.
+This example demonstrates rtflite's row-level formatting capabilities inspired by r2rtf patterns, 
+enabling creation of professional clinical documents with sophisticated visual structure, 
+conditional formatting, and regulatory-compliant presentation standards.
