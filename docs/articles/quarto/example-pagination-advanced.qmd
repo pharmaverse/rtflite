@@ -175,7 +175,7 @@ doc_basic = rtf.RTFDocument(
     )
 )
 
-doc_basic.write_rtf("efficacy_basic_pagination.rtf")
+doc_basic.write_rtf("../rtf/efficacy_basic_pagination.rtf")
 print("Created efficacy_basic_pagination.rtf with basic page element control")
 ```
 
@@ -259,7 +259,7 @@ doc_advanced = rtf.RTFDocument(
     )
 )
 
-doc_advanced.write_rtf("efficacy_advanced_pagination.rtf")
+doc_advanced.write_rtf("../rtf/efficacy_advanced_pagination.rtf")
 print("Created efficacy_advanced_pagination.rtf with advanced page control")
 ```
 
@@ -338,7 +338,7 @@ doc_regulatory = rtf.RTFDocument(
     )
 )
 
-doc_regulatory.write_rtf("primary_efficacy_regulatory.rtf")
+doc_regulatory.write_rtf("../rtf/primary_efficacy_regulatory.rtf")
 print("Created primary_efficacy_regulatory.rtf with regulatory compliance features")
 ```
 
@@ -347,43 +347,6 @@ Created primary_efficacy_regulatory.rtf with regulatory compliance features
 ```
 
 ## Convert All Documents
-
-```{python}
-# Convert all files to PDF
-try:
-    converter = rtf.LibreOfficeConverter()
-    
-    files_to_convert = [
-        "efficacy_basic_pagination.rtf",
-        "efficacy_advanced_pagination.rtf",
-        "primary_efficacy_regulatory.rtf"
-    ]
-    
-    print("Converting files to PDF...")
-    for file in files_to_convert:
-        converter.convert(
-            input_files=file,
-            output_dir=".",
-            format="pdf",
-            overwrite=True
-        )
-        print(f"✓ Converted {file} to PDF")
-    
-    print("\nAll PDF conversions completed successfully!")
-    print("Documents are ready for regulatory review and submission.")
-    
-except FileNotFoundError as e:
-    print(f"Note: {e}")
-    print("\nTo enable PDF conversion, install LibreOffice:")
-    print("- macOS: brew install --cask libreoffice")
-    print("- Ubuntu/Debian: sudo apt-get install libreoffice")
-    print("- Windows: Download from https://www.libreoffice.org/")
-    print("\nRTF files have been successfully created:")
-    print("- efficacy_basic_pagination.rtf (basic page element control)")
-    print("- efficacy_advanced_pagination.rtf (advanced multi-page features)")
-    print("- primary_efficacy_regulatory.rtf (regulatory compliance format)")
-    print("\nThese files can be opened in any RTF-compatible application.")
-```
 
 ```
 Converting files to PDF...

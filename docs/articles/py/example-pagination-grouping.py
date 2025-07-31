@@ -119,7 +119,7 @@ doc_grouped = rtf.RTFDocument(
     rtf_source=rtf.RTFSource(text="Source: ADAE dataset, Data cutoff: 15-JAN-2024"),
 )
 
-doc_grouped.write_rtf("ae_by_soc_grouped.rtf")
+doc_grouped.write_rtf("../rtf/ae_by_soc_grouped.rtf")
 print("Created ae_by_soc_grouped.rtf with page-by grouping")
 
 summary_data = []
@@ -207,7 +207,7 @@ doc_advanced = rtf.RTFDocument(
     ),
 )
 
-doc_advanced.write_rtf("ae_summary_by_treatment.rtf")
+doc_advanced.write_rtf("../rtf/ae_summary_by_treatment.rtf")
 print("Created ae_summary_by_treatment.rtf with treatment grouping")
 
 doc_mixed = rtf.RTFDocument(
@@ -257,34 +257,5 @@ doc_mixed = rtf.RTFDocument(
     ),
 )
 
-doc_mixed.write_rtf("ae_mixed_grouping.rtf")
+doc_mixed.write_rtf("../rtf/ae_mixed_grouping.rtf")
 print("Created ae_mixed_grouping.rtf with mixed grouping (no forced page breaks)")
-
-try:
-    converter = rtf.LibreOfficeConverter()
-
-    files_to_convert = [
-        "ae_by_soc_grouped.rtf",
-        "ae_summary_by_treatment.rtf",
-        "ae_mixed_grouping.rtf",
-    ]
-
-    for file in files_to_convert:
-        converter.convert(
-            input_files=file, output_dir=".", format="pdf", overwrite=True
-        )
-        print(f"✓ Converted {file} to PDF")
-
-    print("\nAll PDF conversions completed successfully!")
-
-except FileNotFoundError as e:
-    print(f"Note: {e}")
-    print("\nTo enable PDF conversion, install LibreOffice:")
-    print("- macOS: brew install --cask libreoffice")
-    print("- Ubuntu/Debian: sudo apt-get install libreoffice")
-    print("- Windows: Download from https://www.libreoffice.org/")
-    print("\nRTF files have been successfully created:")
-    print("- ae_by_soc_grouped.rtf")
-    print("- ae_summary_by_treatment.rtf")
-    print("- ae_mixed_grouping.rtf")
-    print("\nThese files can be opened in any RTF-compatible application.")

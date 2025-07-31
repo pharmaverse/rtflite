@@ -48,14 +48,19 @@ pip install -e '.[all]'
 pip install -e .
 ```
 
-### Documentation
 
-```bash
+### Development
+
+Make changes to the codebase.
+
+We use pytest for unit testing. To run tests and get an HTML preview of
+code coverage, open the
+[VS Code terminal](https://code.visualstudio.com/docs/terminal/basics):
+
 # Sync source document
 # source: docs/scripts/quarto/example-*.qmd
 # output: docs/scripts/*.md; docs/scripts/py/*.py
 bash docs/scripts/sync.sh
-```
 
 ## Architecture Overview
 

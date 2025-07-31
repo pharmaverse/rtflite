@@ -239,23 +239,9 @@ doc = rtf.RTFDocument(
 
 ```{python}
 # Write RTF file
-input_file="../rtf/ae_summary_table.rtf"
-doc.write_rtf(input_file)
-print("\nCreated ae_summary_table.rtf")
+output_file="../rtf/ae_summary_table.rtf"
+doc.write_rtf(output_file)
+print(f"Created: {output_file}")
 ```
 
-```{python}
-pdf_folder="../pdf/"
-try:
-    converter = rtf.LibreOfficeConverter()
-    converter.convert(
-        input_files=input_file, output_dir=pdf_folder, format="pdf", overwrite=True
-    )
-    print("PDF conversion completed successfully!")
-    
-except FileNotFoundError as e:
-    print(f"Note: {e}")
-    print("\nTo enable PDF conversion, install LibreOffice:")
-```
-
-<embed src="./pdf/ae_summary_table.pdf" style="width:100%; height:400px" type="application/pdf">
+The RTF file has been created in the `rtf/` directory. Run `sh docs/scripts/sync.sh` to generate PDF output.

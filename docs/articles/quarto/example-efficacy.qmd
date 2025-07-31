@@ -277,7 +277,7 @@ doc = rtf.RTFDocument(
     )
 )
 
-doc.write_rtf("efficacy_primary.rtf")
+doc.write_rtf("../rtf/efficacy_primary.rtf")
 print("\nCreated efficacy_primary.rtf")
 ```
 
@@ -397,7 +397,7 @@ doc_resp = rtf.RTFDocument(
     )
 )
 
-doc_resp.write_rtf("efficacy_response.rtf")
+doc_resp.write_rtf("../rtf/efficacy_response.rtf")
 print("Created efficacy_response.rtf")
 ```
 
@@ -521,7 +521,7 @@ doc_sub = rtf.RTFDocument(
     )
 )
 
-doc_sub.write_rtf("efficacy_subgroup.rtf")
+doc_sub.write_rtf("../rtf/efficacy_subgroup.rtf")
 print("Created efficacy_subgroup.rtf")
 ```
 
@@ -530,37 +530,6 @@ Created efficacy_subgroup.rtf
 ```
 
 ## Convert to PDF
-
-```{python}
-# Convert all RTF files to PDF
-try:
-    converter = rtf.LibreOfficeConverter()
-    
-    files_to_convert = [
-        "efficacy_primary.rtf", 
-        "efficacy_response.rtf",
-        "efficacy_subgroup.rtf"
-    ]
-    
-    for file in files_to_convert:
-        converter.convert(
-            input_files=file,
-            output_dir=".",
-            format="pdf",
-            overwrite=True
-        )
-        print(f"✓ Converted {file} to PDF")
-    
-    print("\nPDF conversion completed successfully!")
-    
-except FileNotFoundError as e:
-    print(f"Note: {e}")
-    print("\nTo enable PDF conversion, install LibreOffice:")
-    print("- macOS: brew install --cask libreoffice")
-    print("- Ubuntu/Debian: sudo apt-get install libreoffice")
-    print("- Windows: Download from https://www.libreoffice.org/")
-    print("\nRTF files have been successfully created and can be opened in any RTF-compatible application.")
-```
 
 ```
 ✓ Converted efficacy_primary.rtf to PDF
