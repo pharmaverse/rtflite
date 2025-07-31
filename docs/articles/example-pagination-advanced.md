@@ -1,5 +1,8 @@
 # Advanced Page Element Control
 
+
+<!-- `.md` and `.py` files are generated from the `.qmd` file. Please edit that file. -->
+
 !!! tip
 
     To run the code from this article as a Python script:
@@ -8,26 +11,33 @@
     python3 examples/example-pagination-advanced.py
     ```
 
-This article demonstrates rtflite's advanced page element control features, allowing precise control over where titles, footnotes, and other elements appear across multi-page documents. This functionality is essential for regulatory compliance and professional clinical document formatting.
+This article demonstrates rtflite’s advanced page element control
+features, allowing precise control over where titles, footnotes, and
+other elements appear across multi-page documents. This functionality is
+essential for regulatory compliance and professional clinical document
+formatting.
 
 ## Overview
 
 Advanced page element control enables:
 
-- **Selective element positioning**: Show titles only on first page, footnotes only on last page
-- **Page-specific content**: Different headers for first vs. continuation pages
-- **Regulatory compliance**: "Continued" indicators, confidentiality footers, page numbering
-- **Professional formatting**: Optimize space usage while maintaining readability
+- **Selective element positioning**: Show titles only on first page,
+  footnotes only on last page
+- **Page-specific content**: Different headers for first
+  vs. continuation pages
+- **Regulatory compliance**: “Continued” indicators, confidentiality
+  footers, page numbering
+- **Professional formatting**: Optimize space usage while maintaining
+  readability
 
-This is particularly important for:
-- Regulatory submission documents with specific formatting requirements
-- Long tables that need continuation indicators
-- Clinical study reports with confidentiality requirements
-- Multi-page efficacy and safety summaries
+This is particularly important for: - Regulatory submission documents
+with specific formatting requirements - Long tables that need
+continuation indicators - Clinical study reports with confidentiality
+requirements - Multi-page efficacy and safety summaries
 
 ## Imports
 
-```python
+``` python
 import pandas as pd
 import numpy as np
 from datetime import datetime
@@ -38,7 +48,7 @@ import rtflite as rtf
 
 Generate comprehensive clinical data to demonstrate advanced pagination:
 
-```python
+``` python
 # Create sample efficacy data across multiple timepoints
 np.random.seed(456)
 
@@ -89,11 +99,21 @@ print("\nSample data:")
 print(df_efficacy.head())
 ```
 
+    Generated 140 efficacy records
+
+    Sample data:
+          Efficacy_Measure Timepoint   Treatment    N  Mean_Change  Std_Dev    SE  CI_Lower  CI_Upper
+    0  Primary Efficacy Score  Baseline     Placebo  102        -1.90    10.75  1.06     -3.98      0.18
+    1  Primary Efficacy Score  Baseline  Drug 2.5mg  105         9.74     8.84  0.86      8.05     11.43
+    2  Primary Efficacy Score  Baseline   Drug 5mg   95        15.45    11.28  1.16     13.18     17.72
+    3  Primary Efficacy Score  Baseline  Drug 10mg  104        19.32    14.51  1.42     16.54     22.10
+    4  Primary Efficacy Score    Week 4     Placebo   98         4.28     9.22  0.93      2.46      6.10
+
 ## Basic Page Element Control
 
 Demonstrate basic element positioning:
 
-```python
+``` python
 # Create column headers for efficacy table
 efficacy_headers = pd.DataFrame([
     ['Timepoint', 'Treatment', 'N', 'Mean Change', 'Std Dev', 'SE', '95% CI Lower', '95% CI Upper']
@@ -161,11 +181,13 @@ doc_basic.write_rtf("efficacy_basic_pagination.rtf")
 print("Created efficacy_basic_pagination.rtf with basic page element control")
 ```
 
+    Created efficacy_basic_pagination.rtf with basic page element control
+
 ## Advanced Multi-Page Document with Continuation Indicators
 
 Create a sophisticated document with continuation indicators:
 
-```python
+``` python
 # Create a comprehensive efficacy summary with different page elements
 doc_advanced = rtf.RTFDocument(
     df=df_efficacy,
@@ -216,10 +238,7 @@ doc_advanced = rtf.RTFDocument(
         text_font_size=[9] * 8,  # Consistent smaller font
         # Different formatting for measure headers vs data
         text_format=["b", "", "", "", "", "", "", ""],
-        text_background_color=[
-            ["lightcyan", "white", "white", "white", "white", "white", "white", "white"],
-            ["white", "lightgray", "lightgray", "lightgray", "lightgray", "lightgray", "lightgray", "lightgray"]
-        ],
+        text_background_color=["lightcyan", "white"] * 4,
         border_left=["single"] + [""] * 7,
         border_right=[""] * 7 + ["single"],
         border_top=[""] * 8,
@@ -244,11 +263,13 @@ doc_advanced.write_rtf("efficacy_advanced_pagination.rtf")
 print("Created efficacy_advanced_pagination.rtf with advanced page control")
 ```
 
+    Created efficacy_advanced_pagination.rtf with advanced page control
+
 ## Regulatory Compliance Document
 
 Create a document meeting strict regulatory requirements:
 
-```python
+``` python
 # Create subset of data for regulatory table
 regulatory_data = df_efficacy[
     (df_efficacy['Efficacy_Measure'] == 'Primary Efficacy Score') & 
@@ -319,84 +340,23 @@ doc_regulatory.write_rtf("primary_efficacy_regulatory.rtf")
 print("Created primary_efficacy_regulatory.rtf with regulatory compliance features")
 ```
 
-## Performance Optimization Document
-
-Create document optimized for large datasets:
-
-```python
-# Create large dataset for performance testing
-large_data = pd.concat([df_efficacy] * 3, ignore_index=True)  # Triple the data
-large_data['Study_Phase'] = ['Phase_1', 'Phase_2', 'Phase_3'] * len(df_efficacy)
-
-doc_performance = rtf.RTFDocument(
-    df=large_data,
-    rtf_page=rtf.RTFPage(
-        nrow=40,  # Larger pages for efficiency
-        orientation="landscape",
-        page_title_location="first",
-        page_footnote_location="last",
-        page_source_location="last"
-    ),
-    rtf_page_header=rtf.RTFPageHeader(
-        text="STUDY ABC-123 - INTEGRATED ANALYSIS - CONFIDENTIAL"
-    ),
-    rtf_page_footer=rtf.RTFPageFooter(
-        text="Page {PAGE} | Integrated Analysis | " + datetime.now().strftime("%Y-%m-%d")
-    ),
-    rtf_title=rtf.RTFTitle(
-        text=["Integrated Efficacy Analysis Across Study Phases", "Combined Phase 1/2/3 Results"]
-    ),
-    rtf_column_header=[
-        rtf.RTFColumnHeader(
-            df=pd.DataFrame([['Phase', 'Measure', 'Timepoint', 'Treatment', 'N', 'Mean Δ', 'SD', 'SE', '95% CI']]),
-            col_rel_width=[1.0, 1.8, 1.2, 1.5, 0.8, 1.0, 0.8, 0.8, 1.4],
-            text_justification=["c"] * 9,
-            text_format=["b"] * 9,
-            text_font_size=[8] * 9,  # Smaller font for large tables
-            border_bottom=["single"] * 9
-        )
-    ],
-    rtf_body=rtf.RTFBody(
-        page_by=["Study_Phase", "Efficacy_Measure"],  # Multi-level grouping
-        new_page=False,  # Optimize space usage
-        pageby_header=True,
-        col_rel_width=[1.0, 1.8, 1.2, 1.5, 0.8, 1.0, 0.8, 0.8, 1.4],
-        text_justification=["c", "l", "c", "l", "c", "c", "c", "c", "c"],
-        text_font_size=[8] * 9,
-        text_format=["b", "b", "", "", "", "", "", "", ""],  # Bold phase and measure
-        border_left=["single"] + [""] * 8,
-        border_right=[""] * 8 + ["single"]
-    ),
-    rtf_footnote=rtf.RTFFootnote(
-        text="Integrated analysis across all study phases. Phase-specific results may vary due to " +
-             "different patient populations and study conditions."
-    ),
-    rtf_source=rtf.RTFSource(
-        text="Source: Integrated ADEFF datasets from Phases 1, 2, and 3 | " +
-             "Analysis performed: " + datetime.now().strftime("%d-%b-%Y")
-    )
-)
-
-doc_performance.write_rtf("integrated_efficacy_analysis.rtf")
-print("Created integrated_efficacy_analysis.rtf for performance testing")
-```
+    Created primary_efficacy_regulatory.rtf with regulatory compliance features
 
 ## Convert All Documents
 
-```python
+``` python
 # Convert all files to PDF
-converter = rtf.LibreOfficeConverter()
-
-files_to_convert = [
-    "efficacy_basic_pagination.rtf",
-    "efficacy_advanced_pagination.rtf",
-    "primary_efficacy_regulatory.rtf",
-    "integrated_efficacy_analysis.rtf"
-]
-
-print("\nConverting files to PDF...")
-for file in files_to_convert:
-    try:
+try:
+    converter = rtf.LibreOfficeConverter()
+    
+    files_to_convert = [
+        "efficacy_basic_pagination.rtf",
+        "efficacy_advanced_pagination.rtf",
+        "primary_efficacy_regulatory.rtf"
+    ]
+    
+    print("Converting files to PDF...")
+    for file in files_to_convert:
         converter.convert(
             input_files=file,
             output_dir=".",
@@ -404,31 +364,57 @@ for file in files_to_convert:
             overwrite=True
         )
         print(f"✓ Converted {file} to PDF")
-    except Exception as e:
-        print(f"Failed to convert {file}: {e}")
+    
+    print("\nAll PDF conversions completed successfully!")
+    print("Documents are ready for regulatory review and submission.")
+    
+except FileNotFoundError as e:
+    print(f"Note: {e}")
+    print("\nTo enable PDF conversion, install LibreOffice:")
+    print("- macOS: brew install --cask libreoffice")
+    print("- Ubuntu/Debian: sudo apt-get install libreoffice")
+    print("- Windows: Download from https://www.libreoffice.org/")
+    print("\nRTF files have been successfully created:")
+    print("- efficacy_basic_pagination.rtf (basic page element control)")
+    print("- efficacy_advanced_pagination.rtf (advanced multi-page features)")
+    print("- primary_efficacy_regulatory.rtf (regulatory compliance format)")
+    print("\nThese files can be opened in any RTF-compatible application.")
 ```
+
+    Converting files to PDF...
+    ✓ Converted efficacy_basic_pagination.rtf to PDF
+    ✓ Converted efficacy_advanced_pagination.rtf to PDF
+    ✓ Converted primary_efficacy_regulatory.rtf to PDF
+
+    All PDF conversions completed successfully!
+    Documents are ready for regulatory review and submission.
 
 ## Key Advanced Features
 
 ### 1. Precise Element Positioning
-- **`page_title_location`**: Control where titles appear ("first", "last", "all")
+
+- **`page_title_location`**: Control where titles appear (“first”,
+  “last”, “all”)
 - **`page_footnote_location`**: Control footnote placement
 - **`page_source_location`**: Control source attribution placement
 - Optimizes space while maintaining necessary information
 
 ### 2. Regulatory Compliance Features
+
 - **Double borders** for formal regulatory tables
 - **Comprehensive footnotes** with methodology details
 - **Source traceability** with timestamps and version control
 - **Page numbering** with study identifiers
 
 ### 3. Professional Page Headers/Footers
+
 - **Confidentiality notices** on every page
 - **Study identifiers** and protocol numbers
 - **Generation timestamps** for audit trails
 - **Page numbering** with total page counts
 
 ### 4. Performance Optimization
+
 - **Efficient pagination** for large datasets
 - **Optimized page sizes** based on content density
 - **Multi-level grouping** without forced page breaks
@@ -436,28 +422,27 @@ for file in files_to_convert:
 
 ## Best Practices for Advanced Pagination
 
-1. **Regulatory Documents**:
-   - Use `page_title_location="all"` for formal submission tables
-   - Include comprehensive footnotes on all pages
-   - Add source attribution with version control
-   - Use double borders and formal formatting
+1.  **Regulatory Documents**:
+    - Use `page_title_location="all"` for formal submission tables
+    - Include comprehensive footnotes on all pages
+    - Add source attribution with version control
+    - Use double borders and formal formatting
+2.  **Clinical Study Reports**:
+    - Show titles only on first page to save space
+    - Place detailed footnotes only on last page
+    - Include confidentiality notices in headers
+    - Add generation timestamps for reproducibility
+3.  **Large Dataset Documents**:
+    - Optimize page size (`nrow`) based on content complexity
+    - Use landscape orientation for wide tables
+    - Consider multi-level grouping without forced breaks
+    - Implement consistent font sizing for readability
+4.  **Quality Control**:
+    - Test pagination with representative data sizes
+    - Verify element positioning across all pages
+    - Check formatting consistency after page breaks
+    - Validate PDF conversion for final review
 
-2. **Clinical Study Reports**:
-   - Show titles only on first page to save space
-   - Place detailed footnotes only on last page
-   - Include confidentiality notices in headers
-   - Add generation timestamps for reproducibility
-
-3. **Large Dataset Documents**:
-   - Optimize page size (`nrow`) based on content complexity
-   - Use landscape orientation for wide tables
-   - Consider multi-level grouping without forced breaks
-   - Implement consistent font sizing for readability
-
-4. **Quality Control**:
-   - Test pagination with representative data sizes
-   - Verify element positioning across all pages
-   - Check formatting consistency after page breaks
-   - Validate PDF conversion for final review
-
-This advanced pagination control enables creation of sophisticated clinical documents that meet the highest standards for regulatory submission and professional presentation.
+This advanced pagination control enables creation of sophisticated
+clinical documents that meet the highest standards for regulatory
+submission and professional presentation.

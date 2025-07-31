@@ -1,5 +1,8 @@
 # Page-by Grouping for Clinical Data
 
+
+<!-- `.md` and `.py` files are generated from the `.qmd` file. Please edit that file. -->
+
 !!! tip
 
     To run the code from this article as a Python script:
@@ -8,26 +11,28 @@
     python3 examples/example-pagination-grouping.py
     ```
 
-This article demonstrates rtflite's page-by grouping functionality, which mirrors r2rtf's `page_by` and `new_page` parameters. This feature is essential for clinical reports where data needs to be separated by treatment groups, study sites, or adverse event categories.
+This article demonstrates rtflite’s page-by grouping functionality,
+which mirrors r2rtf’s `page_by` and `new_page` parameters. This feature
+is essential for clinical reports where data needs to be separated by
+treatment groups, study sites, or adverse event categories.
 
 ## Overview
 
 Page-by grouping allows you to:
 
-- Create separate pages for different data groups (e.g., by treatment arm)
+- Create separate pages for different data groups (e.g., by treatment
+  arm)
 - Control whether page breaks occur between groups
 - Generate group-specific headers and summaries
 - Maintain proper formatting across grouped sections
 
-This is particularly useful for:
-- Adverse event summaries by system organ class
-- Demographics tables by treatment group
-- Lab results by visit or timepoint
-- Site-specific enrollment summaries
+This is particularly useful for: - Adverse event summaries by system
+organ class - Demographics tables by treatment group - Lab results by
+visit or timepoint - Site-specific enrollment summaries
 
 ## Imports
 
-```python
+``` python
 import pandas as pd
 import numpy as np
 import rtflite as rtf
@@ -37,7 +42,7 @@ import rtflite as rtf
 
 Generate sample adverse event data to demonstrate grouping:
 
-```python
+``` python
 # Create sample adverse events data
 np.random.seed(123)
 
@@ -84,11 +89,26 @@ print("\nSample data:")
 print(df_ae.head(10))
 ```
 
+    Generated 75 adverse event records
+
+    Sample data:
+                                             SOC Preferred_Term  Treatment  N_Subjects  N_Events  Percentage
+    0                      Gastrointestinal disorders         Nausea    Placebo           3         3         3.0
+    1                      Gastrointestinal disorders         Nausea   Drug 5mg           2         4         2.0
+    2                      Gastrointestinal disorders         Nausea  Drug 10mg           2         2         2.0
+    3                      Gastrointestinal disorders       Vomiting    Placebo           3         7         3.0
+    4                      Gastrointestinal disorders       Vomiting   Drug 5mg           2         4         2.0
+    5                      Gastrointestinal disorders       Vomiting  Drug 10mg           4         6         4.0
+    6                      Gastrointestinal disorders       Diarrhea    Placebo           1         1         1.0
+    7                      Gastrointestinal disorders       Diarrhea   Drug 5mg           5         7         5.0
+    8                      Gastrointestinal disorders       Diarrhea  Drug 10mg           5         5         5.0
+    9                      Gastrointestinal disorders   Constipation    Placebo           2         4         2.0
+
 ## Basic Page-by Grouping
 
 Create separate pages for each System Organ Class:
 
-```python
+``` python
 # Create column headers for AE table
 ae_headers1 = pd.DataFrame([['', 'Placebo', 'Drug 5mg', 'Drug 10mg']])
 ae_headers2 = pd.DataFrame([['Preferred Term', 'n (%)', 'n (%)', 'n (%)']])
@@ -143,11 +163,13 @@ doc_grouped.write_rtf("ae_by_soc_grouped.rtf")
 print("Created ae_by_soc_grouped.rtf with page-by grouping")
 ```
 
+    Created ae_by_soc_grouped.rtf with page-by grouping
+
 ## Advanced Grouping with Treatment Summaries
 
 Create a more complex example with nested grouping:
 
-```python
+``` python
 # Create summary data by treatment and SOC
 summary_data = []
 for trt in treatments:
@@ -204,7 +226,7 @@ doc_advanced = rtf.RTFDocument(
         col_rel_width=[3, 1.5, 1.5, 1.5, 1.5],
         text_justification=["l", "c", "c", "c", "c"],
         # Alternate row colors within each group
-        text_background_color=[["white"] * 5, ["lightgray"] * 5],
+        text_background_color=["white", "lightgray"] * 3,
         border_left=["single", "", "", "", ""],
         border_right=["", "", "", "", "single"]
     ),
@@ -222,11 +244,13 @@ doc_advanced.write_rtf("ae_summary_by_treatment.rtf")
 print("Created ae_summary_by_treatment.rtf with treatment grouping")
 ```
 
+    Created ae_summary_by_treatment.rtf with treatment grouping
+
 ## Mixed Grouping - No Forced Page Breaks
 
 Demonstrate grouping without forced page breaks:
 
-```python
+``` python
 # Create a version that groups but doesn't force page breaks
 doc_mixed = rtf.RTFDocument(
     df=df_ae.head(40),  # Use subset for cleaner example
@@ -267,20 +291,22 @@ doc_mixed.write_rtf("ae_mixed_grouping.rtf")
 print("Created ae_mixed_grouping.rtf with mixed grouping (no forced page breaks)")
 ```
 
+    Created ae_mixed_grouping.rtf with mixed grouping (no forced page breaks)
+
 ## Convert to PDF
 
-```python
+``` python
 # Convert all files to PDF
-converter = rtf.LibreOfficeConverter()
-
-files_to_convert = [
-    "ae_by_soc_grouped.rtf",
-    "ae_summary_by_treatment.rtf", 
-    "ae_mixed_grouping.rtf"
-]
-
-for file in files_to_convert:
-    try:
+try:
+    converter = rtf.LibreOfficeConverter()
+    
+    files_to_convert = [
+        "ae_by_soc_grouped.rtf",
+        "ae_summary_by_treatment.rtf", 
+        "ae_mixed_grouping.rtf"
+    ]
+    
+    for file in files_to_convert:
         converter.convert(
             input_files=file,
             output_dir=".",
@@ -288,28 +314,50 @@ for file in files_to_convert:
             overwrite=True
         )
         print(f"✓ Converted {file} to PDF")
-    except Exception as e:
-        print(f"Failed to convert {file}: {e}")
+    
+    print("\nAll PDF conversions completed successfully!")
+    
+except FileNotFoundError as e:
+    print(f"Note: {e}")
+    print("\nTo enable PDF conversion, install LibreOffice:")
+    print("- macOS: brew install --cask libreoffice")
+    print("- Ubuntu/Debian: sudo apt-get install libreoffice")
+    print("- Windows: Download from https://www.libreoffice.org/")
+    print("\nRTF files have been successfully created:")
+    print("- ae_by_soc_grouped.rtf")
+    print("- ae_summary_by_treatment.rtf")
+    print("- ae_mixed_grouping.rtf")
+    print("\nThese files can be opened in any RTF-compatible application.")
 ```
+
+    ✓ Converted ae_by_soc_grouped.rtf to PDF
+    ✓ Converted ae_summary_by_treatment.rtf to PDF
+    ✓ Converted ae_mixed_grouping.rtf to PDF
+
+    All PDF conversions completed successfully!
 
 ## Key Features Demonstrated
 
 ### 1. Page-by Grouping Control
+
 - **`page_by=["SOC"]`** groups data by System Organ Class
 - **`page_by=["Treatment_Group"]`** groups by treatment arm
 - Supports multiple grouping variables for complex hierarchies
 
 ### 2. Page Break Management
+
 - **`new_page=True`** forces new page for each group
 - **`new_page=False`** allows multiple groups per page
 - Optimizes document length while maintaining readability
 
 ### 3. Group Headers
+
 - **`pageby_header=True`** automatically creates group headers
 - Headers display grouping variable values prominently
 - Helps readers understand data organization
 
 ### 4. Clinical Reporting Features
+
 - Proper adverse event table formatting
 - Treatment group comparisons
 - System organ class organization
@@ -317,23 +365,23 @@ for file in files_to_convert:
 
 ## Best Practices for Clinical Grouping
 
-1. **Choose appropriate grouping variables**:
-   - Treatment arms for efficacy comparisons
-   - System organ classes for adverse events
-   - Study visits for longitudinal data
-   - Sites for enrollment summaries
+1.  **Choose appropriate grouping variables**:
+    - Treatment arms for efficacy comparisons
+    - System organ classes for adverse events
+    - Study visits for longitudinal data
+    - Sites for enrollment summaries
+2.  **Consider page break strategy**:
+    - Use `new_page=True` for distinct sections (e.g., different
+      treatments)
+    - Use `new_page=False` for related subcategories within sections
+3.  **Optimize page utilization**:
+    - Adjust `nrow` parameter based on expected group sizes
+    - Use landscape orientation for wide grouped tables
+4.  **Maintain clinical standards**:
+    - Include proper footnotes explaining grouping rationale
+    - Add source attribution and generation timestamps
+    - Use consistent formatting within and across groups
 
-2. **Consider page break strategy**:
-   - Use `new_page=True` for distinct sections (e.g., different treatments)
-   - Use `new_page=False` for related subcategories within sections
-
-3. **Optimize page utilization**:
-   - Adjust `nrow` parameter based on expected group sizes
-   - Use landscape orientation for wide grouped tables
-
-4. **Maintain clinical standards**:
-   - Include proper footnotes explaining grouping rationale
-   - Add source attribution and generation timestamps
-   - Use consistent formatting within and across groups
-
-This grouping functionality enables creation of professional clinical reports that organize complex datasets into readable, regulatory-compliant documents.
+This grouping functionality enables creation of professional clinical
+reports that organize complex datasets into readable,
+regulatory-compliant documents.

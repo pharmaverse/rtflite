@@ -1,0 +1,625 @@
+# Efficacy Analysis Tables
+
+
+<!-- `.md` and `.py` files are generated from the `.qmd` file. Please edit that file. -->
+
+!!! tip
+
+    To run the code from this article as a Python script:
+
+    ```bash
+    python3 examples/example-efficacy.py
+    ```
+
+This article demonstrates creating efficacy analysis tables for clinical
+trials, including primary endpoint analysis with ANCOVA results and
+treatment comparisons. This mirrors functionality in r2rtf’s efficacy
+examples.
+
+## Overview
+
+Efficacy tables are critical for presenting primary and secondary
+endpoint results in clinical trials. Common elements include:
+
+- Baseline and post-baseline measurements
+- Change from baseline calculations
+- Statistical comparisons between treatment groups
+- Confidence intervals and p-values
+- Model-based estimates (LS means)
+
+## Imports
+
+``` python
+import pandas as pd
+import numpy as np
+import rtflite as rtf
+from scipy import stats
+import statsmodels.api as sm
+from statsmodels.formula.api import ols
+```
+
+## Generate Clinical Trial Efficacy Data
+
+Create realistic efficacy data for a hypothetical clinical trial:
+
+``` python
+# Set seed for reproducibility
+np.random.seed(456)
+
+# Study parameters
+n_subjects = {
+    'Placebo': 100,
+    'Drug 50mg': 101,
+    'Drug 100mg': 99
+}
+
+# Generate subject-level efficacy data
+efficacy_data = []
+
+for trt, n in n_subjects.items():
+    # Treatment effect on change from baseline
+    if trt == 'Placebo':
+        trt_effect = 0
+    elif trt == 'Drug 50mg':
+        trt_effect = -2.5  # Reduction in outcome
+    else:  # Drug 100mg
+        trt_effect = -4.0  # Greater reduction
+    
+    for i in range(n):
+        # Baseline characteristics
+        age = np.random.normal(55, 10)
+        sex = np.random.choice(['M', 'F'])
+        baseline = np.random.normal(28, 5)  # Baseline score
+        
+        # Week 12 outcome with treatment effect
+        # Add some correlation with baseline
+        week12 = baseline + trt_effect + np.random.normal(0, 3) + 0.3 * (baseline - 28)
+        
+        # Week 24 outcome (primary endpoint)
+        week24 = baseline + trt_effect * 1.5 + np.random.normal(0, 4) + 0.2 * (baseline - 28)
+        
+        efficacy_data.append({
+            'USUBJID': f"{trt[:4].upper()}-{i+1:03d}",
+            'TREATMENT': trt,
+            'AGE': round(age),
+            'SEX': sex,
+            'BASELINE': round(baseline, 1),
+            'WEEK12': round(week12, 1),
+            'WEEK24': round(week24, 1),
+            'CHG12': round(week12 - baseline, 1),
+            'CHG24': round(week24 - baseline, 1)  # Primary endpoint
+        })
+
+df_efficacy = pd.DataFrame(efficacy_data)
+print(f"Generated efficacy data for {len(df_efficacy)} subjects")
+print(f"\nSample data:\n{df_efficacy.head()}")
+```
+
+    Generated efficacy data for 300 subjects
+
+    Sample data:
+          USUBJID   TREATMENT  AGE SEX  BASELINE  WEEK12  WEEK24  CHG12  CHG24
+    0  PLAC-001          Placebo   60   M      29.3    29.5    29.9    0.2    0.6
+    1  PLAC-002          Placebo   42   F      30.7    29.6    30.2   -1.1   -0.5
+    2  PLAC-003          Placebo   53   M      25.8    24.9    24.7   -0.9   -1.1
+    3  PLAC-004          Placebo   58   F      33.4    35.4    35.8    2.0    2.4
+    4  PLAC-005          Placebo   46   M      27.1    26.5    26.8   -0.6   -0.3
+
+## Primary Endpoint Analysis
+
+Perform ANCOVA analysis for the primary endpoint:
+
+``` python
+# Summary statistics by treatment
+summary_stats = []
+
+for trt in ['Placebo', 'Drug 50mg', 'Drug 100mg']:
+    trt_data = df_efficacy[df_efficacy['TREATMENT'] == trt]
+    
+    # Baseline
+    baseline_mean = trt_data['BASELINE'].mean()
+    baseline_sd = trt_data['BASELINE'].std()
+    
+    # Week 24
+    week24_mean = trt_data['WEEK24'].mean()
+    week24_sd = trt_data['WEEK24'].std()
+    
+    # Change from baseline
+    chg24_mean = trt_data['CHG24'].mean()
+    chg24_sd = trt_data['CHG24'].std()
+    chg24_se = chg24_sd / np.sqrt(len(trt_data))
+    
+    summary_stats.append({
+        'Treatment': trt,
+        'N': len(trt_data),
+        'Baseline_Mean': baseline_mean,
+        'Baseline_SD': baseline_sd,
+        'Week24_Mean': week24_mean,
+        'Week24_SD': week24_sd,
+        'Change_Mean': chg24_mean,
+        'Change_SD': chg24_sd,
+        'Change_SE': chg24_se
+    })
+
+# ANCOVA model
+model = ols('CHG24 ~ TREATMENT + BASELINE', data=df_efficacy).fit()
+
+# Extract LS means and comparisons
+ls_means = {}
+for trt in ['Placebo', 'Drug 50mg', 'Drug 100mg']:
+    # Create prediction data at mean baseline
+    pred_data = pd.DataFrame({
+        'TREATMENT': [trt],
+        'BASELINE': [df_efficacy['BASELINE'].mean()]
+    })
+    ls_means[trt] = model.predict(pred_data)[0]
+
+# Treatment comparisons
+comparisons = []
+
+# Drug 50mg vs Placebo
+diff_50_plac = ls_means['Drug 50mg'] - ls_means['Placebo']
+se_50_plac = np.sqrt(model.mse_resid * (1/n_subjects['Drug 50mg'] + 1/n_subjects['Placebo']))
+ci_50_plac = stats.t.interval(0.95, model.df_resid, diff_50_plac, se_50_plac)
+p_50_plac = model.t_test('TREATMENT[T.Drug 50mg] = 0').pvalue
+
+# Drug 100mg vs Placebo
+diff_100_plac = ls_means['Drug 100mg'] - ls_means['Placebo']
+se_100_plac = np.sqrt(model.mse_resid * (1/n_subjects['Drug 100mg'] + 1/n_subjects['Placebo']))
+ci_100_plac = stats.t.interval(0.95, model.df_resid, diff_100_plac, se_100_plac)
+p_100_plac = model.t_test('TREATMENT[T.Drug 100mg] = 0').pvalue
+
+print(f"\nANCOVA Results:")
+print(f"Drug 50mg vs Placebo: Difference = {diff_50_plac:.2f}, p = {p_50_plac:.4f}")
+print(f"Drug 100mg vs Placebo: Difference = {diff_100_plac:.2f}, p = {p_100_plac:.4f}")
+```
+
+    ANCOVA Results:
+    Drug 50mg vs Placebo: Difference = -2.51, p = 0.0001
+    Drug 100mg vs Placebo: Difference = -5.89, p < 0.0001
+
+## Create Primary Endpoint Table
+
+Format the primary analysis results:
+
+``` python
+# Prepare data for RTF table
+primary_data = []
+
+# Add summary statistics rows
+for stats in summary_stats:
+    primary_data.append([
+        stats['Treatment'],
+        str(stats['N']),
+        f"{stats['Baseline_Mean']:.1f} ({stats['Baseline_SD']:.2f})",
+        f"{stats['Week24_Mean']:.1f} ({stats['Week24_SD']:.2f})",
+        f"{stats['Change_Mean']:.1f} ({stats['Change_SE']:.2f})",
+        f"{ls_means[stats['Treatment']]:.1f}"
+    ])
+
+# Add comparison rows
+primary_data.append(['', '', '', '', '', ''])  # Blank row
+primary_data.append(['Treatment Comparison', '', 'Difference', '95% CI', 'p-value', ''])
+primary_data.append([
+    'Drug 50mg vs Placebo', 
+    '', 
+    f"{diff_50_plac:.1f}",
+    f"({ci_50_plac[0]:.1f}, {ci_50_plac[1]:.1f})",
+    f"{p_50_plac:.4f}",
+    ''
+])
+primary_data.append([
+    'Drug 100mg vs Placebo', 
+    '', 
+    f"{diff_100_plac:.1f}",
+    f"({ci_100_plac[0]:.1f}, {ci_100_plac[1]:.1f})",
+    f"<0.0001",
+    ''
+])
+
+df_primary = pd.DataFrame(primary_data,
+    columns=['Treatment', 'N', 'Baseline Mean (SD)', 'Week 24 Mean (SD)', 
+             'Change Mean (SE)', 'LS Mean'])
+
+# Create RTF document
+doc = rtf.RTFDocument(
+    df=df_primary,
+    rtf_page=rtf.RTFPage(
+        orientation="landscape",
+        nrow=40
+    ),
+    rtf_title=rtf.RTFTitle(
+        text=[
+            "Table 14.2.1.1: Primary Efficacy Endpoint Analysis",
+            "Change from Baseline at Week 24",
+            "Full Analysis Set"
+        ]
+    ),
+    rtf_body=rtf.RTFBody(
+        col_rel_width=[2.5, 0.8, 1.8, 1.8, 1.8, 1.3],
+        text_justification=["l", "c", "c", "c", "c", "c"],
+        border_left=["single"] + [""] * 5,
+        border_right=[""] * 5 + ["single"],
+        # Bold comparison section headers
+        text_format=[
+            ["", "", "", "", "", ""],
+            ["", "", "", "", "", ""],
+            ["", "", "", "", "", ""],
+            ["", "", "", "", "", ""],
+            ["b", "b", "b", "b", "b", "b"],
+            ["", "", "", "", "", ""],
+            ["", "", "", "", "", ""]
+        ],
+        # Add top border for comparison section
+        border_top=[
+            [""] * 6,
+            [""] * 6,
+            [""] * 6,
+            [""] * 6,
+            ["single"] * 6,
+            [""] * 6,
+            [""] * 6
+        ]
+    ),
+    rtf_footnote=rtf.RTFFootnote(
+        text=[
+            "ANCOVA model: Change = Treatment + Baseline",
+            "LS Mean = Least squares mean from ANCOVA model",
+            "CI = Confidence interval; N = Number of subjects in Full Analysis Set",
+            "p-values < 0.0001 are presented as '<0.0001'"
+        ]
+    ),
+    rtf_source=rtf.RTFSource(
+        text="Source: ADEFF Dataset, Protocol XYZ-2024-001"
+    )
+)
+
+doc.write_rtf("efficacy_primary.rtf")
+print("\nCreated efficacy_primary.rtf")
+```
+
+    Created efficacy_primary.rtf
+
+## Response Rate Analysis
+
+Create a categorical response analysis table:
+
+``` python
+# Define responders (≥3 point improvement)
+df_efficacy['RESPONDER'] = df_efficacy['CHG24'] <= -3.0
+
+# Calculate response rates
+response_data = []
+
+for trt in ['Placebo', 'Drug 50mg', 'Drug 100mg']:
+    trt_data = df_efficacy[df_efficacy['TREATMENT'] == trt]
+    n_total = len(trt_data)
+    n_responders = trt_data['RESPONDER'].sum()
+    pct_responders = (n_responders / n_total) * 100
+    
+    response_data.append({
+        'Treatment': trt,
+        'N': n_total,
+        'Responders': n_responders,
+        'Response_Rate': pct_responders
+    })
+
+# Calculate odds ratios
+from scipy.stats import contingency
+
+# Create contingency tables
+placebo_resp = response_data[0]['Responders']
+placebo_nonresp = response_data[0]['N'] - placebo_resp
+
+drug50_resp = response_data[1]['Responders']
+drug50_nonresp = response_data[1]['N'] - drug50_resp
+
+drug100_resp = response_data[2]['Responders']
+drug100_nonresp = response_data[2]['N'] - drug100_resp
+
+# Odds ratios with confidence intervals
+def calculate_or_ci(a, b, c, d):
+    or_val = (a * d) / (b * c)
+    log_or = np.log(or_val)
+    se_log_or = np.sqrt(1/a + 1/b + 1/c + 1/d)
+    ci_lower = np.exp(log_or - 1.96 * se_log_or)
+    ci_upper = np.exp(log_or + 1.96 * se_log_or)
+    return or_val, ci_lower, ci_upper
+
+or_50, ci50_lower, ci50_upper = calculate_or_ci(
+    drug50_resp, drug50_nonresp, placebo_resp, placebo_nonresp)
+or_100, ci100_lower, ci100_upper = calculate_or_ci(
+    drug100_resp, drug100_nonresp, placebo_resp, placebo_nonresp)
+
+# Format response table
+response_table = []
+
+# Header section
+response_table.append(['Treatment', 'n/N', 'Response Rate (%)', 'Odds Ratio', '95% CI'])
+
+# Data rows
+for i, resp in enumerate(response_data):
+    if resp['Treatment'] == 'Placebo':
+        or_text = 'Reference'
+        ci_text = '-'
+    elif resp['Treatment'] == 'Drug 50mg':
+        or_text = f"{or_50:.2f}"
+        ci_text = f"({ci50_lower:.2f}, {ci50_upper:.2f})"
+    else:
+        or_text = f"{or_100:.2f}"
+        ci_text = f"({ci100_lower:.2f}, {ci100_upper:.2f})"
+    
+    response_table.append([
+        resp['Treatment'],
+        f"{resp['Responders']}/{resp['N']}",
+        f"{resp['Response_Rate']:.1f}",
+        or_text,
+        ci_text
+    ])
+
+df_response = pd.DataFrame(response_table[1:], columns=response_table[0])
+
+# Create response rate RTF
+doc_resp = rtf.RTFDocument(
+    df=df_response,
+    rtf_page=rtf.RTFPage(
+        orientation="portrait",
+        nrow=40
+    ),
+    rtf_title=rtf.RTFTitle(
+        text=[
+            "Table 14.2.2.1: Response Rate Analysis",
+            "Proportion of Subjects with ≥3 Point Improvement at Week 24",
+            "Full Analysis Set"
+        ]
+    ),
+    rtf_body=rtf.RTFBody(
+        col_rel_width=[2.0, 1.5, 2.0, 1.5, 2.0],
+        text_justification=["l", "c", "c", "c", "c"],
+        border_left=["single"] + [""] * 4,
+        border_right=[""] * 4 + ["single"],
+        text_format=["", "", "", "b", ""]  # Bold odds ratios
+    ),
+    rtf_footnote=rtf.RTFFootnote(
+        text=[
+            "Response defined as ≥3 point improvement (reduction) from baseline",
+            "Odds Ratio > 1 favors active treatment over placebo",
+            "CI = Confidence Interval calculated using Woolf's method"
+        ]
+    ),
+    rtf_source=rtf.RTFSource(
+        text=f"Program: t-eff-resp.py | Generated: {pd.Timestamp.now().strftime('%d%b%Y:%H:%M')}"
+    )
+)
+
+doc_resp.write_rtf("efficacy_response.rtf")
+print("Created efficacy_response.rtf")
+```
+
+    Created efficacy_response.rtf
+
+## Subgroup Analysis
+
+Analyze efficacy by key subgroups:
+
+``` python
+# Define subgroups
+subgroups = {
+    'Overall': lambda df: df,
+    'Age < 65': lambda df: df[df['AGE'] < 65],
+    'Age ≥ 65': lambda df: df[df['AGE'] >= 65],
+    'Male': lambda df: df[df['SEX'] == 'M'],
+    'Female': lambda df: df[df['SEX'] == 'F'],
+    'Baseline < Median': lambda df: df[df['BASELINE'] < df['BASELINE'].median()],
+    'Baseline ≥ Median': lambda df: df[df['BASELINE'] >= df['BASELINE'].median()]
+}
+
+# Calculate treatment effects by subgroup
+subgroup_results = []
+
+for subgroup_name, filter_func in subgroups.items():
+    subgroup_df = filter_func(df_efficacy)
+    
+    # Skip if too few subjects
+    if len(subgroup_df) < 10:
+        continue
+    
+    # Calculate means by treatment
+    placebo_mean = subgroup_df[subgroup_df['TREATMENT'] == 'Placebo']['CHG24'].mean()
+    drug100_mean = subgroup_df[subgroup_df['TREATMENT'] == 'Drug 100mg']['CHG24'].mean()
+    
+    # Treatment difference
+    diff = drug100_mean - placebo_mean
+    
+    # Sample sizes
+    n_placebo = len(subgroup_df[subgroup_df['TREATMENT'] == 'Placebo'])
+    n_drug100 = len(subgroup_df[subgroup_df['TREATMENT'] == 'Drug 100mg'])
+    
+    subgroup_results.append({
+        'Subgroup': subgroup_name,
+        'N_Placebo': n_placebo,
+        'N_Drug100': n_drug100,
+        'Placebo_Mean': placebo_mean,
+        'Drug100_Mean': drug100_mean,
+        'Difference': diff
+    })
+
+# Format subgroup table
+subgroup_table = []
+for result in subgroup_results:
+    subgroup_table.append([
+        result['Subgroup'],
+        f"{result['N_Placebo']}",
+        f"{result['N_Drug100']}",
+        f"{result['Placebo_Mean']:.1f}",
+        f"{result['Drug100_Mean']:.1f}",
+        f"{result['Difference']:.1f}"
+    ])
+
+df_subgroup = pd.DataFrame(subgroup_table,
+    columns=['Subgroup', 'N (Placebo)', 'N (Drug 100mg)', 
+             'Placebo Mean', 'Drug 100mg Mean', 'Difference'])
+
+# Create forest plot data column
+def format_forest_plot(diff):
+    # Simple text representation of effect size
+    if diff < -7:
+        return "◄════════"
+    elif diff < -5:
+        return "  ◄═════"
+    elif diff < -3:
+        return "    ◄══"
+    else:
+        return "     ◄"
+
+df_subgroup['Effect'] = df_subgroup['Difference'].astype(float).apply(format_forest_plot)
+
+# Create subgroup RTF
+doc_sub = rtf.RTFDocument(
+    df=df_subgroup,
+    rtf_page=rtf.RTFPage(
+        orientation="landscape",
+        nrow=40
+    ),
+    rtf_title=rtf.RTFTitle(
+        text=[
+            "Table 14.2.3.1: Subgroup Analysis of Primary Endpoint",
+            "Change from Baseline at Week 24 - Drug 100mg vs Placebo",
+            "Full Analysis Set"
+        ]
+    ),
+    rtf_body=rtf.RTFBody(
+        col_rel_width=[2.5, 1.2, 1.2, 1.5, 1.5, 1.5, 2.0],
+        text_justification=["l", "c", "c", "c", "c", "c", "l"],
+        text_font=["Times New Roman"] * 6 + ["Courier New"],  # Monospace for plot
+        border_left=["single"] + [""] * 6,
+        border_right=[""] * 6 + ["single"],
+        # Highlight overall row
+        text_format=[
+            ["b", "b", "b", "b", "b", "b", "b"],
+            ["", "", "", "", "", "", ""],
+            ["", "", "", "", "", "", ""],
+            ["", "", "", "", "", "", ""],
+            ["", "", "", "", "", "", ""],
+            ["", "", "", "", "", "", ""],
+            ["", "", "", "", "", "", ""]
+        ]
+    ),
+    rtf_footnote=rtf.RTFFootnote(
+        text=[
+            "Difference = Drug 100mg mean - Placebo mean",
+            "Negative values favor Drug 100mg (improvement)",
+            "Forest plot: ◄ represents magnitude of treatment effect"
+        ]
+    )
+)
+
+doc_sub.write_rtf("efficacy_subgroup.rtf")
+print("Created efficacy_subgroup.rtf")
+```
+
+    Created efficacy_subgroup.rtf
+
+## Convert to PDF
+
+``` python
+# Convert all RTF files to PDF
+try:
+    converter = rtf.LibreOfficeConverter()
+    
+    files_to_convert = [
+        "efficacy_primary.rtf", 
+        "efficacy_response.rtf",
+        "efficacy_subgroup.rtf"
+    ]
+    
+    for file in files_to_convert:
+        converter.convert(
+            input_files=file,
+            output_dir=".",
+            format="pdf",
+            overwrite=True
+        )
+        print(f"✓ Converted {file} to PDF")
+    
+    print("\nPDF conversion completed successfully!")
+    
+except FileNotFoundError as e:
+    print(f"Note: {e}")
+    print("\nTo enable PDF conversion, install LibreOffice:")
+    print("- macOS: brew install --cask libreoffice")
+    print("- Ubuntu/Debian: sudo apt-get install libreoffice")
+    print("- Windows: Download from https://www.libreoffice.org/")
+    print("\nRTF files have been successfully created and can be opened in any RTF-compatible application.")
+```
+
+    ✓ Converted efficacy_primary.rtf to PDF
+    ✓ Converted efficacy_response.rtf to PDF
+    ✓ Converted efficacy_subgroup.rtf to PDF
+
+    PDF conversion completed successfully!
+
+## Key Features Demonstrated
+
+### 1. Primary Endpoint Analysis
+
+- ANCOVA model with baseline adjustment
+- Least squares means from statistical model
+- Treatment comparisons with confidence intervals
+- Proper p-value formatting (\<0.0001)
+
+### 2. Statistical Rigor
+
+- Model-based estimates (not just descriptive statistics)
+- Standard errors for change from baseline
+- 95% confidence intervals for treatment differences
+- Multiple comparison considerations
+
+### 3. Response Analysis
+
+- Binary outcome definition (responder analysis)
+- Odds ratios with confidence intervals
+- Clear reference group designation
+- Proportion formatting (n/N)
+
+### 4. Subgroup Analysis
+
+- Pre-specified subgroups by demographics and baseline
+- Consistent analysis across subgroups
+- Visual representation of treatment effects
+- Sample size reporting for each subgroup
+
+### 5. Table Formatting
+
+- Mixed landscape/portrait orientations
+- Appropriate column widths for content
+- Section separators within tables
+- Font changes for visual elements
+
+## Best Practices for Efficacy Tables
+
+1.  **Statistical Analysis**:
+    - Pre-specify analysis models in SAP
+    - Use appropriate covariates (baseline, stratification factors)
+    - Report both observed and model-based estimates
+    - Include measures of uncertainty (SE, CI)
+2.  **Result Presentation**:
+    - Round appropriately (means to 1 decimal, p-values to 4)
+    - Use consistent formatting across tables
+    - Clearly label statistical methods used
+    - Include sample sizes for transparency
+3.  **Regulatory Compliance**:
+    - Follow ICH E9 guidelines
+    - Include all randomized subjects (ITT/FAS)
+    - Document analysis populations clearly
+    - Provide source dataset information
+4.  **Clinical Interpretation**:
+    - Present clinically meaningful differences
+    - Include responder analyses when relevant
+    - Show consistency across subgroups
+    - Highlight primary vs secondary endpoints
+
+This example demonstrates how rtflite can create publication-quality
+efficacy tables that meet pharmaceutical industry standards for clinical
+trial reporting, including complex statistical results and professional
+formatting.
