@@ -50,7 +50,7 @@ class PageBreakCalculator(BaseModel):
         self,
         df: pl.DataFrame,
         col_widths: List[float],
-        cell_height: float = 0.15,
+        table_attrs=None,
         font_size: int = 9,
     ) -> List[int]:
         """Calculate how many rows each content row will occupy when rendered
@@ -58,26 +58,54 @@ class PageBreakCalculator(BaseModel):
         Args:
             df: DataFrame containing the content
             col_widths: Width of each column in inches
-            cell_height: Height of each cell in inches
-            font_size: Font size in points
+            table_attrs: Table attributes containing cell height and font size info
+            font_size: Default font size in points
 
         Returns:
             List of row counts for each data row
         """
         row_counts = []
+        dim = df.shape
 
         for row_idx in range(df.height):
             max_lines_in_row = 1
 
             for col_idx, col_width in enumerate(col_widths):
                 if col_idx < len(df.columns):
-                    cell_value = str(df[col_idx][row_idx])
+                    # Use proper polars column access - df[column_name][row_idx]
+                    col_name = df.columns[col_idx]
+                    cell_value = str(df[col_name][row_idx])
+
+                    # Get actual font size from table attributes if available
+                    actual_font_size = font_size
+                    if table_attrs and hasattr(table_attrs, "text_font_size"):
+                        from .attributes import BroadcastValue
+
+                        actual_font_size = BroadcastValue(
+                            value=table_attrs.text_font_size, dimension=dim
+                        ).iloc(row_idx, col_idx)
+
                     # Calculate how many lines this text will need
-                    text_width = get_string_width(cell_value, font_size)
+                    # Use default font (Times New Roman) with actual font size
+                    text_width = get_string_width(
+                        cell_value, "Times New Roman", actual_font_size
+                    )
                     lines_needed = max(1, int(text_width / col_width) + 1)
                     max_lines_in_row = max(max_lines_in_row, lines_needed)
 
-            row_counts.append(max_lines_in_row)
+            # Account for cell height if specified in table attributes
+            cell_height_lines = 1
+            if table_attrs and hasattr(table_attrs, "cell_height"):
+                from .attributes import BroadcastValue
+
+                cell_height = BroadcastValue(
+                    value=table_attrs.cell_height, dimension=dim
+                ).iloc(row_idx, 0)
+                # Convert cell height from inches to approximate line count
+                # Assuming default line height of ~0.15 inches
+                cell_height_lines = max(1, int(cell_height / 0.15))
+
+            row_counts.append(max(max_lines_in_row, cell_height_lines))
 
         return row_counts
 
@@ -87,6 +115,7 @@ class PageBreakCalculator(BaseModel):
         col_widths: List[float],
         page_by: List[str] = None,
         new_page: bool = False,
+        table_attrs=None,
     ) -> List[Tuple[int, int]]:
         """Find optimal page break positions
 
@@ -95,6 +124,7 @@ class PageBreakCalculator(BaseModel):
             col_widths: Column widths in inches
             page_by: Columns to group by for page breaks
             new_page: Whether to force new pages between groups
+            table_attrs: Table attributes for accurate row calculation
 
         Returns:
             List of (start_row, end_row) tuples for each page
@@ -102,7 +132,7 @@ class PageBreakCalculator(BaseModel):
         if df.height == 0:
             return []
 
-        row_counts = self.calculate_content_rows(df, col_widths)
+        row_counts = self.calculate_content_rows(df, col_widths, table_attrs)
         page_breaks = []
         current_page_start = 0
         current_page_rows = 0
@@ -151,6 +181,7 @@ class ContentDistributor(BaseModel):
         page_by: List[str] = None,
         new_page: bool = False,
         pageby_header: bool = True,
+        table_attrs=None,
     ) -> List[Dict[str, Any]]:
         """Distribute content across multiple pages
 
@@ -160,12 +191,13 @@ class ContentDistributor(BaseModel):
             page_by: Columns to group by
             new_page: Force new pages between groups
             pageby_header: Repeat headers on new pages
+            table_attrs: Table attributes for accurate calculations
 
         Returns:
             List of page information dictionaries
         """
         page_breaks = self.calculator.find_page_breaks(
-            df, col_widths, page_by, new_page
+            df, col_widths, page_by, new_page, table_attrs
         )
         pages = []
 

@@ -17,6 +17,7 @@ from .input import (
     RTFTitle,
     TableAttributes,
 )
+from .pagination import RTFPagination, PageBreakCalculator, ContentDistributor
 from .row import Utils
 
 
@@ -136,6 +137,47 @@ class RTFDocument(BaseModel):
                 self.rtf_page_footer.text_space_after = (
                     self._table_space + self.rtf_page_footer.text_space_after
                 )
+
+    def _needs_pagination(self) -> bool:
+        """Check if document needs pagination based on content size and page limits"""
+        if self.rtf_body.page_by and self.rtf_body.new_page:
+            return True
+
+        # Create pagination instance to calculate rows needed
+        pagination = RTFPagination(
+            page_width=self.rtf_page.width,
+            page_height=self.rtf_page.height,
+            margin=self.rtf_page.margin,
+            nrow=self.rtf_page.nrow,
+            orientation=self.rtf_page.orientation,
+        )
+
+        calculator = PageBreakCalculator(pagination=pagination)
+        col_total_width = self.rtf_page.col_width
+        col_widths = Utils._col_widths(self.rtf_body.col_rel_width, col_total_width)
+
+        # Calculate rows needed for content
+        content_rows = calculator.calculate_content_rows(
+            self.df, col_widths, self.rtf_body
+        )
+
+        total_rows = sum(content_rows)
+        return total_rows > self.rtf_page.nrow
+
+    def _create_pagination_instance(self) -> tuple[RTFPagination, ContentDistributor]:
+        """Create pagination and content distributor instances"""
+        pagination = RTFPagination(
+            page_width=self.rtf_page.width,
+            page_height=self.rtf_page.height,
+            margin=self.rtf_page.margin,
+            nrow=self.rtf_page.nrow,
+            orientation=self.rtf_page.orientation,
+        )
+
+        calculator = PageBreakCalculator(pagination=pagination)
+        distributor = ContentDistributor(pagination=pagination, calculator=calculator)
+
+        return pagination, distributor
 
     def _rtf_page_encode(self) -> str:
         """Define RTF page settings"""
@@ -352,10 +394,15 @@ class RTFDocument(BaseModel):
 
         # Initialize dimensions and widths
         col_total_width = self.rtf_page.col_width
-        page_by = self._page_by()
+        col_widths = Utils._col_widths(rtf_attrs.col_rel_width, col_total_width)
 
+        # Check if pagination is needed
+        if self._needs_pagination():
+            return self._rtf_body_encode_paginated(df, rtf_attrs, col_widths)
+
+        # Handle existing page_by grouping (non-paginated)
+        page_by = self._page_by()
         if page_by is None:
-            col_widths = Utils._col_widths(rtf_attrs.col_rel_width, col_total_width)
             return rtf_attrs._encode(df, col_widths)
 
         rows = []
@@ -378,10 +425,42 @@ class RTFDocument(BaseModel):
             section_attrs = TableAttributes(**section_attrs_dict)
 
             # Calculate column widths and encode section
-            col_widths = Utils._col_widths(section_attrs.col_rel_width, col_total_width)
-            rows.extend(section_attrs._encode(section_df, col_widths))
+            section_col_widths = Utils._col_widths(
+                section_attrs.col_rel_width, col_total_width
+            )
+            rows.extend(section_attrs._encode(section_df, section_col_widths))
 
         return rows
+
+    def _rtf_body_encode_paginated(
+        self, df: pl.DataFrame, rtf_attrs: TableAttributes, col_widths: list[float]
+    ) -> MutableSequence[str]:
+        """Encode body content with pagination support"""
+        _, distributor = self._create_pagination_instance()
+
+        # Distribute content across pages
+        pages = distributor.distribute_content(
+            df=df,
+            col_widths=col_widths,
+            page_by=self.rtf_body.page_by,
+            new_page=self.rtf_body.new_page,
+            pageby_header=self.rtf_body.pageby_header,
+            table_attrs=rtf_attrs,
+        )
+
+        all_rows = []
+        for page_info in pages:
+            page_df = page_info["data"]
+
+            # Add page break before each page (except first)
+            if not page_info["is_first_page"]:
+                all_rows.append("\\page")
+
+            # Encode page content
+            page_rows = rtf_attrs._encode(page_df, col_widths)
+            all_rows.extend(page_rows)
+
+        return all_rows
 
     def _rtf_column_header_encode(
         self, df: pl.DataFrame, rtf_attrs: TableAttributes | None
