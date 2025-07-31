@@ -89,7 +89,7 @@ converter.convert(
 )
 ```
 
-## CI/CD Integration
+## CI/CD integration
 
 For automated workflows:
 
@@ -111,7 +111,7 @@ RUN apt-get update && apt-get install -y libreoffice
 
 ## Troubleshooting
 
-### "Can't find LibreOffice executable" Error
+### "Can't find LibreOffice executable" error
 
 1. Ensure LibreOffice is installed
 2. Restart your terminal/IDE
