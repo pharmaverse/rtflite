@@ -10,13 +10,13 @@ rtflite is a lightweight RTF (Rich Text Format) composer for Python that special
 ### Testing
 ```bash
 # Run tests with coverage
-pytest --cov=rtflite --cov-report=xml
+uv run pytest --cov=rtflite --cov-report=xml
 
 # Run specific test file
-pytest tests/test_encode.py
+uv run pytest tests/test_encode.py
 
 # Run tests with verbose output
-pytest -v
+uv run pytest -v
 ```
 
 ### Code Quality
