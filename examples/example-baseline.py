@@ -1,21 +1,15 @@
 from importlib.resources import files
 
-import polars as pl
+import pandas as pd
+
 import rtflite as rtf
 
-pl.Config.set_tbl_rows(200)
-
 data_path = files("rtflite.data").joinpath("baseline.csv")
-df = pl.read_csv(data_path)
+df = pd.read_csv(data_path, na_filter=False)
 print(df)
 
-
-header1 = pl.DataFrame(
-    [["", "Placebo", "Drug Low Dose", "Drug High Dose", "Total"]], orient="row"
-)
-header2 = pl.DataFrame(
-    [["", "n", "(%)", "n", "(%)", "n", "(%)", "n", "(%)"]], orient="row"
-)
+header1 = pd.DataFrame([["", "Placebo", "Drug Low Dose", "Drug High Dose", "Total"]])
+header2 = pd.DataFrame([["", "n", "(%)", "n", "(%)", "n", "(%)", "n", "(%)"]])
 
 doc = rtf.RTFDocument(
     df=df,
@@ -49,5 +43,14 @@ try:
     converter.convert(
         input_files="output.rtf", output_dir=".", format="pdf", overwrite=True
     )
-except:
-    print("No Libreoffice")
+    print("PDF conversion completed successfully!")
+
+except FileNotFoundError as e:
+    print(f"Note: {e}")
+    print("\nTo enable PDF conversion, install LibreOffice:")
+    print("- macOS: brew install --cask libreoffice")
+    print("- Ubuntu/Debian: sudo apt-get install libreoffice")
+    print("- Windows: Download from https://www.libreoffice.org/")
+    print(
+        "\nRTF file 'output.rtf' has been successfully created and can be opened in any RTF-compatible application."
+    )

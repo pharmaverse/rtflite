@@ -97,10 +97,20 @@ doc.write_rtf("output.rtf")
 ## Convert to PDF
 
 ```{python}
-converter = rtf.LibreOfficeConverter()
-converter.convert(
-    input_files="output.rtf", output_dir=".", format="pdf", overwrite=True
-)
+try:
+    converter = rtf.LibreOfficeConverter()
+    converter.convert(
+        input_files="output.rtf", output_dir=".", format="pdf", overwrite=True
+    )
+    print("PDF conversion completed successfully!")
+    
+except FileNotFoundError as e:
+    print(f"Note: {e}")
+    print("\nTo enable PDF conversion, install LibreOffice:")
+    print("- macOS: brew install --cask libreoffice")
+    print("- Ubuntu/Debian: sudo apt-get install libreoffice") 
+    print("- Windows: Download from https://www.libreoffice.org/")
+    print("\nRTF file 'output.rtf' has been successfully created and can be opened in any RTF-compatible application.")
 ```
 
 <embed src="../images/example-baseline/output.pdf" style="width:100%; height:400px" type="application/pdf">

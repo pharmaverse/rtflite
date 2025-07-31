@@ -13,7 +13,7 @@ sync_article() {
     quarto convert "$article_path"
 
     # Convert .ipynb to .py using nbconvert from venv
-    python -m nbconvert --to python "docs/articles/$article_name.ipynb" --output "../../$example_output"
+    uv run python -m nbconvert --to python "docs/articles/$article_name.ipynb" --output "../../$example_output"
 
     # Remove all comments
     awk '!/^#/' "$example_output" >temp && mv temp "$example_output"
@@ -25,11 +25,11 @@ sync_article() {
     rm "docs/articles/$article_name.ipynb"
 
     # Format .py using ruff from venv
-    python -m ruff format "$example_output"
+    uv run ruff format "$example_output"
 }
 
 # Sync articles
-for article in example-baseline; do
+for article in example-baseline example-pagination-basic example-pagination-grouping example-pagination-advanced; do
     sync_article "$article"
 done
 
