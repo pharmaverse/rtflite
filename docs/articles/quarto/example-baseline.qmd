@@ -99,8 +99,6 @@ doc.write_rtf(rtf_folder+rtf_file)
 ```
 
 
-## Convert to PDF
-
 ```{python}
 pdf_folder="../pdf/"
 try:

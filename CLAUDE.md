@@ -41,6 +41,14 @@ pip install -e .
 ```
 
 ### Documentation
+
+```bash
+#sync source document 
+# source: docs/scripts/quarto/example-*.qmd
+# output: docs/scripts/*.md; docs/scripts/py/*.py
+bash docs/scripts/sync.sh
+```
+
 ```bash
 # Build and deploy documentation
 mkdocs gh-deploy --force
