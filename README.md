@@ -27,17 +27,14 @@ cd rtflite
 python3 -m pip install -e .
 ```
 
-### Optional: PDF Conversion
+### Install LibreOffice (optional)
 
-rtflite can convert RTF documents to PDF using LibreOffice. To enable this feature:
+rtflite can convert RTF documents to PDF using LibreOffice.
+To enable this feature, install LibreOffice (free and open source, MPL license).
 
-1. Install LibreOffice (free and open source):
-   - macOS: `brew install --cask libreoffice`
-   - Ubuntu/Debian: `sudo apt-get install libreoffice`
-   - Windows: Download from [libreoffice.org](https://www.libreoffice.org/)
-
-
-See the [LibreOffice Setup Guide](https://pharmaverse.github.io/rtflite/articles/libreoffice-setup/) for detailed instructions.
+See the [converter setup
+guide](https://pharmaverse.github.io/rtflite/articles/converter-setup/)
+for detailed instructions.
 
 ## Contributing
 
