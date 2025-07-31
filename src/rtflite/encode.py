@@ -1,10 +1,11 @@
 from collections.abc import MutableSequence
+from typing import Any
 
 import pandas as pd
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from .attributes import BroadcastValue
 from .input import (
-    BroadcastValue,
     RTFBody,
     RTFColumnHeader,
     RTFFootnote,
@@ -22,8 +23,9 @@ from .row import Utils
 class RTFDocument(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    df: pd.DataFrame = Field(
-        ..., description="The DataFrame containing the data for the RTF document."
+    df: Any = Field(
+        ...,
+        description="The DataFrame containing the data for the RTF document. Accepts pandas or polars DataFrame.",
     )
     rtf_page: RTFPage = Field(
         default_factory=lambda: RTFPage(),
@@ -56,6 +58,32 @@ class RTFDocument(BaseModel):
     rtf_page_footer: RTFPageFooter | None = Field(
         default=None, description="Text to appear in the footer of each page"
     )
+
+    @model_validator(mode="before")
+    @classmethod
+    def validate_dataframe(cls, values):
+        """Convert DataFrame to pandas for internal processing."""
+        if "df" in values:
+            df = values["df"]
+            import pandas as pd
+
+            try:
+                import polars as pl
+
+                if isinstance(df, pl.DataFrame):
+                    # Convert polars to pandas using rows method
+                    data = df.rows()
+                    columns = df.columns
+                    values["df"] = pd.DataFrame(data, columns=columns)
+                elif not isinstance(df, pd.DataFrame):
+                    raise ValueError(
+                        "DataFrame must be either pandas or polars DataFrame"
+                    )
+            except ImportError:
+                # polars not available, ensure it's pandas
+                if not isinstance(df, pd.DataFrame):
+                    raise ValueError("DataFrame must be a pandas DataFrame")
+        return values
 
     @model_validator(mode="after")
     def validate_column_names(self):
@@ -218,7 +246,6 @@ class RTFDocument(BaseModel):
 
         # obtain column names and dimensions
         columns = list(data[0].keys())
-        dim = (len(data), len(columns))
 
         if var is None:
             return None
@@ -261,8 +288,8 @@ class RTFDocument(BaseModel):
                 if level == len(var) - 1:
                     need_header = True
                 else:
-                    for l in range(level + 1):
-                        if group[var[l]] != prev_values[var[l]]:
+                    for lvl in range(level + 1):
+                        if group[var[lvl]] != prev_values[var[lvl]]:
                             need_header = True
                             break
 
@@ -323,7 +350,6 @@ class RTFDocument(BaseModel):
             return None
 
         # Initialize dimensions and widths
-        dim = df.shape
         col_total_width = self.rtf_page.col_width
         page_by = self._page_by()
 

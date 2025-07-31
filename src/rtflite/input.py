@@ -1,8 +1,9 @@
 from collections.abc import Sequence
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from rtflite.attributes import TextAttributes, TableAttributes, BroadcastValue
+from rtflite.attributes import TextAttributes, TableAttributes
 from rtflite.row import BORDER_CODES
 
 
@@ -388,16 +389,44 @@ class RTFColumnHeader(TableAttributes):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    text: Sequence[str] | None = Field(default=None, description="Column header table")
+    text: Any = Field(default=None, description="Column header table")
 
     @field_validator("text", mode="before")
     def convert_text(cls, v):
         if v is not None:
             if isinstance(v, str):
                 return [v]
+            # Handle DataFrames
+            try:
+                import pandas as pd
+                import polars as pl
+
+                if isinstance(v, (pd.DataFrame, pl.DataFrame)):
+                    # Keep as DataFrame for now, will be processed later
+                    return v
+            except ImportError:
+                pass
             return v
 
     def __init__(self, **data):
+        # Handle df parameter - convert to text
+        if "df" in data:
+            df = data.pop("df")
+            # Handle both pandas and polars DataFrames
+            import pandas as pd
+
+            try:
+                import polars as pl
+
+                if isinstance(df, pl.DataFrame):
+                    # Convert polars to pandas
+                    data["text"] = pd.DataFrame(df.rows(), columns=df.columns)
+                else:
+                    data["text"] = df
+            except ImportError:
+                # polars not available
+                data["text"] = df
+
         defaults = {
             "border_left": ["single"],
             "border_right": ["single"],

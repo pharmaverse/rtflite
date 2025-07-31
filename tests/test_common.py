@@ -2,7 +2,7 @@ import pandas as pd
 import polars as pl
 import pytest
 
-from rtflite.input import BroadcastValue
+from rtflite.attributes import BroadcastValue
 
 
 def test_table_attributes_list():

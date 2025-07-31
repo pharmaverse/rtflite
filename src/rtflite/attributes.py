@@ -39,11 +39,12 @@ def _to_nested_list(v):
         else:
             raise TypeError("Invalid value type. Must be a list or tuple.")
 
+    # Handle both pandas and polars DataFrames
     if isinstance(v, pd.DataFrame):
         v = v.values.tolist()
-
-    if isinstance(v, pl.DataFrame):
-        v = v.to_pandas().values.tolist()
+    elif isinstance(v, pl.DataFrame):
+        # Use polars native conversion
+        v = v.rows()
 
     if isinstance(v, np.ndarray):
         v = v.tolist()
