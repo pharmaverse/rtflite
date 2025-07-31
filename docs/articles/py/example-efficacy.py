@@ -211,7 +211,7 @@ doc = rtf.RTFDocument(
     rtf_source=rtf.RTFSource(text="Source: ADEFF Dataset, Protocol XYZ-2024-001"),
 )
 
-doc.write_rtf("efficacy_primary.rtf")
+doc.write_rtf("../rtf/efficacy_primary.rtf")
 print("\nCreated efficacy_primary.rtf")
 
 df_efficacy["RESPONDER"] = df_efficacy["CHG24"] <= -3.0
@@ -317,7 +317,7 @@ doc_resp = rtf.RTFDocument(
     ),
 )
 
-doc_resp.write_rtf("efficacy_response.rtf")
+doc_resp.write_rtf("../rtf/efficacy_response.rtf")
 print("Created efficacy_response.rtf")
 
 subgroups = {
@@ -439,32 +439,5 @@ doc_sub = rtf.RTFDocument(
     ),
 )
 
-doc_sub.write_rtf("efficacy_subgroup.rtf")
+doc_sub.write_rtf("../rtf/efficacy_subgroup.rtf")
 print("Created efficacy_subgroup.rtf")
-
-try:
-    converter = rtf.LibreOfficeConverter()
-
-    files_to_convert = [
-        "efficacy_primary.rtf",
-        "efficacy_response.rtf",
-        "efficacy_subgroup.rtf",
-    ]
-
-    for file in files_to_convert:
-        converter.convert(
-            input_files=file, output_dir=".", format="pdf", overwrite=True
-        )
-        print(f"✓ Converted {file} to PDF")
-
-    print("\nPDF conversion completed successfully!")
-
-except FileNotFoundError as e:
-    print(f"Note: {e}")
-    print("\nTo enable PDF conversion, install LibreOffice:")
-    print("- macOS: brew install --cask libreoffice")
-    print("- Ubuntu/Debian: sudo apt-get install libreoffice")
-    print("- Windows: Download from https://www.libreoffice.org/")
-    print(
-        "\nRTF files have been successfully created and can be opened in any RTF-compatible application."
-    )

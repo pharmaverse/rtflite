@@ -72,10 +72,10 @@ demo_summary.append(
 demo_summary.append(["", "", "", "", "", ""])
 
 age_stats = {
-    trt: calculate_stats(df_demo[df_demo["TREATMENT"] == trt]["AGE"])
+    trt: calculate_stats(df_demo[df_demo["TREATMENT"] == trt]["AGE"], "AGE")
     for trt in n_subjects.keys()
 }
-age_total = calculate_stats(df_demo["AGE"])
+age_total = calculate_stats(df_demo["AGE"], "AGE")
 
 demo_summary.append(["Age (years)", "", "", "", "", ""])
 demo_summary.append(
@@ -112,10 +112,12 @@ demo_summary.append(
 demo_summary.append(["", "", "", "", "", ""])
 demo_summary.append(["Sex, n (%)", "", "", "", "", ""])
 sex_stats = {
-    trt: calculate_stats(df_demo[df_demo["TREATMENT"] == trt]["SEX"], "categorical")
+    trt: calculate_stats(
+        df_demo[df_demo["TREATMENT"] == trt]["SEX"], "SEX", "categorical"
+    )
     for trt in n_subjects.keys()
 }
-sex_total = calculate_stats(df_demo["SEX"], "categorical")
+sex_total = calculate_stats(df_demo["SEX"], "SEX", "categorical")
 
 for sex in ["Male", "Female"]:
     demo_summary.append(
@@ -146,10 +148,12 @@ def categorize_bmi(bmi):
 
 df_demo["BMI_CAT"] = df_demo["BMI"].apply(categorize_bmi)
 bmi_stats = {
-    trt: calculate_stats(df_demo[df_demo["TREATMENT"] == trt]["BMI_CAT"], "categorical")
+    trt: calculate_stats(
+        df_demo[df_demo["TREATMENT"] == trt]["BMI_CAT"], "BMI_CAT", "categorical"
+    )
     for trt in n_subjects.keys()
 }
-bmi_total = calculate_stats(df_demo["BMI_CAT"], "categorical")
+bmi_total = calculate_stats(df_demo["BMI_CAT"], "BMI_CAT", "categorical")
 
 for bmi_cat in ["Underweight", "Normal", "Overweight", "Obese"]:
     demo_summary.append(
@@ -303,7 +307,7 @@ doc_demo = rtf.RTFDocument(
     ),
 )
 
-doc_demo.write_rtf("row_formatting_demographics.rtf")
+doc_demo.write_rtf("../rtf/row_formatting_demographics.rtf")
 print("Created row_formatting_demographics.rtf")
 
 vital_data = []
@@ -508,7 +512,7 @@ doc_vitals = rtf.RTFDocument(
     ),
 )
 
-doc_vitals.write_rtf("row_formatting_vitals.rtf")
+doc_vitals.write_rtf("../rtf/row_formatting_vitals.rtf")
 print("Created row_formatting_vitals.rtf")
 
 analysis_summary = [
@@ -731,32 +735,5 @@ doc_analysis = rtf.RTFDocument(
     ),
 )
 
-doc_analysis.write_rtf("row_formatting_analysis.rtf")
+doc_analysis.write_rtf("../rtf/row_formatting_analysis.rtf")
 print("Created row_formatting_analysis.rtf")
-
-try:
-    converter = rtf.LibreOfficeConverter()
-
-    files_to_convert = [
-        "row_formatting_demographics.rtf",
-        "row_formatting_vitals.rtf",
-        "row_formatting_analysis.rtf",
-    ]
-
-    for file in files_to_convert:
-        converter.convert(
-            input_files=file, output_dir=".", format="pdf", overwrite=True
-        )
-        print(f"✓ Converted {file} to PDF")
-
-    print("\nPDF conversion completed successfully!")
-
-except FileNotFoundError as e:
-    print(f"Note: {e}")
-    print("\nTo enable PDF conversion, install LibreOffice:")
-    print("- macOS: brew install --cask libreoffice")
-    print("- Ubuntu/Debian: sudo apt-get install libreoffice")
-    print("- Windows: Download from https://www.libreoffice.org/")
-    print(
-        "\nRTF files have been successfully created and can be opened in any RTF-compatible application."
-    )

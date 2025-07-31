@@ -72,7 +72,7 @@ doc = rtf.RTFDocument(
     rtf_source=rtf.RTFSource(text="Source: Clinical Database Snapshot 2024-01-15"),
 )
 
-doc.write_rtf("patient_listing_paginated.rtf")
+doc.write_rtf("../rtf/patient_listing_paginated.rtf")
 
 doc_advanced = rtf.RTFDocument(
     df=df,
@@ -118,36 +118,5 @@ doc_advanced = rtf.RTFDocument(
     ),
 )
 
-doc_advanced.write_rtf("patient_listing_advanced.rtf")
+doc_advanced.write_rtf("../rtf/patient_listing_advanced.rtf")
 print("Created patient_listing_advanced.rtf with multi-page layout")
-
-try:
-    converter = rtf.LibreOfficeConverter()
-
-    # Convert basic version
-    converter.convert(
-        input_files="patient_listing_paginated.rtf",
-        output_dir=".",
-        format="pdf",
-        overwrite=True,
-    )
-
-    # Convert advanced version
-    converter.convert(
-        input_files="patient_listing_advanced.rtf",
-        output_dir=".",
-        format="pdf",
-        overwrite=True,
-    )
-
-    print("PDF conversion completed")
-
-except FileNotFoundError as e:
-    print(f"Note: {e}")
-    print("\nTo enable PDF conversion, install LibreOffice:")
-    print("- macOS: brew install --cask libreoffice")
-    print("- Ubuntu/Debian: sudo apt-get install libreoffice")
-    print("- Windows: Download from https://www.libreoffice.org/")
-    print(
-        "\nRTF files have been successfully created and can be opened in any RTF-compatible application."
-    )

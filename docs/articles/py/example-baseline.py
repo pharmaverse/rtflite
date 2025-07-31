@@ -39,18 +39,3 @@ doc = rtf.RTFDocument(
 rtf_folder = "../rtf/"
 rtf_file = "baseline.rtf"
 doc.write_rtf(rtf_folder + rtf_file)
-
-pdf_folder = "../pdf/"
-try:
-    converter = rtf.LibreOfficeConverter()
-    converter.convert(
-        input_files=rtf_folder + rtf_file,
-        output_dir=pdf_folder,
-        format="pdf",
-        overwrite=True,
-    )
-    print("PDF conversion completed successfully!")
-
-except FileNotFoundError as e:
-    print(f"Note: {e}")
-    print("\nTo enable PDF conversion, install LibreOffice:")
