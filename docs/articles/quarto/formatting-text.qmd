@@ -1,24 +1,17 @@
-<!-- `.md` and `.py` files are generated from the `.qmd` file. Please edit that file. -->
-
 ---
 title: "Advanced text formatting"
 format: gfm
 eval: false
 ---
 
-!!! tip
-
-    To run the code from this article as a Python script:
-
-    ```bash
-    python3 docs/articles/py/formatting-text.py
-    ```
+<!-- `.md` and `.py` files are generated from the `.qmd` file. Please edit that file. -->
 
 This article demonstrates advanced text formatting capabilities in rtflite, including fonts, colors, alignment, indentation, and special formatting for clinical documentation.
 
 ## Overview
 
-Advanced text formatting is essential for creating professional-quality clinical documents that meet regulatory standards. Key formatting features include:
+Advanced text formatting is essential for creating professional-quality clinical documents that meet regulatory standards. 
+Key formatting features include:
 
 - Multiple font families, sizes, and styles
 - Text colors and background colors
@@ -30,7 +23,7 @@ Advanced text formatting is essential for creating professional-quality clinical
 ## Imports
 
 ```{python}
-import pandas as pd
+import polars as pl
 import numpy as np
 import rtflite as rtf
 ```

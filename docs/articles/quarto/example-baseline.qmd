@@ -1,38 +1,27 @@
-<!-- `.md` and `.py` files are generated from the `.qmd` file. Please edit that file. -->
-
 ---
 title: "Baseline characteristics"
 format: gfm
 eval: false
 ---
 
-!!! tip
+<!-- `.md` and `.py` files are generated from the `.qmd` file. Please edit that file. -->
 
-    To run the code from this article as a Python script:
-
-    ```bash
-    python3 docs/articles/py/example-baseline.py
-    ```
-
-This article reproduces `vignettes/example-basechar.Rmd` in the r2rtf package.
 
 ## Imports
 
 ```{python}
 from importlib.resources import files
-
-import pandas as pd
-
+import polars as pl
 import rtflite as rtf
 ```
 
 ## Ingest data
 
-Load data from CSV file:
+Load data from parquet file:
 
 ```{python}
-data_path = files("rtflite.data").joinpath("baseline.csv")
-df = pd.read_csv(data_path, na_filter=False)
+data_path = files("rtflite.data").joinpath("baseline.parquet")
+df = pl.read_parquet(data_path)
 print(df)
 ```
 
@@ -57,8 +46,8 @@ print(df)
 Create header data frames:
 
 ```{python}
-header1 = pd.DataFrame([["", "Placebo", "Drug Low Dose", "Drug High Dose", "Total"]])
-header2 = pd.DataFrame([["", "n", "(%)", "n", "(%)", "n", "(%)", "n", "(%)"]])
+header1 = pl.DataFrame([["", "Placebo", "Drug Low Dose", "Drug High Dose", "Total"]])
+header2 = pl.DataFrame([["", "n", "(%)", "n", "(%)", "n", "(%)", "n", "(%)"]])
 ```
 
 ## Compose RTF

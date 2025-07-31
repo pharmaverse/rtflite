@@ -1,27 +1,23 @@
-<!-- `.md` and `.py` files are generated from the `.qmd` file. Please edit that file. -->
-
 ---
 title: "Row-level formatting"
 format: gfm
 eval: false
 ---
 
-!!! tip
+<!-- `.md` and `.py` files are generated from the `.qmd` file. Please edit that file. -->
 
-    To run the code from this article as a Python script:
-
-    ```bash
-    python3 docs/articles/py/formatting-row.py
-    ```
-
-This article demonstrates advanced row-level formatting in rtflite, including conditional formatting, alternating row styles, grouped data presentation, and complex multi-row headers commonly used in clinical trial reporting.
+This article demonstrates advanced row-level formatting in rtflite, 
+including conditional formatting, alternating row styles, grouped data presentation, 
+and complex multi-row headers commonly used in clinical trial reporting.
 
 ## Overview
 
-Row-level formatting is essential for creating professional clinical tables that guide the reader's attention and present complex data clearly. Key features include:
+Row-level formatting is essential for 
+creating professional clinical TLFs that guide the reader's attention 
+and present complex data clearly. 
+Key features include:
 
 - Conditional formatting based on data values
-- Alternating row colors for readability
 - Group headers and subheaders
 - Multi-level hierarchical displays
 - Highlighting of critical values or summary rows
@@ -29,7 +25,7 @@ Row-level formatting is essential for creating professional clinical tables that
 ## Imports
 
 ```{python}
-import pandas as pd
+import polars as pl
 import numpy as np
 import rtflite as rtf
 ```
