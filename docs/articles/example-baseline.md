@@ -8,7 +8,7 @@
     To run the code from this article as a Python script:
 
     ```bash
-    python3 examples/example-baseline.py
+    python3 docs/articles/py/example-baseline.py
     ```
 
 This article reproduces `vignettes/example-basechar.Rmd` in the r2rtf
@@ -94,20 +94,4 @@ rtf_file="baseline.rtf"
 doc.write_rtf(rtf_folder+rtf_file)
 ```
 
-## Convert to PDF
-
-``` python
-pdf_folder="../pdf/"
-try:
-    converter = rtf.LibreOfficeConverter()
-    converter.convert(
-        input_files=rtf_folder+rtf_file, output_dir=pdf_folder, format="pdf", overwrite=True
-    )
-    print("PDF conversion completed successfully!")
-    
-except FileNotFoundError as e:
-    print(f"Note: {e}")
-    print("\nTo enable PDF conversion, install LibreOffice:")
-```
-
-<embed src="./pdf/baseline.pdf" style="width:100%; height:400px" type="application/pdf">
+<embed src="../pdf/baseline.pdf" style="width:100%; height:400px" type="application/pdf">

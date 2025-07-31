@@ -119,4 +119,3 @@ doc_advanced = rtf.RTFDocument(
 )
 
 doc_advanced.write_rtf("../rtf/patient_listing_advanced.rtf")
-print("Created patient_listing_advanced.rtf with multi-page layout")

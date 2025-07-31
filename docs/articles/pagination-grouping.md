@@ -1,4 +1,4 @@
-# Page-by Grouping for Clinical Data
+# Page-by grouping for clinical data
 
 
 <!-- `.md` and `.py` files are generated from the `.qmd` file. Please edit that file. -->
@@ -8,7 +8,7 @@
     To run the code from this article as a Python script:
 
     ```bash
-    python3 examples/example-pagination-grouping.py
+    python3 docs/articles/py/pagination-grouping.py
     ```
 
 This article demonstrates rtflite’s page-by grouping functionality,
@@ -49,7 +49,7 @@ np.random.seed(123)
 # Define adverse event categories
 soc_categories = [
     'Gastrointestinal disorders',
-    'Nervous system disorders', 
+    'Nervous system disorders',
     'Skin and subcutaneous tissue disorders',
     'General disorders and administration site conditions',
     'Infections and infestations'
@@ -73,7 +73,7 @@ for soc in soc_categories:
             # Generate counts with some randomness
             n_subjects = np.random.poisson(3) + 1  # 1-10 subjects typically
             n_events = n_subjects + np.random.poisson(2)  # Usually more events than subjects
-            
+
             ae_data.append({
                 'SOC': soc,
                 'Preferred_Term': pt,
@@ -159,7 +159,7 @@ doc_grouped = rtf.RTFDocument(
 )
 
 # Write grouped RTF file
-doc_grouped.write_rtf("ae_by_soc_grouped.rtf")
+doc_grouped.write_rtf("../rtf/ae_by_soc_grouped.rtf")
 print("Created ae_by_soc_grouped.rtf with page-by grouping")
 ```
 
@@ -174,14 +174,14 @@ Create a more complex example with nested grouping:
 summary_data = []
 for trt in treatments:
     trt_data = df_ae[df_ae['Treatment'] == trt]
-    
+
     for soc in soc_categories:
         soc_data = trt_data[trt_data['SOC'] == soc]
-        
+
         total_subjects = soc_data['N_Subjects'].sum()
         total_events = soc_data['N_Events'].sum()
         unique_pts = len(soc_data['Preferred_Term'].unique())
-        
+
         summary_data.append({
             'Treatment_Group': trt,
             'SOC': soc,
@@ -240,7 +240,7 @@ doc_advanced = rtf.RTFDocument(
 )
 
 # Write advanced grouped file
-doc_advanced.write_rtf("ae_summary_by_treatment.rtf")
+doc_advanced.write_rtf("../rtf/ae_summary_by_treatment.rtf")
 print("Created ae_summary_by_treatment.rtf with treatment grouping")
 ```
 
@@ -276,7 +276,7 @@ doc_mixed = rtf.RTFDocument(
         pageby_header=True,  # Still show group headers
         col_rel_width=[4, 2, 2, 2],
         text_justification=["l", "c", "c", "c"],
-        # Highlight group headers with different formatting  
+        # Highlight group headers with different formatting
         text_format=["b", "", "", ""],  # Bold first column (will be group headers)
         text_background_color=["lightblue", "white", "white", "white"],
         border_left=["single", "", "", ""],
@@ -287,48 +287,13 @@ doc_mixed = rtf.RTFDocument(
     )
 )
 
-doc_mixed.write_rtf("ae_mixed_grouping.rtf")
+doc_mixed.write_rtf("../rtf/ae_mixed_grouping.rtf")
 print("Created ae_mixed_grouping.rtf with mixed grouping (no forced page breaks)")
 ```
 
     Created ae_mixed_grouping.rtf with mixed grouping (no forced page breaks)
 
 ## Convert to PDF
-
-``` python
-# Convert all files to PDF
-try:
-    converter = rtf.LibreOfficeConverter()
-    
-    files_to_convert = [
-        "ae_by_soc_grouped.rtf",
-        "ae_summary_by_treatment.rtf", 
-        "ae_mixed_grouping.rtf"
-    ]
-    
-    for file in files_to_convert:
-        converter.convert(
-            input_files=file,
-            output_dir=".",
-            format="pdf",
-            overwrite=True
-        )
-        print(f"✓ Converted {file} to PDF")
-    
-    print("\nAll PDF conversions completed successfully!")
-    
-except FileNotFoundError as e:
-    print(f"Note: {e}")
-    print("\nTo enable PDF conversion, install LibreOffice:")
-    print("- macOS: brew install --cask libreoffice")
-    print("- Ubuntu/Debian: sudo apt-get install libreoffice")
-    print("- Windows: Download from https://www.libreoffice.org/")
-    print("\nRTF files have been successfully created:")
-    print("- ae_by_soc_grouped.rtf")
-    print("- ae_summary_by_treatment.rtf")
-    print("- ae_mixed_grouping.rtf")
-    print("\nThese files can be opened in any RTF-compatible application.")
-```
 
     ✓ Converted ae_by_soc_grouped.rtf to PDF
     ✓ Converted ae_summary_by_treatment.rtf to PDF

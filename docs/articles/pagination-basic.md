@@ -1,4 +1,4 @@
-# Basic Multi-Page Tables
+# Basic multi-page tables
 
 
 <!-- `.md` and `.py` files are generated from the `.qmd` file. Please edit that file. -->
@@ -8,7 +8,7 @@
     To run the code from this article as a Python script:
 
     ```bash
-    python3 examples/example-pagination-basic.py
+    python3 docs/articles/py/pagination-basic.py
     ```
 
 This article demonstrates rtflite’s pagination functionality for
@@ -118,8 +118,10 @@ doc = rtf.RTFDocument(
 )
 
 # Write RTF file
-doc.write_rtf("patient_listing_paginated.rtf")
+doc.write_rtf("../rtf/patient_listing_paginated.rtf")
 ```
+
+<embed src="../pdf/patient_listing_paginated.pdf" style="width:100%; height:400px" type="application/pdf">
 
 ## Advanced Pagination with Page Headers
 
@@ -172,47 +174,10 @@ doc_advanced = rtf.RTFDocument(
 )
 
 # Write advanced RTF file
-doc_advanced.write_rtf("patient_listing_advanced.rtf")
-print("Created patient_listing_advanced.rtf with multi-page layout")
+doc_advanced.write_rtf("../rtf/patient_listing_advanced.rtf")
 ```
 
-    Created patient_listing_advanced.rtf with multi-page layout
-
-## Convert to PDF
-
-``` python
-# Convert both files to PDF for review
-try:
-    converter = rtf.LibreOfficeConverter()
-    
-    # Convert basic version
-    converter.convert(
-        input_files="patient_listing_paginated.rtf", 
-        output_dir=".", 
-        format="pdf", 
-        overwrite=True
-    )
-    
-    # Convert advanced version  
-    converter.convert(
-        input_files="patient_listing_advanced.rtf", 
-        output_dir=".", 
-        format="pdf", 
-        overwrite=True
-    )
-    
-    print("PDF conversion completed")
-    
-except FileNotFoundError as e:
-    print(f"Note: {e}")
-    print("\nTo enable PDF conversion, install LibreOffice:")
-    print("- macOS: brew install --cask libreoffice")
-    print("- Ubuntu/Debian: sudo apt-get install libreoffice")
-    print("- Windows: Download from https://www.libreoffice.org/")
-    print("\nRTF files have been successfully created and can be opened in any RTF-compatible application.")
-```
-
-    PDF conversion completed
+<embed src="../pdf/patient_listing_advanced.pdf" style="width:100%; height:400px" type="application/pdf">
 
 ## Key Features Demonstrated
 

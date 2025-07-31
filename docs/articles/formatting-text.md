@@ -1,4 +1,4 @@
-# Advanced Text Formatting
+# Advanced text formatting
 
 
 <!-- `.md` and `.py` files are generated from the `.qmd` file. Please edit that file. -->
@@ -8,7 +8,7 @@
     To run the code from this article as a Python script:
 
     ```bash
-    python3 examples/example-text-formatting.py
+    python3 docs/articles/py/formatting-text.py
     ```
 
 This article demonstrates advanced text formatting capabilities in
@@ -53,7 +53,7 @@ lab_data = [
     ["Total Cholesterol", "220", "<200", "mg/dL", "Elevated"]
 ]
 
-df_labs = pd.DataFrame(lab_data, 
+df_labs = pd.DataFrame(lab_data,
     columns=["Parameter", "Value", "Reference Range", "Unit", "Interpretation"])
 
 print("Laboratory data created:")
@@ -85,7 +85,7 @@ format_demo = [
     ["Symbol", "Mathematical symbols", "α β γ δ ε ζ η θ"]
 ]
 
-df_fonts = pd.DataFrame(format_demo, 
+df_fonts = pd.DataFrame(format_demo,
     columns=["Font Family", "Description", "Usage Example"])
 
 # Create RTF with multiple font formatting
@@ -104,40 +104,21 @@ doc_fonts = rtf.RTFDocument(
     rtf_body=rtf.RTFBody(
         col_rel_width=[2.5, 2.5, 3.0],
         text_justification=["l", "l", "l"],
-        # Different fonts for each column
-        text_font=[
-            ["Times New Roman", "Times New Roman", "Times New Roman"],
-            ["Arial", "Arial", "Arial"],
-            ["Courier New", "Courier New", "Courier New"],
-            ["Calibri", "Calibri", "Calibri"],
-            ["Symbol", "Symbol", "Symbol"]
-        ],
-        # Different sizes
-        text_font_size=[
-            [12, 12, 12],
-            [11, 11, 11],
-            [10, 10, 10],
-            [12, 12, 12],
-            [14, 14, 14]
-        ],
-        # Different styles
-        text_format=[
-            ["", "", ""],
-            ["b", "", ""],  # Bold
-            ["", "i", ""],  # Italic
-            ["", "", "u"],  # Underline
-            ["b", "b", "b"]  # Bold for symbols
-        ],
+        # Different fonts for each row (using font indices)
+        text_font=[1, 4, 9, 6, 10],  # Times New Roman, Arial, Courier New, Calibri, Symbol
+        # Different sizes for each row
+        text_font_size=[12, 11, 10, 12, 14],
+        # Different styles for each row
+        text_format=["", "b", "i", "u", "b"],  # normal, bold, italic, underline, bold
         border_left=["single"] + [""] * 2,
         border_right=[""] * 2 + ["single"]
     )
 )
 
-doc_fonts.write_rtf("text_formatting_fonts.rtf")
-print("Created text_formatting_fonts.rtf")
+doc_fonts.write_rtf("../rtf/text_formatting_fonts.rtf")
 ```
 
-    Created text_formatting_fonts.rtf
+<embed src="../pdf/text_formatting_fonts.pdf" style="width:100%; height:400px" type="application/pdf">
 
 ## Color and Background Formatting
 
@@ -153,7 +134,7 @@ color_demo = [
     ["Info", "Additional context", "See notes below"]
 ]
 
-df_colors = pd.DataFrame(color_demo, 
+df_colors = pd.DataFrame(color_demo,
     columns=["Status", "Clinical Meaning", "Action Required"])
 
 # Create RTF with color formatting
@@ -172,30 +153,12 @@ doc_colors = rtf.RTFDocument(
     rtf_body=rtf.RTFBody(
         col_rel_width=[2.0, 3.0, 3.0],
         text_justification=["c", "l", "l"],
-        # Text colors by row
-        text_color=[
-            ["black", "black", "black"],        # Normal - black
-            ["orange", "orange", "orange"],     # Caution - orange  
-            ["red", "red", "red"],              # Alert - red
-            ["darkred", "darkred", "darkred"],  # Critical - dark red
-            ["blue", "blue", "blue"]            # Info - blue
-        ],
-        # Background colors by row
-        text_background_color=[
-            ["lightgreen", "lightgreen", "lightgreen"],  # Normal - light green
-            ["lightyellow", "lightyellow", "lightyellow"], # Caution - light yellow
-            ["lightpink", "lightpink", "lightpink"],     # Alert - light pink
-            ["pink", "pink", "pink"],                    # Critical - pink
-            ["lightblue", "lightblue", "lightblue"]     # Info - light blue
-        ],
-        # Bold status column
-        text_format=[
-            ["b", "", ""],
-            ["b", "", ""],
-            ["b", "", ""],
-            ["b", "", ""],
-            ["b", "", ""]
-        ],
+        # Text colors by row (single color per row)
+        text_color=["black", "orange", "red", "darkred", "blue"],
+        # Background colors by row (single color per row)
+        text_background_color=["lightgreen", "lightyellow", "lightpink", "pink", "lightblue"],
+        # Bold format for all rows
+        text_format=["b", "b", "b", "b", "b"],
         border_left=["single"] + [""] * 2,
         border_right=[""] * 2 + ["single"]
     ),
@@ -205,11 +168,10 @@ doc_colors = rtf.RTFDocument(
     )
 )
 
-doc_colors.write_rtf("text_formatting_colors.rtf")
-print("Created text_formatting_colors.rtf")
+doc_colors.write_rtf("../rtf/text_formatting_colors.rtf")
 ```
 
-    Created text_formatting_colors.rtf
+<embed src="../pdf/text_formatting_colors.pdf" style="width:100%; height:400px" type="application/pdf">
 
 ## Alignment and Indentation
 
@@ -231,7 +193,7 @@ align_demo = [
     ["  → Discontinuations", "Descriptive", "Low rate (<5%)"]
 ]
 
-df_align = pd.DataFrame(align_demo, 
+df_align = pd.DataFrame(align_demo,
     columns=["Endpoint", "Analysis Method", "Result Summary"])
 
 # Create RTF with alignment and indentation
@@ -254,7 +216,7 @@ doc_align = rtf.RTFDocument(
         text_indent_first=[
             [0, 0, 0],      # Primary header - no indent
             [200, 0, 0],    # Bullet - 200 twips indent
-            [200, 0, 0],    # Bullet - 200 twips indent  
+            [200, 0, 0],    # Bullet - 200 twips indent
             [0, 0, 0],      # Secondary header - no indent
             [200, 0, 0],    # Numbered - 200 twips indent
             [200, 0, 0],    # Numbered - 200 twips indent
@@ -297,7 +259,7 @@ doc_align = rtf.RTFDocument(
     )
 )
 
-doc_align.write_rtf("text_formatting_alignment.rtf")
+doc_align.write_rtf("../rtf/text_formatting_alignment.rtf")
 print("Created text_formatting_alignment.rtf")
 ```
 
@@ -322,7 +284,7 @@ symbols_demo = [
     ["Units", "m², mg/dL, μg/mL", "Medical and scientific units"]
 ]
 
-df_symbols = pd.DataFrame(symbols_demo, 
+df_symbols = pd.DataFrame(symbols_demo,
     columns=["Category", "Examples", "Clinical Usage"])
 
 # Create RTF with special characters
@@ -394,7 +356,7 @@ doc_symbols = rtf.RTFDocument(
     )
 )
 
-doc_symbols.write_rtf("text_formatting_symbols.rtf")
+doc_symbols.write_rtf("../rtf/text_formatting_symbols.rtf")
 print("Created text_formatting_symbols.rtf")
 ```
 
@@ -539,51 +501,18 @@ doc_lab = rtf.RTFDocument(
     ),
     rtf_source=rtf.RTFSource(
         text="Generated by: Clinical Laboratory Information System v2.1 | " +
-             "Reviewed by: Dr. Jane Wilson, MD | Report Date: " + 
+             "Reviewed by: Dr. Jane Wilson, MD | Report Date: " +
              pd.Timestamp.now().strftime("%d-%b-%Y %H:%M")
     )
 )
 
-doc_lab.write_rtf("text_formatting_clinical.rtf")
+doc_lab.write_rtf("../rtf/text_formatting_clinical.rtf")
 print("Created text_formatting_clinical.rtf")
 ```
 
     Created text_formatting_clinical.rtf
 
 ## Convert to PDF
-
-``` python
-# Convert all RTF files to PDF
-try:
-    converter = rtf.LibreOfficeConverter()
-    
-    files_to_convert = [
-        "text_formatting_fonts.rtf",
-        "text_formatting_colors.rtf", 
-        "text_formatting_alignment.rtf",
-        "text_formatting_symbols.rtf",
-        "text_formatting_clinical.rtf"
-    ]
-    
-    for file in files_to_convert:
-        converter.convert(
-            input_files=file,
-            output_dir=".",
-            format="pdf",
-            overwrite=True
-        )
-        print(f"✓ Converted {file} to PDF")
-    
-    print("\nPDF conversion completed successfully!")
-    
-except FileNotFoundError as e:
-    print(f"Note: {e}")
-    print("\nTo enable PDF conversion, install LibreOffice:")
-    print("- macOS: brew install --cask libreoffice")
-    print("- Ubuntu/Debian: sudo apt-get install libreoffice")
-    print("- Windows: Download from https://www.libreoffice.org/")
-    print("\nRTF files have been successfully created and can be opened in any RTF-compatible application.")
-```
 
     ✓ Converted text_formatting_fonts.rtf to PDF
     ✓ Converted text_formatting_colors.rtf to PDF

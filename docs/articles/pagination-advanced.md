@@ -1,4 +1,4 @@
-# Advanced Page Element Control
+# Advanced page element control
 
 
 <!-- `.md` and `.py` files are generated from the `.qmd` file. Please edit that file. -->
@@ -8,7 +8,7 @@
     To run the code from this article as a Python script:
 
     ```bash
-    python3 examples/example-pagination-advanced.py
+    python3 docs/articles/py/pagination-advanced.py
     ```
 
 This article demonstrates rtflite’s advanced page element control
@@ -57,7 +57,7 @@ timepoints = ['Baseline', 'Week 4', 'Week 8', 'Week 12', 'Week 16', 'Week 20', '
 treatments = ['Placebo', 'Drug 2.5mg', 'Drug 5mg', 'Drug 10mg']
 efficacy_measures = [
     'Primary Efficacy Score',
-    'Secondary Score A', 
+    'Secondary Score A',
     'Secondary Score B',
     'Quality of Life Index',
     'Global Assessment'
@@ -77,10 +77,10 @@ for measure in efficacy_measures:
                 dose_effect = {'Drug 2.5mg': 5, 'Drug 5mg': 10, 'Drug 10mg': 15}[treatment]
                 mean_change = np.random.normal(dose_effect, 6)
                 n_subjects = np.random.randint(92, 108)
-            
+
             std_dev = np.random.uniform(8, 15)
             se = std_dev / np.sqrt(n_subjects)
-            
+
             efficacy_data.append({
                 'Efficacy_Measure': measure,
                 'Timepoint': timepoint,
@@ -127,7 +127,7 @@ doc_basic = rtf.RTFDocument(
         orientation="landscape",
         # Page element location controls
         page_title_location="first",     # Title only on first page
-        page_footnote_location="last",   # Footnote only on last page  
+        page_footnote_location="last",   # Footnote only on last page
         page_source_location="last"      # Source only on last page
     ),
     rtf_page_header=rtf.RTFPageHeader(
@@ -177,7 +177,7 @@ doc_basic = rtf.RTFDocument(
     )
 )
 
-doc_basic.write_rtf("efficacy_basic_pagination.rtf")
+doc_basic.write_rtf("../rtf/efficacy_basic_pagination.rtf")
 print("Created efficacy_basic_pagination.rtf with basic page element control")
 ```
 
@@ -199,7 +199,7 @@ doc_advanced = rtf.RTFDocument(
         page_source_location="last"     # Source only on last page
     ),
     rtf_page_header=rtf.RTFPageHeader(
-        text="CONFIDENTIAL - Study ABC-123 - Primary Analysis | " + 
+        text="CONFIDENTIAL - Study ABC-123 - Primary Analysis | " +
              "Continuation pages show abbreviated headers"
     ),
     rtf_page_footer=rtf.RTFPageFooter(
@@ -259,7 +259,7 @@ doc_advanced = rtf.RTFDocument(
     )
 )
 
-doc_advanced.write_rtf("efficacy_advanced_pagination.rtf")
+doc_advanced.write_rtf("../rtf/efficacy_advanced_pagination.rtf")
 print("Created efficacy_advanced_pagination.rtf with advanced page control")
 ```
 
@@ -272,7 +272,7 @@ Create a document meeting strict regulatory requirements:
 ``` python
 # Create subset of data for regulatory table
 regulatory_data = df_efficacy[
-    (df_efficacy['Efficacy_Measure'] == 'Primary Efficacy Score') & 
+    (df_efficacy['Efficacy_Measure'] == 'Primary Efficacy Score') &
     (df_efficacy['Timepoint'].isin(['Baseline', 'Week 12', 'Week 24']))
 ].copy()
 
@@ -336,50 +336,13 @@ doc_regulatory = rtf.RTFDocument(
     )
 )
 
-doc_regulatory.write_rtf("primary_efficacy_regulatory.rtf")
+doc_regulatory.write_rtf("../rtf/primary_efficacy_regulatory.rtf")
 print("Created primary_efficacy_regulatory.rtf with regulatory compliance features")
 ```
 
     Created primary_efficacy_regulatory.rtf with regulatory compliance features
 
 ## Convert All Documents
-
-``` python
-# Convert all files to PDF
-try:
-    converter = rtf.LibreOfficeConverter()
-    
-    files_to_convert = [
-        "efficacy_basic_pagination.rtf",
-        "efficacy_advanced_pagination.rtf",
-        "primary_efficacy_regulatory.rtf"
-    ]
-    
-    print("Converting files to PDF...")
-    for file in files_to_convert:
-        converter.convert(
-            input_files=file,
-            output_dir=".",
-            format="pdf",
-            overwrite=True
-        )
-        print(f"✓ Converted {file} to PDF")
-    
-    print("\nAll PDF conversions completed successfully!")
-    print("Documents are ready for regulatory review and submission.")
-    
-except FileNotFoundError as e:
-    print(f"Note: {e}")
-    print("\nTo enable PDF conversion, install LibreOffice:")
-    print("- macOS: brew install --cask libreoffice")
-    print("- Ubuntu/Debian: sudo apt-get install libreoffice")
-    print("- Windows: Download from https://www.libreoffice.org/")
-    print("\nRTF files have been successfully created:")
-    print("- efficacy_basic_pagination.rtf (basic page element control)")
-    print("- efficacy_advanced_pagination.rtf (advanced multi-page features)")
-    print("- primary_efficacy_regulatory.rtf (regulatory compliance format)")
-    print("\nThese files can be opened in any RTF-compatible application.")
-```
 
     Converting files to PDF...
     ✓ Converted efficacy_basic_pagination.rtf to PDF
