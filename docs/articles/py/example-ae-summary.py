@@ -83,14 +83,12 @@ df_summary = pd.DataFrame(ae_summary)
 
 df_summary = df_summary.sort_values(["SOC", "PT"])
 
-
 def max_incidence(row):
     return max(
         float(row["Placebo_pct"]),
         float(row["Drug 50mg_pct"]),
         float(row["Drug 100mg_pct"]),
     )
-
 
 df_summary["max_pct"] = df_summary.apply(max_incidence, axis=1)
 df_filtered = df_summary[df_summary["max_pct"] >= 5.0].copy()

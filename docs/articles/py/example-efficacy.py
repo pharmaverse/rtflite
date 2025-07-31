@@ -244,7 +244,6 @@ drug50_nonresp = response_data[1]["N"] - drug50_resp
 drug100_resp = response_data[2]["Responders"]
 drug100_nonresp = response_data[2]["N"] - drug100_resp
 
-
 def calculate_or_ci(a, b, c, d):
     or_val = (a * d) / (b * c)
     log_or = np.log(or_val)
@@ -252,7 +251,6 @@ def calculate_or_ci(a, b, c, d):
     ci_lower = np.exp(log_or - 1.96 * se_log_or)
     ci_upper = np.exp(log_or + 1.96 * se_log_or)
     return or_val, ci_lower, ci_upper
-
 
 or_50, ci50_lower, ci50_upper = calculate_or_ci(
     drug50_resp, drug50_nonresp, placebo_resp, placebo_nonresp
@@ -386,7 +384,6 @@ df_subgroup = pd.DataFrame(
     ],
 )
 
-
 def format_forest_plot(diff):
     # Simple text representation of effect size
     if diff < -7:
@@ -397,7 +394,6 @@ def format_forest_plot(diff):
         return "    ◄══"
     else:
         return "     ◄"
-
 
 df_subgroup["Effect"] = (
     df_subgroup["Difference"].astype(float).apply(format_forest_plot)

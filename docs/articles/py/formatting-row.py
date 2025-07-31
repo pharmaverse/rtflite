@@ -36,7 +36,6 @@ df_demo = pd.DataFrame(demo_data)
 print(f"Generated demographics for {len(df_demo)} subjects")
 print(f"Sample data:\n{df_demo.head()}")
 
-
 def calculate_stats(data, var, var_type="continuous"):
     if var_type == "continuous":
         return {
@@ -54,7 +53,6 @@ def calculate_stats(data, var, var_type="continuous"):
             cat: {"n": count, "pct": count / total * 100}
             for cat, count in counts.items()
         }
-
 
 demo_summary = []
 
@@ -134,7 +132,6 @@ for sex in ["Male", "Female"]:
 demo_summary.append(["", "", "", "", "", ""])
 demo_summary.append(["BMI Category, n (%)", "", "", "", "", ""])
 
-
 def categorize_bmi(bmi):
     if bmi < 18.5:
         return "Underweight"
@@ -144,7 +141,6 @@ def categorize_bmi(bmi):
         return "Overweight"
     else:
         return "Obese"
-
 
 df_demo["BMI_CAT"] = df_demo["BMI"].apply(categorize_bmi)
 bmi_stats = {
@@ -180,7 +176,6 @@ df_demo_table = pd.DataFrame(
 )
 
 print(f"\nDemographics table has {len(df_demo_table)} rows")
-
 
 def get_row_formatting(row_index, row_data):
     """Determine formatting for each row based on content and position."""
@@ -250,7 +245,6 @@ def get_row_formatting(row_index, row_data):
             "text_background_color": ["white"] * 6,
             "text_font_size": [10] * 6,
         }
-
 
 text_formats = []
 text_colors = []
@@ -394,7 +388,6 @@ df_vitals_table = pd.DataFrame(
     vital_summary, columns=["Visit", "Placebo", "Drug 25mg", "Drug 50mg"]
 )
 
-
 def get_vital_formatting(row_index, row_data):
     """Apply conditional formatting based on vital sign values and clinical significance."""
     visit = row_data[0] if len(row_data) > 0 else ""
@@ -462,7 +455,6 @@ def get_vital_formatting(row_index, row_data):
         "text_background_color": ["white"] * 4,
         "text_font_size": [10] * 4,
     }
-
 
 vital_formats = []
 vital_colors = []
@@ -562,7 +554,6 @@ df_analysis = pd.DataFrame(
     analysis_summary,
     columns=["Analysis", "Statistic", "Drug 25mg", "Drug 50mg", "p-value"],
 )
-
 
 def get_analysis_formatting(row_index, row_data):
     """Apply complex hierarchical formatting based on analysis type and level."""
@@ -676,7 +667,6 @@ def get_analysis_formatting(row_index, row_data):
             "text_background_color": ["white"] * 5,
             "text_font_size": [10] * 5,
         }
-
 
 analysis_formats = []
 analysis_colors = []
