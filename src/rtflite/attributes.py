@@ -445,7 +445,12 @@ class TableAttributes(TextAttributes):
                 else:
                     border_right = None
 
-                cell_value = str(row[j])
+                # Handle null values - display as empty string instead of "None"
+                raw_value = row[j]
+                if raw_value is None:
+                    cell_value = ""
+                else:
+                    cell_value = str(raw_value)
 
                 cell = Cell(
                     text=TextContent(
