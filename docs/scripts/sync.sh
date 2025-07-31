@@ -3,8 +3,8 @@
 # Render .qmd to .md and convert to .py
 sync_article() {
     local article_name=$1
-    local article_path="docs/articles/$article_name.qmd"
-    local example_output="examples/$article_name.py"
+    local article_path="docs/articles/quarto/$article_name.qmd"
+    local example_output="docs/articles/py/$article_name.py"
 
     # Render .qmd to .md
     quarto render "$article_path" --quiet
