@@ -36,21 +36,21 @@ doc = rtf.RTFDocument(
     ),
 )
 
-doc.write_rtf("output.rtf")
+rtf_folder = "../rtf/"
+rtf_file = "baseline.rtf"
+doc.write_rtf(rtf_folder + rtf_file)
 
+pdf_folder = "../pdf/"
 try:
     converter = rtf.LibreOfficeConverter()
     converter.convert(
-        input_files="output.rtf", output_dir=".", format="pdf", overwrite=True
+        input_files=rtf_folder + rtf_file,
+        output_dir=pdf_folder,
+        format="pdf",
+        overwrite=True,
     )
     print("PDF conversion completed successfully!")
 
 except FileNotFoundError as e:
     print(f"Note: {e}")
     print("\nTo enable PDF conversion, install LibreOffice:")
-    print("- macOS: brew install --cask libreoffice")
-    print("- Ubuntu/Debian: sudo apt-get install libreoffice")
-    print("- Windows: Download from https://www.libreoffice.org/")
-    print(
-        "\nRTF file 'output.rtf' has been successfully created and can be opened in any RTF-compatible application."
-    )
