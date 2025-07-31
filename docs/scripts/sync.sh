@@ -10,7 +10,7 @@ sync_article() {
     local example_output="docs/articles/py/$article_name.py"
 
     echo "Processing: $article_name"
-    
+
     # Render .qmd to .md
     echo "  - Rendering QMD to MD..."
     quarto render "$article_path" --output-dir ".." --quiet
@@ -41,16 +41,16 @@ sync_article() {
 generate_rtf_files() {
     echo ""
     echo "=== Generating RTF files from Python scripts ==="
-    
+
     # Create rtf directory if it doesn't exist
     mkdir -p docs/articles/rtf
-    
+
     # Run each Python file to generate RTF
-    for py_file in docs/articles/py/example-*.py; do
+    for py_file in docs/articles/py/*.py; do
         if [[ -f "$py_file" ]]; then
             py_name=$(basename "$py_file" .py)
             echo "Running: $py_name.py"
-            
+
             # Change to py directory to run the script with proper relative paths
             cd docs/articles/py || exit 1
             uv run python "$py_name.py"
@@ -63,14 +63,14 @@ generate_rtf_files() {
 convert_rtf_to_pdf() {
     echo ""
     echo "=== Converting RTF files to PDF ==="
-    
+
     # Create pdf directory if it doesn't exist
     mkdir -p docs/articles/pdf
-    
+
     # Find all RTF files in the rtf directory
     if ls docs/articles/rtf/*.rtf 1> /dev/null 2>&1; then
         echo "Converting RTF files to PDF using rtflite converter..."
-        
+
         # Use Python to batch convert RTF files
         cat > temp_convert.py << 'EOF'
 import os
@@ -93,13 +93,13 @@ if rtf_files:
         for rtf_file in rtf_files:
             rtf_name = os.path.basename(rtf_file)
             pdf_name = os.path.splitext(rtf_name)[0] + ".pdf"
-            
+
             print(f"  Converting: {rtf_name} -> {pdf_name}")
             try:
                 converter.convert(
-                    input_files=rtf_file, 
-                    output_dir=pdf_dir, 
-                    format="pdf", 
+                    input_files=rtf_file,
+                    output_dir=pdf_dir,
+                    format="pdf",
                     overwrite=True
                 )
                 print(f"    ✓ Success")
@@ -111,10 +111,10 @@ if rtf_files:
 else:
     print("No RTF files found to convert")
 EOF
-        
+
         # Run the conversion script
         uv run python temp_convert.py
-        
+
         # Clean up
         rm temp_convert.py
     else
@@ -125,7 +125,7 @@ EOF
 # Main execution flow
 echo ""
 echo "=== Step 1: Syncing QMD to MD and PY files ==="
-for qmd_file in docs/articles/quarto/example-*.qmd; do
+for qmd_file in docs/articles/quarto/*.qmd; do
     if [[ -f "$qmd_file" ]]; then
         article=$(basename "$qmd_file" .qmd)
         sync_article "$article"

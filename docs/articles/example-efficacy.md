@@ -1,4 +1,4 @@
-# Efficacy Analysis Tables
+# Efficacy analysis tables
 
 
 <!-- `.md` and `.py` files are generated from the `.qmd` file. Please edit that file. -->
@@ -8,7 +8,7 @@
     To run the code from this article as a Python script:
 
     ```bash
-    python3 examples/example-efficacy.py
+    python3 docs/articles/py/example-efficacy.py
     ```
 
 This article demonstrates creating efficacy analysis tables for clinical
@@ -64,20 +64,20 @@ for trt, n in n_subjects.items():
         trt_effect = -2.5  # Reduction in outcome
     else:  # Drug 100mg
         trt_effect = -4.0  # Greater reduction
-    
+
     for i in range(n):
         # Baseline characteristics
         age = np.random.normal(55, 10)
         sex = np.random.choice(['M', 'F'])
         baseline = np.random.normal(28, 5)  # Baseline score
-        
+
         # Week 12 outcome with treatment effect
         # Add some correlation with baseline
         week12 = baseline + trt_effect + np.random.normal(0, 3) + 0.3 * (baseline - 28)
-        
+
         # Week 24 outcome (primary endpoint)
         week24 = baseline + trt_effect * 1.5 + np.random.normal(0, 4) + 0.2 * (baseline - 28)
-        
+
         efficacy_data.append({
             'USUBJID': f"{trt[:4].upper()}-{i+1:03d}",
             'TREATMENT': trt,
@@ -115,20 +115,20 @@ summary_stats = []
 
 for trt in ['Placebo', 'Drug 50mg', 'Drug 100mg']:
     trt_data = df_efficacy[df_efficacy['TREATMENT'] == trt]
-    
+
     # Baseline
     baseline_mean = trt_data['BASELINE'].mean()
     baseline_sd = trt_data['BASELINE'].std()
-    
+
     # Week 24
     week24_mean = trt_data['WEEK24'].mean()
     week24_sd = trt_data['WEEK24'].std()
-    
+
     # Change from baseline
     chg24_mean = trt_data['CHG24'].mean()
     chg24_sd = trt_data['CHG24'].std()
     chg24_se = chg24_sd / np.sqrt(len(trt_data))
-    
+
     summary_stats.append({
         'Treatment': trt,
         'N': len(trt_data),
@@ -201,16 +201,16 @@ for stats in summary_stats:
 primary_data.append(['', '', '', '', '', ''])  # Blank row
 primary_data.append(['Treatment Comparison', '', 'Difference', '95% CI', 'p-value', ''])
 primary_data.append([
-    'Drug 50mg vs Placebo', 
-    '', 
+    'Drug 50mg vs Placebo',
+    '',
     f"{diff_50_plac:.1f}",
     f"({ci_50_plac[0]:.1f}, {ci_50_plac[1]:.1f})",
     f"{p_50_plac:.4f}",
     ''
 ])
 primary_data.append([
-    'Drug 100mg vs Placebo', 
-    '', 
+    'Drug 100mg vs Placebo',
+    '',
     f"{diff_100_plac:.1f}",
     f"({ci_100_plac[0]:.1f}, {ci_100_plac[1]:.1f})",
     f"<0.0001",
@@ -218,7 +218,7 @@ primary_data.append([
 ])
 
 df_primary = pd.DataFrame(primary_data,
-    columns=['Treatment', 'N', 'Baseline Mean (SD)', 'Week 24 Mean (SD)', 
+    columns=['Treatment', 'N', 'Baseline Mean (SD)', 'Week 24 Mean (SD)',
              'Change Mean (SE)', 'LS Mean'])
 
 # Create RTF document
@@ -274,7 +274,7 @@ doc = rtf.RTFDocument(
     )
 )
 
-doc.write_rtf("efficacy_primary.rtf")
+doc.write_rtf("../rtf/efficacy_primary.rtf")
 print("\nCreated efficacy_primary.rtf")
 ```
 
@@ -296,7 +296,7 @@ for trt in ['Placebo', 'Drug 50mg', 'Drug 100mg']:
     n_total = len(trt_data)
     n_responders = trt_data['RESPONDER'].sum()
     pct_responders = (n_responders / n_total) * 100
-    
+
     response_data.append({
         'Treatment': trt,
         'N': n_total,
@@ -348,7 +348,7 @@ for i, resp in enumerate(response_data):
     else:
         or_text = f"{or_100:.2f}"
         ci_text = f"({ci100_lower:.2f}, {ci100_upper:.2f})"
-    
+
     response_table.append([
         resp['Treatment'],
         f"{resp['Responders']}/{resp['N']}",
@@ -392,7 +392,7 @@ doc_resp = rtf.RTFDocument(
     )
 )
 
-doc_resp.write_rtf("efficacy_response.rtf")
+doc_resp.write_rtf("../rtf/efficacy_response.rtf")
 print("Created efficacy_response.rtf")
 ```
 
@@ -419,22 +419,22 @@ subgroup_results = []
 
 for subgroup_name, filter_func in subgroups.items():
     subgroup_df = filter_func(df_efficacy)
-    
+
     # Skip if too few subjects
     if len(subgroup_df) < 10:
         continue
-    
+
     # Calculate means by treatment
     placebo_mean = subgroup_df[subgroup_df['TREATMENT'] == 'Placebo']['CHG24'].mean()
     drug100_mean = subgroup_df[subgroup_df['TREATMENT'] == 'Drug 100mg']['CHG24'].mean()
-    
+
     # Treatment difference
     diff = drug100_mean - placebo_mean
-    
+
     # Sample sizes
     n_placebo = len(subgroup_df[subgroup_df['TREATMENT'] == 'Placebo'])
     n_drug100 = len(subgroup_df[subgroup_df['TREATMENT'] == 'Drug 100mg'])
-    
+
     subgroup_results.append({
         'Subgroup': subgroup_name,
         'N_Placebo': n_placebo,
@@ -457,7 +457,7 @@ for result in subgroup_results:
     ])
 
 df_subgroup = pd.DataFrame(subgroup_table,
-    columns=['Subgroup', 'N (Placebo)', 'N (Drug 100mg)', 
+    columns=['Subgroup', 'N (Placebo)', 'N (Drug 100mg)',
              'Placebo Mean', 'Drug 100mg Mean', 'Difference'])
 
 # Create forest plot data column
@@ -514,44 +514,13 @@ doc_sub = rtf.RTFDocument(
     )
 )
 
-doc_sub.write_rtf("efficacy_subgroup.rtf")
+doc_sub.write_rtf("../rtf/efficacy_subgroup.rtf")
 print("Created efficacy_subgroup.rtf")
 ```
 
     Created efficacy_subgroup.rtf
 
 ## Convert to PDF
-
-``` python
-# Convert all RTF files to PDF
-try:
-    converter = rtf.LibreOfficeConverter()
-    
-    files_to_convert = [
-        "efficacy_primary.rtf", 
-        "efficacy_response.rtf",
-        "efficacy_subgroup.rtf"
-    ]
-    
-    for file in files_to_convert:
-        converter.convert(
-            input_files=file,
-            output_dir=".",
-            format="pdf",
-            overwrite=True
-        )
-        print(f"✓ Converted {file} to PDF")
-    
-    print("\nPDF conversion completed successfully!")
-    
-except FileNotFoundError as e:
-    print(f"Note: {e}")
-    print("\nTo enable PDF conversion, install LibreOffice:")
-    print("- macOS: brew install --cask libreoffice")
-    print("- Ubuntu/Debian: sudo apt-get install libreoffice")
-    print("- Windows: Download from https://www.libreoffice.org/")
-    print("\nRTF files have been successfully created and can be opened in any RTF-compatible application.")
-```
 
     ✓ Converted efficacy_primary.rtf to PDF
     ✓ Converted efficacy_response.rtf to PDF

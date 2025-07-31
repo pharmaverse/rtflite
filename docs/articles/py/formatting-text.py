@@ -60,7 +60,6 @@ doc_fonts = rtf.RTFDocument(
 )
 
 doc_fonts.write_rtf("../rtf/text_formatting_fonts.rtf")
-print("Created text_formatting_fonts.rtf")
 
 color_demo = [
     ["Normal", "Within reference range", "Continue monitoring"],
@@ -108,7 +107,6 @@ doc_colors = rtf.RTFDocument(
 )
 
 doc_colors.write_rtf("../rtf/text_formatting_colors.rtf")
-print("Created text_formatting_colors.rtf")
 
 align_demo = [
     ["Primary Endpoint:", "", "Change from baseline at Week 24"],

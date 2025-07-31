@@ -1,26 +1,25 @@
-<!-- `.md` and `.py` files are generated from the `.qmd` file. Please edit that file. -->
+# Basic multi-page tables
 
----
-title: "Basic Multi-Page Tables"
-format: gfm
-eval: false
----
+
+<!-- `.md` and `.py` files are generated from the `.qmd` file. Please edit that file. -->
 
 !!! tip
 
     To run the code from this article as a Python script:
 
     ```bash
-    python3 examples/example-pagination-basic.py
+    python3 docs/articles/py/pagination-basic.py
     ```
 
-This article demonstrates rtflite's pagination functionality for handling large datasets that exceed single page capacity. This mirrors r2rtf's `rtf_page(nrow = X)` functionality.
+This article demonstrates rtflite’s pagination functionality for
+handling large datasets that exceed single page capacity. This mirrors
+r2rtf’s `rtf_page(nrow = X)` functionality.
 
 ## Overview
 
-When working with clinical study reports, 
-TLFs often contain more rows than can fit on a single page. 
-rtflite automatically handles pagination by:
+When working with clinical study reports, TLFs often contain more rows
+than can fit on a single page. rtflite automatically handles pagination
+by:
 
 - Splitting content across multiple pages when row limits are exceeded
 - Repeating column headers on each page for readability
@@ -29,7 +28,7 @@ rtflite automatically handles pagination by:
 
 ## Imports
 
-```{python}
+``` python
 import numpy as np
 import polars as pl
 import rtflite as rtf
@@ -37,9 +36,10 @@ import rtflite as rtf
 
 ## Create Large Dataset
 
-For this example, we'll create a patient listing with 60 patients to demonstrate pagination:
+For this example, we’ll create a patient listing with 60 patients to
+demonstrate pagination:
 
-```{python}
+``` python
 np.random.seed(42)  # For reproducible results
 
 # Generate patient data
@@ -61,27 +61,25 @@ print(f"Dataset contains {len(df)} patients")
 print(df.head())
 ```
 
-```
-Dataset contains 60 patients
-shape: (5, 9)
-┌─────────┬───────────┬─────┬─────┬───────┬────────┬────────┬──────┬─────────┐
-│ SUBJID  ┆ TREATMENT ┆ AGE ┆ SEX ┆ RACE  ┆ WEIGHT ┆ HEIGHT ┆ BMI  ┆ SITE    │
-│ ---     ┆ ---       ┆ --- ┆ --- ┆ ---   ┆ ---    ┆ ---    ┆ ---  ┆ ---     │
-│ str     ┆ str       ┆ i64 ┆ str ┆ str   ┆ f64    ┆ f64    ┆ f64  ┆ str     │
-╞═════════╪═══════════╪═════╪═════╪═══════╪════════╪════════╪══════╪═════════╡
-│ SUBJ-001 ┆ Drug 5mg  ┆ 64  ┆ M   ┆ Other ┆ 49.9   ┆ 175.4  ┆ 16.2 ┆ Site 04 │
-│ SUBJ-002 ┆ Drug 10mg ┆ 67  ┆ F   ┆ White ┆ 88.1   ┆ 154.9  ┆ 36.7 ┆ Site 02 │
-│ SUBJ-003 ┆ Placebo   ┆ 20  ┆ F   ┆ White ┆ 87.3   ┆ 168.9  ┆ 30.6 ┆ Site 01 │
-│ SUBJ-004 ┆ Drug 5mg  ┆ 48  ┆ F   ┆ White ┆ 61.4   ┆ 167.8  ┆ 21.8 ┆ Site 02 │
-│ SUBJ-005 ┆ Drug 10mg ┆ 64  ┆ M   ┆ White ┆ 85.2   ┆ 181.4  ┆ 25.9 ┆ Site 01 │
-└─────────┴───────────┴─────┴─────┴───────┴────────┴────────┴──────┴─────────┘
-```
+    Dataset contains 60 patients
+    shape: (5, 9)
+    ┌─────────┬───────────┬─────┬─────┬───────┬────────┬────────┬──────┬─────────┐
+    │ SUBJID  ┆ TREATMENT ┆ AGE ┆ SEX ┆ RACE  ┆ WEIGHT ┆ HEIGHT ┆ BMI  ┆ SITE    │
+    │ ---     ┆ ---       ┆ --- ┆ --- ┆ ---   ┆ ---    ┆ ---    ┆ ---  ┆ ---     │
+    │ str     ┆ str       ┆ i64 ┆ str ┆ str   ┆ f64    ┆ f64    ┆ f64  ┆ str     │
+    ╞═════════╪═══════════╪═════╪═════╪═══════╪════════╪════════╪══════╪═════════╡
+    │ SUBJ-001 ┆ Drug 5mg  ┆ 64  ┆ M   ┆ Other ┆ 49.9   ┆ 175.4  ┆ 16.2 ┆ Site 04 │
+    │ SUBJ-002 ┆ Drug 10mg ┆ 67  ┆ F   ┆ White ┆ 88.1   ┆ 154.9  ┆ 36.7 ┆ Site 02 │
+    │ SUBJ-003 ┆ Placebo   ┆ 20  ┆ F   ┆ White ┆ 87.3   ┆ 168.9  ┆ 30.6 ┆ Site 01 │
+    │ SUBJ-004 ┆ Drug 5mg  ┆ 48  ┆ F   ┆ White ┆ 61.4   ┆ 167.8  ┆ 21.8 ┆ Site 02 │
+    │ SUBJ-005 ┆ Drug 10mg ┆ 64  ┆ M   ┆ White ┆ 85.2   ┆ 181.4  ┆ 25.9 ┆ Site 01 │
+    └─────────┴───────────┴─────┴─────┴───────┴────────┴────────┴──────┴─────────┘
 
 ## Basic Pagination Configuration
 
 Configure RTF document with pagination settings:
 
-```{python}
+``` python
 # Create column headers
 header = pl.DataFrame([['Subject ID', 'Treatment', 'Age', 'Sex', 'Race', 'Weight (kg)', 'Height (cm)', 'BMI', 'Site']], orient = "row")
 
@@ -123,11 +121,13 @@ doc = rtf.RTFDocument(
 doc.write_rtf("../rtf/patient_listing_paginated.rtf")
 ```
 
+<embed src="../pdf/patient_listing_paginated.pdf" style="width:100%; height:400px" type="application/pdf">
+
 ## Advanced Pagination with Page Headers
 
 Add page-specific headers and footers:
 
-```{python}
+``` python
 # Create document with page headers and footers
 doc_advanced = rtf.RTFDocument(
     df=df,
@@ -175,39 +175,34 @@ doc_advanced = rtf.RTFDocument(
 
 # Write advanced RTF file
 doc_advanced.write_rtf("../rtf/patient_listing_advanced.rtf")
-print("Created patient_listing_advanced.rtf with multi-page layout")
 ```
 
-```
-Created patient_listing_advanced.rtf with multi-page layout
-```
-
-## Convert to PDF
-
-```
-PDF conversion completed
-```
+<embed src="../pdf/patient_listing_advanced.pdf" style="width:100%; height:400px" type="application/pdf">
 
 ## Key Features Demonstrated
 
 This example showcases several important pagination features:
 
 ### 1. Automatic Row Limit Management
+
 - **`nrow=20`** limits each page to 20 data rows
 - Content automatically flows to next page when limit exceeded
 - Maintains table structure and formatting consistency
 
 ### 2. Column Header Repetition
+
 - Headers automatically repeat on each new page
 - Ensures readability without referring back to first page
 - Maintains formatting and borders across pages
 
 ### 3. Page Element Control
+
 - **`page_title_location="first"`** shows title only on first page
 - **`page_footnote_location="last"`** shows footnote only on last page
 - Reduces redundancy while maintaining necessary information
 
 ### 4. Clinical Document Standards
+
 - Page headers with confidentiality notices
 - Page numbering in footers
 - Source attribution and generation timestamps
@@ -217,11 +212,16 @@ This example showcases several important pagination features:
 
 When implementing pagination for clinical documents:
 
-1. **Choose appropriate row limits** based on content complexity and page size
-2. **Use landscape orientation** for wide tables with many columns
-3. **Include page headers** with study identifiers and confidentiality notices
-4. **Add generation timestamps** for audit trail requirements
-5. **Test with representative data** to ensure proper page breaks
-6. **Consider alternating row colors** for improved readability across pages
+1.  **Choose appropriate row limits** based on content complexity and
+    page size
+2.  **Use landscape orientation** for wide tables with many columns
+3.  **Include page headers** with study identifiers and confidentiality
+    notices
+4.  **Add generation timestamps** for audit trail requirements
+5.  **Test with representative data** to ensure proper page breaks
+6.  **Consider alternating row colors** for improved readability across
+    pages
 
-This pagination approach ensures that large clinical datasets can be presented in professional, readable RTF documents that meet regulatory submission requirements.
+This pagination approach ensures that large clinical datasets can be
+presented in professional, readable RTF documents that meet regulatory
+submission requirements.

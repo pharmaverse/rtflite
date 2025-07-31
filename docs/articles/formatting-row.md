@@ -1,4 +1,4 @@
-# Row-Level Formatting
+# Row-level formatting
 
 
 <!-- `.md` and `.py` files are generated from the `.qmd` file. Please edit that file. -->
@@ -8,7 +8,7 @@
     To run the code from this article as a Python script:
 
     ```bash
-    python3 examples/example-row-formatting.py
+    python3 docs/articles/py/formatting-row.py
     ```
 
 This article demonstrates advanced row-level formatting in rtflite,
@@ -52,12 +52,12 @@ for trt, n in n_subjects.items():
     for i in range(n):
         age = max(18, int(np.random.normal(65, 12)))
         sex = np.random.choice(['Male', 'Female'], p=[0.6, 0.4])
-        race = np.random.choice(['White', 'Black or African American', 'Asian', 'Other'], 
+        race = np.random.choice(['White', 'Black or African American', 'Asian', 'Other'],
                                p=[0.75, 0.15, 0.08, 0.02])
         weight = np.random.normal(75 + (10 if sex == 'Male' else -5), 15)
         height = np.random.normal(170 + (8 if sex == 'Male' else -8), 10)
         bmi = weight / ((height/100) ** 2)
-        
+
         demo_data.append({
             'TREATMENT': trt,
             'USUBJID': f"{trt[:4].upper()}-{i+1:03d}",
@@ -102,7 +102,7 @@ def calculate_stats(data, var, var_type='continuous'):
     else:
         counts = data.value_counts()
         total = len(data)
-        return {cat: {'n': count, 'pct': count/total*100} 
+        return {cat: {'n': count, 'pct': count/total*100}
                 for cat, count in counts.items()}
 
 # Build demographics table
@@ -110,29 +110,29 @@ demo_summary = []
 
 # Age statistics
 demo_summary.append(['DEMOGRAPHICS', '', 'Placebo', 'Drug 25mg', 'Drug 50mg', 'Total'])
-demo_summary.append(['', '', f'(N={n_subjects["Placebo"]})', 
-                    f'(N={n_subjects["Drug 25mg"]})', 
-                    f'(N={n_subjects["Drug 50mg"]})', 
+demo_summary.append(['', '', f'(N={n_subjects["Placebo"]})',
+                    f'(N={n_subjects["Drug 25mg"]})',
+                    f'(N={n_subjects["Drug 50mg"]})',
                     f'(N={sum(n_subjects.values())})'])
 demo_summary.append(['', '', '', '', '', ''])
 
 # Age
-age_stats = {trt: calculate_stats(df_demo[df_demo['TREATMENT'] == trt]['AGE']) 
+age_stats = {trt: calculate_stats(df_demo[df_demo['TREATMENT'] == trt]['AGE'], 'AGE')
              for trt in n_subjects.keys()}
-age_total = calculate_stats(df_demo['AGE'])
+age_total = calculate_stats(df_demo['AGE'], 'AGE')
 
 demo_summary.append(['Age (years)', '', '', '', '', ''])
-demo_summary.append(['  Mean (SD)', '', 
+demo_summary.append(['  Mean (SD)', '',
                     f"{age_stats['Placebo']['mean']:.1f} ({age_stats['Placebo']['std']:.1f})",
                     f"{age_stats['Drug 25mg']['mean']:.1f} ({age_stats['Drug 25mg']['std']:.1f})",
                     f"{age_stats['Drug 50mg']['mean']:.1f} ({age_stats['Drug 50mg']['std']:.1f})",
                     f"{age_total['mean']:.1f} ({age_total['std']:.1f})"])
-demo_summary.append(['  Median', '', 
+demo_summary.append(['  Median', '',
                     f"{age_stats['Placebo']['median']:.0f}",
                     f"{age_stats['Drug 25mg']['median']:.0f}",
                     f"{age_stats['Drug 50mg']['median']:.0f}",
                     f"{age_total['median']:.0f}"])
-demo_summary.append(['  Range', '', 
+demo_summary.append(['  Range', '',
                     f"{age_stats['Placebo']['min']:.0f}-{age_stats['Placebo']['max']:.0f}",
                     f"{age_stats['Drug 25mg']['min']:.0f}-{age_stats['Drug 25mg']['max']:.0f}",
                     f"{age_stats['Drug 50mg']['min']:.0f}-{age_stats['Drug 50mg']['max']:.0f}",
@@ -141,12 +141,12 @@ demo_summary.append(['  Range', '',
 # Sex
 demo_summary.append(['', '', '', '', '', ''])
 demo_summary.append(['Sex, n (%)', '', '', '', '', ''])
-sex_stats = {trt: calculate_stats(df_demo[df_demo['TREATMENT'] == trt]['SEX'], 'categorical') 
+sex_stats = {trt: calculate_stats(df_demo[df_demo['TREATMENT'] == trt]['SEX'], 'SEX', 'categorical')
              for trt in n_subjects.keys()}
-sex_total = calculate_stats(df_demo['SEX'], 'categorical')
+sex_total = calculate_stats(df_demo['SEX'], 'SEX', 'categorical')
 
 for sex in ['Male', 'Female']:
-    demo_summary.append([f'  {sex}', '', 
+    demo_summary.append([f'  {sex}', '',
                         f"{sex_stats['Placebo'].get(sex, {'n': 0, 'pct': 0})['n']} ({sex_stats['Placebo'].get(sex, {'n': 0, 'pct': 0})['pct']:.1f})",
                         f"{sex_stats['Drug 25mg'].get(sex, {'n': 0, 'pct': 0})['n']} ({sex_stats['Drug 25mg'].get(sex, {'n': 0, 'pct': 0})['pct']:.1f})",
                         f"{sex_stats['Drug 50mg'].get(sex, {'n': 0, 'pct': 0})['n']} ({sex_stats['Drug 50mg'].get(sex, {'n': 0, 'pct': 0})['pct']:.1f})",
@@ -168,18 +168,18 @@ def categorize_bmi(bmi):
         return 'Obese'
 
 df_demo['BMI_CAT'] = df_demo['BMI'].apply(categorize_bmi)
-bmi_stats = {trt: calculate_stats(df_demo[df_demo['TREATMENT'] == trt]['BMI_CAT'], 'categorical') 
+bmi_stats = {trt: calculate_stats(df_demo[df_demo['TREATMENT'] == trt]['BMI_CAT'], 'BMI_CAT', 'categorical')
              for trt in n_subjects.keys()}
-bmi_total = calculate_stats(df_demo['BMI_CAT'], 'categorical')
+bmi_total = calculate_stats(df_demo['BMI_CAT'], 'BMI_CAT', 'categorical')
 
 for bmi_cat in ['Underweight', 'Normal', 'Overweight', 'Obese']:
-    demo_summary.append([f'  {bmi_cat}', '', 
+    demo_summary.append([f'  {bmi_cat}', '',
                         f"{bmi_stats['Placebo'].get(bmi_cat, {'n': 0, 'pct': 0})['n']} ({bmi_stats['Placebo'].get(bmi_cat, {'n': 0, 'pct': 0})['pct']:.1f})",
                         f"{bmi_stats['Drug 25mg'].get(bmi_cat, {'n': 0, 'pct': 0})['n']} ({bmi_stats['Drug 25mg'].get(bmi_cat, {'n': 0, 'pct': 0})['pct']:.1f})",
                         f"{bmi_stats['Drug 50mg'].get(bmi_cat, {'n': 0, 'pct': 0})['n']} ({bmi_stats['Drug 50mg'].get(bmi_cat, {'n': 0, 'pct': 0})['pct']:.1f})",
                         f"{bmi_total.get(bmi_cat, {'n': 0, 'pct': 0})['n']} ({bmi_total.get(bmi_cat, {'n': 0, 'pct': 0})['pct']:.1f})"])
 
-df_demo_table = pd.DataFrame(demo_summary, 
+df_demo_table = pd.DataFrame(demo_summary,
     columns=['Characteristic', 'Statistic', 'Placebo', 'Drug 25mg', 'Drug 50mg', 'Total'])
 
 print(f"\nDemographics table has {len(df_demo_table)} rows")
@@ -196,7 +196,7 @@ Apply sophisticated row-level formatting:
 def get_row_formatting(row_index, row_data):
     """Determine formatting for each row based on content and position."""
     characteristic = row_data[0] if len(row_data) > 0 else ""
-    
+
     # Main section headers (DEMOGRAPHICS)
     if characteristic == 'DEMOGRAPHICS':
         return {
@@ -207,7 +207,7 @@ def get_row_formatting(row_index, row_data):
             'border_top': ['single'] * 6,
             'border_bottom': ['single'] * 6
         }
-    
+
     # N values row
     elif '(N=' in str(characteristic):
         return {
@@ -217,7 +217,7 @@ def get_row_formatting(row_index, row_data):
             'text_font_size': [10] * 6,
             'border_bottom': ['single'] * 6
         }
-    
+
     # Subsection headers (Age, Sex, BMI Category)
     elif characteristic in ['Age (years)', 'Sex, n (%)', 'BMI Category, n (%)']:
         return {
@@ -227,7 +227,7 @@ def get_row_formatting(row_index, row_data):
             'text_font_size': [11] * 6,
             'border_top': ['single'] * 6
         }
-    
+
     # Sub-items (indented with spaces)
     elif characteristic.startswith('  '):
         # Alternate row colors for readability
@@ -235,7 +235,7 @@ def get_row_formatting(row_index, row_data):
             bg_color = 'white'
         else:
             bg_color = 'lightyellow'
-        
+
         return {
             'text_format': ['', '', '', '', '', ''],
             'text_color': ['black'] * 6,
@@ -243,7 +243,7 @@ def get_row_formatting(row_index, row_data):
             'text_font_size': [10] * 6,
             'text_indent_first': [300, 0, 0, 0, 0, 0]  # Indent sub-items
         }
-    
+
     # Blank rows
     elif characteristic == '':
         return {
@@ -252,7 +252,7 @@ def get_row_formatting(row_index, row_data):
             'text_background_color': ['white'] * 6,
             'text_font_size': [8] * 6
         }
-    
+
     # Default formatting
     else:
         return {
@@ -273,7 +273,7 @@ border_bottoms = []
 
 for i, row in df_demo_table.iterrows():
     formatting = get_row_formatting(i, row.values)
-    
+
     text_formats.append(formatting.get('text_format', [''] * 6))
     text_colors.append(formatting.get('text_color', ['black'] * 6))
     text_bg_colors.append(formatting.get('text_background_color', ['white'] * 6))
@@ -317,12 +317,12 @@ doc_demo = rtf.RTFDocument(
         ]
     ),
     rtf_source=rtf.RTFSource(
-        text="Source: ADSL Dataset | Program: t-demo.py | Generated: " + 
+        text="Source: ADSL Dataset | Program: t-demo.py | Generated: " +
              pd.Timestamp.now().strftime("%d%b%Y:%H:%M")
     )
 )
 
-doc_demo.write_rtf("row_formatting_demographics.rtf")
+doc_demo.write_rtf("../rtf/row_formatting_demographics.rtf")
 print("Created row_formatting_demographics.rtf")
 ```
 
@@ -341,12 +341,12 @@ for trt in n_subjects.keys():
     n = min(50, n_subjects[trt])  # Sample subset for demo
     for i in range(n):
         subject_id = f"{trt[:4].upper()}-{i+1:03d}"
-        
+
         # Baseline values
         baseline_sbp = np.random.normal(130, 15)
         baseline_dbp = np.random.normal(80, 10)
         baseline_hr = np.random.normal(72, 12)
-        
+
         for week in visit_weeks:
             # Treatment effect over time
             if trt == 'Placebo':
@@ -360,7 +360,7 @@ for trt in n_subjects.keys():
                 sbp_change = np.random.normal(-drug_effect * time_factor, 6)
                 dbp_change = np.random.normal(-drug_effect * 0.6 * time_factor, 4)
                 hr_change = np.random.normal(2 * time_factor, 4)  # Slight HR increase
-            
+
             vital_data.append({
                 'TREATMENT': trt,
                 'USUBJID': subject_id,
@@ -379,7 +379,7 @@ vital_summary = []
 for week in visit_weeks:
     visit_name = f'Week {week}' if week > 0 else 'Baseline'
     vital_summary.append([visit_name, '', '', '', ''])
-    
+
     # SBP
     sbp_row = ['  Systolic BP (mmHg)']
     for trt in ['Placebo', 'Drug 25mg', 'Drug 50mg']:
@@ -388,7 +388,7 @@ for week in visit_weeks:
         std_val = trt_data.std()
         sbp_row.append(f"{mean_val:.1f} ({std_val:.1f})")
     vital_summary.append(sbp_row)
-    
+
     # DBP
     dbp_row = ['  Diastolic BP (mmHg)']
     for trt in ['Placebo', 'Drug 25mg', 'Drug 50mg']:
@@ -397,7 +397,7 @@ for week in visit_weeks:
         std_val = trt_data.std()
         dbp_row.append(f"{mean_val:.1f} ({std_val:.1f})")
     vital_summary.append(dbp_row)
-    
+
     # Heart Rate
     hr_row = ['  Heart Rate (bpm)']
     for trt in ['Placebo', 'Drug 25mg', 'Drug 50mg']:
@@ -407,14 +407,14 @@ for week in visit_weeks:
         hr_row.append(f"{mean_val:.1f} ({std_val:.1f})")
     vital_summary.append(hr_row)
 
-df_vitals_table = pd.DataFrame(vital_summary, 
+df_vitals_table = pd.DataFrame(vital_summary,
     columns=['Visit', 'Placebo', 'Drug 25mg', 'Drug 50mg'])
 
 # Add conditional formatting based on clinical significance
 def get_vital_formatting(row_index, row_data):
     """Apply conditional formatting based on vital sign values and clinical significance."""
     visit = row_data[0] if len(row_data) > 0 else ""
-    
+
     # Visit headers
     if 'Week' in visit or visit == 'Baseline':
         color = 'darkblue' if visit == 'Baseline' else 'darkgreen'
@@ -426,7 +426,7 @@ def get_vital_formatting(row_index, row_data):
             'text_font_size': [11] * 4,
             'border_top': ['single'] * 4
         }
-    
+
     # Vital sign rows - conditional formatting based on parameter type
     elif visit.startswith('  '):
         # Extract parameter type
@@ -453,7 +453,7 @@ def get_vital_formatting(row_index, row_data):
                 else:
                     text_colors.append('black')
                     bg_colors.append('white')
-            
+
             return {
                 'text_format': ['', '', '', ''],
                 'text_color': ['black'] + text_colors,
@@ -461,7 +461,7 @@ def get_vital_formatting(row_index, row_data):
                 'text_font_size': [10] * 4,
                 'text_indent_first': [300, 0, 0, 0]
             }
-        
+
         # Standard formatting for other parameters
         return {
             'text_format': ['', '', '', ''],
@@ -470,7 +470,7 @@ def get_vital_formatting(row_index, row_data):
             'text_font_size': [10] * 4,
             'text_indent_first': [300, 0, 0, 0]
         }
-    
+
     # Default
     return {
         'text_format': [''] * 4,
@@ -489,7 +489,7 @@ vital_border_tops = []
 
 for i, row in df_vitals_table.iterrows():
     formatting = get_vital_formatting(i, row.values)
-    
+
     vital_formats.append(formatting.get('text_format', [''] * 4))
     vital_colors.append(formatting.get('text_color', ['black'] * 4))
     vital_bg_colors.append(formatting.get('text_background_color', ['white'] * 4))
@@ -532,7 +532,7 @@ doc_vitals = rtf.RTFDocument(
     )
 )
 
-doc_vitals.write_rtf("row_formatting_vitals.rtf")
+doc_vitals.write_rtf("../rtf/row_formatting_vitals.rtf")
 print("Created row_formatting_vitals.rtf")
 ```
 
@@ -560,7 +560,7 @@ analysis_summary = [
     ['  ', '95% CI', '(-3.7, -1.9)', '(-6.1, -4.3)', ''],
     ['  ', 'p-value', '0.0008', '<0.0001', ''],
     ['', '', '', '', ''],
-    
+
     # Secondary Analysis Section
     ['SECONDARY EFFICACY ANALYSES', '', '', '', ''],
     ['', '', '', '', ''],
@@ -574,7 +574,7 @@ analysis_summary = [
     ['  Hazard Ratio vs Placebo', '', '1.43', '1.89', ''],
     ['  95% CI', '', '(1.1, 1.9)', '(1.4, 2.6)', ''],
     ['', '', '', '', ''],
-    
+
     # Safety Section
     ['SAFETY SUMMARY', '', '', '', ''],
     ['', '', '', '', ''],
@@ -597,7 +597,7 @@ def get_analysis_formatting(row_index, row_data):
     """Apply complex hierarchical formatting based on analysis type and level."""
     analysis = row_data[0] if len(row_data) > 0 else ""
     statistic = row_data[1] if len(row_data) > 1 else ""
-    
+
     # Main section headers
     if analysis in ['PRIMARY EFFICACY ANALYSIS', 'SECONDARY EFFICACY ANALYSES', 'SAFETY SUMMARY']:
         section_colors = {
@@ -606,7 +606,7 @@ def get_analysis_formatting(row_index, row_data):
             'SAFETY SUMMARY': ('darkred', 'lightpink')
         }
         text_color, bg_color = section_colors.get(analysis, ('black', 'white'))
-        
+
         return {
             'text_format': ['b', 'b', 'b', 'b', 'b'],
             'text_color': [text_color] * 5,
@@ -615,7 +615,7 @@ def get_analysis_formatting(row_index, row_data):
             'border_top': ['double'] * 5,
             'border_bottom': ['single'] * 5
         }
-    
+
     # Endpoint descriptions
     elif analysis.startswith('Endpoint:') or analysis.startswith('Response Rate') or analysis.startswith('Time to Response') or analysis.startswith('Overall TEAE') or analysis.startswith('Most Common'):
         return {
@@ -625,7 +625,7 @@ def get_analysis_formatting(row_index, row_data):
             'text_font_size': [11] * 5,
             'border_top': ['single'] * 5
         }
-    
+
     # Population/subgroup headers
     elif analysis in ['Primary Population (ITT)', 'Per-Protocol Population']:
         return {
@@ -635,7 +635,7 @@ def get_analysis_formatting(row_index, row_data):
             'text_font_size': [10] * 5,
             'text_indent_first': [200, 0, 0, 0, 0]
         }
-    
+
     # Statistical results (indented with spaces)
     elif analysis.startswith('  '):
         # Highlight significant p-values
@@ -651,7 +651,7 @@ def get_analysis_formatting(row_index, row_data):
                     is_significant = p_val < 0.05
         except:
             pass
-        
+
         # Color for significant results
         if is_significant:
             p_color = 'red'
@@ -659,7 +659,7 @@ def get_analysis_formatting(row_index, row_data):
         else:
             p_color = 'black'
             p_bg = 'white'
-        
+
         return {
             'text_format': ['', '', '', '', 'b' if is_significant else ''],
             'text_color': ['black', 'black', 'black', 'black', p_color],
@@ -667,7 +667,7 @@ def get_analysis_formatting(row_index, row_data):
             'text_font_size': [9] * 5,
             'text_indent_first': [400, 0, 0, 0, 0]
         }
-    
+
     # Header row with treatment comparisons
     elif 'vs Placebo' in str(row_data):
         return {
@@ -677,7 +677,7 @@ def get_analysis_formatting(row_index, row_data):
             'text_font_size': [9] * 5,
             'border_bottom': ['single'] * 5
         }
-    
+
     # Blank rows
     elif analysis == '':
         return {
@@ -686,7 +686,7 @@ def get_analysis_formatting(row_index, row_data):
             'text_background_color': ['white'] * 5,
             'text_font_size': [6] * 5
         }
-    
+
     # Default formatting
     else:
         return {
@@ -707,7 +707,7 @@ analysis_border_bottoms = []
 
 for i, row in df_analysis.iterrows():
     formatting = get_analysis_formatting(i, row.values)
-    
+
     analysis_formats.append(formatting.get('text_format', [''] * 5))
     analysis_colors.append(formatting.get('text_color', ['black'] * 5))
     analysis_bg_colors.append(formatting.get('text_background_color', ['white'] * 5))
@@ -757,44 +757,13 @@ doc_analysis = rtf.RTFDocument(
     )
 )
 
-doc_analysis.write_rtf("row_formatting_analysis.rtf")
+doc_analysis.write_rtf("../rtf/row_formatting_analysis.rtf")
 print("Created row_formatting_analysis.rtf")
 ```
 
     Created row_formatting_analysis.rtf
 
 ## Convert to PDF
-
-``` python
-# Convert all RTF files to PDF
-try:
-    converter = rtf.LibreOfficeConverter()
-    
-    files_to_convert = [
-        "row_formatting_demographics.rtf",
-        "row_formatting_vitals.rtf",
-        "row_formatting_analysis.rtf"
-    ]
-    
-    for file in files_to_convert:
-        converter.convert(
-            input_files=file,
-            output_dir=".",
-            format="pdf",
-            overwrite=True
-        )
-        print(f"✓ Converted {file} to PDF")
-    
-    print("\nPDF conversion completed successfully!")
-    
-except FileNotFoundError as e:
-    print(f"Note: {e}")
-    print("\nTo enable PDF conversion, install LibreOffice:")
-    print("- macOS: brew install --cask libreoffice")
-    print("- Ubuntu/Debian: sudo apt-get install libreoffice")
-    print("- Windows: Download from https://www.libreoffice.org/")
-    print("\nRTF files have been successfully created and can be opened in any RTF-compatible application.")
-```
 
     ✓ Converted row_formatting_demographics.rtf to PDF
     ✓ Converted row_formatting_vitals.rtf to PDF

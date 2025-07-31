@@ -13,12 +13,12 @@ nav:
       - articles/example-efficacy.md
       - articles/example-ae-summary.md
     - Pagination:
-      - articles/example-pagination-advanced.md
-      - articles/example-pagination-basic.md
-      - articles/example-pagination-grouping.md
+      - articles/pagination-advanced.md
+      - articles/pagination-basic.md
+      - articles/pagination-grouping.md
     - Formatting:
-      - articles/example-row-formatting.md
-      - articles/example-text-formatting.md
+      - articles/formatting-row.md
+      - articles/formatting-text.md
     - Converter:
       - articles/converter-setup.md
   - API Reference:

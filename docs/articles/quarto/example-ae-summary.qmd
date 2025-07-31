@@ -1,7 +1,7 @@
 <!-- `.md` and `.py` files are generated from the `.qmd` file. Please edit that file. -->
 
 ---
-title: "Adverse Event Summary"
+title: "Adverse event summary"
 format: gfm
 eval: false
 ---
@@ -11,7 +11,7 @@ eval: false
     To run the code from this article as a Python script:
 
     ```bash
-    python3 examples/example-ae-summary.py
+    python3 docs/articles/py/example-ae-summary.py
     ```
 
 This article demonstrates creating an adverse event (AE) summary table, a standard requirement in clinical trial reporting. This mirrors the functionality in r2rtf's `example-ae-summary.Rmd`.
@@ -72,12 +72,12 @@ ae_structure = {
 ae_data = []
 for trt_idx, (trt, n_subjects) in enumerate(treatments.items()):
     subject_ids = [f"{trt[:4].upper()}-{i:03d}" for i in range(1, n_subjects + 1)]
-    
+
     for soc, pts in ae_structure.items():
         for pt, rates in pts.items():
             # Number of subjects experiencing this AE
             n_ae = int(n_subjects * rates[trt_idx])
-            
+
             # Create records for subjects with this AE
             for i in range(n_ae):
                 ae_data.append({
@@ -86,7 +86,7 @@ for trt_idx, (trt, n_subjects) in enumerate(treatments.items()):
                     'SOC': soc,
                     'PT': pt,
                     'AESER': 'N' if np.random.random() > 0.05 else 'Y',  # 5% serious
-                    'AEREL': np.random.choice(['Not Related', 'Possibly Related', 'Related'], 
+                    'AEREL': np.random.choice(['Not Related', 'Possibly Related', 'Related'],
                                             p=[0.3, 0.5, 0.2])
                 })
 
@@ -111,22 +111,22 @@ ae_summary = []
 for soc in ae_structure.keys():
     for pt in ae_structure[soc].keys():
         row_data = {'SOC': soc, 'PT': pt}
-        
+
         for trt in treatments.keys():
             # Count subjects with this AE
             n_subjects_total = treatments[trt]
             subjects_with_ae = df_ae[
-                (df_ae['TREATMENT'] == trt) & 
-                (df_ae['SOC'] == soc) & 
+                (df_ae['TREATMENT'] == trt) &
+                (df_ae['SOC'] == soc) &
                 (df_ae['PT'] == pt)
             ]['USUBJID'].nunique()
-            
+
             pct = (subjects_with_ae / n_subjects_total) * 100
-            
+
             row_data[f'{trt}_n'] = subjects_with_ae
             row_data[f'{trt}_pct'] = f"{pct:.1f}"
             row_data[f'{trt}_display'] = f"{subjects_with_ae} ({pct:.1f})"
-        
+
         ae_summary.append(row_data)
 
 df_summary = pd.DataFrame(ae_summary)
@@ -177,9 +177,9 @@ rtf_data.columns = ['System Organ Class', 'Preferred Term', 'Placebo', 'Drug 50m
 
 # Create header rows
 header1 = pd.DataFrame([['', '', 'Number (%) of Subjects', '', '']])
-header2 = pd.DataFrame([['System Organ Class', 'Preferred Term', 
-                        f'Placebo\n(N={treatments["Placebo"]})', 
-                        f'Drug 50mg\n(N={treatments["Drug 50mg"]})', 
+header2 = pd.DataFrame([['System Organ Class', 'Preferred Term',
+                        f'Placebo\n(N={treatments["Placebo"]})',
+                        f'Drug 50mg\n(N={treatments["Drug 50mg"]})',
                         f'Drug 100mg\n(N={treatments["Drug 100mg"]})']])
 
 # Create RTF document
@@ -241,7 +241,6 @@ doc = rtf.RTFDocument(
 # Write RTF file
 output_file="../rtf/ae_summary_table.rtf"
 doc.write_rtf(output_file)
-print(f"Created: {output_file}")
 ```
 
-The RTF file has been created in the `rtf/` directory. Run `sh docs/scripts/sync.sh` to generate PDF output.
+<embed src="../pdf/ae_summary_table.pdf" style="width:100%; height:400px" type="application/pdf">
