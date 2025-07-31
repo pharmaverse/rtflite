@@ -10,3 +10,8 @@ from .input import (
     RTFFootnote,
     RTFSource,
 )
+from .pagination import (
+    RTFPagination,
+    PageBreakCalculator,
+    ContentDistributor,
+)

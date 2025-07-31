@@ -39,7 +39,6 @@ def _to_nested_list(v):
         else:
             raise TypeError("Invalid value type. Must be a list or tuple.")
 
-
     if isinstance(v, pd.DataFrame):
         v = pl.from_pandas(v).rows()
 

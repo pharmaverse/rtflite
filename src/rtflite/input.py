@@ -50,11 +50,31 @@ class RTFPage(BaseModel):
         default=False, description="Whether to use color in the document"
     )
 
+    page_title_location: str | None = Field(
+        default="all", description="Where to display titles ('all', 'first', 'last')"
+    )
+    page_footnote_location: str | None = Field(
+        default="all", description="Where to display footnotes ('all', 'first', 'last')"
+    )
+    page_source_location: str | None = Field(
+        default="all", description="Where to display source ('all', 'first', 'last')"
+    )
+
     @field_validator("border_first", "border_last")
     def validate_border(cls, v):
         if v not in BORDER_CODES:
             raise ValueError(
                 f"{cls.__field_name__.capitalize()} with invalid border style: {v}"
+            )
+        return v
+
+    @field_validator(
+        "page_title_location", "page_footnote_location", "page_source_location"
+    )
+    def validate_location(cls, v):
+        if v not in ["all", "first", "last"]:
+            raise ValueError(
+                f"Invalid location. Must be 'all', 'first', or 'last'. Given: {v}"
             )
         return v
 
@@ -497,6 +517,14 @@ class RTFBody(TableAttributes):
             if isinstance(v, str):
                 return [v]
             return v
+
+    @field_validator("pageby_row")
+    def validate_pageby_row(cls, v):
+        if v not in ["column", "first_row"]:
+            raise ValueError(
+                f"Invalid pageby_row. Must be 'column' or 'first_row'. Given: {v}"
+            )
+        return v
 
     def __init__(self, **data):
         defaults = {

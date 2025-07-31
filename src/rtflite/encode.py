@@ -316,7 +316,7 @@ class RTFDocument(BaseModel):
 
         col_total_width = self.rtf_page.col_width
         col_widths = Utils._col_widths(rtf_attrs.col_rel_width, col_total_width)
-        
+
         # Create DataFrame from text string
         df = pl.DataFrame([[rtf_attrs.text]])
         return rtf_attrs._encode(df, col_widths)
@@ -330,7 +330,7 @@ class RTFDocument(BaseModel):
 
         col_total_width = self.rtf_page.col_width
         col_widths = Utils._col_widths(rtf_attrs.col_rel_width, col_total_width)
-        
+
         # Create DataFrame from text string
         df = pl.DataFrame([[rtf_attrs.text]])
         return rtf_attrs._encode(df, col_widths)
@@ -455,7 +455,9 @@ class RTFDocument(BaseModel):
                 ]
                 # Create DataFrame with explicit column names to ensure single row
                 self.rtf_column_header[0].text = pl.DataFrame(
-                    [columns], schema=[f"col_{i}" for i in range(len(columns))], orient="row"
+                    [columns],
+                    schema=[f"col_{i}" for i in range(len(columns))],
+                    orient="row",
                 )
                 self.rtf_column_header = self.rtf_column_header[:1]
 

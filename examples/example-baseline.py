@@ -10,8 +10,12 @@ df = pl.read_csv(data_path)
 print(df)
 
 
-header1 = pl.DataFrame([["", "Placebo", "Drug Low Dose", "Drug High Dose", "Total"]], orient = "row")
-header2 = pl.DataFrame([["", "n", "(%)", "n", "(%)", "n", "(%)", "n", "(%)"]], orient = "row")
+header1 = pl.DataFrame(
+    [["", "Placebo", "Drug Low Dose", "Drug High Dose", "Total"]], orient="row"
+)
+header2 = pl.DataFrame(
+    [["", "n", "(%)", "n", "(%)", "n", "(%)", "n", "(%)"]], orient="row"
+)
 
 doc = rtf.RTFDocument(
     df=df,
