@@ -1,17 +1,15 @@
 from importlib.resources import files
 
-import polars as pl
+import pandas as pd
+
 import rtflite as rtf
 
-pl.Config.set_tbl_rows(200)
-
 data_path = files("rtflite.data").joinpath("baseline.csv")
-df = pl.read_csv(data_path)
+df = pd.read_csv(data_path, na_filter=False)
 print(df)
 
-
-header1 = pl.DataFrame([["", "Placebo", "Drug Low Dose", "Drug High Dose", "Total"]], orient = "row")
-header2 = pl.DataFrame([["", "n", "(%)", "n", "(%)", "n", "(%)", "n", "(%)"]], orient = "row")
+header1 = pd.DataFrame([["", "Placebo", "Drug Low Dose", "Drug High Dose", "Total"]])
+header2 = pd.DataFrame([["", "n", "(%)", "n", "(%)", "n", "(%)", "n", "(%)"]])
 
 doc = rtf.RTFDocument(
     df=df,
@@ -38,12 +36,21 @@ doc = rtf.RTFDocument(
     ),
 )
 
-doc.write_rtf("output.rtf")
+rtf_folder = "../rtf/"
+rtf_file = "baseline.rtf"
+doc.write_rtf(rtf_folder + rtf_file)
 
+pdf_folder = "../pdf/"
 try:
     converter = rtf.LibreOfficeConverter()
     converter.convert(
-        input_files="output.rtf", output_dir=".", format="pdf", overwrite=True
+        input_files=rtf_folder + rtf_file,
+        output_dir=pdf_folder,
+        format="pdf",
+        overwrite=True,
     )
-except:
-    print("No Libreoffice")
+    print("PDF conversion completed successfully!")
+
+except FileNotFoundError as e:
+    print(f"Note: {e}")
+    print("\nTo enable PDF conversion, install LibreOffice:")

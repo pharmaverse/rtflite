@@ -39,7 +39,6 @@ def _to_nested_list(v):
         else:
             raise TypeError("Invalid value type. Must be a list or tuple.")
 
-
     if isinstance(v, pd.DataFrame):
         v = pl.from_pandas(v).rows()
 
@@ -522,8 +521,8 @@ class BroadcastValue(BaseModel):
         if not isinstance(rows, int) or not isinstance(cols, int):
             raise TypeError("dimension values must be integers")
 
-        if rows <= 0 or cols <= 0:
-            raise ValueError("dimension values must be positive")
+        if rows < 0 or cols <= 0:
+            raise ValueError("rows must be non-negative and cols must be positive")
 
         return v
 

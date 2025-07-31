@@ -3,17 +3,17 @@
 # Render .qmd to .md and convert to .py
 sync_article() {
     local article_name=$1
-    local article_path="docs/articles/$article_name.qmd"
-    local example_output="examples/$article_name.py"
+    local article_path="docs/articles/quarto/$article_name.qmd"
+    local example_output="docs/articles/py/$article_name.py"
 
     # Render .qmd to .md
-    quarto render "$article_path" --quiet
+    quarto render "$article_path" --output-dir ".." --quiet
 
     # Convert .qmd to .ipynb
     quarto convert "$article_path"
 
     # Convert .ipynb to .py using nbconvert from venv
-    python -m nbconvert --to python "docs/articles/$article_name.ipynb" --output "../../$example_output"
+    uv run python -m nbconvert --to python "docs/articles/quarto/$article_name.ipynb" --output "../../../$example_output"
 
     # Remove all comments
     awk '!/^#/' "$example_output" >temp && mv temp "$example_output"
@@ -22,15 +22,18 @@ sync_article() {
     awk 'NF {p = 0} !NF {p++} p < 2' "$example_output" >temp && mv temp "$example_output"
 
     # Clean up
-    rm "docs/articles/$article_name.ipynb"
+    rm "docs/articles/quarto/$article_name.ipynb"
 
     # Format .py using ruff from venv
-    python -m ruff format "$example_output"
+    uv run ruff format "$example_output"
 }
 
 # Sync articles
-for article in example-baseline; do
-    sync_article "$article"
+for qmd_file in docs/articles/quarto/example-*.qmd; do
+    if [[ -f "$qmd_file" ]]; then
+        article=$(basename "$qmd_file" .qmd)
+        sync_article "$article"
+    fi
 done
 
 # Sync README.md with modified image path for docs/index.md
@@ -41,3 +44,4 @@ cp CHANGELOG.md docs/changelog.md
 
 # Sync CONTRIBUTING.md with docs/contributing.md
 cp CONTRIBUTING.md docs/contributing.md
+

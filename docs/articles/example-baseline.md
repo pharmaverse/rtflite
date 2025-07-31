@@ -86,17 +86,28 @@ doc = rtf.RTFDocument(
         border_bottom=[""] * 9 + ["single"],
     ),
 )
+```
 
-doc.write_rtf("output.rtf")
+``` python
+rtf_folder="../rtf/"
+rtf_file="baseline.rtf"
+doc.write_rtf(rtf_folder+rtf_file)
 ```
 
 ## Convert to PDF
 
 ``` python
-converter = rtf.LibreOfficeConverter()
-converter.convert(
-    input_files="output.rtf", output_dir=".", format="pdf", overwrite=True
-)
+pdf_folder="../pdf/"
+try:
+    converter = rtf.LibreOfficeConverter()
+    converter.convert(
+        input_files=rtf_folder+rtf_file, output_dir=pdf_folder, format="pdf", overwrite=True
+    )
+    print("PDF conversion completed successfully!")
+    
+except FileNotFoundError as e:
+    print(f"Note: {e}")
+    print("\nTo enable PDF conversion, install LibreOffice:")
 ```
 
-<embed src="../images/example-baseline/output.pdf" style="width:100%; height:400px" type="application/pdf">
+<embed src="./pdf/baseline.pdf" style="width:100%; height:400px" type="application/pdf">
