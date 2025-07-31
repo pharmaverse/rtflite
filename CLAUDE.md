@@ -7,20 +7,28 @@ rtflite is a lightweight RTF (Rich Text Format) composer for Python that special
 
 ## Development Commands
 
+### Activate Virtual Environment
+```bash
+source .venv/bin/activate
+```
+
 ### Testing
 ```bash
 # Run tests with coverage
-uv run pytest --cov=rtflite --cov-report=xml
+pytest --cov=rtflite --cov-report=xml
 
 # Run specific test file
-uv run pytest tests/test_encode.py
+pytest tests/test_encode.py
 
 # Run tests with verbose output
-uv run pytest -v
+pytest -v
 ```
 
 ### Code Quality
 ```bash
+# Sort imports
+isort .
+
 # Format code
 ruff format
 
@@ -43,15 +51,10 @@ pip install -e .
 ### Documentation
 
 ```bash
-#sync source document 
+# Sync source document
 # source: docs/scripts/quarto/example-*.qmd
 # output: docs/scripts/*.md; docs/scripts/py/*.py
 bash docs/scripts/sync.sh
-```
-
-```bash
-# Build and deploy documentation
-mkdocs gh-deploy --force
 ```
 
 ## Architecture Overview
