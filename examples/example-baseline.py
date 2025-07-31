@@ -1,15 +1,17 @@
 from importlib.resources import files
 
-import pandas as pd
-
+import polars as pl
 import rtflite as rtf
 
+pl.Config.set_tbl_rows(200)
+
 data_path = files("rtflite.data").joinpath("baseline.csv")
-df = pd.read_csv(data_path, na_filter=False)
+df = pl.read_csv(data_path)
 print(df)
 
-header1 = pd.DataFrame([["", "Placebo", "Drug Low Dose", "Drug High Dose", "Total"]])
-header2 = pd.DataFrame([["", "n", "(%)", "n", "(%)", "n", "(%)", "n", "(%)"]])
+
+header1 = pl.DataFrame([["", "Placebo", "Drug Low Dose", "Drug High Dose", "Total"]], orient = "row")
+header2 = pl.DataFrame([["", "n", "(%)", "n", "(%)", "n", "(%)", "n", "(%)"]], orient = "row")
 
 doc = rtf.RTFDocument(
     df=df,
@@ -38,7 +40,10 @@ doc = rtf.RTFDocument(
 
 doc.write_rtf("output.rtf")
 
-converter = rtf.LibreOfficeConverter()
-converter.convert(
-    input_files="output.rtf", output_dir=".", format="pdf", overwrite=True
-)
+try:
+    converter = rtf.LibreOfficeConverter()
+    converter.convert(
+        input_files="output.rtf", output_dir=".", format="pdf", overwrite=True
+    )
+except:
+    print("No Libreoffice")

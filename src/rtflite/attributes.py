@@ -396,10 +396,11 @@ class TableAttributes(TextAttributes):
                 if not callable(getattr(self, attr)):
                     attrs[attr] = getattr(self, attr)
 
-        # Broadcast attributes to section indices
+        # Broadcast attributes to section indices, excluding None values
         return {
             attr: [BroadcastValue(value=val).iloc(row, col) for row, col in indices]
             for attr, val in attrs.items()
+            if val is not None
         }
 
     def _encode(
