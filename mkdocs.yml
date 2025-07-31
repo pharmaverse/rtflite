@@ -8,8 +8,19 @@ edit_uri: edit/main/docs/
 nav:
   - Home: index.md
   - Articles:
-    - articles/example-baseline.md
-    - articles/converter-setup.md
+    - Examples:
+      - articles/example-baseline.md
+      - articles/example-efficacy.md
+      - articles/example-ae-summary.md
+    - Pagination:
+      - articles/example-pagination-advanced.md
+      - articles/example-pagination-basic.md
+      - articles/example-pagination-grouping.md
+    - Formatting:
+      - articles/example-row-formatting.md
+      - articles/example-text-formatting.md
+    - Converter:
+      - articles/converter-setup.md
   - API Reference:
     - Row: reference/row.md
     - Input: reference/input.md
@@ -80,7 +91,6 @@ theme:
   - navigation.footer
   - navigation.indexes
   - navigation.sections
-  - navigation.expand
   - navigation.top
   - navigation.path
   - search.highlight
