@@ -251,14 +251,14 @@ class RTFDocument(BaseModel):
 
     def _rtf_title_encode(self, method: str) -> str:
         """Convert the RTF title into RTF syntax using the Text class."""
-        if not self.rtf_title:
+        if not self.rtf_title or not self.rtf_title.text:
             return None
 
         return self.rtf_title._encode(text=self.rtf_title.text, method=method)
 
     def _rtf_subline_encode(self, method: str) -> str:
         """Convert the RTF subline into RTF syntax using the Text class."""
-        if self.rtf_subline is None:
+        if self.rtf_subline is None or not self.rtf_subline.text:
             return None
 
         encode = self.rtf_subline._encode(text=self.rtf_subline.text, method=method)
@@ -280,6 +280,10 @@ class RTFDocument(BaseModel):
         # obtain input data
         data = self.df.to_dicts()
         var = self.rtf_body.page_by
+
+        # Handle empty DataFrame
+        if len(data) == 0:
+            return None
 
         # obtain column names and dimensions
         columns = list(data[0].keys())
@@ -512,18 +516,30 @@ class RTFDocument(BaseModel):
                 page_elements.append("\\page")
 
             # Add title if it should appear on this page
-            if self.rtf_title and self._should_show_element_on_page(
-                self.rtf_page.page_title_location, page_info
+            if (
+                self.rtf_title
+                and self.rtf_title.text
+                and self._should_show_element_on_page(
+                    self.rtf_page.page_title_location, page_info
+                )
             ):
-                page_elements.append(self._rtf_title_encode(method="line"))
-                page_elements.append("\n")
+                title_content = self._rtf_title_encode(method="line")
+                if title_content:
+                    page_elements.append(title_content)
+                    page_elements.append("\n")
 
             # Add subline if it should appear on this page
-            if self.rtf_subline and self._should_show_element_on_page(
-                self.rtf_page.page_title_location, page_info
+            if (
+                self.rtf_subline
+                and self.rtf_subline.text
+                and self._should_show_element_on_page(
+                    self.rtf_page.page_title_location, page_info
+                )
             ):
-                page_elements.append(self._rtf_subline_encode(method="line"))
-                page_elements.append("\n")
+                subline_content = self._rtf_subline_encode(method="line")
+                if subline_content:
+                    page_elements.append(subline_content)
+                    page_elements.append("\n")
 
             # Add column headers if needed
             if page_info["needs_header"] and self.rtf_column_header:
@@ -557,16 +573,24 @@ class RTFDocument(BaseModel):
             page_elements.extend(page_body)
 
             # Add footnote if it should appear on this page
-            if self.rtf_footnote and self._should_show_element_on_page(
-                self.rtf_page.page_footnote_location, page_info
+            if (
+                self.rtf_footnote
+                and self.rtf_footnote.text
+                and self._should_show_element_on_page(
+                    self.rtf_page.page_footnote_location, page_info
+                )
             ):
                 footnote_content = self._rtf_footnote_encode()
                 if footnote_content:
                     page_elements.extend(footnote_content)
 
             # Add source if it should appear on this page
-            if self.rtf_source and self._should_show_element_on_page(
-                self.rtf_page.page_source_location, page_info
+            if (
+                self.rtf_source
+                and self.rtf_source.text
+                and self._should_show_element_on_page(
+                    self.rtf_page.page_source_location, page_info
+                )
             ):
                 source_content = self._rtf_source_encode()
                 if source_content:
@@ -659,9 +683,11 @@ class RTFDocument(BaseModel):
         # Column header
         if self.rtf_column_header is None:
             rtf_column_header = ""
-            self.rtf_body.border_top = BroadcastValue(
-                value=self.rtf_body.border_top, dimension=dim
-            ).update_row(0, doc_border_top)
+            # Only update borders if DataFrame has rows
+            if dim[0] > 0:
+                self.rtf_body.border_top = BroadcastValue(
+                    value=self.rtf_body.border_top, dimension=dim
+                ).update_row(0, doc_border_top)
         else:
             if self.rtf_column_header[0].text is None and self.rtf_body.as_colheader:
                 columns = [
@@ -677,18 +703,22 @@ class RTFDocument(BaseModel):
                 )
                 self.rtf_column_header = self.rtf_column_header[:1]
 
-            self.rtf_column_header[0].border_top = BroadcastValue(
-                value=self.rtf_column_header[0].border_top, dimension=dim
-            ).update_row(0, doc_border_top)
+            # Only update borders if DataFrame has rows
+            if dim[0] > 0:
+                self.rtf_column_header[0].border_top = BroadcastValue(
+                    value=self.rtf_column_header[0].border_top, dimension=dim
+                ).update_row(0, doc_border_top)
 
             rtf_column_header = [
                 self._rtf_column_header_encode(df=header.text, rtf_attrs=header)
                 for header in self.rtf_column_header
             ]
 
-        self.rtf_body.border_top = BroadcastValue(
-            value=self.rtf_body.border_top, dimension=dim
-        ).update_row(0, page_border_top)
+        # Only update borders if DataFrame has rows
+        if dim[0] > 0:
+            self.rtf_body.border_top = BroadcastValue(
+                value=self.rtf_body.border_top, dimension=dim
+            ).update_row(0, page_border_top)
 
         # Bottom border last line update
         if self.rtf_footnote is not None:
@@ -700,13 +730,15 @@ class RTFDocument(BaseModel):
                 value=self.rtf_footnote.border_bottom, dimension=(1, 1)
             ).update_row(0, doc_border_bottom[0])
         else:
-            self.rtf_body.border_bottom = BroadcastValue(
-                value=self.rtf_body.border_bottom, dimension=dim
-            ).update_row(dim[0] - 1, page_border_bottom)
+            # Only update borders if DataFrame has rows
+            if dim[0] > 0:
+                self.rtf_body.border_bottom = BroadcastValue(
+                    value=self.rtf_body.border_bottom, dimension=dim
+                ).update_row(dim[0] - 1, page_border_bottom)
 
-            self.rtf_body.border_bottom = BroadcastValue(
-                value=self.rtf_body.border_bottom, dimension=dim
-            ).update_row(dim[0] - 1, doc_border_bottom)
+                self.rtf_body.border_bottom = BroadcastValue(
+                    value=self.rtf_body.border_bottom, dimension=dim
+                ).update_row(dim[0] - 1, doc_border_bottom)
 
         # Body
         rtf_body = self._rtf_body_encode(df=self.df, rtf_attrs=self.rtf_body)

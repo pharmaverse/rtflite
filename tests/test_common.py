@@ -151,9 +151,13 @@ def test_table_attributes_invalid_dimensions():
     with pytest.raises(ValueError):
         BroadcastValue(value=[1, 2, 3], dimension=(-1, 2))
 
-    # # Test with zero dimensions
+    # # Test with zero columns (should still raise error)
     with pytest.raises(ValueError):
-        BroadcastValue(value=[1, 2, 3], dimension=(0, 2))
+        BroadcastValue(value=[1, 2, 3], dimension=(2, 0))
+
+    # # Test with zero rows (should be allowed for empty DataFrames)
+    # This should not raise an error now
+    BroadcastValue(value=[], dimension=(0, 2))
 
     # # Test with non-integer dimensions
     with pytest.raises(ValueError):

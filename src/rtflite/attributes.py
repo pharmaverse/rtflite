@@ -521,8 +521,8 @@ class BroadcastValue(BaseModel):
         if not isinstance(rows, int) or not isinstance(cols, int):
             raise TypeError("dimension values must be integers")
 
-        if rows <= 0 or cols <= 0:
-            raise ValueError("dimension values must be positive")
+        if rows < 0 or cols <= 0:
+            raise ValueError("rows must be non-negative and cols must be positive")
 
         return v
 
