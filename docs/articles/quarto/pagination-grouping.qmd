@@ -1,7 +1,7 @@
 <!-- `.md` and `.py` files are generated from the `.qmd` file. Please edit that file. -->
 
 ---
-title: "Page-by Grouping for Clinical Data"
+title: "Page-by grouping for clinical data"
 format: gfm
 eval: false
 ---
@@ -11,7 +11,7 @@ eval: false
     To run the code from this article as a Python script:
 
     ```bash
-    python3 examples/example-pagination-grouping.py
+    python3 docs/articles/py/pagination-grouping.py
     ```
 
 This article demonstrates rtflite's page-by grouping functionality, which mirrors r2rtf's `page_by` and `new_page` parameters. This feature is essential for clinical reports where data needs to be separated by treatment groups, study sites, or adverse event categories.
@@ -50,7 +50,7 @@ np.random.seed(123)
 # Define adverse event categories
 soc_categories = [
     'Gastrointestinal disorders',
-    'Nervous system disorders', 
+    'Nervous system disorders',
     'Skin and subcutaneous tissue disorders',
     'General disorders and administration site conditions',
     'Infections and infestations'
@@ -74,7 +74,7 @@ for soc in soc_categories:
             # Generate counts with some randomness
             n_subjects = np.random.poisson(3) + 1  # 1-10 subjects typically
             n_events = n_subjects + np.random.poisson(2)  # Usually more events than subjects
-            
+
             ae_data.append({
                 'SOC': soc,
                 'Preferred_Term': pt,
@@ -179,14 +179,14 @@ Create a more complex example with nested grouping:
 summary_data = []
 for trt in treatments:
     trt_data = df_ae[df_ae['Treatment'] == trt]
-    
+
     for soc in soc_categories:
         soc_data = trt_data[trt_data['SOC'] == soc]
-        
+
         total_subjects = soc_data['N_Subjects'].sum()
         total_events = soc_data['N_Events'].sum()
         unique_pts = len(soc_data['Preferred_Term'].unique())
-        
+
         summary_data.append({
             'Treatment_Group': trt,
             'SOC': soc,
@@ -283,7 +283,7 @@ doc_mixed = rtf.RTFDocument(
         pageby_header=True,  # Still show group headers
         col_rel_width=[4, 2, 2, 2],
         text_justification=["l", "c", "c", "c"],
-        # Highlight group headers with different formatting  
+        # Highlight group headers with different formatting
         text_format=["b", "", "", ""],  # Bold first column (will be group headers)
         text_background_color=["lightblue", "white", "white", "white"],
         border_left=["single", "", "", ""],

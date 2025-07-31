@@ -1,7 +1,7 @@
 <!-- `.md` and `.py` files are generated from the `.qmd` file. Please edit that file. -->
 
 ---
-title: "Advanced Page Element Control"
+title: "Advanced page element control"
 format: gfm
 eval: false
 ---
@@ -11,7 +11,7 @@ eval: false
     To run the code from this article as a Python script:
 
     ```bash
-    python3 examples/example-pagination-advanced.py
+    python3 docs/articles/py/pagination-advanced.py
     ```
 
 This article demonstrates rtflite's advanced page element control features, allowing precise control over where titles, footnotes, and other elements appear across multi-page documents. This functionality is essential for regulatory compliance and professional clinical document formatting.
@@ -53,7 +53,7 @@ timepoints = ['Baseline', 'Week 4', 'Week 8', 'Week 12', 'Week 16', 'Week 20', '
 treatments = ['Placebo', 'Drug 2.5mg', 'Drug 5mg', 'Drug 10mg']
 efficacy_measures = [
     'Primary Efficacy Score',
-    'Secondary Score A', 
+    'Secondary Score A',
     'Secondary Score B',
     'Quality of Life Index',
     'Global Assessment'
@@ -73,10 +73,10 @@ for measure in efficacy_measures:
                 dose_effect = {'Drug 2.5mg': 5, 'Drug 5mg': 10, 'Drug 10mg': 15}[treatment]
                 mean_change = np.random.normal(dose_effect, 6)
                 n_subjects = np.random.randint(92, 108)
-            
+
             std_dev = np.random.uniform(8, 15)
             se = std_dev / np.sqrt(n_subjects)
-            
+
             efficacy_data.append({
                 'Efficacy_Measure': measure,
                 'Timepoint': timepoint,
@@ -125,7 +125,7 @@ doc_basic = rtf.RTFDocument(
         orientation="landscape",
         # Page element location controls
         page_title_location="first",     # Title only on first page
-        page_footnote_location="last",   # Footnote only on last page  
+        page_footnote_location="last",   # Footnote only on last page
         page_source_location="last"      # Source only on last page
     ),
     rtf_page_header=rtf.RTFPageHeader(
@@ -199,7 +199,7 @@ doc_advanced = rtf.RTFDocument(
         page_source_location="last"     # Source only on last page
     ),
     rtf_page_header=rtf.RTFPageHeader(
-        text="CONFIDENTIAL - Study ABC-123 - Primary Analysis | " + 
+        text="CONFIDENTIAL - Study ABC-123 - Primary Analysis | " +
              "Continuation pages show abbreviated headers"
     ),
     rtf_page_footer=rtf.RTFPageFooter(
@@ -274,7 +274,7 @@ Create a document meeting strict regulatory requirements:
 ```{python}
 # Create subset of data for regulatory table
 regulatory_data = df_efficacy[
-    (df_efficacy['Efficacy_Measure'] == 'Primary Efficacy Score') & 
+    (df_efficacy['Efficacy_Measure'] == 'Primary Efficacy Score') &
     (df_efficacy['Timepoint'].isin(['Baseline', 'Week 12', 'Week 24']))
 ].copy()
 

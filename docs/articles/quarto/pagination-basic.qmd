@@ -1,7 +1,7 @@
 <!-- `.md` and `.py` files are generated from the `.qmd` file. Please edit that file. -->
 
 ---
-title: "Basic Multi-Page Tables"
+title: "Basic multi-page tables"
 format: gfm
 eval: false
 ---
@@ -11,15 +11,15 @@ eval: false
     To run the code from this article as a Python script:
 
     ```bash
-    python3 examples/example-pagination-basic.py
+    python3 docs/articles/py/pagination-basic.py
     ```
 
 This article demonstrates rtflite's pagination functionality for handling large datasets that exceed single page capacity. This mirrors r2rtf's `rtf_page(nrow = X)` functionality.
 
 ## Overview
 
-When working with clinical study reports, 
-TLFs often contain more rows than can fit on a single page. 
+When working with clinical study reports,
+TLFs often contain more rows than can fit on a single page.
 rtflite automatically handles pagination by:
 
 - Splitting content across multiple pages when row limits are exceeded
@@ -123,6 +123,8 @@ doc = rtf.RTFDocument(
 doc.write_rtf("../rtf/patient_listing_paginated.rtf")
 ```
 
+<embed src="../pdf/patient_listing_paginated.pdf" style="width:100%; height:400px" type="application/pdf">
+
 ## Advanced Pagination with Page Headers
 
 Add page-specific headers and footers:
@@ -175,18 +177,9 @@ doc_advanced = rtf.RTFDocument(
 
 # Write advanced RTF file
 doc_advanced.write_rtf("../rtf/patient_listing_advanced.rtf")
-print("Created patient_listing_advanced.rtf with multi-page layout")
 ```
 
-```
-Created patient_listing_advanced.rtf with multi-page layout
-```
-
-## Convert to PDF
-
-```
-PDF conversion completed
-```
+<embed src="../pdf/patient_listing_advanced.pdf" style="width:100%; height:400px" type="application/pdf">
 
 ## Key Features Demonstrated
 
