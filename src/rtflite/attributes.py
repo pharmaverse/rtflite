@@ -39,11 +39,11 @@ def _to_nested_list(v):
         else:
             raise TypeError("Invalid value type. Must be a list or tuple.")
 
-    # Handle both pandas and polars DataFrames
+
     if isinstance(v, pd.DataFrame):
-        v = v.values.tolist()
-    elif isinstance(v, pl.DataFrame):
-        # Use polars native conversion
+        v = pl.from_pandas(v).rows()
+
+    if isinstance(v, pl.DataFrame):
         v = v.rows()
 
     if isinstance(v, np.ndarray):
@@ -404,7 +404,7 @@ class TableAttributes(TextAttributes):
         }
 
     def _encode(
-        self, df: pd.DataFrame, col_widths: Sequence[float]
+        self, df: pl.DataFrame, col_widths: Sequence[float]
     ) -> MutableSequence[str]:
         dim = df.shape
 
@@ -432,12 +432,10 @@ class TableAttributes(TextAttributes):
 
         rows: MutableSequence[str] = []
         for i in range(dim[0]):
-            row = df.iloc[i]
+            row = df.row(i)
             cells = []
 
             for j in range(dim[1]):
-                col = df.columns[j]
-
                 if j == dim[1] - 1:
                     border_right = Border(
                         style=BroadcastValue(
@@ -447,9 +445,11 @@ class TableAttributes(TextAttributes):
                 else:
                     border_right = None
 
+                cell_value = str(row[j])
+
                 cell = Cell(
                     text=TextContent(
-                        text=str(row[col]),
+                        text=cell_value,
                         font=get_broadcast_value("text_font", i, j),
                         size=get_broadcast_value("text_font_size", i, j),
                         format=get_broadcast_value("text_format", i, j),
@@ -533,7 +533,7 @@ class BroadcastValue(BaseModel):
         except IndexError as e:
             raise ValueError(f"Invalid DataFrame index or slice: {e}")
 
-    def to_list(self) -> pd.DataFrame:
+    def to_list(self) -> list:
         if self.value is None:
             return None
 

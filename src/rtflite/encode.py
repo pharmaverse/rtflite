@@ -1,7 +1,7 @@
 from collections.abc import MutableSequence
 from typing import Any
 
-import pandas as pd
+import polars as pl
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .attributes import BroadcastValue
@@ -23,9 +23,9 @@ from .row import Utils
 class RTFDocument(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    df: Any = Field(
+    df: pl.DataFrame = Field(
         ...,
-        description="The DataFrame containing the data for the RTF document. Accepts pandas or polars DataFrame.",
+        description="The DataFrame containing the data for the RTF document. Accepts pandas or polars DataFrame, internally converted to polars.",
     )
     rtf_page: RTFPage = Field(
         default_factory=lambda: RTFPage(),
@@ -62,32 +62,27 @@ class RTFDocument(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def validate_dataframe(cls, values):
-        """Convert DataFrame to pandas for internal processing."""
+        """Convert DataFrame to polars for internal processing."""
         if "df" in values:
             df = values["df"]
-            import pandas as pd
+            import polars as pl
 
             try:
-                import polars as pl
+                import pandas as pd
 
-                if isinstance(df, pl.DataFrame):
-                    # Convert polars to pandas using rows method
-                    data = df.rows()
-                    columns = df.columns
-                    values["df"] = pd.DataFrame(data, columns=columns)
-                elif not isinstance(df, pd.DataFrame):
-                    raise ValueError(
-                        "DataFrame must be either pandas or polars DataFrame"
-                    )
+                if isinstance(df, pd.DataFrame):
+                    # Convert pandas to polars
+                    values["df"] = pl.from_pandas(df)
+
             except ImportError:
-                # polars not available, ensure it's pandas
-                if not isinstance(df, pd.DataFrame):
-                    raise ValueError("DataFrame must be a pandas DataFrame")
+                # pandas not available, ensure it's polars
+                if not isinstance(df, pl.DataFrame):
+                    raise ValueError("DataFrame must be a polars DataFrame")
         return values
 
     @model_validator(mode="after")
     def validate_column_names(self):
-        columns = self.df.columns.tolist()
+        columns = self.df.columns
 
         if self.rtf_body.group_by is not None:
             for column in self.rtf_body.group_by:
@@ -241,7 +236,7 @@ class RTFDocument(BaseModel):
 
         """
         # obtain input data
-        data = self.df.to_dict("records")
+        data = self.df.to_dicts()
         var = self.rtf_body.page_by
 
         # obtain column names and dimensions
@@ -321,7 +316,10 @@ class RTFDocument(BaseModel):
 
         col_total_width = self.rtf_page.col_width
         col_widths = Utils._col_widths(rtf_attrs.col_rel_width, col_total_width)
-        return rtf_attrs._encode(rtf_attrs.text, col_widths)
+        
+        # Create DataFrame from text string
+        df = pl.DataFrame([[rtf_attrs.text]])
+        return rtf_attrs._encode(df, col_widths)
 
     def _rtf_source_encode(self) -> str:
         """Convert the RTF source into RTF syntax using the Text class."""
@@ -332,10 +330,13 @@ class RTFDocument(BaseModel):
 
         col_total_width = self.rtf_page.col_width
         col_widths = Utils._col_widths(rtf_attrs.col_rel_width, col_total_width)
-        return rtf_attrs._encode(rtf_attrs.text, col_widths)
+        
+        # Create DataFrame from text string
+        df = pl.DataFrame([[rtf_attrs.text]])
+        return rtf_attrs._encode(df, col_widths)
 
     def _rtf_body_encode(
-        self, df: pd.DataFrame, rtf_attrs: TableAttributes | None
+        self, df: pl.DataFrame, rtf_attrs: TableAttributes | None
     ) -> MutableSequence[str]:
         """Convert the RTF table into RTF syntax using the Cell class.
 
@@ -365,9 +366,9 @@ class RTFDocument(BaseModel):
                 continue
 
             # Create DataFrame for current section
-            section_df = pd.DataFrame(
+            section_df = pl.DataFrame(
                 {
-                    i: [BroadcastValue(value=df).iloc(row, col)]
+                    str(i): [BroadcastValue(value=df).iloc(row, col)]
                     for i, (row, col) in enumerate(indices)
                 }
             )
@@ -383,7 +384,7 @@ class RTFDocument(BaseModel):
         return rows
 
     def _rtf_column_header_encode(
-        self, df: pd.DataFrame, rtf_attrs: TableAttributes | None
+        self, df: pl.DataFrame, rtf_attrs: TableAttributes | None
     ) -> MutableSequence[str]:
         dim = df.shape
         col_total_width = self.rtf_page.col_width
@@ -452,7 +453,10 @@ class RTFDocument(BaseModel):
                     for col in self.df.columns
                     if col not in (self.rtf_body.page_by or [])
                 ]
-                self.rtf_column_header[0].text = pd.DataFrame([columns])
+                # Create DataFrame with explicit column names to ensure single row
+                self.rtf_column_header[0].text = pl.DataFrame(
+                    [columns], schema=[f"col_{i}" for i in range(len(columns))], orient="row"
+                )
                 self.rtf_column_header = self.rtf_column_header[:1]
 
             self.rtf_column_header[0].border_top = BroadcastValue(

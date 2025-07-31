@@ -1,6 +1,6 @@
 ### Add table footnote and source
 
-import pandas as pd
+import polars as pl
 from rtflite import (
     RTFDocument,
     RTFTitle,
@@ -20,7 +20,7 @@ def df1():
         "Column1": ["Data 1.1", "Data 2.1"],
         "Column2": ["Data 1.2", "Data 2.2"],
     }
-    return pd.DataFrame(data)
+    return pl.DataFrame(data)
 
 
 df = RTFDocument(

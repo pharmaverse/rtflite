@@ -418,9 +418,9 @@ class RTFColumnHeader(TableAttributes):
             try:
                 import polars as pl
 
-                if isinstance(df, pl.DataFrame):
-                    # Convert polars to pandas
-                    data["text"] = pd.DataFrame(df.rows(), columns=df.columns)
+                if isinstance(df, pd.DataFrame):
+                    # Convert pandas to polars
+                    data["text"] = pl.from_pandas(df)
                 else:
                     data["text"] = df
             except ImportError:
