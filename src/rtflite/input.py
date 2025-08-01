@@ -409,44 +409,29 @@ class RTFColumnHeader(TableAttributes):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    text: Any = Field(default=None, description="Column header table")
+    text: Sequence[str] | None = Field(default=None, description="Column header table")
 
     @field_validator("text", mode="before")
-    def convert_text(cls, v):
+    def convert_text_before(cls, v):
         if v is not None:
             if isinstance(v, str):
                 return [v]
-            # Handle DataFrames
-            try:
-                import pandas as pd
-                import polars as pl
+            if isinstance(v, (list, tuple)) and all(isinstance(item, str) for item in v):
+                return list(v)
+        return v
 
-                if isinstance(v, (pd.DataFrame, pl.DataFrame)):
-                    # Keep as DataFrame for now, will be processed later
-                    return v
+    @field_validator("text", mode="after")
+    def convert_text_after(cls, v):
+        if v is not None and isinstance(v, (list, tuple)):
+            try:
+                import polars as pl
+                schema = [f"col_{i+1}" for i in range(len(v))]
+                return pl.DataFrame([v], schema=schema, orient="row")
             except ImportError:
                 pass
-            return v
+        return v
 
     def __init__(self, **data):
-        # Handle df parameter - convert to text
-        if "df" in data:
-            df = data.pop("df")
-            # Handle both pandas and polars DataFrames
-            import pandas as pd
-
-            try:
-                import polars as pl
-
-                if isinstance(df, pd.DataFrame):
-                    # Convert pandas to polars
-                    data["text"] = pl.from_pandas(df)
-                else:
-                    data["text"] = df
-            except ImportError:
-                # polars not available
-                data["text"] = df
-
         defaults = {
             "border_left": ["single"],
             "border_right": ["single"],

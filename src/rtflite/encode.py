@@ -2,7 +2,7 @@ from collections.abc import MutableSequence
 from typing import Any
 
 import polars as pl
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from .attributes import BroadcastValue
 from .input import (
@@ -46,6 +46,13 @@ class RTFDocument(BaseModel):
         default_factory=lambda: [RTFColumnHeader()],
         description="Column header settings",
     )
+    
+    @field_validator("rtf_column_header", mode="before")
+    def convert_column_header_to_list(cls, v):
+        """Convert single RTFColumnHeader to list"""
+        if v is not None and isinstance(v, RTFColumnHeader):
+            return [v]
+        return v
     rtf_body: RTFBody | None = Field(
         default_factory=lambda: RTFBody(),
         description="Table body section settings including column widths and formatting",
