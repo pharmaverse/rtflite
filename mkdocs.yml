@@ -10,17 +10,11 @@ nav:
   - Articles:
     - Examples:
       - articles/example-baseline.md
-      - articles/example-efficacy.md
-      - articles/example-ae-summary.md
-    - Pagination:
-      - articles/pagination-basic.md
-      - articles/pagination-advanced.md
-      - articles/pagination-grouping.md
     - Formatting:
       - articles/formatting-row.md
       - articles/formatting-text.md
     - Converter:
-      - articles/converter-setup.md
+      - reference/converter-setup.md
   - API Reference:
     - Row: reference/row.md
     - Input: reference/input.md
