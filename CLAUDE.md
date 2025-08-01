@@ -8,6 +8,9 @@ rtflite is a lightweight RTF (Rich Text Format) composer for Python that special
 ## Development Commands
 
 ### Activate Virtual Environment
+
+- the step is always needed
+
 ```bash
 source .venv/bin/activate
 ```
