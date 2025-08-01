@@ -114,6 +114,13 @@ class RTFDocument(BaseModel):
         dim = self.df.shape
         # Set default values
         self.rtf_body.col_rel_width = self.rtf_body.col_rel_width or [1] * dim[1]
+        
+        # Inherit col_rel_width from rtf_body to rtf_column_header if not specified
+        if self.rtf_column_header:
+            for header in self.rtf_column_header:
+                if header.col_rel_width is None:
+                    header.col_rel_width = self.rtf_body.col_rel_width.copy()
+        
         self._table_space = int(
             Utils._inch_to_twip(self.rtf_page.width - self.rtf_page.col_width) / 2
         )
