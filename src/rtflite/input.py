@@ -248,6 +248,46 @@ class RTFSubline(TextAttributes):
         return self
 
 
+class RTFText(TextAttributes):
+    """RTF text object with string width calculation capabilities"""
+    
+    text: str = Field(description="Text content")
+    
+    def __init__(self, text: str = "", **data):
+        # Set the text content
+        data["text"] = text
+        
+        # Set default values for text attributes if not provided
+        defaults = {
+            "text_font": [1],
+            "text_font_size": [12],
+            "text_justification": ["l"],
+            "text_indent_first": [0],
+            "text_indent_left": [0],
+            "text_indent_right": [0],
+            "text_space": [1.0],
+            "text_space_before": [0.0],
+            "text_space_after": [0.0],
+            "text_hyphenation": [True],
+            "text_convert": [True],
+        }
+        
+        # Update defaults with any provided values
+        defaults.update(data)
+        super().__init__(**defaults)
+        self._set_default()
+    
+    def _set_default(self):
+        """Ensure all text attributes are properly formatted as tuples"""
+        for attr, value in self.__dict__.items():
+            if attr.startswith("text_") and attr != "text":
+                if isinstance(value, (str, int, float, bool)):
+                    setattr(self, attr, [value])
+                if isinstance(value, list):
+                    setattr(self, attr, tuple(value))
+        return self
+
+
 class RTFFootnote(TableAttributes):
     """Class for RTF footnote settings"""
 
