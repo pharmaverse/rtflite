@@ -1,59 +1,39 @@
 import pytest
-from rtflite.input import RTFText
+from rtflite.input import RTFTitle
+from rtflite.attributes import TextAttributes
+from rtflite.strwidth import get_string_width
 
 
-class TestRTFText:
-    """Test cases for RTFText class and string_width functionality"""
+class TestTextWidthAndLineCalculation:
+    """Test cases for text width and line calculation functionality using existing RTF components"""
 
-    def test_rtftext_initialization_basic(self):
-        """Test basic RTFText initialization with text content"""
-        text = RTFText("abc")
-        
-        assert text.text == "abc"
-        assert text.text_font == (1,)  # Default font
-        assert text.text_font_size == (12,)  # Default size
-        assert text.text_justification == ("l",)  # Default left alignment
-
-    def test_rtftext_initialization_with_attributes(self):
-        """Test RTFText initialization with custom text attributes"""
-        text = RTFText(
-            "test text",
+    def test_rtf_title_initialization_and_attributes(self):
+        """Test RTFTitle initialization and text attributes"""
+        title = RTFTitle(
+            text=["Sample Title"],
             text_font=[2],
             text_font_size=[14],
             text_justification=["c"]
         )
         
-        assert text.text == "test text"
-        assert text.text_font == (2,)
-        assert text.text_font_size == (14,)
-        assert text.text_justification == ("c",)
+        assert title.text == ("Sample Title",)
+        assert title.text_font == (2,)
+        assert title.text_font_size == (14,)
+        assert title.text_justification == ("c",)
 
-    def test_rtftext_empty_initialization(self):
-        """Test RTFText initialization with empty string"""
-        text = RTFText()
-        
-        assert text.text == ""
-        assert text.text_font == (1,)
-        assert text.text_font_size == (12,)
-
-    def test_string_width_default_unit(self):
-        """Test string_width method with default unit (inches)"""
-        text = RTFText("abc")
-        width = text.string_width()
-        
-        # Should return a positive float value in inches
+    def test_direct_string_width_calculation(self):
+        """Test direct string width calculation using get_string_width function"""
+        # Test basic width calculation
+        width = get_string_width("abc", font=1, font_size=12, unit="in")
         assert isinstance(width, float)
         assert width > 0
-        # For "abc" with default font (Times New Roman) and size 12, expect small width
         assert 0.1 < width < 1.0
 
     def test_string_width_different_units(self):
-        """Test string_width method with different units"""
-        text = RTFText("abc")
-        
-        width_in = text.string_width("in")
-        width_mm = text.string_width("mm") 
-        width_px = text.string_width("px")
+        """Test string width calculation with different units"""
+        width_in = get_string_width("abc", font=1, font_size=12, unit="in")
+        width_mm = get_string_width("abc", font=1, font_size=12, unit="mm")
+        width_px = get_string_width("abc", font=1, font_size=12, unit="px")
         
         # All should be positive
         assert width_in > 0
@@ -67,12 +47,9 @@ class TestRTFText:
         assert width_px > width_in * 50  # Allow some tolerance
 
     def test_string_width_different_fonts(self):
-        """Test string_width with different font numbers"""
-        text1 = RTFText("abc", text_font=[1])  # Times New Roman
-        text2 = RTFText("abc", text_font=[2])  # Arial
-        
-        width1 = text1.string_width()
-        width2 = text2.string_width()
+        """Test string width with different font numbers"""
+        width1 = get_string_width("abc", font=1, font_size=12)  # Times New Roman
+        width2 = get_string_width("abc", font=2, font_size=12)  # Arial
         
         # Both should be positive
         assert width1 > 0
@@ -83,12 +60,9 @@ class TestRTFText:
         assert 0.1 < width2 < 1.0
 
     def test_string_width_different_sizes(self):
-        """Test string_width with different font sizes"""
-        text_small = RTFText("abc", text_font_size=[8])
-        text_large = RTFText("abc", text_font_size=[16])
-        
-        width_small = text_small.string_width()
-        width_large = text_large.string_width()
+        """Test string width with different font sizes"""
+        width_small = get_string_width("abc", font=1, font_size=8)
+        width_large = get_string_width("abc", font=1, font_size=16)
         
         # Larger font should produce larger width
         assert width_large > width_small
@@ -97,12 +71,9 @@ class TestRTFText:
         assert width_large / width_small > 1.5  # At least 1.5x larger
 
     def test_string_width_longer_text(self):
-        """Test string_width with longer text strings"""
-        short_text = RTFText("a")
-        long_text = RTFText("abcdefghijklmnop")
-        
-        width_short = short_text.string_width()
-        width_long = long_text.string_width()
+        """Test string width with longer text strings"""
+        width_short = get_string_width("a", font=1, font_size=12)
+        width_long = get_string_width("abcdefghijklmnop", font=1, font_size=12)
         
         # Longer text should be wider
         assert width_long > width_short
@@ -111,32 +82,45 @@ class TestRTFText:
         assert width_long / width_short > 10
 
     def test_string_width_empty_text(self):
-        """Test string_width with empty text"""
-        text = RTFText("")
-        width = text.string_width()
+        """Test string width with empty text"""
+        width = get_string_width("", font=1, font_size=12)
         
         # Empty string should have zero or near-zero width
         assert width == 0.0
 
     def test_string_width_special_characters(self):
-        """Test string_width with special characters"""
-        text = RTFText("Hello, World! @#$%")
-        width = text.string_width()
+        """Test string width with special characters"""
+        width = get_string_width("Hello, World! @#$%", font=1, font_size=12)
         
         # Should handle special characters without error
         assert isinstance(width, float)
         assert width > 0
 
     def test_string_width_invalid_unit(self):
-        """Test string_width with invalid unit raises ValueError"""
-        text = RTFText("abc")
-        
+        """Test string width with invalid unit raises ValueError"""
         with pytest.raises(ValueError, match="Unsupported unit"):
-            text.string_width("invalid_unit")
+            get_string_width("abc", font=1, font_size=12, unit="invalid_unit")
 
-    def test_attribute_defaults_compatibility(self):
-        """Test that RTFText attributes are compatible with existing system"""
-        text = RTFText("test")
+    def test_line_calculation_with_rtf_title(self):
+        """Test line calculation functionality with RTFTitle"""
+        title = RTFTitle(
+            text=["Sample Title"],
+            text_font=[1],
+            text_font_size=[12]
+        )
+        
+        # Test line calculation
+        lines_wide = title.calculate_lines("Short title", available_width=5.0)
+        lines_narrow = title.calculate_lines("This is a very long title that needs multiple lines", available_width=1.0)
+        
+        assert lines_wide == 1
+        assert lines_narrow > 1
+
+    def test_text_attributes_compatibility(self):
+        """Test that TextAttributes has all expected attributes"""
+        attrs = TextAttributes()
+        attrs.text_font = [1]
+        attrs.text_font_size = [12]
         
         # Check that all expected text attributes exist
         expected_attrs = [
@@ -147,16 +131,13 @@ class TestRTFText:
         ]
         
         for attr in expected_attrs:
-            assert hasattr(text, attr)
-            # All should be tuples after initialization
-            assert isinstance(getattr(text, attr), tuple)
+            assert hasattr(attrs, attr)
 
     def test_precision_comparison_with_r_example(self):
         """Test precision matches expected R output format"""
         # The GitHub issue shows R example with strwidth: 0.2604167
         # Test similar case to verify our calculation precision
-        text = RTFText("abc", text_font=[1], text_font_size=[12])
-        width = text.string_width()
+        width = get_string_width("abc", font=1, font_size=12)
         
         # Should be in similar range and precision as R example
         assert isinstance(width, float)
