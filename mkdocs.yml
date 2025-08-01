@@ -10,6 +10,7 @@ nav:
   - Articles:
     - Examples:
       - articles/example-baseline.md
+      - articles/example-ae.md
     - Formatting:
       - articles/formatting-row.md
       - articles/formatting-text.md
