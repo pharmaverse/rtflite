@@ -193,6 +193,96 @@ class RTFDocument(BaseModel):
 
         return pagination, distributor
 
+    def _rtf_page_break_encode(self) -> str:
+        """Generate proper RTF page break sequence matching r2rtf format"""
+        page_setup = (
+            f"\\paperw{int(self.rtf_page.width * 1440)}"
+            f"\\paperh{int(self.rtf_page.height * 1440)}\n\n"
+            f"{self._rtf_page_margin_encode()}\n"
+        )
+        
+        return f"{{\\pard\\fs2\\par}}\\page{{\\pard\\fs2\\par}}\n{page_setup}"
+
+    def _apply_pagination_borders(
+        self, rtf_attrs: TableAttributes, page_info: dict, total_pages: int
+    ) -> TableAttributes:
+        """Apply proper borders for paginated context following r2rtf design:
+        
+        rtf_page.border_first/last: Controls borders for the entire table
+        rtf_body.border_first/last: Controls borders for each page  
+        rtf_body.border_top/bottom: Controls borders for individual cells
+        
+        Logic:
+        - First page, first row: Apply rtf_page.border_first (overrides rtf_body.border_first)
+        - Last page, last row: Apply rtf_page.border_last (overrides rtf_body.border_last)
+        - Non-first pages, first row: Apply rtf_body.border_first
+        - Non-last pages, last row: Apply rtf_body.border_last
+        - All other rows: Use existing border_top/bottom from rtf_body
+        """
+        from copy import deepcopy
+        
+        # Create a deep copy of the attributes to avoid modifying the original  
+        page_attrs = deepcopy(rtf_attrs)
+        page_df_height = page_info["data"].height
+        
+        if page_df_height == 0:
+            return page_attrs
+        
+        # Apply borders based on page position
+        # Only apply double borders to the very first and very last rows of the entire table
+        
+        # For first page: only apply rtf_page.border_first to table body if NO column headers
+        # (Column headers get the page-level border when they exist)
+        has_column_headers = self.rtf_column_header and len(self.rtf_column_header) > 0
+        if page_info["is_first_page"] and not has_column_headers:
+            if self.rtf_page.border_first:
+                page_attrs = self._apply_border_to_row(
+                    page_attrs, 0, "top", self.rtf_page.border_first, page_info["data"].width
+                )
+                
+        if page_info["is_last_page"]:
+            # Last page: Apply rtf_page.border_last to last row only
+            if self.rtf_page.border_last:
+                last_row_idx = page_df_height - 1
+                page_attrs = self._apply_border_to_row(
+                    page_attrs, last_row_idx, "bottom", self.rtf_page.border_last, page_info["data"].width
+                )
+                
+        # Note: When column headers are present, they get the rtf_page.border_first
+        # The table body only gets rtf_page.border_first when there are no column headers
+            
+        return page_attrs
+    
+    def _apply_border_to_row(
+        self, page_attrs: TableAttributes, row_idx: int, border_side: str, border_style: str, num_cols: int
+    ) -> TableAttributes:
+        """Apply specified border style to a specific row"""
+        border_attr = f"border_{border_side}"
+        
+        if not hasattr(page_attrs, border_attr):
+            return page_attrs
+            
+        # Get current border values
+        current_borders = getattr(page_attrs, border_attr)
+        
+        # Ensure borders list is large enough
+        while len(current_borders) <= row_idx:
+            current_borders.append(current_borders[-1] if current_borders else [""])
+            
+        # Ensure the row has enough columns
+        while len(current_borders[row_idx]) < num_cols:
+            current_borders[row_idx].append(
+                current_borders[row_idx][-1] if current_borders[row_idx] else ""
+            )
+        
+        # Apply specified border to all cells in this row
+        for col_idx in range(num_cols):
+            current_borders[row_idx][col_idx] = border_style
+            
+        # Update the attribute
+        setattr(page_attrs, border_attr, current_borders)
+        return page_attrs
+
     def _rtf_page_encode(self) -> str:
         """Define RTF page settings"""
         page_size = [
@@ -472,10 +562,15 @@ class RTFDocument(BaseModel):
 
             # Add page break before each page (except first)
             if not page_info["is_first_page"]:
-                all_rows.append("\\page")
+                all_rows.append(self._rtf_page_break_encode())
 
-            # Encode page content
-            page_rows = rtf_attrs._encode(page_df, col_widths)
+            # Create modified table attributes for pagination context
+            page_attrs = self._apply_pagination_borders(
+                rtf_attrs, page_info, len(pages)
+            )
+
+            # Encode page content with modified borders
+            page_rows = page_attrs._encode(page_df, col_widths)
             all_rows.extend(page_rows)
 
         return all_rows
@@ -527,7 +622,7 @@ class RTFDocument(BaseModel):
 
             # Add page break before each page (except first)
             if not page_info["is_first_page"]:
-                page_elements.append("\\page")
+                page_elements.append(self._rtf_page_break_encode())
 
             # Add title if it should appear on this page
             if (
@@ -572,18 +667,39 @@ class RTFDocument(BaseModel):
                         orient="row",
                     )
 
-                rtf_column_header = [
-                    self._rtf_column_header_encode(df=header.text, rtf_attrs=header)
-                    for header in self.rtf_column_header
-                ]
+                # Apply pagination borders to column headers
+                from copy import deepcopy
+                
+                # Process each column header with proper borders
+                header_elements = []
+                for i, header in enumerate(self.rtf_column_header):
+                    header_copy = deepcopy(header)
+                    
+                    # Apply page-level borders to column headers (matching non-paginated behavior)
+                    if page_info["is_first_page"] and i == 0:  # First header on first page
+                        if self.rtf_page.border_first and header_copy.text is not None:
+                            header_dims = header_copy.text.shape
+                            # Apply page border_first to top of first column header
+                            header_copy.border_top = BroadcastValue(
+                                value=header_copy.border_top, dimension=header_dims
+                            ).update_row(0, [self.rtf_page.border_first] * header_dims[1])
+                    
+                    # Encode the header with modified borders
+                    header_rtf = self._rtf_column_header_encode(df=header_copy.text, rtf_attrs=header_copy)
+                    header_elements.extend(header_rtf)
 
-                page_elements.extend(
-                    [header for sublist in rtf_column_header for header in sublist]
-                )
+                page_elements.extend(header_elements)
 
-            # Add page content (table body)
+            # Add page content (table body) with proper border handling
             page_df = page_info["data"]
-            page_body = self.rtf_body._encode(page_df, col_widths)
+            
+            # Apply pagination borders to the body attributes
+            page_attrs = self._apply_pagination_borders(
+                self.rtf_body, page_info, len(pages)
+            )
+            
+            # Encode page content with modified borders
+            page_body = page_attrs._encode(page_df, col_widths)
             page_elements.extend(page_body)
 
             # Add footnote if it should appear on this page
@@ -673,7 +789,6 @@ class RTFDocument(BaseModel):
         # Use paginated encoding if pagination is needed
         if self._needs_pagination():
             return self._rtf_encode_paginated()
-
         # Otherwise use standard encoding
         dim = self.df.shape
 
