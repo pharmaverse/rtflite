@@ -24,7 +24,7 @@ pdf_dir = "docs/articles/pdf"
 # Ensure PDF directory exists
 os.makedirs(pdf_dir, exist_ok=True)
 
-# Get RTF files that are in git changes (modified, added, or staged)
+# Get RTF files that are in git changes (modified, added, staged, or untracked)
 def get_changed_rtf_files():
     try:
         # Get staged files
@@ -37,8 +37,13 @@ def get_changed_rtf_files():
                                        capture_output=True, text=True, check=True)
         modified_files = modified_result.stdout.strip().split('\n') if modified_result.stdout.strip() else []
         
+        # Get untracked files
+        untracked_result = subprocess.run(['git', 'ls-files', '--others', '--exclude-standard'], 
+                                        capture_output=True, text=True, check=True)
+        untracked_files = untracked_result.stdout.strip().split('\n') if untracked_result.stdout.strip() else []
+        
         # Combine and filter for RTF files in the rtf directory
-        all_changed_files = set(staged_files + modified_files)
+        all_changed_files = set(staged_files + modified_files + untracked_files)
         rtf_files = [f for f in all_changed_files 
                     if f.startswith('docs/articles/rtf/') and f.endswith('.rtf')]
         
@@ -76,8 +81,12 @@ else:
     print("No changed RTF files found to convert")
 EOF
 
-        # Run the conversion script
-        python temp_convert.py
+        # Run the conversion script using the virtual environment Python
+        if [ -f ".venv/bin/python" ]; then
+            .venv/bin/python temp_convert.py
+        else
+            python3 temp_convert.py
+        fi
 
         # Clean up
         rm temp_convert.py
@@ -88,13 +97,7 @@ EOF
 
 # Main execution flow
 echo ""
-echo "=== Step 1: Syncing QMD to MD and PY files ==="
-for qmd_file in docs/articles/quarto/*.qmd; do
-    if [[ -f "$qmd_file" ]]; then
-        article=$(basename "$qmd_file" .qmd)
-        sync_article "$article"
-    fi
-done
+echo "=== Converting RTF files to PDF ==="
 
 # Convert all RTF files to PDF in batch
 convert_rtf_to_pdf

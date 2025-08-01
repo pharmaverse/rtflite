@@ -6,8 +6,8 @@ data_path = files("rtflite.data").joinpath("baseline.parquet")
 df = pl.read_parquet(data_path)
 print(df)
 
-header1 = pl.DataFrame([["", "Placebo", "Drug Low Dose", "Drug High Dose", "Total"]])
-header2 = pl.DataFrame([["", "n", "(%)", "n", "(%)", "n", "(%)", "n", "(%)"]])
+header1 = ["", "Placebo", "Drug Low Dose", "Drug High Dose", "Total"]
+header2 = ["", "n", "(%)", "n", "(%)", "n", "(%)", "n", "(%)"]
 
 doc = rtf.RTFDocument(
     df=df,
@@ -15,9 +15,9 @@ doc = rtf.RTFDocument(
         text=["Demographic and Anthropometric Characteristics", "ITT Subjects"]
     ),
     rtf_column_header=[
-        rtf.RTFColumnHeader(df=header1, col_rel_width=[3] + [2] * 4),
+        rtf.RTFColumnHeader(text=header1, col_rel_width=[3] + [2] * 4),
         rtf.RTFColumnHeader(
-            df=header2,
+            text=header2,
             col_rel_width=[3] + [1.2, 0.8] * 4,
             border_top=[""] + ["single"] * 8,
             border_left=["single"] + ["single", ""] * 4,
@@ -34,6 +34,4 @@ doc = rtf.RTFDocument(
     ),
 )
 
-rtf_folder = "../rtf/"
-rtf_file = "baseline.rtf"
-doc.write_rtf(rtf_folder + rtf_file)
+doc.write_rtf("../rtf/example-baseline-char.rtf")
