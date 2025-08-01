@@ -66,6 +66,8 @@ print(df_formats)
 
 Apply text formatting using column-based approach:
 
+> Using tuples `()` allow user define parameters by row. 
+
 ```{python}
 # Create RTF document with text formatting
 doc_formats = rtf.RTFDocument(
@@ -79,7 +81,7 @@ doc_formats.write_rtf("../rtf/text_format_styles.rtf")
 ```
 
 
-<embed src="../pdf/text_format_styles.rtf" style="width:100%; height:400px" type="application/pdf">
+<embed src="../pdf/text_format_styles.pdf" style="width:100%; height:400px" type="application/pdf">
 
 
 ## Font Size and Alignment Examples
@@ -89,91 +91,65 @@ Demonstrate font size variations and text alignment:
 ```{python}
 # Create font size and alignment data
 font_align_demo = [
-    ["Alignment", "Font Size", "Sample Text", "Usage"],
-    ["Left", "12pt", "Left aligned text for paragraphs", "Body text, paragraphs"],
-    ["Center", "14pt", "Centered text for titles", "Headers, titles"],
-    ["Right", "10pt", "Right aligned for numbers", "Numerical data, dates"],
-    ["Justified", "11pt", "Justified text fills the full width of the column creating even margins on both sides", "Long paragraphs, formal documents"],
-    ["Left", "8pt", "Small text for footnotes", "Footnotes, disclaimers"],
-    ["Center", "16pt", "Large text for main titles", "Document titles, section headers"]
+    ["Left", "12pt", "l"],
+    ["Center", "14pt", "c"],
+    ["Right", "10pt", "r"],
+    ["Justified", "11pt", "j"],
 ]
 
-df_font_align = pl.DataFrame(font_align_demo, schema=["alignment", "size", "text", "usage"])
+df_font_align = pl.DataFrame(font_align_demo, schema=["alignment", "size", "text_justification"])
+print(df_font_align)
+```
+
+```{python}
 
 # Create RTF with font sizes and alignment
 doc_font_align = rtf.RTFDocument(
     df=df_font_align,
-    rtf_title=rtf.RTFTitle(
-        text=["Font Size and Alignment", "Typography and Positioning Examples"]
-    ),
     rtf_body=rtf.RTFBody(
-        col_rel_width=[1.5, 1.5, 4.0, 2.5],
-        text_justification=["c", "c", "l", "l"],  # Center first two, left others
-        text_format=["b", "b", "", "i"],  # Bold headers, italic usage
-        text_font_size=[18, 16, 20, 16],  # Different sizes per column
-        text_color=["blue", "green", "black", "gray"],
-        border_top=["single"] * 4,
-        border_bottom=["single"] * 4,
-        border_left=["single", "", "", ""],
-        border_right=["", "", "", "single"]
+        text_justification=("l", "c", "r", "j"), 
+        text_font_size=(12, 14, 10, 11), 
     )
 )
 
-doc_font_align.write_rtf("../rtf/font_size_alignment.rtf")
-print("Created font_size_alignment.rtf")
+doc_font_align.write_rtf("../rtf/text_font_size_alignment.rtf")
 ```
 
-```
-Created font_size_alignment.rtf
-```
+<embed src="../pdf/text_font_size_alignment.pdf" style="width:100%; height:400px" type="application/pdf">
 
 ## Color and Background Formatting
+
+> the feature is under development (https://github.com/pharmaverse/rtflite/issues/2)
 
 Demonstrate text and background color applications:
 
 ```{python}
 # Create color demonstration data
 color_demo = [
-    ["Status", "Text Color", "Background", "Clinical Meaning"],
     ["Normal", "Black", "White", "Within reference range"],
     ["Caution", "Orange", "Light Yellow", "Borderline values"],
     ["Alert", "Red", "Light Pink", "Outside normal range"],
-    ["Critical", "Dark Red", "Pink", "Immediate attention needed"],
     ["Info", "Blue", "Light Blue", "Additional information"]
 ]
 
 df_colors = pl.DataFrame(color_demo, schema=["status", "text_color", "background", "meaning"])
+print(df_colors)
+```
+
+```{python}
 
 # Create RTF with color formatting
 doc_colors = rtf.RTFDocument(
     df=df_colors,
-    rtf_title=rtf.RTFTitle(
-        text=["Color and Background Formatting", "Clinical Status Color Coding"]
-    ),
     rtf_body=rtf.RTFBody(
-        col_rel_width=[2.0, 2.0, 2.0, 3.5],
-        text_justification=["c", "c", "c", "l"],
-        text_format=["b", "", "", ""],  # Bold status column
-        text_color=["darkblue", "black", "black", "black"],
-        text_background_color=["lightblue", "white", "lightgray", "white"],
-        border_top=["single"] * 4,
-        border_bottom=["single"] * 4,
-        border_left=["single", "", "", ""],
-        border_right=["", "", "", "single"]
-    ),
-    rtf_footnote=rtf.RTFFootnote(
-        text="Color coding should be used consistently across clinical documents. " +
-             "Always include textual indicators alongside colors for accessibility."
+        text_color=("black", "orange", "red", "blue"),
+        text_background_color=("lightblue", "white", "lightgray", "green"),
     )
 )
 
-doc_colors.write_rtf("../rtf/color_formatting.rtf")
-print("Created color_formatting.rtf")
+doc_colors.write_rtf("../rtf/text_color.rtf")
 ```
 
-```
-Created color_formatting.rtf
-```
 
 ## Indentation and Hierarchical Structure
 
