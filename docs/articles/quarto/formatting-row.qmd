@@ -69,10 +69,6 @@ df_widths = pl.DataFrame(width_demo, schema=["narrow", "standard", "wide"])
 # Apply different column width ratios
 doc_widths = rtf.RTFDocument(
     df=df_widths,
-    rtf_column_header=rtf.RTFColumnHeader(
-        text = ["a", "b", "c"], 
-        col_rel_width=[1.0, 2.0, 3.0]
-    ),
     rtf_body=rtf.RTFBody(
         col_rel_width=[1.0, 2.0, 3.0],  # Relative width ratios
     )
