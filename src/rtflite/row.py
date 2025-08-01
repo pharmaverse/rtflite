@@ -2,6 +2,8 @@ from collections.abc import Mapping, MutableSequence, Sequence
 
 from pydantic import BaseModel, Field
 
+from .fonts_mapping import FontMapping
+
 FORMAT_CODES = {
     "": "",
     "b": "\\b",
@@ -84,58 +86,7 @@ class Utils:
     @staticmethod
     def _font_type() -> Mapping:
         """Define font types"""
-        return {
-            "type": list(range(1, 11)),
-            "name": [
-                "Times New Roman",
-                "Times New Roman Greek",
-                "Arial Greek",
-                "Arial",
-                "Helvetica",
-                "Calibri",
-                "Georgia",
-                "Cambria",
-                "Courier New",
-                "Symbol",
-            ],
-            "style": [
-                "\\froman",
-                "\\froman",
-                "\\fswiss",
-                "\\fswiss",
-                "\\fswiss",
-                "\\fswiss",
-                "\\froman",
-                "\\ffroman",
-                "\\fmodern",
-                "\\ftech",
-            ],
-            "rtf_code": [f"\\f{i}" for i in range(10)],
-            "family": [
-                "Times",
-                "Times",
-                "ArialMT",
-                "ArialMT",
-                "Helvetica",
-                "Calibri",
-                "Georgia",
-                "Cambria",
-                "Courier",
-                "Times",
-            ],
-            "charset": [
-                "\\fcharset1",
-                "\\fcharset161",
-                "\\fcharset161",
-                "\\fcharset0",
-                "\\fcharset1",
-                "\\fcharset1",
-                "\\fcharset1",
-                "\\fcharset1",
-                "\\fcharset0",
-                "\\fcharset2",
-            ],
-        }
+        return FontMapping.get_font_table()
 
     @staticmethod
     def _inch_to_twip(inch: float) -> int:

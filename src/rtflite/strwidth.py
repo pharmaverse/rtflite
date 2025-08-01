@@ -4,53 +4,14 @@ from typing import Literal, overload
 from PIL import ImageFont
 
 import rtflite.fonts
+from .fonts_mapping import FontMapping, FontName, FontNumber
 
 Unit = Literal["in", "mm", "px"]
 
-FontName = Literal[
-    "Times New Roman",
-    "Times New Roman Greek",
-    "Arial Greek",
-    "Arial",
-    "Helvetica",
-    "Calibri",
-    "Georgia",
-    "Cambria",
-    "Courier New",
-    "Symbol",
-]
+_FONT_PATHS = FontMapping.get_font_paths()
 
-_FONT_PATHS = {
-    "Times New Roman": "liberation/LiberationSerif-Regular.ttf",
-    "Times New Roman Greek": "liberation/LiberationSerif-Regular.ttf",
-    "Arial Greek": "liberation/LiberationSans-Regular.ttf",
-    "Arial": "liberation/LiberationSans-Regular.ttf",
-    "Helvetica": "liberation/LiberationSans-Regular.ttf",
-    "Calibri": "cros/Carlito-Regular.ttf",
-    "Georgia": "cros/Gelasio-Regular.ttf",
-    "Cambria": "cros/Caladea-Regular.ttf",
-    "Courier New": "liberation/LiberationMono-Regular.ttf",
-    "Symbol": "liberation/LiberationSerif-Regular.ttf",
-}
-
-# Add type number type
-FontNumber = Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-
-# Define bidirectional mappings
-RTF_FONT_NUMBERS = {
-    "Times New Roman": 1,
-    "Times New Roman Greek": 2,
-    "Arial Greek": 3,
-    "Arial": 4,
-    "Helvetica": 5,
-    "Calibri": 6,
-    "Georgia": 7,
-    "Cambria": 8,
-    "Courier New": 9,
-    "Symbol": 10,
-}
-
-RTF_FONT_NAMES: dict[int, FontName] = {v: k for k, v in RTF_FONT_NUMBERS.items()}
+RTF_FONT_NUMBERS = FontMapping.get_font_name_to_number_mapping()
+RTF_FONT_NAMES: dict[int, FontName] = FontMapping.get_font_number_to_name_mapping()
 
 
 @overload

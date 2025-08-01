@@ -15,13 +15,16 @@ sync_article() {
     echo "  - Rendering QMD to MD..."
     quarto render "$article_path" --output-dir ".." --quiet
 
-    # Convert .qmd to .ipynb
+    # Convert .qmd to .ipynb (in the same directory as the qmd file)
     echo "  - Converting QMD to IPYNB..."
-    quarto convert "$article_path"
+    cd docs/articles/quarto || exit 1
+    quarto convert "$article_name.qmd"
+    cd - > /dev/null || exit 1
 
-    # Convert .ipynb to .py using nbconvert from venv
+    # Convert .ipynb to .py using nbconvert
     echo "  - Converting IPYNB to PY..."
-    uv run python -m nbconvert --to python "docs/articles/quarto/$article_name.ipynb" --output "../../../$example_output"
+    source .venv/bin/activate
+    python -m nbconvert --to python "docs/articles/quarto/$article_name.ipynb" --output "../../../$example_output"
 
     # Remove all comments
     awk '!/^#/' "$example_output" >temp && mv temp "$example_output"
@@ -32,9 +35,9 @@ sync_article() {
     # Clean up
     rm "docs/articles/quarto/$article_name.ipynb"
 
-    # Format .py using ruff from venv
+    # Format .py using ruff
     echo "  - Formatting PY file with ruff..."
-    uv run ruff format "$example_output"
+    ruff format "$example_output"
 }
 
 # Function to run Python files and generate RTF files
@@ -53,12 +56,23 @@ generate_rtf_files() {
 
             # Change to py directory to run the script with proper relative paths
             cd docs/articles/py || exit 1
-            uv run python "$py_name.py"
+            source ../../../.venv/bin/activate
+            python "$py_name.py"
             cd - > /dev/null || exit 1
         fi
     done
 }
 
+# Activate virtual environment first
+source .venv/bin/activate
+
+# Sync all articles in the quarto folder
+for qmd_file in docs/articles/quarto/*.qmd; do
+    if [[ -f "$qmd_file" ]]; then
+        article_name=$(basename "$qmd_file" .qmd)
+        sync_article "$article_name"
+    fi
+done
 
 # Generate RTF files by running Python scripts
 generate_rtf_files
@@ -71,4 +85,3 @@ cp CHANGELOG.md docs/changelog.md
 
 # Sync CONTRIBUTING.md with docs/contributing.md
 cp CONTRIBUTING.md docs/contributing.md
-
