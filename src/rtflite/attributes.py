@@ -54,7 +54,7 @@ def _to_nested_list(v):
 class TextAttributes(BaseModel):
     """Base class for text-related attributes in RTF components"""
 
-    text_font: list[int] | None = Field(
+    text_font: list[int] | list[list[int]] | None = Field(
         default=None, description="Font number for text"
     )
 
@@ -63,12 +63,20 @@ class TextAttributes(BaseModel):
         if v is None:
             return v
 
-        for font in v:
-            if font not in Utils._font_type()["type"]:
-                raise ValueError(f"Invalid font number: {font}")
+        # Check if it's a nested list
+        if v and isinstance(v[0], list):
+            for row in v:
+                for font in row:
+                    if font not in Utils._font_type()["type"]:
+                        raise ValueError(f"Invalid font number: {font}")
+        else:
+            # Flat list
+            for font in v:
+                if font not in Utils._font_type()["type"]:
+                    raise ValueError(f"Invalid font number: {font}")
         return v
 
-    text_format: list[str] | None = Field(
+    text_format: list[str] | list[list[str]] | None = Field(
         default=None,
         description="Text formatting (e.g. 'b' for 'bold', 'i' for'italic')",
     )
@@ -78,13 +86,22 @@ class TextAttributes(BaseModel):
         if v is None:
             return v
 
-        for format in v:
-            for fmt in format:
-                if fmt not in FORMAT_CODES:
-                    raise ValueError(f"Invalid text format: {fmt}")
+        # Check if it's a nested list
+        if v and isinstance(v[0], list):
+            for row in v:
+                for format in row:
+                    for fmt in format:
+                        if fmt not in FORMAT_CODES:
+                            raise ValueError(f"Invalid text format: {fmt}")
+        else:
+            # Flat list
+            for format in v:
+                for fmt in format:
+                    if fmt not in FORMAT_CODES:
+                        raise ValueError(f"Invalid text format: {fmt}")
         return v
 
-    text_font_size: list[float] | None = Field(
+    text_font_size: list[float] | list[list[float]] | None = Field(
         default=None, description="Font size in points"
     )
 
@@ -93,18 +110,26 @@ class TextAttributes(BaseModel):
         if v is None:
             return v
 
-        for size in v:
-            if size <= 0:
-                raise ValueError(f"Invalid font size: {size}")
+        # Check if it's a nested list
+        if v and isinstance(v[0], list):
+            for row in v:
+                for size in row:
+                    if size <= 0:
+                        raise ValueError(f"Invalid font size: {size}")
+        else:
+            # Flat list
+            for size in v:
+                if size <= 0:
+                    raise ValueError(f"Invalid font size: {size}")
         return v
 
-    text_color: list[str] | None = Field(
+    text_color: list[str] | list[list[str]] | None = Field(
         default=None, description="Text color name or RGB value"
     )
-    text_background_color: list[str] | None = Field(
+    text_background_color: list[str] | list[list[str]] | None = Field(
         default=None, description="Background color name or RGB value"
     )
-    text_justification: list[str] | None = Field(
+    text_justification: list[str] | list[list[str]] | None = Field(
         default=None,
         description="Text alignment ('l'=left, 'c'=center, 'r'=right, 'j'=justify)",
     )
@@ -114,33 +139,41 @@ class TextAttributes(BaseModel):
         if v is None:
             return v
 
-        for justification in v:
-            if justification not in TEXT_JUSTIFICATION_CODES:
-                raise ValueError(f"Invalid text justification: {justification}")
+        # Check if it's a nested list
+        if v and isinstance(v[0], list):
+            for row in v:
+                for justification in row:
+                    if justification not in TEXT_JUSTIFICATION_CODES:
+                        raise ValueError(f"Invalid text justification: {justification}")
+        else:
+            # Flat list
+            for justification in v:
+                if justification not in TEXT_JUSTIFICATION_CODES:
+                    raise ValueError(f"Invalid text justification: {justification}")
         return v
 
-    text_indent_first: list[int] | None = Field(
+    text_indent_first: list[int] | list[list[int]] | None = Field(
         default=None, description="First line indent in twips"
     )
-    text_indent_left: list[int] | None = Field(
+    text_indent_left: list[int] | list[list[int]] | None = Field(
         default=None, description="Left indent in twips"
     )
-    text_indent_right: list[int] | None = Field(
+    text_indent_right: list[int] | list[list[int]] | None = Field(
         default=None, description="Right indent in twips"
     )
-    text_space: list[int] | None = Field(
+    text_space: list[int] | list[list[int]] | None = Field(
         default=None, description="Line spacing multiplier"
     )
-    text_space_before: list[int] | None = Field(
+    text_space_before: list[int] | list[list[int]] | None = Field(
         default=None, description="Space before paragraph in twips"
     )
-    text_space_after: list[int] | None = Field(
+    text_space_after: list[int] | list[list[int]] | None = Field(
         default=None, description="Space after paragraph in twips"
     )
-    text_hyphenation: list[bool] | None = Field(
+    text_hyphenation: list[bool] | list[list[bool]] | None = Field(
         default=None, description="Enable automatic hyphenation"
     )
-    text_convert: list[bool] | None = Field(
+    text_convert: list[bool] | list[list[bool]] | None = Field(
         default=None, description="Convert special characters to RTF"
     )
 
@@ -310,7 +343,7 @@ class TableAttributes(TextAttributes):
     )
 
     @field_validator("col_rel_width", mode="before")
-    def convert_to_list(cls, v):
+    def convert_col_rel_width_to_list(cls, v):
         if v is not None and isinstance(v, (int, str, float, bool)):
             return [v]
         return v
@@ -333,6 +366,20 @@ class TableAttributes(TextAttributes):
         "cell_justification",
         "cell_vertical_justification",
         "cell_nrow",
+        "text_font",
+        "text_format",
+        "text_font_size",
+        "text_color",
+        "text_background_color",
+        "text_justification",
+        "text_indent_first",
+        "text_indent_left",
+        "text_indent_right",
+        "text_space",
+        "text_space_before",
+        "text_space_after",
+        "text_hyphenation",
+        "text_convert",
         mode="before",
     )
     def convert_to_nested_list(cls, v):

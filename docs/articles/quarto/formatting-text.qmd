@@ -71,7 +71,7 @@ Apply text formatting using column-based approach:
 doc_formats = rtf.RTFDocument(
     df=df_formats,
     rtf_body=rtf.RTFBody(
-        text_format=["", "b", "i", "bi", "u", "s"],  
+        text_format=("", "b", "i", "bi", "u", "s"),  
     )
 )
 
