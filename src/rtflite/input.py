@@ -432,6 +432,22 @@ class RTFColumnHeader(TableAttributes):
         return v
 
     def __init__(self, **data):
+        # Handle backwards compatibility for df parameter
+        if "df" in data and "text" not in data:
+            df = data.pop("df")
+            try:
+                import polars as pl
+                if isinstance(df, pl.DataFrame):
+                    # For backwards compatibility, assume single-row DataFrame
+                    # If DataFrame has multiple rows, transpose it first
+                    if df.shape[0] > 1 and df.shape[1] == 1:
+                        # Column-oriented: transpose to row-oriented
+                        data["text"] = df.get_column(df.columns[0]).to_list()
+                    else:
+                        # Row-oriented: take first row
+                        data["text"] = list(df.row(0))
+            except ImportError:
+                pass
         defaults = {
             "border_left": ["single"],
             "border_right": ["single"],
