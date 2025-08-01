@@ -3,19 +3,48 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Overview
+
 rtflite is a lightweight RTF (Rich Text Format) composer for Python that specializes in creating production-quality tables and figures for pharmaceutical and clinical research reporting. It is inspired by the R package r2rtf.
+
+## Python Package Management with uv
+
+Use uv exclusively for Python package management in this project.
+
+### Package Management Commands
+
+- All Python dependencies **must be installed, synchronized, and locked** using uv
+- Never use pip, pip-tools, poetry, or conda directly for dependency management
+
+Use these commands:
+
+- Install dependencies: `uv add <package>`
+- Remove dependencies: `uv remove <package>`
+- Sync dependencies: `uv sync`
+
+### Running Python Code
+
+- Run a Python script with `uv run <script-name>.py`
+- Run Python tools like Pytest or Ruff with `uv run pytest` or `uv run ruff`
+- Launch a Python repl with `uv run python`
+
+### Managing Scripts with PEP 723 Inline Metadata
+
+- Run a Python script with inline metadata (dependencies defined at the top of the file) with: `uv run script.py`
+- You can add or remove dependencies manually from the `dependencies =` section at the top of the script, or
+- Or using uv CLI:
+    - `uv add package-name --script script.py`
+    - `uv remove package-name --script script.py`
 
 ## Development Commands
 
-### Activate Virtual Environment
+### Development
 
-- the step is always needed
-
-```bash
-source .venv/bin/activate
-```
+Make changes to the codebase.
 
 ### Testing
+
+We use pytest for unit testing.
+
 ```bash
 # Run tests with coverage
 pytest --cov=rtflite --cov-report=xml
@@ -28,6 +57,7 @@ pytest -v
 ```
 
 ### Code Quality
+
 ```bash
 # Sort imports
 isort .
@@ -42,28 +72,18 @@ ruff check
 ruff check --fix
 ```
 
-### Installation
-```bash
-# Install with all dependencies for development
-pip install -e '.[all]'
+### Render Documentation
 
-# Install minimal dependencies
-pip install -e .
-```
+mkdocs is used for building the documentation website (via a GitHub Actions workflow).
 
+To improve documentation automation, we embedded Python code chunks in Markdown. This is similar to the principles used by R package vignettes (single source of truth and literate programming).
 
-### Development
+Specifically, we write articles in Quarto (`.qmd`) format, which are then converted to `.md` files (for mkdocs) and `.py` files (for generating the RTF outputs). Note that the Quarto toolchain and its code chunk evaluation feature is **not** used directly to render outputs.
 
-Make changes to the codebase.
+- The articles are written as `.qmd` files in: `docs/scripts/quarto/*.qmd`
+- The outputs are in: `docs/scripts/*.md`; `docs/scripts/py/*.py`
 
-We use pytest for unit testing. To run tests and get an HTML preview of
-code coverage, open the
-[VS Code terminal](https://code.visualstudio.com/docs/terminal/basics):
-
-# Sync source document
-# source: docs/scripts/quarto/example-*.qmd
-# output: docs/scripts/*.md; docs/scripts/py/*.py
-bash docs/scripts/sync.sh
+To render the documentation and asset outputs, run this custom shell script: `sh docs/scripts/sync.sh`. This script will convert the `.qmd` files to `.md` and `.py` files, and then run the `.py` files to generate the RTF outputs and convert them to PDF files.
 
 ## Architecture Overview
 
@@ -86,12 +106,15 @@ The project follows a modular architecture centered around RTF document generati
 ## Key Development Patterns
 
 ### Data Structure Preferences
+
 - Use nested lists instead of pandas DataFrames (project is removing pandas dependency)
 - Convert numpy arrays to nested lists when needed
 - Prefer narwhals for DataFrame abstraction when dataframe operations are necessary
 
 ### Pydantic Validation
+
 All RTF components use Pydantic BaseModel with validators:
+
 ```python
 class RTFComponent(BaseModel):
     model_config = ConfigDict(
@@ -101,9 +124,11 @@ class RTFComponent(BaseModel):
 ```
 
 ### Font Handling
-The project includes Liberation and Cros fonts for consistent string width calculations. Always use the strwidth module for text measurements rather than estimations.
+
+The project includes Liberation and CrOS fonts for consistent string width calculations. Always use the strwidth module for text measurements rather than estimations.
 
 ### Testing Patterns
+
 - Tests include R output fixtures for cross-language compatibility
 - Use pytest fixtures for common test data
 - Test files mirror source structure in `tests/` directory
