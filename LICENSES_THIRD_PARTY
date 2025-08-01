@@ -12,6 +12,8 @@ Third party Python packages listed by license type
 --------------------------------------------------
 
 MIT License (https://opensource.org/license/mit)
+  * narwhals - https://github.com/narwhals-dev/narwhals/blob/main/LICENSE.md
+  * polars - https://github.com/pola-rs/polars/blob/main/LICENSE
   * pydantic - https://github.com/pydantic/pydantic/blob/main/LICENSE
 
 BSD 3-Clause License (https://opensource.org/license/bsd-3-clause)
