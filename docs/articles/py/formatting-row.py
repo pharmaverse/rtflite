@@ -1,19 +1,17 @@
 import polars as pl
 import rtflite as rtf
 
-border_demo = [
-    ["Single", "Standard line"],
-    ["Double", "Double line"],
-    ["Thick", "Thick line"],
-    ["None", "No border"],
+border_data = [
+    [border_type, f"Example of {border_type or 'no'} border"]
+    for border_type in rtf.attributes.BORDER_CODES.keys()
 ]
 
-df_borders = pl.DataFrame(border_demo, schema=["type", "description"])
+df_borders = pl.DataFrame(border_data, schema=["border_type", "description"])
 
 doc_borders = rtf.RTFDocument(
     df=df_borders,
     rtf_body=rtf.RTFBody(
-        border_bottom=("single", "double", "thick", ""),
+        border_bottom=tuple(rtf.attributes.BORDER_CODES.keys()),
     ),
 )
 
@@ -30,7 +28,7 @@ df_widths = pl.DataFrame(width_demo, schema=["narrow", "standard", "wide"])
 doc_widths = rtf.RTFDocument(
     df=df_widths,
     rtf_body=rtf.RTFBody(
-        col_rel_width=(1.0, 2.0, 3.0),  # Relative width ratios
+        col_rel_width=[1.0, 2.0, 3.0],  # Relative width ratios
     ),
 )
 

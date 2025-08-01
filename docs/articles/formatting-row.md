@@ -12,7 +12,6 @@ for creating professional tables.
 Row-level formatting provides granular control over table appearance:
 
 - Border styles (single, double, thick)
-- Cell alignment (left, center, right)  
 - Column width control with relative sizing
 
 ## Imports
@@ -24,24 +23,25 @@ import rtflite as rtf
 
 ## Border Styles
 
+> please refer `rtf` output. PDF version has known issue for some border
+> type.
+
 Demonstrate different border types:
 
 ``` python
-# Create border demonstration data
-border_demo = [
-    ["Single", "Standard line"],
-    ["Double", "Double line"],
-    ["Thick", "Thick line"],
-    ["None", "No border"]
+# Create border demonstration data from BORDER_CODES
+border_data = [
+    [border_type, f"Example of {border_type or 'no'} border"] 
+    for border_type in rtf.attributes.BORDER_CODES.keys()
 ]
 
-df_borders = pl.DataFrame(border_demo, schema=["type", "description"])
+df_borders = pl.DataFrame(border_data, schema=["border_type", "description"])
 
-# Apply different border styles
+# Apply different border styles to each row
 doc_borders = rtf.RTFDocument(
     df=df_borders,
     rtf_body=rtf.RTFBody(
-        border_bottom=("single", "double", "thick", ""),
+        border_bottom=tuple(rtf.attributes.BORDER_CODES.keys()),
     )
 )
 
@@ -68,7 +68,7 @@ df_widths = pl.DataFrame(width_demo, schema=["narrow", "standard", "wide"])
 doc_widths = rtf.RTFDocument(
     df=df_widths,
     rtf_body=rtf.RTFBody(
-        col_rel_width=(1.0, 2.0, 3.0),  # Relative width ratios
+        col_rel_width=[1.0, 2.0, 3.0],  # Relative width ratios
     )
 )
 
