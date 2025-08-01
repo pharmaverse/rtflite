@@ -78,6 +78,7 @@ print(df_indent)
 doc_indent = rtf.RTFDocument(
     df=df_indent,
     rtf_body=rtf.RTFBody(
+        text_justification="l",
         text_indent_first=(0, 300, 600, 900),
     ),
 )

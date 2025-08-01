@@ -27,7 +27,7 @@ import polars as pl
 import rtflite as rtf
 ```
 
-## Basic Text Formatting
+## Text Style
 
 Demonstrate core text formatting options:
 
@@ -128,7 +128,7 @@ doc_colors = rtf.RTFDocument(
 doc_colors.write_rtf("../rtf/text_color.rtf")
 ```
 
-## Indentation and Hierarchical Structure
+## Indentation
 
 Show indentation options for hierarchical content:
 
@@ -150,6 +150,7 @@ print(df_indent)
 doc_indent = rtf.RTFDocument(
     df=df_indent,
     rtf_body=rtf.RTFBody(
+        text_justification = "l",
         text_indent_first=(0, 300, 600, 900),
     )
 )
