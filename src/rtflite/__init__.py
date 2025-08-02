@@ -1,4 +1,5 @@
 from .convert import LibreOfficeConverter
+from .core import RTFConstants, RTFConfiguration
 from .encode import RTFDocument
 from .input import (
     RTFBody,
@@ -30,4 +31,6 @@ __all__ = [
     "RTFPagination",
     "PageBreakCalculator",
     "ContentDistributor",
+    "RTFConstants",
+    "RTFConfiguration",
 ]

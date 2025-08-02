@@ -4,6 +4,7 @@ import polars as pl
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from .attributes import BroadcastValue
+from .core.constants import RTFConstants, RTFMeasurements
 from .input import (
     RTFBody,
     RTFColumnHeader,
@@ -241,8 +242,8 @@ class RTFDocument(BaseModel):
     def _rtf_page_break_encode(self) -> str:
         """Generate proper RTF page break sequence matching r2rtf format"""
         page_setup = (
-            f"\\paperw{int(self.rtf_page.width * 1440)}"
-            f"\\paperh{int(self.rtf_page.height * 1440)}\n\n"
+            f"\\paperw{int(self.rtf_page.width * RTFConstants.TWIPS_PER_INCH)}"
+            f"\\paperh{int(self.rtf_page.height * RTFConstants.TWIPS_PER_INCH)}\n\n"
             f"{self._rtf_page_margin_encode()}\n"
         )
 

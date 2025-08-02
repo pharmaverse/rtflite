@@ -3,6 +3,7 @@ from collections.abc import Sequence
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from rtflite.attributes import TextAttributes, TableAttributes
+from rtflite.core.constants import RTFConstants
 from rtflite.row import BORDER_CODES
 
 
@@ -137,8 +138,8 @@ class RTFPageHeader(TextAttributes):
             "text_indent_left": [0],
             "text_indent_right": [0],
             "text_space": [1.0],
-            "text_space_before": [15.0],
-            "text_space_after": [15.0],
+            "text_space_before": [RTFConstants.DEFAULT_SPACE_BEFORE],
+            "text_space_after": [RTFConstants.DEFAULT_SPACE_AFTER],
             "text_hyphenation": [True],
             "text_convert": [False],  
         }
@@ -182,8 +183,8 @@ class RTFPageFooter(TextAttributes):
             "text_indent_left": [0],
             "text_indent_right": [0],
             "text_space": [1.0],
-            "text_space_before": [15.0],
-            "text_space_after": [15.0],
+            "text_space_before": [RTFConstants.DEFAULT_SPACE_BEFORE],
+            "text_space_after": [RTFConstants.DEFAULT_SPACE_AFTER],
             "text_hyphenation": [True],
             "text_convert": [False],  # Disable to preserve RTF field codes
         }
@@ -227,8 +228,8 @@ class RTFSubline(TextAttributes):
             "text_indent_left": [0],
             "text_indent_right": [0],
             "text_space": [1.0],
-            "text_space_before": [15.0],
-            "text_space_after": [15.0],
+            "text_space_before": [RTFConstants.DEFAULT_SPACE_BEFORE],
+            "text_space_after": [RTFConstants.DEFAULT_SPACE_AFTER],
             "text_hyphenation": [True],
             "text_convert": [True],
         }

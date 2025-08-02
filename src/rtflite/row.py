@@ -2,57 +2,20 @@ from collections.abc import Mapping, MutableSequence, Sequence
 
 from pydantic import BaseModel, Field
 
+from .core.constants import RTFConstants, RTFMeasurements
 from .fonts_mapping import FontMapping
 from .text_convert import text_convert
 
-FORMAT_CODES = {
-    "": "",
-    "b": "\\b",
-    "i": "\\i",
-    "u": "\\ul",
-    "s": "\\strike",
-    "^": "\\super",
-    "_": "\\sub",
-}
+# Import constants from centralized location for backwards compatibility
+FORMAT_CODES = RTFConstants.FORMAT_CODES
 
-TEXT_JUSTIFICATION_CODES = {
-    "": "",
-    "l": "\\ql",
-    "c": "\\qc",
-    "r": "\\qr",
-    "d": "\\qd",
-    "j": "\\qj",
-}
+TEXT_JUSTIFICATION_CODES = RTFConstants.TEXT_JUSTIFICATION_CODES
 
-ROW_JUSTIFICATION_CODES = {"": "", "l": "\\trql", "c": "\\trqc", "r": "\\trqr"}
+ROW_JUSTIFICATION_CODES = RTFConstants.ROW_JUSTIFICATION_CODES
 
-BORDER_CODES = {
-    "single": "\\brdrs",
-    "double": "\\brdrdb",
-    "thick": "\\brdrth",
-    "dotted": "\\brdrdot",
-    "dashed": "\\brdrdash",
-    "small-dash": "\\brdrdashsm",
-    "dash-dotted": "\\brdrdashd",
-    "dash-dot-dotted": "\\brdrdashdd",
-    "triple": "\\brdrtriple",
-    "wavy": "\\brdrwavy",
-    "double-wavy": "\\brdrwavydb",
-    "striped": "\\brdrengrave",
-    "embossed": "\\brdremboss",
-    "engraved": "\\brdrengrave",
-    "frame": "\\brdrframe",
-    "": "",  # No border
-}
+BORDER_CODES = RTFConstants.BORDER_CODES
 
-VERTICAL_ALIGNMENT_CODES = {
-    "top": "\\clvertalt",
-    "center": "\\clvertalc",
-    "bottom": "\\clvertalb",
-    "merge_first": "\\clvertalc\\clvmgf",
-    "merge_rest": "\\clvertalc\\clvmrg",
-    "": "",
-}
+VERTICAL_ALIGNMENT_CODES = RTFConstants.VERTICAL_ALIGNMENT_CODES
 
 
 class Utils:
@@ -95,7 +58,7 @@ class Utils:
     @staticmethod
     def _inch_to_twip(inch: float) -> int:
         """Convert inches to twips."""
-        return round(inch * 1440)
+        return RTFMeasurements.inch_to_twip(inch)
 
     @staticmethod
     def _col_widths(
@@ -138,8 +101,8 @@ class TextContent(BaseModel):
     indent_left: int = Field(default=0, description="Left indent")
     indent_right: int = Field(default=0, description="Right indent")
     space: int = Field(default=1, description="Line spacing")
-    space_before: int = Field(default=15, description="Space before paragraph")
-    space_after: int = Field(default=15, description="Space after paragraph")
+    space_before: int = Field(default=RTFConstants.DEFAULT_SPACE_BEFORE, description="Space before paragraph")
+    space_after: int = Field(default=RTFConstants.DEFAULT_SPACE_AFTER, description="Space after paragraph")
     convert: bool = Field(default=True, description="Enable LaTeX to Unicode conversion")
     hyphenation: bool = Field(default=True, description="Enable hyphenation")
 
@@ -157,12 +120,12 @@ class TextContent(BaseModel):
         rtf.append(f"\\sb{self.space_before}")
         rtf.append(f"\\sa{self.space_after}")
         if self.space != 1:
-            rtf.append(f"\\sl{int(self.space * 240)}\\slmult1")
+            rtf.append(f"\\sl{int(self.space * RTFConstants.LINE_SPACING_FACTOR)}\\slmult1")
 
         # Indentation
-        rtf.append(f"\\fi{Utils._inch_to_twip(self.indent_first / 1440)}")
-        rtf.append(f"\\li{Utils._inch_to_twip(self.indent_left / 1440)}")
-        rtf.append(f"\\ri{Utils._inch_to_twip(self.indent_right / 1440)}")
+        rtf.append(f"\\fi{Utils._inch_to_twip(self.indent_first / RTFConstants.TWIPS_PER_INCH)}")
+        rtf.append(f"\\li{Utils._inch_to_twip(self.indent_left / RTFConstants.TWIPS_PER_INCH)}")
+        rtf.append(f"\\ri{Utils._inch_to_twip(self.indent_right / RTFConstants.TWIPS_PER_INCH)}")
 
         # Justification
         if self.justification not in TEXT_JUSTIFICATION_CODES:
@@ -210,16 +173,7 @@ class TextContent(BaseModel):
         text = text_convert(self.text, self.convert)
         
         # Basic RTF character conversion (matching r2rtf char_rtf mapping)
-        rtf_chars = {
-            "^": "\\super ",
-            "_": "\\sub ",
-            ">=": "\\geq ",
-            "<=": "\\leq ",
-            "\n": "\\line ",
-            "\\pagenumber": "\\chpgn ",
-            "\\totalpage": "\\totalpage ",
-            "\\pagefield": "{\\field{\\*\\fldinst NUMPAGES }} ",
-        }
+        rtf_chars = RTFConstants.RTF_CHAR_MAPPING
 
         for char, rtf in rtf_chars.items():
             text = text.replace(char, rtf)
@@ -251,7 +205,7 @@ class Border(BaseModel):
     style: str = Field(
         default="single", description="Border style (single, double, dashed, etc)"
     )
-    width: int = Field(default=15, description="Border width in twips")
+    width: int = Field(default=RTFConstants.DEFAULT_BORDER_WIDTH, description="Border width in twips")
     color: str | None = Field(default=None, description="Border color")
 
     def _as_rtf(self) -> str:
