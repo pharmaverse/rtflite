@@ -254,7 +254,10 @@ class RTFFootnote(TableAttributes):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     text: Sequence[str] | None = Field(default=None, description="Footnote table")
-    as_table: bool = Field(default=True, description="Whether to render footnote as table (True) or plain text (False)")
+    as_table: bool = Field(
+        default=True,
+        description="Whether to render footnote as table (True) or plain text (False)",
+    )
 
     @field_validator("text", mode="before")
     def convert_text(cls, v):
@@ -263,54 +266,59 @@ class RTFFootnote(TableAttributes):
                 return [v]
             return v
 
+    @field_validator("as_table", mode="before")
+    def validate_as_table(cls, v):
+        if not isinstance(v, bool):
+            raise ValueError(f"as_table must be a boolean, got {type(v).__name__}: {v}")
+        return v
+
     def __init__(self, **data):
         # Get as_table setting before setting defaults
         as_table = data.get("as_table", True)  # Default True for footnotes
-        
+
         if as_table:
             # Table rendering: has borders (R2RTF as_table=TRUE behavior)
             border_defaults = {
-                "border_left": ["single"],
-                "border_right": ["single"],
-                "border_top": ["single"],
-                "border_bottom": [""],
+                "border_left": [["single"]],
+                "border_right": [["single"]],
+                "border_top": [["single"]],
+                "border_bottom": [[""]],
             }
         else:
             # Plain text rendering: no borders (R2RTF as_table=FALSE behavior)
             border_defaults = {
-                "border_left": [""],
-                "border_right": [""],
-                "border_top": [""],
-                "border_bottom": [""],
+                "border_left": [[""]],
+                "border_right": [[""]],
+                "border_top": [[""]],
+                "border_bottom": [[""]],
             }
-            
+
         defaults = {
-            "col_rel_width": [1],
-            "border_width": [15],
-            "cell_height": [0.15],
-            "cell_justification": ["c"],
-            "cell_vertical_justification": ["top"],
-            "text_font": [1],
-            "text_format": [""],
-            "text_font_size": [9],
-            "text_justification": ["l"],
-            "text_indent_first": [0],
-            "text_indent_left": [0],
-            "text_indent_right": [0],
-            "text_space": [1],
-            "text_space_before": [15],
-            "text_space_after": [15],
-            "text_hyphenation": [False],
-            "text_convert": [True],
+            "col_rel_width": [1.0],
+            "border_width": [[15]],
+            "cell_height": [[0.15]],
+            "cell_justification": [["c"]],
+            "cell_vertical_justification": [["top"]],
+            "text_font": [[1]],
+            "text_format": [[""]],
+            "text_font_size": [[9]],
+            "text_justification": [["l"]],
+            "text_indent_first": [[0]],
+            "text_indent_left": [[0]],
+            "text_indent_right": [[0]],
+            "text_space": [[1]],
+            "text_space_before": [[15]],
+            "text_space_after": [[15]],
+            "text_hyphenation": [[False]],
+            "text_convert": [[True]],
         }
-        
+
         # Add border defaults based on as_table setting
         defaults.update(border_defaults)
 
         # Update defaults with any provided values
         defaults.update(data)
         super().__init__(**defaults)
-        self._set_default()
         # Convert text to DataFrame during initialization
         if self.text is not None:
             if isinstance(self.text, Sequence):
@@ -318,7 +326,7 @@ class RTFFootnote(TableAttributes):
 
     def _set_default(self):
         for attr, value in self.__dict__.items():
-            if isinstance(value, (str, int, float, bool)):
+            if isinstance(value, (str, int, float, bool)) and attr not in ["as_table"]:
                 setattr(self, attr, [value])
 
         return self
@@ -330,7 +338,10 @@ class RTFSource(TableAttributes):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     text: Sequence[str] | None = Field(default=None, description="Data source table")
-    as_table: bool = Field(default=False, description="Whether to render source as table (True) or plain text (False)")
+    as_table: bool = Field(
+        default=False,
+        description="Whether to render source as table (True) or plain text (False)",
+    )
 
     @field_validator("text", mode="before")
     def convert_text(cls, v):
@@ -339,54 +350,59 @@ class RTFSource(TableAttributes):
                 return [v]
             return v
 
+    @field_validator("as_table", mode="before")
+    def validate_as_table(cls, v):
+        if not isinstance(v, bool):
+            raise ValueError(f"as_table must be a boolean, got {type(v).__name__}: {v}")
+        return v
+
     def __init__(self, **data):
         # Get as_table setting before setting defaults
         as_table = data.get("as_table", False)  # Default False for sources
-        
+
         if as_table:
             # Table rendering: has borders (R2RTF as_table=TRUE behavior)
             border_defaults = {
-                "border_left": ["single"],
-                "border_right": ["single"],
-                "border_top": ["single"],
-                "border_bottom": [""],
+                "border_left": [["single"]],
+                "border_right": [["single"]],
+                "border_top": [["single"]],
+                "border_bottom": [[""]],
             }
         else:
             # Plain text rendering: no borders (R2RTF as_table=FALSE behavior)
             border_defaults = {
-                "border_left": [""],
-                "border_right": [""],
-                "border_top": [""],
-                "border_bottom": [""],
+                "border_left": [[""]],
+                "border_right": [[""]],
+                "border_top": [[""]],
+                "border_bottom": [[""]],
             }
-            
+
         defaults = {
-            "col_rel_width": [1],
-            "border_width": [15],
-            "cell_height": [0.15],
-            "cell_justification": ["c"],
-            "cell_vertical_justification": ["top"],
-            "text_font": [1],
-            "text_format": [""],
-            "text_font_size": [9],
-            "text_justification": ["c"],
-            "text_indent_first": [0],
-            "text_indent_left": [0],
-            "text_indent_right": [0],
-            "text_space": [1],
-            "text_space_before": [15],
-            "text_space_after": [15],
-            "text_hyphenation": [False],
-            "text_convert": [True],
+            "col_rel_width": [1.0],
+            "border_width": [[15]],
+            "cell_height": [[0.15]],
+            "cell_justification": [["c"]],
+            "cell_vertical_justification": [["top"]],
+            "text_font": [[1]],
+            "text_format": [[""]],
+            "text_font_size": [[9]],
+            "text_justification": [["c"]],
+            "text_indent_first": [[0]],
+            "text_indent_left": [[0]],
+            "text_indent_right": [[0]],
+            "text_space": [[1]],
+            "text_space_before": [[15]],
+            "text_space_after": [[15]],
+            "text_hyphenation": [[False]],
+            "text_convert": [[True]],
         }
-        
+
         # Add border defaults based on as_table setting
         defaults.update(border_defaults)
 
         # Update defaults with any provided values
         defaults.update(data)
         super().__init__(**defaults)
-        self._set_default()
 
         # Convert text to DataFrame during initialization
         if self.text is not None:
@@ -395,7 +411,7 @@ class RTFSource(TableAttributes):
 
     def _set_default(self):
         for attr, value in self.__dict__.items():
-            if isinstance(value, (str, int, float, bool)):
+            if isinstance(value, (str, int, float, bool)) and attr not in ["as_table"]:
                 setattr(self, attr, [value])
 
         return self
@@ -456,7 +472,9 @@ class RTFColumnHeader(TableAttributes):
         if v is not None:
             if isinstance(v, str):
                 return [v]
-            if isinstance(v, (list, tuple)) and all(isinstance(item, str) for item in v):
+            if isinstance(v, (list, tuple)) and all(
+                isinstance(item, str) for item in v
+            ):
                 return list(v)
         return v
 
@@ -465,7 +483,8 @@ class RTFColumnHeader(TableAttributes):
         if v is not None and isinstance(v, (list, tuple)):
             try:
                 import polars as pl
-                schema = [f"col_{i+1}" for i in range(len(v))]
+
+                schema = [f"col_{i + 1}" for i in range(len(v))]
                 return pl.DataFrame([v], schema=schema, orient="row")
             except ImportError:
                 pass
@@ -477,6 +496,7 @@ class RTFColumnHeader(TableAttributes):
             df = data.pop("df")
             try:
                 import polars as pl
+
                 if isinstance(df, pl.DataFrame):
                     # For backwards compatibility, assume single-row DataFrame
                     # If DataFrame has multiple rows, transpose it first
