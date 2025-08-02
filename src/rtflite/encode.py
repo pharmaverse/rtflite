@@ -224,33 +224,63 @@ class RTFDocument(BaseModel):
         # Create a deep copy of the attributes to avoid modifying the original  
         page_attrs = deepcopy(rtf_attrs)
         page_df_height = page_info["data"].height
+        page_df_width = page_info["data"].width
         
         if page_df_height == 0:
             return page_attrs
         
-        # Apply borders based on page position
-        # Only apply double borders to the very first and very last rows of the entire table
+        # Clear border_first and border_last from being broadcast to all rows
+        # These should only apply to specific rows based on pagination logic
+        if hasattr(page_attrs, 'border_first') and page_attrs.border_first:
+            # Don't use border_first in pagination - it's handled separately
+            page_attrs.border_first = None
+            
+        if hasattr(page_attrs, 'border_last') and page_attrs.border_last:
+            # Don't use border_last in pagination - it's handled separately  
+            page_attrs.border_last = None
         
+        # Ensure border_top and border_bottom are properly sized for this page
+        if not page_attrs.border_top:
+            page_attrs.border_top = [[""] * page_df_width for _ in range(page_df_height)]
+        if not page_attrs.border_bottom:
+            page_attrs.border_bottom = [[""] * page_df_width for _ in range(page_df_height)]
+            
+        # Apply borders based on page position
         # For first page: only apply rtf_page.border_first to table body if NO column headers
-        # (Column headers get the page-level border when they exist)
         has_column_headers = self.rtf_column_header and len(self.rtf_column_header) > 0
         if page_info["is_first_page"] and not has_column_headers:
             if self.rtf_page.border_first:
                 page_attrs = self._apply_border_to_row(
-                    page_attrs, 0, "top", self.rtf_page.border_first, page_info["data"].width
+                    page_attrs, 0, "top", self.rtf_page.border_first, page_df_width
                 )
+        
+        # Apply page-level borders for non-first/last pages
+        if not page_info["is_first_page"] and self.rtf_body.border_first:
+            # Apply border_first to first row of non-first pages
+            border_style = self.rtf_body.border_first[0][0] if isinstance(self.rtf_body.border_first, list) else self.rtf_body.border_first
+            page_attrs = self._apply_border_to_row(
+                page_attrs, 0, "top", border_style, page_df_width
+            )
+            
+        if not page_info["is_last_page"] and self.rtf_body.border_last:
+            # Apply border_last to last row of non-last pages
+            border_style = self.rtf_body.border_last[0][0] if isinstance(self.rtf_body.border_last, list) else self.rtf_body.border_last
+            page_attrs = self._apply_border_to_row(
+                page_attrs, page_df_height - 1, "bottom", border_style, page_df_width
+            )
                 
-        if page_info["is_last_page"]:
-            # Last page: Apply rtf_page.border_last to last row only
-            if self.rtf_page.border_last:
+        # For last page: Apply rtf_page.border_last only to the absolute last row
+        if page_info["is_last_page"] and self.rtf_page.border_last:
+            # Check if this page contains the absolute last row
+            total_rows = self.df.height
+            is_absolute_last_row = page_info["end_row"] == total_rows - 1
+            
+            if is_absolute_last_row:
                 last_row_idx = page_df_height - 1
                 page_attrs = self._apply_border_to_row(
-                    page_attrs, last_row_idx, "bottom", self.rtf_page.border_last, page_info["data"].width
+                    page_attrs, last_row_idx, "bottom", self.rtf_page.border_last, page_df_width
                 )
                 
-        # Note: When column headers are present, they get the rtf_page.border_first
-        # The table body only gets rtf_page.border_first when there are no column headers
-            
         return page_attrs
     
     def _apply_border_to_row(
@@ -267,7 +297,11 @@ class RTFDocument(BaseModel):
         
         # Ensure borders list is large enough
         while len(current_borders) <= row_idx:
-            current_borders.append(current_borders[-1] if current_borders else [""])
+            # Create a copy of the last row's borders, not a reference
+            if current_borders:
+                current_borders.append(current_borders[-1].copy())
+            else:
+                current_borders.append([""] * num_cols)
             
         # Ensure the row has enough columns
         while len(current_borders[row_idx]) < num_cols:
