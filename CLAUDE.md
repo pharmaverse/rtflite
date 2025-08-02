@@ -391,4 +391,45 @@ python3 tests/fixtures/run_r_tests.py
 
 # Check RTF output quality
 # (Click .rtf files in VSCode to open in Microsoft Word)
+
+# Test text conversion features
+pytest tests/test_text_conversion.py -v
+
+# Test service layer independently  
+pytest tests/test_factory.py -v
 ```
+
+## Architectural Principles for Future Development
+
+### 1. Service-First Design
+- **Extract complex logic** into services before implementing in RTFDocument
+- **Test services independently** before integration
+- **Use dependency injection** for service composition
+
+### 2. Strategy Pattern Usage
+- **Add new strategies** for new document types (lists, figures, etc.)
+- **Keep strategies focused** on single responsibilities
+- **Test strategies independently** of the engine
+
+### 3. Component Factory Extension
+- **Add new builders** for new component types
+- **Centralize default management** in builders
+- **Use factory for all component creation** in new code
+
+### 4. Text Conversion Enhancement
+- **Extend symbol mappings** through the dictionary system
+- **Add validation tools** for new symbol categories
+- **Use text conversion service** for all text processing
+
+### 5. Maintainability Focus
+- **Prioritize readability** over performance optimizations
+- **Write comprehensive tests** for all new functionality
+- **Document complex algorithms** with clear comments
+- **Use type hints** consistently throughout the codebase
+
+### 6. Testing Strategy
+- **Test architectural layers independently**:
+  - Services: Unit tests with mocked dependencies
+  - Strategies: Integration tests with real documents
+  - Factories: Component creation and configuration tests
+  - Full pipeline: End-to-end RTF generation tests
