@@ -320,28 +320,103 @@ class RTFDocument(BaseModel):
                     page_attrs, 0, col_idx, "top", border_style, page_shape
                 )
             
-        if not page_info["is_last_page"] and self.rtf_body.border_last:
-            # Apply border_last to last row of non-last pages
-            border_style = self.rtf_body.border_last[0][0] if isinstance(self.rtf_body.border_last, list) else self.rtf_body.border_last
-            for col_idx in range(page_df_width):
-                page_attrs = self._apply_border_to_cell(
-                    page_attrs, page_df_height - 1, col_idx, "bottom", border_style, page_shape
-                )
+        # Check if footnotes or sources will appear on this page
+        has_footnote_on_page = (
+            self.rtf_footnote 
+            and self.rtf_footnote.text 
+            and self._should_show_element_on_page(self.rtf_page.page_footnote_location, page_info)
+        )
+        has_source_on_page = (
+            self.rtf_source 
+            and self.rtf_source.text 
+            and self._should_show_element_on_page(self.rtf_page.page_source_location, page_info)
+        )
+        
+        # Apply border logic based on page position and footnote/source presence
+        if not page_info["is_last_page"]:
+            # Non-last pages: apply single border after footnote/source, or after data if no footnote/source
+            if self.rtf_body.border_last:
+                border_style = self.rtf_body.border_last[0][0] if isinstance(self.rtf_body.border_last, list) else self.rtf_body.border_last
                 
-        # For last page: Apply rtf_page.border_last only to the absolute last row
-        if page_info["is_last_page"] and self.rtf_page.border_last:
-            # Check if this page contains the absolute last row
-            total_rows = self.df.height
-            is_absolute_last_row = page_info["end_row"] == total_rows - 1
-            
-            if is_absolute_last_row:
-                last_row_idx = page_df_height - 1
-                for col_idx in range(page_df_width):
-                    page_attrs = self._apply_border_to_cell(
-                        page_attrs, last_row_idx, col_idx, "bottom", self.rtf_page.border_last, page_shape
-                    )
+                if not (has_footnote_on_page or has_source_on_page):
+                    # No footnote/source: apply border to last data row
+                    for col_idx in range(page_df_width):
+                        page_attrs = self._apply_border_to_cell(
+                            page_attrs, page_df_height - 1, col_idx, "bottom", border_style, page_shape
+                        )
+                else:
+                    # Has footnote/source: apply border_last from RTFBody
+                    self._apply_footnote_source_borders(page_info, border_style, is_last_page=False)
+                
+        else:  # is_last_page
+            # Last page: apply double border after footnote/source, or after data if no footnote/source
+            if self.rtf_page.border_last:
+                # Check if this page contains the absolute last row
+                total_rows = self.df.height
+                is_absolute_last_row = page_info["end_row"] == total_rows - 1
+                
+                if is_absolute_last_row:
+                    if not (has_footnote_on_page or has_source_on_page):
+                        # No footnote/source: apply border to last data row
+                        last_row_idx = page_df_height - 1
+                        for col_idx in range(page_df_width):
+                            page_attrs = self._apply_border_to_cell(
+                                page_attrs, last_row_idx, col_idx, "bottom", self.rtf_page.border_last, page_shape
+                            )
+                    else:
+                        # Has footnote/source: set border for footnote/source (handled in separate method)
+                        self._apply_footnote_source_borders(page_info, self.rtf_page.border_last, is_last_page=True)
                 
         return page_attrs
+    
+    def _apply_footnote_source_borders(self, page_info: dict, border_style: str, is_last_page: bool):
+        """Apply borders to footnote and source components based on page position."""
+        
+        # Determine which component should get the border
+        has_footnote = (
+            self.rtf_footnote 
+            and self.rtf_footnote.text 
+            and self._should_show_element_on_page(self.rtf_page.page_footnote_location, page_info)
+        )
+        has_source = (
+            self.rtf_source 
+            and self.rtf_source.text 
+            and self._should_show_element_on_page(self.rtf_page.page_source_location, page_info)
+        )
+        
+        # Apply border to components based on as_table setting
+        # Priority: Source with as_table=True > Footnote with as_table=True > any component
+        target_component = None
+        
+        # Extract as_table values (stored as lists, need first element)
+        footnote_as_table = None
+        if has_footnote:
+            as_table_attr = getattr(self.rtf_footnote, 'as_table', [True])
+            footnote_as_table = as_table_attr[0] if as_table_attr else True
+            
+        source_as_table = None  
+        if has_source:
+            as_table_attr = getattr(self.rtf_source, 'as_table', [False])
+            source_as_table = as_table_attr[0] if as_table_attr else False
+        
+        if has_source and source_as_table:
+            # Source is rendered as table: prioritize source for borders
+            target_component = ('source', self.rtf_source)
+        elif has_footnote and footnote_as_table:
+            # Footnote is rendered as table: use footnote for borders
+            target_component = ('footnote', self.rtf_footnote)
+        elif has_source:
+            # Fallback: source even if plain text
+            target_component = ('source', self.rtf_source)
+        elif has_footnote:
+            # Fallback: footnote even if plain text
+            target_component = ('footnote', self.rtf_footnote)
+            
+        if target_component:
+            component_name, component = target_component
+            if not hasattr(component, '_page_border_style'):
+                component._page_border_style = {}
+            component._page_border_style[page_info["page_number"]] = border_style
     
     def _apply_border_to_cell(
         self, page_attrs: TableAttributes, row_idx: int, col_idx: int, 
@@ -574,12 +649,19 @@ class RTFDocument(BaseModel):
 
         return output
 
-    def _rtf_footnote_encode(self) -> str:
+    def _rtf_footnote_encode(self, page_number: int = None) -> str:
         """Convert the RTF footnote into RTF syntax using the Text class."""
         rtf_attrs = self.rtf_footnote
 
         if rtf_attrs is None:
             return None
+
+        # Apply page-specific border if set
+        if hasattr(rtf_attrs, '_page_border_style') and page_number in rtf_attrs._page_border_style:
+            border_style = rtf_attrs._page_border_style[page_number]
+            # Create a copy with modified border
+            rtf_attrs = rtf_attrs.model_copy()
+            rtf_attrs.border_bottom = [[border_style]]
 
         col_total_width = self.rtf_page.col_width
         col_widths = Utils._col_widths(rtf_attrs.col_rel_width, col_total_width)
@@ -588,12 +670,19 @@ class RTFDocument(BaseModel):
         df = pl.DataFrame([[rtf_attrs.text]])
         return rtf_attrs._encode(df, col_widths)
 
-    def _rtf_source_encode(self) -> str:
+    def _rtf_source_encode(self, page_number: int = None) -> str:
         """Convert the RTF source into RTF syntax using the Text class."""
         rtf_attrs = self.rtf_source
 
         if rtf_attrs is None:
             return None
+
+        # Apply page-specific border if set
+        if hasattr(rtf_attrs, '_page_border_style') and page_number in rtf_attrs._page_border_style:
+            border_style = rtf_attrs._page_border_style[page_number]
+            # Create a copy with modified border
+            rtf_attrs = rtf_attrs.model_copy()
+            rtf_attrs.border_bottom = [[border_style]]
 
         col_total_width = self.rtf_page.col_width
         col_widths = Utils._col_widths(rtf_attrs.col_rel_width, col_total_width)
@@ -832,7 +921,7 @@ class RTFDocument(BaseModel):
                     self.rtf_page.page_footnote_location, page_info
                 )
             ):
-                footnote_content = self._rtf_footnote_encode()
+                footnote_content = self._rtf_footnote_encode(page_number=page_info["page_number"])
                 if footnote_content:
                     page_elements.extend(footnote_content)
 
@@ -844,7 +933,7 @@ class RTFDocument(BaseModel):
                     self.rtf_page.page_source_location, page_info
                 )
             ):
-                source_content = self._rtf_source_encode()
+                source_content = self._rtf_source_encode(page_number=page_info["page_number"])
                 if source_content:
                     page_elements.extend(source_content)
 
@@ -1014,10 +1103,10 @@ class RTFDocument(BaseModel):
                     if rtf_column_header
                     else None,
                     "\n".join(rtf_body),
-                    "\n".join(self._rtf_footnote_encode())
+                    "\n".join(self._rtf_footnote_encode(page_number=1))
                     if self.rtf_footnote is not None
                     else None,
-                    "\n".join(self._rtf_source_encode())
+                    "\n".join(self._rtf_source_encode(page_number=1))
                     if self.rtf_source is not None
                     else None,
                     "\n\n",

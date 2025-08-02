@@ -254,6 +254,7 @@ class RTFFootnote(TableAttributes):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     text: Sequence[str] | None = Field(default=None, description="Footnote table")
+    as_table: bool = Field(default=True, description="Whether to render footnote as table (True) or plain text (False)")
 
     @field_validator("text", mode="before")
     def convert_text(cls, v):
@@ -263,12 +264,28 @@ class RTFFootnote(TableAttributes):
             return v
 
     def __init__(self, **data):
+        # Get as_table setting before setting defaults
+        as_table = data.get("as_table", True)  # Default True for footnotes
+        
+        if as_table:
+            # Table rendering: has borders (R2RTF as_table=TRUE behavior)
+            border_defaults = {
+                "border_left": ["single"],
+                "border_right": ["single"],
+                "border_top": ["single"],
+                "border_bottom": [""],
+            }
+        else:
+            # Plain text rendering: no borders (R2RTF as_table=FALSE behavior)
+            border_defaults = {
+                "border_left": [""],
+                "border_right": [""],
+                "border_top": [""],
+                "border_bottom": [""],
+            }
+            
         defaults = {
             "col_rel_width": [1],
-            "border_left": ["single"],
-            "border_right": ["single"],
-            "border_top": ["single"],
-            "border_bottom": [""],
             "border_width": [15],
             "cell_height": [0.15],
             "cell_justification": ["c"],
@@ -286,6 +303,9 @@ class RTFFootnote(TableAttributes):
             "text_hyphenation": [False],
             "text_convert": [True],
         }
+        
+        # Add border defaults based on as_table setting
+        defaults.update(border_defaults)
 
         # Update defaults with any provided values
         defaults.update(data)
@@ -310,6 +330,7 @@ class RTFSource(TableAttributes):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     text: Sequence[str] | None = Field(default=None, description="Data source table")
+    as_table: bool = Field(default=False, description="Whether to render source as table (True) or plain text (False)")
 
     @field_validator("text", mode="before")
     def convert_text(cls, v):
@@ -319,12 +340,28 @@ class RTFSource(TableAttributes):
             return v
 
     def __init__(self, **data):
+        # Get as_table setting before setting defaults
+        as_table = data.get("as_table", False)  # Default False for sources
+        
+        if as_table:
+            # Table rendering: has borders (R2RTF as_table=TRUE behavior)
+            border_defaults = {
+                "border_left": ["single"],
+                "border_right": ["single"],
+                "border_top": ["single"],
+                "border_bottom": [""],
+            }
+        else:
+            # Plain text rendering: no borders (R2RTF as_table=FALSE behavior)
+            border_defaults = {
+                "border_left": [""],
+                "border_right": [""],
+                "border_top": [""],
+                "border_bottom": [""],
+            }
+            
         defaults = {
             "col_rel_width": [1],
-            "border_left": [""],
-            "border_right": [""],
-            "border_top": [""],
-            "border_bottom": [""],
             "border_width": [15],
             "cell_height": [0.15],
             "cell_justification": ["c"],
@@ -342,6 +379,9 @@ class RTFSource(TableAttributes):
             "text_hyphenation": [False],
             "text_convert": [True],
         }
+        
+        # Add border defaults based on as_table setting
+        defaults.update(border_defaults)
 
         # Update defaults with any provided values
         defaults.update(data)

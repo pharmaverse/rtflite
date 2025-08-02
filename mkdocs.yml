@@ -8,6 +8,7 @@ edit_uri: edit/main/docs/
 nav:
   - Home: index.md
   - Articles:
+    - Quick Start: articles/example-quickstart.md
     - Examples:
       - articles/example-baseline.md
       - articles/example-ae.md
