@@ -110,6 +110,8 @@ doc = rtf.RTFDocument(
 doc.write_rtf("../rtf/intro-ae1.rtf")
 ```
 
+<embed src="../pdf/intro-ae1.pdf" style="width:100%; height:400px" type="application/pdf">
+
 ## Column Width
 
 If we want to adjust the width of each column to provide more space to
@@ -136,6 +138,8 @@ doc = rtf.RTFDocument(
 doc.write_rtf("../rtf/intro-ae2.rtf")
 ```
 
+<embed src="../pdf/intro-ae2.pdf" style="width:100%; height:400px" type="application/pdf">
+
 ## Column Headers
 
 In `RTFColumnHeader`, `text` argument is used to provide content of
@@ -155,6 +159,8 @@ doc = rtf.RTFDocument(
 
 doc.write_rtf("../rtf/intro-ae3.rtf")
 ```
+
+<embed src="../pdf/intro-ae3.pdf" style="width:100%; height:400px" type="application/pdf">
 
 We also allow column headers be displayed in multiple lines. If an empty
 column name is needed for a column, you can insert an empty string;
@@ -189,6 +195,8 @@ doc = rtf.RTFDocument(
 
 doc.write_rtf("../rtf/intro-ae4.rtf")
 ```
+
+<embed src="../pdf/intro-ae4.pdf" style="width:100%; height:400px" type="application/pdf">
 
 ## Titles, Footnotes, and Data Source
 
@@ -232,6 +240,8 @@ doc = rtf.RTFDocument(
 doc.write_rtf("../rtf/intro-ae5.rtf")
 ```
 
+<embed src="../pdf/intro-ae5.pdf" style="width:100%; height:400px" type="application/pdf">
+
 Note the use of `\\line` in column headers to create line breaks within
 cells.
 
@@ -268,6 +278,8 @@ doc = rtf.RTFDocument(
 doc.write_rtf("../rtf/intro-ae6.rtf")
 ```
 
+<embed src="../pdf/intro-ae6.pdf" style="width:100%; height:400px" type="application/pdf">
+
 ## Border Customization
 
 Table borders can be customized extensively:
@@ -299,6 +311,8 @@ doc = rtf.RTFDocument(
 
 doc.write_rtf("../rtf/intro-ae7.rtf")
 ```
+
+<embed src="../pdf/intro-ae7.pdf" style="width:100%; height:400px" type="application/pdf">
 
 ## Page Layout and Orientation
 
@@ -336,6 +350,8 @@ doc = rtf.RTFDocument(
 doc.write_rtf("../rtf/intro-ae8.rtf")
 ```
 
+<embed src="../pdf/intro-ae8.pdf" style="width:100%; height:400px" type="application/pdf">
+
 ## Cell-level Formatting
 
 Using the BroadcastValue pattern, you can apply formatting to individual
@@ -365,6 +381,8 @@ doc = rtf.RTFDocument(
 
 doc.write_rtf("../rtf/intro-ae9.rtf")
 ```
+
+<embed src="../pdf/intro-ae9.pdf" style="width:100%; height:400px" type="application/pdf">
 
 ### Multi-page Considerations
 
@@ -415,3 +433,5 @@ doc = rtf.RTFDocument(
 
 doc.write_rtf("../rtf/intro-ae10.rtf")
 ```
+
+<embed src="../pdf/intro-ae10.pdf" style="width:100%; height:400px" type="application/pdf">

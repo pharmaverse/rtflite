@@ -128,6 +128,8 @@ doc_colors = rtf.RTFDocument(
 doc_colors.write_rtf("../rtf/text_color.rtf")
 ```
 
+<embed src="../pdf/text_color.pdf" style="width:100%; height:400px" type="application/pdf">
+
 ## Indentation
 
 Show indentation options for hierarchical content:

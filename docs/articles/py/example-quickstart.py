@@ -154,6 +154,7 @@ doc = rtf.RTFDocument(
 
 doc.write_rtf("../rtf/intro-ae8.rtf")
 
+from rtflite.attributes import BroadcastValue
 
 border_pattern = [
     ["single", "", "single", ""],  # Row 1: borders on columns 1 and 3
