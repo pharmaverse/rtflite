@@ -244,14 +244,8 @@ class RTFDocument(BaseModel):
         return pagination, distributor
 
     def _rtf_page_break_encode(self) -> str:
-        """Generate proper RTF page break sequence matching r2rtf format"""
-        page_setup = (
-            f"\\paperw{int(self.rtf_page.width * RTFConstants.TWIPS_PER_INCH)}"
-            f"\\paperh{int(self.rtf_page.height * RTFConstants.TWIPS_PER_INCH)}\n\n"
-            f"{self._rtf_page_margin_encode()}\n"
-        )
-
-        return f"{{\\pard\\fs2\\par}}\\page{{\\pard\\fs2\\par}}\n{page_setup}"
+        """Generate proper RTF page break sequence - delegated to encoding service."""
+        return self._encoding_service.encode_page_break(self.rtf_page, self._rtf_page_margin_encode)
 
     def _apply_pagination_borders(
         self, rtf_attrs: TableAttributes, page_info: dict, total_pages: int
@@ -536,45 +530,12 @@ class RTFDocument(BaseModel):
         return page_attrs
 
     def _rtf_page_encode(self) -> str:
-        """Define RTF page settings"""
-        page_size = [
-            f"\\paperw{Utils._inch_to_twip(self.rtf_page.width)}",
-            f"\\paperh{Utils._inch_to_twip(self.rtf_page.height)}",
-        ]
-        page_size = "".join(page_size)
-
-        if self.rtf_page.orientation == "landscape":
-            page_size += "\\landscape\n"
-        else:
-            page_size += "\n"
-
-        # Add page footer if exists
-        # if self.rtf_page.page_footer:
-        #     footer = ["{\\footer", self._rtf_paragraph(self.rtf_page.page_footer), "}"]
-        #     page_size = "\n".join(footer + [page_size])
-
-        # Add page header if exists
-        # if self.rtf_page.page_header:
-        #     header = ["{\\header", self._rtf_paragraph(self.rtf_page.page_header), "}"]
-        #     page_size = "\n".join(header + [page_size])
-
-        return page_size
+        """Define RTF page settings - delegated to encoding service."""
+        return self._encoding_service.encode_page_settings(self.rtf_page)
 
     def _rtf_page_margin_encode(self) -> str:
-        """Define RTF margin settings"""
-        margin_codes = [
-            "\\margl",
-            "\\margr",
-            "\\margt",
-            "\\margb",
-            "\\headery",
-            "\\footery",
-        ]
-        margins = [Utils._inch_to_twip(m) for m in self.rtf_page.margin]
-        margin = "".join(
-            f"{code}{margin}" for code, margin in zip(margin_codes, margins)
-        )
-        return margin + "\n"
+        """Define RTF margin settings - delegated to encoding service."""
+        return self._encoding_service.encode_page_margin(self.rtf_page)
 
     def _rtf_page_header_encode(self, method: str) -> str:
         """Convert the RTF page header into RTF syntax - delegated to encoding service."""
@@ -688,170 +649,25 @@ class RTFDocument(BaseModel):
         return output
 
     def _rtf_footnote_encode(self, page_number: int = None) -> MutableSequence[str]:
-        """Convert the RTF footnote into RTF syntax using the Text class."""
-        rtf_attrs = self.rtf_footnote
-
-        if rtf_attrs is None:
-            return None
-
-        # Apply page-specific border if set
-        if (
-            hasattr(rtf_attrs, "_page_border_style")
-            and page_number in rtf_attrs._page_border_style
-        ):
-            border_style = rtf_attrs._page_border_style[page_number]
-            # Create a copy with modified border
-            rtf_attrs = rtf_attrs.model_copy()
-            rtf_attrs.border_bottom = [[border_style]]
-
-        # Check if footnote should be rendered as table or paragraph
-        if hasattr(rtf_attrs, 'as_table') and not rtf_attrs.as_table:
-            # Render as paragraph (plain text)
-            if isinstance(rtf_attrs.text, list):
-                text_list = rtf_attrs.text
-            else:
-                text_list = [rtf_attrs.text] if rtf_attrs.text else []
-            
-            # Use TextAttributes._encode_text method directly for paragraph rendering
-            paragraphs = rtf_attrs._encode_text(text_list, method="paragraph")
-            return paragraphs
-        else:
-            # Render as table (default behavior)
-            col_total_width = self.rtf_page.col_width
-            col_widths = Utils._col_widths(rtf_attrs.col_rel_width, col_total_width)
-
-            # Create DataFrame from text string
-            df = pl.DataFrame([[rtf_attrs.text]])
-            return rtf_attrs._encode(df, col_widths)
+        """Convert the RTF footnote into RTF syntax - delegated to encoding service."""
+        result = self._encoding_service.encode_footnote(
+            self.rtf_footnote, page_number, self.rtf_page.col_width
+        )
+        return result if result else None
 
     def _rtf_source_encode(self, page_number: int = None) -> MutableSequence[str]:
-        """Convert the RTF source into RTF syntax using the Text class."""
-        rtf_attrs = self.rtf_source
-
-        if rtf_attrs is None:
-            return None
-
-        # Apply page-specific border if set
-        if (
-            hasattr(rtf_attrs, "_page_border_style")
-            and page_number in rtf_attrs._page_border_style
-        ):
-            border_style = rtf_attrs._page_border_style[page_number]
-            # Create a copy with modified border
-            rtf_attrs = rtf_attrs.model_copy()
-            rtf_attrs.border_bottom = [[border_style]]
-
-        # Check if source should be rendered as table or paragraph
-        if hasattr(rtf_attrs, 'as_table') and not rtf_attrs.as_table:
-            # Render as paragraph (plain text)
-            if isinstance(rtf_attrs.text, list):
-                text_list = rtf_attrs.text
-            else:
-                text_list = [rtf_attrs.text] if rtf_attrs.text else []
-            
-            # Use TextAttributes._encode_text method directly for paragraph rendering
-            paragraphs = rtf_attrs._encode_text(text_list, method="paragraph")
-            return paragraphs
-        else:
-            # Render as table (default behavior)
-            col_total_width = self.rtf_page.col_width
-            col_widths = Utils._col_widths(rtf_attrs.col_rel_width, col_total_width)
-
-            # Create DataFrame from text string
-            df = pl.DataFrame([[rtf_attrs.text]])
-            return rtf_attrs._encode(df, col_widths)
+        """Convert the RTF source into RTF syntax - delegated to encoding service."""
+        result = self._encoding_service.encode_source(
+            self.rtf_source, page_number, self.rtf_page.col_width
+        )
+        return result if result else None
 
     def _rtf_body_encode(
         self, df: pl.DataFrame, rtf_attrs: TableAttributes | None
     ) -> MutableSequence[str]:
-        """Convert the RTF table into RTF syntax using the Cell class.
+        """Convert the RTF table into RTF syntax - delegated to encoding service."""
+        return self._encoding_service.encode_body(self, df, rtf_attrs)
 
-        Args:
-            df: Input DataFrame to encode
-            rtf_attrs: Table attributes for styling
-
-        Returns:
-            List of RTF-encoded strings representing table rows
-        """
-        if rtf_attrs is None:
-            return None
-
-        # Initialize dimensions and widths
-        col_total_width = self.rtf_page.col_width
-        col_widths = Utils._col_widths(rtf_attrs.col_rel_width, col_total_width)
-
-        # Check if pagination is needed
-        if self._needs_pagination():
-            return self._rtf_body_encode_paginated(df, rtf_attrs, col_widths)
-
-        # Handle existing page_by grouping (non-paginated)
-        page_by = self._page_by()
-        if page_by is None:
-            return rtf_attrs._encode(df, col_widths)
-
-        rows = []
-        for section in page_by:
-            # Skip empty sections
-            indices = [(row, col) for row, col, level in section]
-            if not indices:
-                continue
-
-            # Create DataFrame for current section
-            section_df = pl.DataFrame(
-                {
-                    str(i): [BroadcastValue(value=df).iloc(row, col)]
-                    for i, (row, col) in enumerate(indices)
-                }
-            )
-
-            # Collect all text and table attributes
-            section_attrs_dict = rtf_attrs._get_section_attributes(indices)
-            section_attrs = TableAttributes(**section_attrs_dict)
-
-            # Calculate column widths and encode section
-            section_col_widths = Utils._col_widths(
-                section_attrs.col_rel_width, col_total_width
-            )
-            rows.extend(section_attrs._encode(section_df, section_col_widths))
-
-        return rows
-
-    def _rtf_body_encode_paginated(
-        self, df: pl.DataFrame, rtf_attrs: TableAttributes, col_widths: list[float]
-    ) -> MutableSequence[str]:
-        """Encode body content with pagination support"""
-        _, distributor = self._create_pagination_instance()
-
-        # Distribute content across pages (r2rtf compatible)
-        additional_rows = self._calculate_additional_rows_per_page()
-        pages = distributor.distribute_content(
-            df=df,
-            col_widths=col_widths,
-            page_by=self.rtf_body.page_by,
-            new_page=self.rtf_body.new_page,
-            pageby_header=self.rtf_body.pageby_header,
-            table_attrs=rtf_attrs,
-            additional_rows_per_page=additional_rows,
-        )
-
-        all_rows = []
-        for page_info in pages:
-            page_df = page_info["data"]
-
-            # Add page break before each page (except first)
-            if not page_info["is_first_page"]:
-                all_rows.append(self._rtf_page_break_encode())
-
-            # Create modified table attributes for pagination context
-            page_attrs = self._apply_pagination_borders(
-                rtf_attrs, page_info, len(pages)
-            )
-
-            # Encode page content with modified borders
-            page_rows = page_attrs._encode(page_df, col_widths)
-            all_rows.extend(page_rows)
-
-        return all_rows
 
     def _should_show_element_on_page(
         self, element_location: str, page_info: dict
@@ -867,193 +683,16 @@ class RTFDocument(BaseModel):
             return False
 
     def _rtf_encode_paginated(self) -> str:
-        """Generate RTF code for paginated documents"""
-        dim = self.df.shape
-
-        # Get pagination instance and distribute content
-        _, distributor = self._create_pagination_instance()
-        col_total_width = self.rtf_page.col_width
-        col_widths = Utils._col_widths(self.rtf_body.col_rel_width, col_total_width)
-
-        # Calculate additional rows per page for r2rtf compatibility
-        additional_rows = self._calculate_additional_rows_per_page()
-        pages = distributor.distribute_content(
-            df=self.df,
-            col_widths=col_widths,
-            page_by=self.rtf_body.page_by,
-            new_page=self.rtf_body.new_page,
-            pageby_header=self.rtf_body.pageby_header,
-            table_attrs=self.rtf_body,
-            additional_rows_per_page=additional_rows,
-        )
-
-        # Prepare border settings
-        BroadcastValue(
-            value=self.rtf_page.border_first, dimension=(1, dim[1])
-        ).to_list()[0]
-        BroadcastValue(
-            value=self.rtf_page.border_last, dimension=(1, dim[1])
-        ).to_list()[0]
-
-        # Generate RTF for each page
-        page_contents = []
-
-        for page_info in pages:
-            page_elements = []
-
-            # Add page break before each page (except first)
-            if not page_info["is_first_page"]:
-                page_elements.append(self._rtf_page_break_encode())
-
-            # Add title if it should appear on this page
-            if (
-                self.rtf_title
-                and self.rtf_title.text
-                and self._should_show_element_on_page(
-                    self.rtf_page.page_title_location, page_info
-                )
-            ):
-                title_content = self._rtf_title_encode(method="line")
-                if title_content:
-                    page_elements.append(title_content)
-                    page_elements.append("\n")
-
-            # Add subline if it should appear on this page
-            if (
-                self.rtf_subline
-                and self.rtf_subline.text
-                and self._should_show_element_on_page(
-                    self.rtf_page.page_title_location, page_info
-                )
-            ):
-                subline_content = self._rtf_subline_encode(method="line")
-                if subline_content:
-                    page_elements.append(subline_content)
-                    page_elements.append("\n")
-
-            # Add column headers if needed
-            if page_info["needs_header"] and self.rtf_column_header:
-                if (
-                    self.rtf_column_header[0].text is None
-                    and self.rtf_body.as_colheader
-                ):
-                    columns = [
-                        col
-                        for col in self.df.columns
-                        if col not in (self.rtf_body.page_by or [])
-                    ]
-                    self.rtf_column_header[0].text = pl.DataFrame(
-                        [columns],
-                        schema=[f"col_{i}" for i in range(len(columns))],
-                        orient="row",
-                    )
-
-                # Apply pagination borders to column headers
-                from copy import deepcopy
-
-                # Process each column header with proper borders
-                header_elements = []
-                for i, header in enumerate(self.rtf_column_header):
-                    header_copy = deepcopy(header)
-
-                    # Apply page-level borders to column headers (matching non-paginated behavior)
-                    if (
-                        page_info["is_first_page"] and i == 0
-                    ):  # First header on first page
-                        if self.rtf_page.border_first and header_copy.text is not None:
-                            header_dims = header_copy.text.shape
-                            # Apply page border_first to top of first column header
-                            header_copy.border_top = BroadcastValue(
-                                value=header_copy.border_top, dimension=header_dims
-                            ).update_row(
-                                0, [self.rtf_page.border_first] * header_dims[1]
-                            )
-
-                    # Encode the header with modified borders
-                    header_rtf = self._rtf_column_header_encode(
-                        df=header_copy.text, rtf_attrs=header_copy
-                    )
-                    header_elements.extend(header_rtf)
-
-                page_elements.extend(header_elements)
-
-            # Add page content (table body) with proper border handling
-            page_df = page_info["data"]
-
-            # Apply pagination borders to the body attributes
-            page_attrs = self._apply_pagination_borders(
-                self.rtf_body, page_info, len(pages)
-            )
-
-            # Encode page content with modified borders
-            page_body = page_attrs._encode(page_df, col_widths)
-            page_elements.extend(page_body)
-
-            # Add footnote if it should appear on this page
-            if (
-                self.rtf_footnote
-                and self.rtf_footnote.text
-                and self._should_show_element_on_page(
-                    self.rtf_page.page_footnote_location, page_info
-                )
-            ):
-                footnote_content = self._rtf_footnote_encode(
-                    page_number=page_info["page_number"]
-                )
-                if footnote_content:
-                    page_elements.extend(footnote_content)
-
-            # Add source if it should appear on this page
-            if (
-                self.rtf_source
-                and self.rtf_source.text
-                and self._should_show_element_on_page(
-                    self.rtf_page.page_source_location, page_info
-                )
-            ):
-                source_content = self._rtf_source_encode(
-                    page_number=page_info["page_number"]
-                )
-                if source_content:
-                    page_elements.extend(source_content)
-
-            page_contents.extend(page_elements)
-
-        # Build complete RTF document
-        return "\n".join(
-            [
-                item
-                for item in [
-                    self._rtf_start_encode(),
-                    self._rtf_font_table_encode(),
-                    "\n",
-                    self._rtf_page_header_encode(method="line"),
-                    self._rtf_page_footer_encode(method="line"),
-                    self._rtf_page_encode(),
-                    self._rtf_page_margin_encode(),
-                    "\n".join(page_contents),
-                    "\n\n",
-                    "}",
-                ]
-                if item is not None
-            ]
-        )
+        """Generate RTF code for paginated documents - delegated to PaginatedStrategy."""
+        from .encoding.strategies import PaginatedStrategy
+        strategy = PaginatedStrategy()
+        return strategy.encode(self)
 
     def _rtf_column_header_encode(
         self, df: pl.DataFrame, rtf_attrs: TableAttributes | None
     ) -> MutableSequence[str]:
-        dim = df.shape
-        col_total_width = self.rtf_page.col_width
-
-        if rtf_attrs is None:
-            return None
-
-        rtf_attrs.col_rel_width = rtf_attrs.col_rel_width or [1] * dim[1]
-        rtf_attrs = rtf_attrs._set_default()
-
-        col_widths = Utils._col_widths(rtf_attrs.col_rel_width, col_total_width)
-
-        return rtf_attrs._encode(df, col_widths)
+        """Convert column header into RTF syntax - delegated to encoding service."""
+        return self._encoding_service.encode_column_header(df, rtf_attrs, self.rtf_page.col_width)
 
     def _rtf_start_encode(self) -> str:
         """Generate RTF document start - delegated to encoding service."""
@@ -1083,122 +722,10 @@ class RTFDocument(BaseModel):
         return engine.encode_document(self)
     
     def _rtf_encode_single_page(self) -> str:
-        """Generate RTF code for single-page documents (original implementation)."""
-        # Original single-page encoding logic
-        dim = self.df.shape
-
-        # Title
-        rtf_title = self._rtf_title_encode(method="line")
-
-        # Page Border
-        doc_border_top = BroadcastValue(
-            value=self.rtf_page.border_first, dimension=(1, dim[1])
-        ).to_list()[0]
-        doc_border_bottom = BroadcastValue(
-            value=self.rtf_page.border_last, dimension=(1, dim[1])
-        ).to_list()[0]
-        page_border_top = BroadcastValue(
-            value=self.rtf_body.border_first, dimension=(1, dim[1])
-        ).to_list()[0]
-        page_border_bottom = BroadcastValue(
-            value=self.rtf_body.border_last, dimension=(1, dim[1])
-        ).to_list()[0]
-
-        # Column header
-        if self.rtf_column_header is None:
-            rtf_column_header = ""
-            # Only update borders if DataFrame has rows
-            if dim[0] > 0:
-                self.rtf_body.border_top = BroadcastValue(
-                    value=self.rtf_body.border_top, dimension=dim
-                ).update_row(0, doc_border_top)
-        else:
-            if self.rtf_column_header[0].text is None and self.rtf_body.as_colheader:
-                columns = [
-                    col
-                    for col in self.df.columns
-                    if col not in (self.rtf_body.page_by or [])
-                ]
-                # Create DataFrame with explicit column names to ensure single row
-                self.rtf_column_header[0].text = pl.DataFrame(
-                    [columns],
-                    schema=[f"col_{i}" for i in range(len(columns))],
-                    orient="row",
-                )
-                self.rtf_column_header = self.rtf_column_header[:1]
-
-            # Only update borders if DataFrame has rows
-            if dim[0] > 0:
-                self.rtf_column_header[0].border_top = BroadcastValue(
-                    value=self.rtf_column_header[0].border_top, dimension=dim
-                ).update_row(0, doc_border_top)
-
-            rtf_column_header = [
-                self._rtf_column_header_encode(df=header.text, rtf_attrs=header)
-                for header in self.rtf_column_header
-            ]
-
-        # Only update borders if DataFrame has rows
-        if dim[0] > 0:
-            self.rtf_body.border_top = BroadcastValue(
-                value=self.rtf_body.border_top, dimension=dim
-            ).update_row(0, page_border_top)
-
-        # Bottom border last line update
-        if self.rtf_footnote is not None:
-            self.rtf_footnote.border_bottom = BroadcastValue(
-                value=self.rtf_footnote.border_bottom, dimension=(1, 1)
-            ).update_row(0, page_border_bottom[0])
-
-            self.rtf_footnote.border_bottom = BroadcastValue(
-                value=self.rtf_footnote.border_bottom, dimension=(1, 1)
-            ).update_row(0, doc_border_bottom[0])
-        else:
-            # Only update borders if DataFrame has rows
-            if dim[0] > 0:
-                self.rtf_body.border_bottom = BroadcastValue(
-                    value=self.rtf_body.border_bottom, dimension=dim
-                ).update_row(dim[0] - 1, page_border_bottom)
-
-                self.rtf_body.border_bottom = BroadcastValue(
-                    value=self.rtf_body.border_bottom, dimension=dim
-                ).update_row(dim[0] - 1, doc_border_bottom)
-
-        # Body
-        rtf_body = self._rtf_body_encode(df=self.df, rtf_attrs=self.rtf_body)
-
-        return "\n".join(
-            [
-                item
-                for item in [
-                    self._rtf_start_encode(),
-                    self._rtf_font_table_encode(),
-                    "\n",
-                    self._rtf_page_header_encode(method="line"),
-                    self._rtf_page_footer_encode(method="line"),
-                    self._rtf_page_encode(),
-                    self._rtf_page_margin_encode(),
-                    rtf_title,
-                    "\n",
-                    self._rtf_subline_encode(method="line"),
-                    "\n".join(
-                        header for sublist in rtf_column_header for header in sublist
-                    )
-                    if rtf_column_header
-                    else None,
-                    "\n".join(rtf_body),
-                    "\n".join(self._rtf_footnote_encode(page_number=1))
-                    if self.rtf_footnote is not None
-                    else None,
-                    "\n".join(self._rtf_source_encode(page_number=1))
-                    if self.rtf_source is not None
-                    else None,
-                    "\n\n",
-                    "}",
-                ]
-                if item is not None
-            ]
-        )
+        """Generate RTF code for single-page documents - delegated to SinglePageStrategy."""
+        from .encoding.strategies import SinglePageStrategy
+        strategy = SinglePageStrategy()
+        return strategy.encode(self)
 
     def write_rtf(self, file_path: str) -> None:
         """Write the RTF code into a `.rtf` file."""
