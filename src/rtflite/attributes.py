@@ -174,7 +174,7 @@ class TextAttributes(BaseModel):
         default=None, description="Enable automatic hyphenation"
     )
     text_convert: list[bool] | list[list[bool]] | None = Field(
-        default=None, description="Convert special characters to RTF"
+        default=[True], description="Convert LaTeX commands to Unicode characters"
     )
 
     @field_validator(

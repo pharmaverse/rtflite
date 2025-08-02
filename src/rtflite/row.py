@@ -3,6 +3,7 @@ from collections.abc import Mapping, MutableSequence, Sequence
 from pydantic import BaseModel, Field
 
 from .fonts_mapping import FontMapping
+from .text_convert import text_convert
 
 FORMAT_CODES = {
     "": "",
@@ -139,6 +140,7 @@ class TextContent(BaseModel):
     space: int = Field(default=1, description="Line spacing")
     space_before: int = Field(default=15, description="Space before paragraph")
     space_after: int = Field(default=15, description="Space after paragraph")
+    convert: bool = Field(default=True, description="Enable LaTeX to Unicode conversion")
     hyphenation: bool = Field(default=True, description="Enable hyphenation")
 
     def _get_paragraph_formatting(self) -> str:
@@ -204,19 +206,21 @@ class TextContent(BaseModel):
 
     def _convert_special_chars(self) -> str:
         """Convert special characters to RTF codes."""
-        # Basic RTF character conversion
+        # First apply LaTeX to Unicode conversion if enabled
+        text = text_convert(self.text, self.convert)
+        
+        # Basic RTF character conversion (matching r2rtf char_rtf mapping)
         rtf_chars = {
-            "\\": "\\\\",
-            "{": "\\{",
-            "}": "\\}",
-            "\n": "\\line ",
             "^": "\\super ",
             "_": "\\sub ",
-            "≥": "\\geq ",
-            "≤": "\\leq ",
+            ">=": "\\geq ",
+            "<=": "\\leq ",
+            "\n": "\\line ",
+            "\\pagenumber": "\\chpgn ",
+            "\\totalpage": "\\totalpage ",
+            "\\pagefield": "{\\field{\\*\\fldinst NUMPAGES }} ",
         }
 
-        text = self.text
         for char, rtf in rtf_chars.items():
             text = text.replace(char, rtf)
 
