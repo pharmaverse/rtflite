@@ -1,5 +1,6 @@
 import re
 import subprocess
+import shutil
 from pathlib import Path
 
 
@@ -12,8 +13,10 @@ def extract_r_tests(test_files):
     if isinstance(test_files, str):
         test_files = [test_files]
 
-    # Create output directory if it doesn't exist
+    # Clean and create output directory
     output_dir = Path("tests/fixtures/r_outputs")
+    if output_dir.exists():
+        shutil.rmtree(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # Generate R script
@@ -33,7 +36,7 @@ def extract_r_tests(test_files):
 
         for label, code in r_chunks:
             label = label.strip()
-            output_file = output_dir / f"{test_name}_{label}.txt"
+            output_file = output_dir / f"{test_name}_{label}.rtf"
 
             # Clean up the code by removing comment markers and extra whitespace
             code_lines = [

@@ -10,7 +10,7 @@ class ROutputReader:
     def read(self, label):
         """Read R output from generated fixture file."""
         output_file = (
-            Path("tests/fixtures/r_outputs") / f"{self.test_file_prefix}_{label}.txt"
+            Path("tests/fixtures/r_outputs") / f"{self.test_file_prefix}_{label}.rtf"
         )
         with open(output_file) as f:
             return f.read()
