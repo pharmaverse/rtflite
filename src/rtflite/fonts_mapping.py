@@ -18,7 +18,7 @@ FontNumber = Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
 class FontMapping:
     """Centralized font mapping for RTF document generation."""
-    
+
     @staticmethod
     def get_font_table() -> Mapping:
         """Get complete font table with all properties."""
@@ -74,7 +74,7 @@ class FontMapping:
                 "\\fcharset2",
             ],
         }
-    
+
     @staticmethod
     def get_font_name_to_number_mapping() -> dict[FontName, int]:
         """Get mapping from font names to font numbers."""
@@ -90,13 +90,13 @@ class FontMapping:
             "Courier New": 9,
             "Symbol": 10,
         }
-    
+
     @staticmethod
     def get_font_number_to_name_mapping() -> dict[int, FontName]:
         """Get mapping from font numbers to font names."""
         name_to_number = FontMapping.get_font_name_to_number_mapping()
         return {v: k for k, v in name_to_number.items()}
-    
+
     @staticmethod
     def get_font_paths() -> dict[FontName, str]:
         """Get mapping from font names to font file paths."""

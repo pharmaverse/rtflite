@@ -267,45 +267,43 @@ class TextAttributes(BaseModel):
 
         raise ValueError(f"Invalid method: {method}")
 
-    def calculate_lines(self, text: str, available_width: float, 
-                       row_idx: int = 0, col_idx: int = 0) -> int:
+    def calculate_lines(
+        self, text: str, available_width: float, row_idx: int = 0, col_idx: int = 0
+    ) -> int:
         """
         Calculate number of lines needed for text given available width.
-        
+
         Args:
             text: Text content to measure
             available_width: Available width in inches
             row_idx: Row index for attribute lookup (default: 0)
             col_idx: Column index for attribute lookup (default: 0)
-        
+
         Returns:
             Number of lines needed (minimum 1)
         """
         if not text or available_width <= 0:
             return 1
-            
+
         # Create a dummy dimension for broadcast lookup
         dim = (max(1, row_idx + 1), max(1, col_idx + 1))
-        
+
         # Get font attributes using broadcast logic - raise error if None
         if self.text_font is None:
             raise ValueError("text_font must be set to calculate lines")
         font_broadcast = BroadcastValue(value=self.text_font, dimension=dim)
         font_number = font_broadcast.iloc(row_idx, col_idx)
-        
+
         if self.text_font_size is None:
             raise ValueError("text_font_size must be set to calculate lines")
         size_broadcast = BroadcastValue(value=self.text_font_size, dimension=dim)
         font_size = size_broadcast.iloc(row_idx, col_idx)
-        
+
         # Calculate total text width
         total_width = get_string_width(
-            text=text, 
-            font=font_number, 
-            font_size=font_size, 
-            unit="in"
+            text=text, font=font_number, font_size=font_size, unit="in"
         )
-        
+
         # Simple approximation: divide total width by available width and round up
         return max(1, int(np.ceil(total_width / available_width)))
 
@@ -512,13 +510,10 @@ class TableAttributes(TextAttributes):
                     col_width = BroadcastValue(value=col_widths, dimension=dim).iloc(
                         i, j
                     )
-                    
+
                     # Enhanced: Use calculate_lines method for better text wrapping
                     self.cell_nrow[i, j] = self.calculate_lines(
-                        text=text, 
-                        available_width=col_width,
-                        row_idx=i,
-                        col_idx=j
+                        text=text, available_width=col_width, row_idx=i, col_idx=j
                     )
 
         rows: MutableSequence[str] = []

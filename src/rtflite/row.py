@@ -31,7 +31,7 @@ BORDER_CODES = {
     "thick": "\\brdrth",
     "dotted": "\\brdrdot",
     "dashed": "\\brdrdash",
-    "small-dash": "\\brdrdashsm",  
+    "small-dash": "\\brdrdashsm",
     "dash-dotted": "\\brdrdashd",
     "dash-dot-dotted": "\\brdrdashdd",
     "triple": "\\brdrtriple",
@@ -48,8 +48,8 @@ VERTICAL_ALIGNMENT_CODES = {
     "top": "\\clvertalt",
     "center": "\\clvertalc",
     "bottom": "\\clvertalb",
-    "merge_first": "\\clvertalc\\clvmgf",  
-    "merge_rest": "\\clvertalc\\clvmrg",   
+    "merge_first": "\\clvertalc\\clvmgf",
+    "merge_rest": "\\clvertalc\\clvmrg",
     "": "",
 }
 
