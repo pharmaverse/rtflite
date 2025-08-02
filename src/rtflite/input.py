@@ -131,7 +131,7 @@ class RTFPageHeader(TextAttributes):
     def __init__(self, **data):
         defaults = {
             "text_font": [1],
-            "text_font_size": [12],  # Match r2rtf default of 12pt
+            "text_font_size": [12],  
             "text_justification": ["r"],
             "text_indent_first": [0],
             "text_indent_left": [0],
@@ -140,7 +140,7 @@ class RTFPageHeader(TextAttributes):
             "text_space_before": [15.0],
             "text_space_after": [15.0],
             "text_hyphenation": [True],
-            "text_convert": [False],  # Disable to preserve RTF field codes
+            "text_convert": [False],  
         }
 
         # Update defaults with any provided values
@@ -308,8 +308,8 @@ class RTFFootnote(TableAttributes):
             "text_space": [[1]],
             "text_space_before": [[15]],
             "text_space_after": [[15]],
-            "text_hyphenation": [[not as_table]],  # False for table, True for paragraph
-            "text_convert": [[True]],
+            "text_hyphenation": [[True]],  
+            "text_convert": [[False]],  
         }
 
         # Add border defaults based on as_table setting
@@ -395,8 +395,8 @@ class RTFSource(TableAttributes):
             "text_space": [[1]],
             "text_space_before": [[15]],
             "text_space_after": [[15]],
-            "text_hyphenation": [[not as_table]],  # False for table, True for paragraph
-            "text_convert": [[True]],
+            "text_hyphenation": [[True]], 
+            "text_convert": [[False]], 
         }
 
         # Add border defaults based on as_table setting
