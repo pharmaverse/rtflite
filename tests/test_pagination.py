@@ -34,7 +34,7 @@ def test_pagination_basic_with_headers():
     
     doc = rtf.RTFDocument(
         df=df,
-        rtf_page=rtf.RTFPage(orientation="portrait", nrow=2),
+        rtf_page=rtf.RTFPage(orientation="portrait", nrow=3),
         rtf_column_header=[
             rtf.RTFColumnHeader(
                 text=["Column 1", "Column 2"],
@@ -46,6 +46,7 @@ def test_pagination_basic_with_headers():
     
     # ```{r, basic_with_headers}
     # library(r2rtf)
+    # library(dplyr)
     # test_data <- data.frame(
     #   Col1 = c("Row1", "Row2", "Row3", "Row4", "Row5", "Row6"),
     #   Col2 = c("A", "B", "C", "D", "E", "F"),
@@ -53,7 +54,7 @@ def test_pagination_basic_with_headers():
     # )
     # 
     # test_data %>%
-    #   rtf_page(orientation = "portrait", nrow = 2) %>%
+    #   rtf_page(orientation = "portrait", nrow = 3) %>%
     #   rtf_colheader(
     #     colheader = "Column 1 | Column 2",
     #     col_rel_width = c(1, 1)
@@ -62,7 +63,9 @@ def test_pagination_basic_with_headers():
     #     col_rel_width = c(1, 1)
     #   ) %>%
     #   rtf_encode() %>%
-    #   cat()
+    #   write_rtf(tempfile()) %>%
+    #   readLines() %>%
+    #   cat(sep = "\n")
     # ```
     
     rtf_output = doc.rtf_encode()
