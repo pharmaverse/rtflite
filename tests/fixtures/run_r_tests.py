@@ -75,6 +75,11 @@ def execute_r_tests():
 
 if __name__ == "__main__":
     extract_r_tests(
-        ["tests/test_row.py", "tests/test_input.py", "tests/test_convert.py", "tests/test_pagination.py"],
+        [
+            "tests/test_row.py",
+            "tests/test_input.py",
+            "tests/test_convert.py",
+            "tests/test_pagination.py",
+        ],
     )
     execute_r_tests()

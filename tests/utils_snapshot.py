@@ -5,26 +5,26 @@ import re
 
 def remove_font_table(rtf_text: str) -> str:
     """Remove font table from RTF text to focus on structural differences.
-    
+
     Args:
         rtf_text: RTF text containing font table
-        
+
     Returns:
         RTF text with font table removed
     """
     import re
-    
+
     # Use regex to remove the entire font table block
     # Pattern matches {\fonttbl...} including nested braces and newlines
-    pattern = r'\{\\fonttbl[^{}]*(?:\{[^{}]*\}[^{}]*)*\}'
-    
+    pattern = r"\{\\fonttbl[^{}]*(?:\{[^{}]*\}[^{}]*)*\}"
+
     # Remove font table while preserving line structure
-    result = re.sub(pattern, '', rtf_text, flags=re.MULTILINE | re.DOTALL)
-    
+    result = re.sub(pattern, "", rtf_text, flags=re.MULTILINE | re.DOTALL)
+
     # Clean up any resulting empty lines from font table removal
-    lines = result.split('\n')
+    lines = result.split("\n")
     cleaned_lines = []
-    
+
     for line in lines:
         # Skip lines that only had font table content
         if line.strip():
@@ -32,72 +32,88 @@ def remove_font_table(rtf_text: str) -> str:
         elif not cleaned_lines or cleaned_lines[-1].strip():
             # Keep empty lines that provide structure, but not consecutive ones
             cleaned_lines.append(line)
-    
-    return '\n'.join(cleaned_lines)
+
+    return "\n".join(cleaned_lines)
 
 
 def normalize_rtf_whitespace(rtf_text: str) -> str:
     """Normalize RTF whitespace patterns for comparison.
-    
+
     Args:
         rtf_text: RTF text to normalize
-        
+
     Returns:
         RTF text with normalized whitespace
     """
-    lines = rtf_text.split('\n')
+    lines = rtf_text.split("\n")
     normalized_lines = []
-    
+
     for line in lines:
         # Keep non-empty lines
         if line.strip():
             normalized_lines.append(line.strip())
-    
-    return '\n'.join(normalized_lines)
+
+    return "\n".join(normalized_lines)
 
 
 def normalize_rtf_structure(rtf_text: str) -> str:
     """Normalize RTF structural differences for comparison.
-    
+
     This function handles common structural differences between rtflite and r2rtf:
     - Page break and page setup ordering
     - Empty line patterns
     - RTF command grouping
-    
+
     Args:
         rtf_text: RTF text to normalize
-        
+
     Returns:
         RTF text with normalized structure
     """
     # Remove font table first
     rtf_text = remove_font_table(rtf_text)
-    
+
     # Split into lines and normalize
-    lines = rtf_text.split('\n')
-    
+    lines = rtf_text.split("\n")
+
     # Extract key structural components
     rtf_header = []
     page_setups = []
     content_blocks = []
     rtf_footer = []
-    
+
     current_block = []
     in_content = False
-    
+
     for line in lines:
         line = line.strip()
         if not line:
             continue
-            
+
         # RTF header components
-        if line.startswith(r'{\rtf1') or line.startswith(r'\deff0') or line.startswith(r'\deflang'):
+        if (
+            line.startswith(r"{\rtf1")
+            or line.startswith(r"\deff0")
+            or line.startswith(r"\deflang")
+        ):
             rtf_header.append(line)
         # Page setup components
-        elif any(cmd in line for cmd in [r'\paperw', r'\paperh', r'\margl', r'\margr', r'\margt', r'\margb', r'\headery', r'\footery']):
+        elif any(
+            cmd in line
+            for cmd in [
+                r"\paperw",
+                r"\paperh",
+                r"\margl",
+                r"\margr",
+                r"\margt",
+                r"\margb",
+                r"\headery",
+                r"\footery",
+            ]
+        ):
             page_setups.append(line)
         # Page breaks
-        elif r'\page' in line:
+        elif r"\page" in line:
             if current_block:
                 content_blocks.append(current_block)
                 current_block = []
@@ -106,91 +122,101 @@ def normalize_rtf_structure(rtf_text: str) -> str:
             if page_setups:
                 content_blocks.append(page_setups[:])
         # Content
-        elif line.startswith(r'\trowd') or line.startswith(r'\cl') or line.startswith(r'\pard') or line.startswith(r'\intbl') or line == '}':
+        elif (
+            line.startswith(r"\trowd")
+            or line.startswith(r"\cl")
+            or line.startswith(r"\pard")
+            or line.startswith(r"\intbl")
+            or line == "}"
+        ):
             in_content = True
             current_block.append(line)
         # Everything else
         else:
             current_block.append(line)
-    
+
     # Add final block
     if current_block:
         content_blocks.append(current_block)
-    
+
     # Reconstruct normalized RTF
     result = []
     result.extend(rtf_header)
     if page_setups:
         result.extend(page_setups)
-    result.append('')  # Empty line after header
-    
+    result.append("")  # Empty line after header
+
     for block in content_blocks:
-        if isinstance(block, list) and len(block) == 1 and r'\page' in block[0]:
+        if isinstance(block, list) and len(block) == 1 and r"\page" in block[0]:
             # Page break - add with surrounding empty lines
-            result.append('')
+            result.append("")
             result.extend(block)
-            result.append('')
+            result.append("")
         else:
             result.extend(block)
-    
-    return '\n'.join(result)
+
+    return "\n".join(result)
 
 
-def assert_rtf_equals_without_fonts(rtf_output: str, expected: str, test_name: str = "", 
-                                   normalize_whitespace: bool = True):
+def assert_rtf_equals_without_fonts(
+    rtf_output: str,
+    expected: str,
+    test_name: str = "",
+    normalize_whitespace: bool = True,
+):
     """Compare RTF outputs after removing font tables.
-    
+
     Args:
         rtf_output: RTF output from rtflite
-        expected: Expected RTF output from r2rtf  
+        expected: Expected RTF output from r2rtf
         test_name: Optional test name for better error messages
         normalize_whitespace: Whether to normalize whitespace differences
     """
     rtf_no_fonts = remove_font_table(rtf_output)
     expected_no_fonts = remove_font_table(expected)
-    
+
     if normalize_whitespace:
         rtf_no_fonts = normalize_rtf_whitespace(rtf_no_fonts)
         expected_no_fonts = normalize_rtf_whitespace(expected_no_fonts)
-    
+
     # Add test name to assertion message if provided
     message = f"RTF content should match after removing font tables"
     if test_name:
         message = f"{test_name}: {message}"
-    
+
     if normalize_whitespace:
         message += " (whitespace normalized)"
-    
+
     assert rtf_no_fonts == expected_no_fonts, message
 
 
 def normalize_rtf_borders(rtf_text: str) -> str:
     """Normalize RTF border differences for semantic comparison.
-    
+
     RTF allows borders to be specified as:
     - \\clbrdrt\\brdrw15 (width only, default single style)
     - \\clbrdrt\\brdrs\\brdrw15 (explicit single style + width)
-    
+
     These are semantically equivalent, so normalize them for comparison.
-    
+
     Args:
         rtf_text: RTF text to normalize
-        
+
     Returns:
         RTF text with normalized border commands
     """
     import re
-    
+
     # Pattern to match border commands like \clbrdrt\brdrw15
     # where style is implied (default single)
-    pattern = r'(\\cl(?:brdrl|brdrt|brdrr|brdrb))\\brdrw(\d+)'
-    
+    pattern = r"(\\cl(?:brdrl|brdrt|brdrr|brdrb))\\brdrw(\d+)"
+
     def replacer(match):
         border_side = match.group(1)
         width = match.group(2)
         # Add explicit single style
-        return f'{border_side}\\brdrs\\brdrw{width}'
-    
+        return f"{border_side}\\brdrs\\brdrw{width}"
+
     # Apply normalization
     result = re.sub(pattern, replacer, rtf_text)
     return result
@@ -198,54 +224,54 @@ def normalize_rtf_borders(rtf_text: str) -> str:
 
 def assert_rtf_equals_structural(rtf_output: str, expected: str, test_name: str = ""):
     """Compare RTF outputs after structural normalization.
-    
+
     This is more aggressive than font table removal and handles:
     - Font table removal
     - Page break and page setup ordering differences
     - Whitespace normalization
     - Structural RTF command grouping
-    
+
     Args:
         rtf_output: RTF output from rtflite
-        expected: Expected RTF output from r2rtf  
+        expected: Expected RTF output from r2rtf
         test_name: Optional test name for better error messages
     """
     rtf_normalized = normalize_rtf_structure(rtf_output)
     expected_normalized = normalize_rtf_structure(expected)
-    
+
     # Add test name to assertion message if provided
     message = f"RTF content should match after structural normalization"
     if test_name:
         message = f"{test_name}: {message}"
-    
+
     assert rtf_normalized == expected_normalized, message
 
 
 def assert_rtf_equals_semantic(rtf_output: str, expected: str, test_name: str = ""):
     """Compare RTF outputs after semantic normalization.
-    
+
     This handles all structural differences plus border style normalization:
     - Font table removal
-    - Page break and page setup ordering differences  
+    - Page break and page setup ordering differences
     - Whitespace normalization
     - Border style semantic equivalence (\\brdrw15 vs \\brdrs\\brdrw15)
     - Structural RTF command grouping
-    
+
     Args:
         rtf_output: RTF output from rtflite
-        expected: Expected RTF output from r2rtf  
+        expected: Expected RTF output from r2rtf
         test_name: Optional test name for better error messages
     """
     # Apply all normalizations
     rtf_normalized = normalize_rtf_structure(rtf_output)
     rtf_normalized = normalize_rtf_borders(rtf_normalized)
-    
+
     expected_normalized = normalize_rtf_structure(expected)
     expected_normalized = normalize_rtf_borders(expected_normalized)
-    
+
     # Add test name to assertion message if provided
     message = f"RTF content should match after semantic normalization"
     if test_name:
         message = f"{test_name}: {message}"
-    
+
     assert rtf_normalized == expected_normalized, message
