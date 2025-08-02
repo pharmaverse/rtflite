@@ -186,15 +186,15 @@ doc = rtf.RTFDocument(
     rtf_column_header=[
         rtf.RTFColumnHeader(
             text=[" ", "Treatment"],
-            col_rel_width=[3, 6]
+            col_rel_width=[3, 3]
         ),
         rtf.RTFColumnHeader(
             text=["Adverse Events", "Placebo", "Xanomeline High Dose", "Xanomeline Low Dose"],
-            col_rel_width=[3, 2, 2, 2]
+            col_rel_width=[3, 1, 1, 1]
         )
     ],
     rtf_body=rtf.RTFBody(
-        col_rel_width=[3, 2, 2, 2]
+        col_rel_width=[3, 1, 1, 1]
     )
 )
 

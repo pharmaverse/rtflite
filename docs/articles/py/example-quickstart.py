@@ -52,7 +52,7 @@ doc = rtf.RTFDocument(
     df=tbl.head(50),
     # rtf_page uses default settings (portrait: nrow=40, landscape: nrow=24)
     rtf_column_header=[
-        rtf.RTFColumnHeader(text=[" ", "Treatment"], col_rel_width=[3, 6]),
+        rtf.RTFColumnHeader(text=[" ", "Treatment"], col_rel_width=[3, 3]),
         rtf.RTFColumnHeader(
             text=[
                 "Adverse Events",
@@ -60,10 +60,10 @@ doc = rtf.RTFDocument(
                 "Xanomeline High Dose",
                 "Xanomeline Low Dose",
             ],
-            col_rel_width=[3, 2, 2, 2],
+            col_rel_width=[3, 1, 1, 1],
         ),
     ],
-    rtf_body=rtf.RTFBody(col_rel_width=[3, 2, 2, 2]),
+    rtf_body=rtf.RTFBody(col_rel_width=[3, 1, 1, 1]),
 )
 
 doc.write_rtf("../rtf/intro-ae4.rtf")
