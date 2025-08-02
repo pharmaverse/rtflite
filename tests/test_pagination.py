@@ -46,25 +46,24 @@ def test_pagination_basic_with_headers():
     
     # ```{r, basic_with_headers}
     # library(r2rtf)
-    # library(dplyr)
     # test_data <- data.frame(
     #   Col1 = c("Row1", "Row2", "Row3", "Row4", "Row5", "Row6"),
     #   Col2 = c("A", "B", "C", "D", "E", "F"),
     #   stringsAsFactors = FALSE
     # )
     # 
-    # test_data %>%
-    #   rtf_page(orientation = "portrait", nrow = 3) %>%
+    # test_data |>
+    #   rtf_page(orientation = "portrait", nrow = 3) |>
     #   rtf_colheader(
     #     colheader = "Column 1 | Column 2",
     #     col_rel_width = c(1, 1)
-    #   ) %>%
+    #   ) |>
     #   rtf_body(
     #     col_rel_width = c(1, 1)
-    #   ) %>%
-    #   rtf_encode() %>%
-    #   write_rtf(tempfile()) %>%
-    #   readLines() %>%
+    #   ) |>
+    #   rtf_encode() |>
+    #   write_rtf(tempfile()) |>
+    #   readLines() |>
     #   cat(sep = "\n")
     # ```
     

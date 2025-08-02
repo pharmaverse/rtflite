@@ -92,17 +92,17 @@ python3 tests/fixtures/run_r_tests.py
 **Important**: R code in test comments must use the correct pattern:
 ```r
 # R code must use this pattern for rtf_encode():
-test_data %>%
-  rtf_page(...) %>%
-  rtf_colheader(...) %>%
-  rtf_body(...) %>%
-  rtf_encode() %>%
-  write_rtf(tempfile()) %>%
-  readLines() %>%
+test_data |>
+  rtf_page(...) |>
+  rtf_colheader(...) |>
+  rtf_body(...) |>
+  rtf_encode() |>
+  write_rtf(tempfile()) |>
+  readLines() |>
   cat(sep = "\n")
 
 # NOT this (will cause "list cannot be handled by cat" error):
-rtf_encode() %>% cat()
+rtf_encode() |> cat()
 ```
 
 ### Render Documentation
