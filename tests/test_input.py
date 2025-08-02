@@ -5,6 +5,7 @@ from rtflite.input import (
     RTFSource,
     RTFBody,
     TextAttributes,
+    RTFPage,
 )
 import polars as pl
 import pytest
@@ -596,3 +597,261 @@ def test_rtf_as_table_border_inheritance():
     assert source_custom.border_right == [[""]]
     assert source_custom.border_top == [[""]]
     assert source_custom.border_bottom == [[""]]
+
+
+def test_rtf_footnote_as_table_multipage():
+    """Test RTFFootnote with as_table settings across multiple pages (3 pages)."""
+    # ```{r, footnote_multipage_as_table_true}
+    # library(r2rtf)
+    #
+    # # Create dataset for 3 pages
+    # tbl_multipage <- data.frame(
+    #   Column1 = paste0("Row ", 1:24),
+    #   Column2 = paste0("Data ", 1:24),
+    #   Column3 = paste0("Value ", 1:24)
+    # )
+    #
+    # # Test with footnote as_table = TRUE and nrow = 10
+    # tbl_multipage_footnote_table <- tbl_multipage |>
+    #   r2rtf::rtf_page(nrow = 10) |>
+    #   r2rtf::rtf_body() |>
+    #   r2rtf::rtf_footnote("This is a footnote that appears on each page with table borders", as_table = TRUE) |>
+    #   r2rtf::rtf_encode(verbose = FALSE)
+    #
+    # tbl_multipage_footnote_table |>
+    #   r2rtf::write_rtf(tempfile()) |>
+    #   readLines() |>
+    #   cat(sep = "\n")
+    # ```
+
+    # Create a large dataset that will span 3 pages with nrow=10
+    # With headers, footnotes, and sources, we need enough data rows
+    data_for_3_pages = {
+        "Column1": [f"Row {i + 1}" for i in range(24)],  # 24 rows of data
+        "Column2": [f"Data {i + 1}" for i in range(24)],
+        "Column3": [f"Value {i + 1}" for i in range(24)],
+    }
+    df_large = pl.DataFrame(data_for_3_pages)
+
+    # Test with footnote as_table=True (default) across 3 pages
+    doc_table_footnote = RTFDocument(
+        df=df_large,
+        rtf_page=RTFPage(nrow=10),  # Force pagination: 10 rows per page
+        rtf_body=RTFBody(),
+        rtf_footnote=RTFFootnote(
+            text=["This is a footnote that appears on each page with table borders"],
+            as_table=True,
+        ),
+    )
+
+    rtf_output_table = doc_table_footnote.rtf_encode()
+
+    # Test with footnote as_table=False across 3 pages
+    doc_plain_footnote = RTFDocument(
+        df=df_large,
+        rtf_page=RTFPage(nrow=10),  # Force pagination: 10 rows per page
+        rtf_body=RTFBody(),
+        rtf_footnote=RTFFootnote(
+            text=["This is a footnote that appears on each page as plain text"],
+            as_table=False,
+        ),
+    )
+
+    rtf_output_plain = doc_plain_footnote.rtf_encode()
+
+    # Verify outputs are different
+    assert rtf_output_table != rtf_output_plain
+
+    # Count page breaks to confirm 3 pages
+    page_break_count = rtf_output_table.count("\\page")
+    assert page_break_count == 2  # 2 page breaks = 3 pages
+
+    # More specific test: look for border codes
+    # When as_table=True, should have cell border codes for footnotes
+    border_codes_table = rtf_output_table.count("\\clbrdrl\\brdrs\\brdrw15")
+    border_codes_plain = rtf_output_plain.count("\\clbrdrl\\brdrs\\brdrw15")
+
+    # Table footnote should have more border structures than plain text
+    assert border_codes_table > border_codes_plain
+
+    # Check that footnote text appears in both
+    assert "table borders" in rtf_output_table
+    assert "plain text" in rtf_output_plain
+
+
+def test_rtf_source_as_table_multipage():
+    """Test RTFSource with as_table settings across multiple pages (3 pages)."""
+    # Create a large dataset that will span 3 pages
+    data_for_3_pages = {
+        "Column1": [f"Item {i + 1}" for i in range(24)],
+        "Column2": [f"Desc {i + 1}" for i in range(24)],
+        "Column3": [f"Code {i + 1}" for i in range(24)],
+    }
+    df_large = pl.DataFrame(data_for_3_pages)
+
+    # Test with source as_table=True across 3 pages
+    doc_table_source = RTFDocument(
+        df=df_large,
+        rtf_page=RTFPage(nrow=10),  # Force pagination
+        rtf_body=RTFBody(),
+        rtf_source=RTFSource(
+            text=["Source: Clinical trial data from 2024 study"], as_table=True
+        ),
+    )
+
+    rtf_output_table = doc_table_source.rtf_encode()
+
+    # Test with source as_table=False (default) across 3 pages
+    doc_plain_source = RTFDocument(
+        df=df_large,
+        rtf_page=RTFPage(nrow=10),  # Force pagination
+        rtf_body=RTFBody(),
+        rtf_source=RTFSource(
+            text=["Source: Clinical trial data from 2024 study"], as_table=False
+        ),
+    )
+
+    rtf_output_plain = doc_plain_source.rtf_encode()
+
+    # Verify outputs are different
+    assert rtf_output_table != rtf_output_plain
+
+    # Confirm 3 pages
+    assert rtf_output_table.count("\\page") == 2  # 2 page breaks = 3 pages
+    assert rtf_output_plain.count("\\page") == 2
+
+    # When as_table=True, source should have more table structures
+    source_table_count = rtf_output_table.count("\\clbrdrl\\brdrs\\brdrw15")
+    source_plain_count = rtf_output_plain.count("\\clbrdrl\\brdrs\\brdrw15")
+    assert source_table_count > source_plain_count
+
+
+def test_rtf_footnote_and_source_multipage_mixed():
+    """Test document with both footnote and source with different as_table settings across 3 pages."""
+    # Create dataset for 3 pages
+    data_for_3_pages = {
+        "Patient ID": [f"P{str(i + 1).zfill(3)}" for i in range(24)],
+        "Treatment": [f"Treatment {'A' if i % 2 == 0 else 'B'}" for i in range(24)],
+        "Response": [f"{80 + i % 20}%" for i in range(24)],
+        "Status": ["Complete" if i % 3 == 0 else "Ongoing" for i in range(24)],
+    }
+    df_large = pl.DataFrame(data_for_3_pages)
+
+    # Create document with footnote as table and source as plain text
+    doc_mixed = RTFDocument(
+        df=df_large,
+        rtf_page=RTFPage(nrow=10),  # Force 3 pages
+        rtf_body=RTFBody(),
+        rtf_footnote=RTFFootnote(
+            text=[
+                "Note: Treatment assignment was randomized",
+                "Response rates are preliminary",
+            ],
+            as_table=True,  # Footnote with borders
+        ),
+        rtf_source=RTFSource(
+            text=["Data collected from Jan 2024 to Mar 2024"],
+            as_table=False,  # Source as plain text
+        ),
+    )
+
+    rtf_output = doc_mixed.rtf_encode()
+
+    # Verify 3 pages
+    assert rtf_output.count("\\page") == 2
+
+    # Create opposite configuration for comparison
+    doc_mixed_opposite = RTFDocument(
+        df=df_large,
+        rtf_page=RTFPage(nrow=10),
+        rtf_body=RTFBody(),
+        rtf_footnote=RTFFootnote(
+            text=[
+                "Note: Treatment assignment was randomized",
+                "Response rates are preliminary",
+            ],
+            as_table=False,  # Footnote as plain text
+        ),
+        rtf_source=RTFSource(
+            text=["Data collected from Jan 2024 to Mar 2024"],
+            as_table=True,  # Source with borders
+        ),
+    )
+
+    rtf_output_opposite = doc_mixed_opposite.rtf_encode()
+
+    # Outputs should be different due to different formatting
+    assert rtf_output != rtf_output_opposite
+
+    # Both should have 3 pages
+    assert rtf_output_opposite.count("\\page") == 2
+
+
+def test_rtf_multipage_pagination_with_as_table():
+    """Test that as_table behavior works correctly with pagination across 3 pages."""
+    # Create dataset that spans exactly 3 pages
+    df_large = pl.DataFrame(
+        {
+            "Patient": [f"P{str(i + 1).zfill(3)}" for i in range(24)],  # 24 patients
+            "Age": [25 + (i % 50) for i in range(24)],  # Ages 25-74
+            "Treatment": ["A" if i % 2 == 0 else "B" for i in range(24)],
+            "Response": [
+                f"{70 + (i % 30)}%" for i in range(24)
+            ],  # Response rates 70-99%
+        }
+    )
+
+    # Test all combinations across multiple pages
+    test_cases = [
+        ("footnote_table_source_plain", True, False),
+        ("footnote_plain_source_table", False, True),
+        ("both_table", True, True),
+        ("both_plain", False, False),
+    ]
+
+    results = {}
+
+    for case_name, footnote_as_table, source_as_table in test_cases:
+        doc = RTFDocument(
+            df=df_large,
+            rtf_page=RTFPage(nrow=8),  # 8 rows per page = 3 pages (24/8 = 3)
+            rtf_body=RTFBody(),
+            rtf_footnote=RTFFootnote(
+                text=[
+                    f"Multi-line footnote for {case_name}",
+                    "Additional footnote information",
+                ],
+                as_table=footnote_as_table,
+            ),
+            rtf_source=RTFSource(
+                text=[f"Source data for {case_name} test"], as_table=source_as_table
+            ),
+        )
+
+        rtf_output = doc.rtf_encode()
+        results[case_name] = rtf_output
+
+        # Verify multiple pages (at least 2 page breaks for 3+ pages)
+        page_breaks = rtf_output.count("\\page")
+        assert page_breaks >= 2, (
+            f"Expected at least 2 page breaks for {case_name}, got {page_breaks}"
+        )
+
+        # Verify footnote and source text appear
+        assert case_name in rtf_output, (
+            f"Case name should appear in RTF for {case_name}"
+        )
+
+    # Compare different combinations to ensure they produce different outputs
+    assert (
+        results["footnote_table_source_plain"] != results["footnote_plain_source_table"]
+    )
+    assert results["both_table"] != results["both_plain"]
+    assert results["footnote_table_source_plain"] != results["both_table"]
+
+    # Verify table borders appear more frequently when as_table=True
+    border_count_both_table = results["both_table"].count("\\clbrdrl\\brdrs\\brdrw15")
+    border_count_both_plain = results["both_plain"].count("\\clbrdrl\\brdrs\\brdrw15")
+
+    # Both table should have more borders than both plain
+    assert border_count_both_table > border_count_both_plain

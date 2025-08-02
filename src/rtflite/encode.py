@@ -436,16 +436,14 @@ class RTFDocument(BaseModel):
         # Priority: Source with as_table=True > Footnote with as_table=True > any component
         target_component = None
 
-        # Extract as_table values (stored as lists, need first element)
+        # Extract as_table values (now stored as booleans)
         footnote_as_table = None
         if has_footnote:
-            as_table_attr = getattr(self.rtf_footnote, "as_table", [True])
-            footnote_as_table = as_table_attr[0] if as_table_attr else True
+            footnote_as_table = getattr(self.rtf_footnote, "as_table", True)
 
         source_as_table = None
         if has_source:
-            as_table_attr = getattr(self.rtf_source, "as_table", [False])
-            source_as_table = as_table_attr[0] if as_table_attr else False
+            source_as_table = getattr(self.rtf_source, "as_table", False)
 
         if has_source and source_as_table:
             # Source is rendered as table: prioritize source for borders
