@@ -210,7 +210,7 @@ def test_rtf_footnote_as_table_true():
     # # Test footnote with as_table = TRUE (default)
     # tbl_footnote_table <- tbl |>
     #   r2rtf::rtf_body() |>
-    #   r2rtf::rtf_footnote(text = "Footnote as table", as_table = TRUE) |>
+    #   r2rtf::rtf_footnote(footnote = "Footnote as table", as_table = TRUE) |>
     #   r2rtf::rtf_encode(verbose = FALSE)
     #
     # # Output RTF content
@@ -247,7 +247,7 @@ def test_rtf_footnote_as_table_false():
     # # Test footnote with as_table = FALSE
     # tbl_footnote_plain <- tbl |>
     #   r2rtf::rtf_body() |>
-    #   r2rtf::rtf_footnote(text = "Footnote as plain text", as_table = FALSE) |>
+    #   r2rtf::rtf_footnote(footnote = "Footnote as plain text", as_table = FALSE) |>
     #   r2rtf::rtf_encode(verbose = FALSE)
     #
     # tbl_footnote_plain |>
@@ -283,7 +283,7 @@ def test_rtf_source_as_table_true():
     # # Test source with as_table = TRUE
     # tbl_source_table <- tbl |>
     #   r2rtf::rtf_body() |>
-    #   r2rtf::rtf_source(text = "Source as table", as_table = TRUE) |>
+    #   r2rtf::rtf_source(source = "Source as table", as_table = TRUE) |>
     #   r2rtf::rtf_encode(verbose = FALSE)
     #
     # tbl_source_table |>
@@ -319,7 +319,7 @@ def test_rtf_source_as_table_false():
     # # Test source with as_table = FALSE (default)
     # tbl_source_plain <- tbl |>
     #   r2rtf::rtf_body() |>
-    #   r2rtf::rtf_source(text = "Source as plain text", as_table = FALSE) |>
+    #   r2rtf::rtf_source(source = "Source as plain text", as_table = FALSE) |>
     #   r2rtf::rtf_encode(verbose = FALSE)
     #
     # tbl_source_plain |>

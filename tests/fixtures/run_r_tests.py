@@ -38,10 +38,48 @@ def extract_r_tests(test_files):
             label = label.strip()
             output_file = output_dir / f"{test_name}_{label}.rtf"
 
-            # Clean up the code by removing comment markers and extra whitespace
-            code_lines = [
-                line.lstrip("# ").rstrip() for line in code.strip().split("\n")
-            ]
+            # Clean up the code by properly handling comment markers
+            # Lines may be indented and have "# " that needs to be removed
+            # After removing "# ", lines starting with "#" are R comments
+            # Other lines are R code
+            code_lines = []
+            for line in code.strip().split("\n"):
+                line = line.rstrip()
+                
+                # Skip completely empty lines
+                if not line.strip():
+                    continue
+                
+                # Find the "# " pattern (may be after indentation)
+                # Look for the pattern of whitespace followed by "# "
+                match = re.match(r'^(\s*)# (.*)$', line)
+                if match:
+                    indent, content = match.groups()
+                    # Keep the original indentation, but remove the "# " part
+                    cleaned_line = indent + content
+                elif re.match(r'^(\s*)#$', line):
+                    # Handle lines that are just whitespace + "#" (empty comment lines)
+                    continue  # Skip empty comment lines
+                else:
+                    # This shouldn't happen in well-formed R blocks, but handle it
+                    cleaned_line = line
+                
+                # Now check if the content (after indentation) starts with "#"
+                content_part = cleaned_line.lstrip()
+                if content_part.startswith("#"):
+                    # This is an R comment - keep as is
+                    pass
+                elif content_part.strip() == "":
+                    # Empty line - skip
+                    continue
+                else:
+                    # This is R code - keep as is
+                    pass
+                
+                # Add non-empty lines
+                if cleaned_line.strip():
+                    code_lines.append(cleaned_line)
+            
             clean_code = "\n".join(code_lines)
 
             r_script.append(f"""
