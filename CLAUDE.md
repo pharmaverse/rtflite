@@ -120,23 +120,99 @@ To render the documentation and asset outputs, run this custom shell script: `sh
 
 ## Architecture Overview
 
-The project follows a modular architecture centered around RTF document generation:
+The project follows a **modern service-oriented architecture** with clean separation of concerns, designed for maintainability and extensibility:
 
-1. **Core Document Model** (`src/rtflite/encode.py`): The `RTFDocument` class orchestrates document generation, managing pages, encoding, and output.
+### Core Architecture Layers
 
-2. **Component System** (`src/rtflite/input.py`): Pydantic-based models for RTF components:
-   - `RTFPage`: Page-level settings and content
-   - `RTFPageHeader/Footer`: Repeated page elements
-   - `RTFTable`: Table data and formatting
-   - `RTFText`: Styled text content
+1. **Document Orchestration Layer** (`src/rtflite/encode.py`):
+   - `RTFDocument`: Lightweight orchestrator (reduced from 1217 to 735 lines)
+   - Delegates complex operations to service and strategy layers
+   - Maintains simple, readable public interface
 
-3. **Attribute Broadcasting** (`src/rtflite/attributes.py`): Implements a broadcasting pattern for applying text and table attributes across rows/columns, similar to numpy broadcasting.
+2. **Service Layer** (`src/rtflite/services/`):
+   - **`RTFEncodingService`**: Centralized encoding operations
+   - **`TextConversionService`**: LaTeX-to-Unicode conversion with validation
+   - Clean interfaces, comprehensive error handling, debugging tools
 
-4. **String Width Calculation** (`src/rtflite/strwidth.py`): Uses Pillow and embedded fonts to calculate precise string widths for table layout. Critical for proper column sizing.
+3. **Strategy Pattern** (`src/rtflite/encoding/`):
+   - **`SinglePageStrategy`**: Optimized single-page document encoding
+   - **`PaginatedStrategy`**: Complex multi-page document handling
+   - **`RTFEncodingEngine`**: Strategy selection and orchestration
+   - Extensible for future features (lists, figures)
 
-5. **Format Conversion** (`src/rtflite/convert.py`): Integrates with LibreOffice for RTF-to-PDF conversion. Automatically detects LibreOffice installation paths across platforms.
+4. **Component Factory** (`src/rtflite/factory/`):
+   - **`RTFComponentFactory`**: Consistent component creation
+   - **Builder patterns**: TableBuilder, TextBuilder, PageBuilder
+   - Centralized default management and configuration
+
+5. **Text Conversion System** (`src/rtflite/text_conversion/`):
+   - **`LaTeXSymbolMapper`**: 682 symbols organized by category
+   - **`TextConverter`**: Readable conversion engine with statistics
+   - **Public interface**: `convert_text()` function for easy use
+
+### Legacy Components (Stable)
+
+6. **Component System** (`src/rtflite/input.py`): Pydantic-based models for RTF components
+7. **Attribute Broadcasting** (`src/rtflite/attributes.py`): Pattern for row/column attribute application
+8. **String Width Calculation** (`src/rtflite/strwidth.py`): Precise layout calculations
+9. **Format Conversion** (`src/rtflite/convert.py`): LibreOffice integration
 
 ## Key Development Patterns
+
+### Service-Oriented Development
+
+**Always use the service layer for complex operations**:
+
+```python
+# ✅ Correct: Use service layer
+from rtflite.services import RTFEncodingService, TextConversionService
+
+encoding_service = RTFEncodingService()
+text_service = TextConversionService()
+
+# Convert text with validation
+result = text_service.convert_with_validation("\\alpha test", True)
+converted = encoding_service.convert_text_for_encoding("\\beta", True)
+```
+
+### Component Creation via Factory
+
+**Use the factory for consistent component creation**:
+
+```python
+# ✅ Correct: Use component factory
+from rtflite.factory import RTFComponentFactory, ComponentType
+
+factory = RTFComponentFactory()
+title = factory.create_component(ComponentType.TITLE, text_font_size=[14])
+footnote = factory.create_component(ComponentType.FOOTNOTE, as_table=True)
+```
+
+### Text Conversion Best Practices
+
+**Use the new text conversion interface**:
+
+```python
+# ✅ Correct: Use new interface
+from rtflite.text_conversion import convert_text
+
+result = convert_text("\\alpha + \\beta", enable_conversion=True)
+
+# For debugging and validation
+from rtflite.text_conversion import TextConverter
+converter = TextConverter()
+stats = converter.get_conversion_statistics("\\alpha \\unknown")
+```
+
+### Strategy Pattern Usage
+
+**The encoding engine automatically selects the optimal strategy**:
+
+```python
+# ✅ The RTFDocument automatically uses the right strategy
+doc = RTFDocument(df=data)
+rtf_output = doc.rtf_encode()  # Uses SinglePageStrategy or PaginatedStrategy
+```
 
 ### Data Structure Preferences
 
@@ -161,6 +237,39 @@ class RTFComponent(BaseModel):
 The project includes Liberation and CrOS fonts for consistent string width calculations. Always use the strwidth module for text measurements rather than estimations.
 
 ### Testing Patterns
+
+**Test Architecture Components Independently**:
+
+```python
+# ✅ Test services independently
+from rtflite.services import TextConversionService
+
+def test_text_conversion():
+    service = TextConversionService()
+    result = service.convert_text_content("\\alpha", True)
+    assert result == "α"
+
+# ✅ Test with comprehensive validation
+def test_conversion_validation():
+    service = TextConversionService()
+    validation = service.validate_latex_commands("\\alpha \\unknown")
+    assert len(validation["valid_commands"]) == 1
+    assert len(validation["invalid_commands"]) == 1
+```
+
+**Test Integration with Full Documents**:
+
+```python
+# ✅ Test full RTF pipeline with text conversion
+def test_rtf_integration():
+    doc = RTFDocument(df=data, rtf_title=RTFTitle(text="Study: \\alpha"))
+    # Enable conversion for footnotes/sources (disabled by default)
+    doc.rtf_footnote = RTFFootnote(text="Level: \\alpha = 0.05", text_convert=[[True]])
+    rtf_output = doc.rtf_encode()
+    assert "α" in rtf_output
+```
+
+**Legacy Testing Patterns** (still supported):
 
 - Tests include R output fixtures for cross-language compatibility
 - Use pytest fixtures for common test data
@@ -200,11 +309,17 @@ def test_example():
 
 2. **LibreOffice Dependency**: PDF conversion requires LibreOffice installation. The converter automatically finds LibreOffice across different platforms.
 
-3. **Unicode and LaTeX Support**: The project includes mappings for Unicode and LaTeX symbols commonly used in scientific notation.
+3. **Enhanced LaTeX Support**: 
+   - **682 LaTeX symbols** organized into categories (Greek, Math Operators, Blackboard Bold, etc.)
+   - **Validation tools** for debugging conversion issues
+   - **Text conversion service** with comprehensive error handling
+   - **Default behavior**: Conversion enabled for data/titles, disabled for footnotes/sources to preserve RTF field codes
 
 4. **Color Management**: Supports clinical trial standard colors through the color dictionary system.
 
 5. **Precision Requirements**: String width calculations and table layouts must be precise for regulatory compliance.
+
+6. **Service-Oriented Architecture**: Complex operations use dedicated services for better maintainability and testing.
 
 ## Development Environment
 
@@ -219,16 +334,6 @@ The project includes VSCode workspace settings in `.vscode/`:
 
 **RTF File Preview**: Click any `.rtf` file in VSCode Explorer → Opens in Microsoft Word for formatted preview
 
-### File Structure
-
-```
-tests/fixtures/r_outputs/          # RTF fixture files (.rtf format)
-├── test_pagination_*.rtf          # Pagination test fixtures  
-├── test_input_*.rtf               # Input validation fixtures
-└── test_row_*.rtf                 # Row formatting fixtures
-
-tests/utils_snapshot.py            # RTF comparison utilities
-tests/fixtures/run_r_tests.py      # RTF fixture generator
 .vscode/                           # VSCode workspace settings
 ├── settings.json                  # RTF file associations
 ├── tasks.json                     # Microsoft Word integration
