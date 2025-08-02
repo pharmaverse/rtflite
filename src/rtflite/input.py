@@ -1,10 +1,106 @@
 from collections.abc import Sequence
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from rtflite.attributes import TextAttributes, TableAttributes
 from rtflite.core.constants import RTFConstants
 from rtflite.row import BORDER_CODES
+
+
+class AttributeDefaultsMixin:
+    """Mixin class for common attribute default setting patterns."""
+    
+    def _set_attribute_defaults(self, exclude_attrs: set = None) -> None:
+        """Set default values for text attributes by converting scalars to lists/tuples."""
+        exclude_attrs = exclude_attrs or set()
+        for attr, value in self.__dict__.items():
+            if attr not in exclude_attrs:
+                if isinstance(value, (str, int, float, bool)):
+                    setattr(self, attr, [value])
+                elif isinstance(value, list):
+                    setattr(self, attr, tuple(value))
+
+
+class ValidationHelpers:
+    """Helper class for common validation patterns."""
+    
+    @staticmethod
+    def convert_string_to_sequence(v: Any) -> Any:
+        """Convert string to single-item sequence for text fields."""
+        if v is not None:
+            if isinstance(v, str):
+                return [v]
+            return v
+        return v
+    
+    @staticmethod
+    def validate_boolean_field(v: Any, field_name: str) -> bool:
+        """Validate that a field is a boolean value."""
+        if not isinstance(v, bool):
+            raise ValueError(f"{field_name} must be a boolean, got {type(v).__name__}: {v}")
+        return v
+
+
+class DefaultsFactory:
+    """Factory class for creating common default configurations."""
+    
+    @staticmethod
+    def get_text_defaults() -> dict:
+        """Get common text attribute defaults."""
+        return {
+            "text_font": [1],
+            "text_font_size": [9],
+            "text_indent_first": [0],
+            "text_indent_left": [0], 
+            "text_indent_right": [0],
+            "text_space": [1.0],
+            "text_space_before": [RTFConstants.DEFAULT_SPACE_BEFORE],
+            "text_space_after": [RTFConstants.DEFAULT_SPACE_AFTER],
+            "text_hyphenation": [True],
+        }
+    
+    @staticmethod
+    def get_table_defaults() -> dict:
+        """Get common table attribute defaults."""
+        return {
+            "col_rel_width": [1.0],
+            "border_width": [[15]],
+            "cell_height": [[0.15]],
+            "cell_justification": [["c"]],
+            "cell_vertical_justification": [["top"]],
+            "text_font": [[1]],
+            "text_format": [[""]],
+            "text_font_size": [[9]],
+            "text_justification": [["l"]],
+            "text_indent_first": [[0]],
+            "text_indent_left": [[0]],
+            "text_indent_right": [[0]],
+            "text_space": [[1]],
+            "text_space_before": [[15]],
+            "text_space_after": [[15]],
+            "text_hyphenation": [[True]],
+        }
+    
+    @staticmethod
+    def get_border_defaults(as_table: bool) -> dict:
+        """Get conditional border defaults based on table rendering mode."""
+        if as_table:
+            # Table rendering: has borders (R2RTF as_table=TRUE behavior)
+            return {
+                "border_left": [["single"]],
+                "border_right": [["single"]],
+                "border_top": [["single"]],
+                "border_bottom": [[""]],
+            }
+        else:
+            # Plain text rendering: no borders (R2RTF as_table=FALSE behavior)
+            return {
+                "border_left": [[""]],
+                "border_right": [[""]],
+                "border_top": [[""]],
+                "border_bottom": [[""]],
+            }
 
 
 class RTFPage(BaseModel):
@@ -91,27 +187,38 @@ class RTFPage(BaseModel):
         self._set_default()
 
     def _set_default(self):
+        """Set default values based on page orientation."""
         if self.orientation == "portrait":
-            self.width = self.width or 8.5
-            self.height = self.height or 11
-            self.margin = self.margin or [1.25, 1, 1.75, 1.25, 1.75, 1.00625]
-            self.col_width = self.col_width or self.width - 2.25
-            self.nrow = self.nrow or 40
-
-        if self.orientation == "landscape":
-            self.width = self.width or 11
-            self.height = self.height or 8.5
-            self.margin = self.margin or [1.0, 1.0, 2, 1.25, 1.25, 1.25]
-            self.col_width = self.col_width or self.width - 2.5
-            self.nrow = self.nrow or 24
-
+            self._set_portrait_defaults()
+        elif self.orientation == "landscape":
+            self._set_landscape_defaults()
+        
+        self._validate_margin_length()
+        return self
+    
+    def _set_portrait_defaults(self) -> None:
+        """Set default values for portrait orientation."""
+        self.width = self.width or 8.5
+        self.height = self.height or 11
+        self.margin = self.margin or [1.25, 1, 1.75, 1.25, 1.75, 1.00625]
+        self.col_width = self.col_width or self.width - 2.25
+        self.nrow = self.nrow or 40
+    
+    def _set_landscape_defaults(self) -> None:
+        """Set default values for landscape orientation."""
+        self.width = self.width or 11
+        self.height = self.height or 8.5
+        self.margin = self.margin or [1.0, 1.0, 2, 1.25, 1.25, 1.25]
+        self.col_width = self.col_width or self.width - 2.5
+        self.nrow = self.nrow or 24
+    
+    def _validate_margin_length(self) -> None:
+        """Validate that margin has exactly 6 values."""
         if len(self.margin) != 6:
             raise ValueError("Margin length must be 6.")
 
-        return self
 
-
-class RTFPageHeader(TextAttributes):
+class RTFPageHeader(TextAttributes, AttributeDefaultsMixin):
     text: Sequence[str] | None = Field(
         default="Page \\chpgn of {\\field{\\*\\fldinst NUMPAGES }}",
         description="Page header text content",
@@ -119,10 +226,7 @@ class RTFPageHeader(TextAttributes):
 
     @field_validator("text", mode="before")
     def convert_text(cls, v):
-        if v is not None:
-            if isinstance(v, str):
-                return [v]
-            return v
+        return ValidationHelpers.convert_string_to_sequence(v)
 
     text_indent_reference: str | None = Field(
         default="page",
@@ -150,15 +254,11 @@ class RTFPageHeader(TextAttributes):
         self._set_default()
 
     def _set_default(self):
-        for attr, value in self.__dict__.items():
-            if isinstance(value, (str, int, float, bool)):
-                setattr(self, attr, [value])
-            if isinstance(value, list):
-                setattr(self, attr, tuple(value))
+        self._set_attribute_defaults()
         return self
 
 
-class RTFPageFooter(TextAttributes):
+class RTFPageFooter(TextAttributes, AttributeDefaultsMixin):
     text: Sequence[str] | None = Field(
         default=None, description="Page footer text content"
     )
@@ -169,10 +269,7 @@ class RTFPageFooter(TextAttributes):
 
     @field_validator("text", mode="before")
     def convert_text(cls, v):
-        if v is not None:
-            if isinstance(v, str):
-                return [v]
-            return v
+        return ValidationHelpers.convert_string_to_sequence(v)
 
     def __init__(self, **data):
         defaults = {
@@ -195,15 +292,11 @@ class RTFPageFooter(TextAttributes):
         self._set_default()
 
     def _set_default(self):
-        for attr, value in self.__dict__.items():
-            if isinstance(value, (str, int, float, bool)):
-                setattr(self, attr, [value])
-            if isinstance(value, list):
-                setattr(self, attr, tuple(value))
+        self._set_attribute_defaults()
         return self
 
 
-class RTFSubline(TextAttributes):
+class RTFSubline(TextAttributes, AttributeDefaultsMixin):
     text: Sequence[str] | None = Field(
         default=None, description="Page footer text content"
     )
@@ -214,10 +307,7 @@ class RTFSubline(TextAttributes):
 
     @field_validator("text", mode="before")
     def convert_text(cls, v):
-        if v is not None:
-            if isinstance(v, str):
-                return [v]
-            return v
+        return ValidationHelpers.convert_string_to_sequence(v)
 
     def __init__(self, **data):
         defaults = {
@@ -240,11 +330,7 @@ class RTFSubline(TextAttributes):
         self._set_default()
 
     def _set_default(self):
-        for attr, value in self.__dict__.items():
-            if isinstance(value, (str, int, float, bool)):
-                setattr(self, attr, [value])
-            if isinstance(value, list):
-                setattr(self, attr, tuple(value))
+        self._set_attribute_defaults()
         return self
 
 
@@ -261,65 +347,35 @@ class RTFFootnote(TableAttributes):
 
     @field_validator("text", mode="before")
     def convert_text(cls, v):
-        if v is not None:
-            if isinstance(v, str):
-                return [v]
-            return v
+        return ValidationHelpers.convert_string_to_sequence(v)
 
     @field_validator("as_table", mode="before")
     def validate_as_table(cls, v):
-        if not isinstance(v, bool):
-            raise ValueError(f"as_table must be a boolean, got {type(v).__name__}: {v}")
-        return v
+        return ValidationHelpers.validate_boolean_field(v, "as_table")
 
     def __init__(self, **data):
-        # Get as_table setting before setting defaults
         as_table = data.get("as_table", True)  # Default True for footnotes
-
-        if as_table:
-            # Table rendering: has borders (R2RTF as_table=TRUE behavior)
-            border_defaults = {
-                "border_left": [["single"]],
-                "border_right": [["single"]],
-                "border_top": [["single"]],
-                "border_bottom": [[""]],
-            }
-        else:
-            # Plain text rendering: no borders (R2RTF as_table=FALSE behavior)
-            border_defaults = {
-                "border_left": [[""]],
-                "border_right": [[""]],
-                "border_top": [[""]],
-                "border_bottom": [[""]],
-            }
-
-        defaults = {
-            "col_rel_width": [1.0],
-            "border_width": [[15]],
-            "cell_height": [[0.15]],
-            "cell_justification": [["c"]],
-            "cell_vertical_justification": [["top"]],
-            "text_font": [[1]],
-            "text_format": [[""]],
-            "text_font_size": [[9]],
-            "text_justification": [["l"]],
-            "text_indent_first": [[0]],
-            "text_indent_left": [[0]],
-            "text_indent_right": [[0]],
-            "text_space": [[1]],
-            "text_space_before": [[15]],
-            "text_space_after": [[15]],
-            "text_hyphenation": [[True]],  
-            "text_convert": [[False]],  
-        }
-
-        # Add border defaults based on as_table setting
-        defaults.update(border_defaults)
-
-        # Update defaults with any provided values
+        defaults = self._get_footnote_defaults(as_table)
         defaults.update(data)
         super().__init__(**defaults)
-        # Convert text to DataFrame during initialization
+        self._process_text_conversion()
+    
+    def _get_footnote_defaults(self, as_table: bool) -> dict:
+        """Get default configuration for footnote based on rendering mode."""
+        defaults = DefaultsFactory.get_table_defaults()
+        border_defaults = DefaultsFactory.get_border_defaults(as_table)
+        
+        # Footnote-specific overrides
+        footnote_overrides = {
+            "text_convert": [[False]],  # Disable text conversion for footnotes
+        }
+        
+        defaults.update(border_defaults)
+        defaults.update(footnote_overrides)
+        return defaults
+    
+    def _process_text_conversion(self) -> None:
+        """Convert text sequence to line-separated string format."""
         if self.text is not None:
             if isinstance(self.text, Sequence):
                 if len(self.text) == 0:
@@ -348,66 +404,36 @@ class RTFSource(TableAttributes):
 
     @field_validator("text", mode="before")
     def convert_text(cls, v):
-        if v is not None:
-            if isinstance(v, str):
-                return [v]
-            return v
+        return ValidationHelpers.convert_string_to_sequence(v)
 
     @field_validator("as_table", mode="before")
     def validate_as_table(cls, v):
-        if not isinstance(v, bool):
-            raise ValueError(f"as_table must be a boolean, got {type(v).__name__}: {v}")
-        return v
+        return ValidationHelpers.validate_boolean_field(v, "as_table")
 
     def __init__(self, **data):
-        # Get as_table setting before setting defaults
         as_table = data.get("as_table", False)  # Default False for sources
-
-        if as_table:
-            # Table rendering: has borders (R2RTF as_table=TRUE behavior)
-            border_defaults = {
-                "border_left": [["single"]],
-                "border_right": [["single"]],
-                "border_top": [["single"]],
-                "border_bottom": [[""]],
-            }
-        else:
-            # Plain text rendering: no borders (R2RTF as_table=FALSE behavior)
-            border_defaults = {
-                "border_left": [[""]],
-                "border_right": [[""]],
-                "border_top": [[""]],
-                "border_bottom": [[""]],
-            }
-
-        defaults = {
-            "col_rel_width": [1.0],
-            "border_width": [[15]],
-            "cell_height": [[0.15]],
-            "cell_justification": [["c"]],
-            "cell_vertical_justification": [["top"]],
-            "text_font": [[1]],
-            "text_format": [[""]],
-            "text_font_size": [[9]],
-            "text_justification": [["c"]],
-            "text_indent_first": [[0]],
-            "text_indent_left": [[0]],
-            "text_indent_right": [[0]],
-            "text_space": [[1]],
-            "text_space_before": [[15]],
-            "text_space_after": [[15]],
-            "text_hyphenation": [[True]], 
-            "text_convert": [[False]], 
-        }
-
-        # Add border defaults based on as_table setting
-        defaults.update(border_defaults)
-
-        # Update defaults with any provided values
+        defaults = self._get_source_defaults(as_table)
         defaults.update(data)
         super().__init__(**defaults)
-
-        # Convert text to DataFrame during initialization
+        self._process_text_conversion()
+    
+    def _get_source_defaults(self, as_table: bool) -> dict:
+        """Get default configuration for source based on rendering mode."""
+        defaults = DefaultsFactory.get_table_defaults()
+        border_defaults = DefaultsFactory.get_border_defaults(as_table)
+        
+        # Source-specific overrides
+        source_overrides = {
+            "text_justification": [["c"]],  # Center justification for sources
+            "text_convert": [[False]],  # Disable text conversion for sources
+        }
+        
+        defaults.update(border_defaults)
+        defaults.update(source_overrides)
+        return defaults
+    
+    def _process_text_conversion(self) -> None:
+        """Convert text sequence to line-separated string format."""
         if self.text is not None:
             if isinstance(self.text, Sequence):
                 if len(self.text) == 0:
@@ -423,7 +449,7 @@ class RTFSource(TableAttributes):
         return self
 
 
-class RTFTitle(TextAttributes):
+class RTFTitle(TextAttributes, AttributeDefaultsMixin):
     text: Sequence[str] | None = Field(default=None, description="Title text content")
     text_indent_reference: str | None = Field(
         default="table",
@@ -432,10 +458,7 @@ class RTFTitle(TextAttributes):
 
     @field_validator("text", mode="before")
     def convert_text(cls, v):
-        if v is not None:
-            if isinstance(v, str):
-                return [v]
-            return v
+        return ValidationHelpers.convert_string_to_sequence(v)
 
     def __init__(self, **data):
         defaults = {
@@ -458,11 +481,7 @@ class RTFTitle(TextAttributes):
         self._set_default()
 
     def _set_default(self):
-        for attr, value in self.__dict__.items():
-            if isinstance(value, (str, int, float, bool)):
-                setattr(self, attr, [value])
-            if isinstance(value, list):
-                setattr(self, attr, tuple(value))
+        self._set_attribute_defaults()
         return self
 
 
@@ -497,24 +516,44 @@ class RTFColumnHeader(TableAttributes):
         return v
 
     def __init__(self, **data):
-        # Handle backwards compatibility for df parameter
+        data = self._handle_backwards_compatibility(data)
+        defaults = self._get_column_header_defaults()
+        defaults.update(data)
+        super().__init__(**defaults)
+        self._set_default()
+    
+    def _handle_backwards_compatibility(self, data: dict) -> dict:
+        """Handle backwards compatibility for df parameter."""
         if "df" in data and "text" not in data:
             df = data.pop("df")
-            try:
-                import polars as pl
-
-                if isinstance(df, pl.DataFrame):
-                    # For backwards compatibility, assume single-row DataFrame
-                    # If DataFrame has multiple rows, transpose it first
-                    if df.shape[0] > 1 and df.shape[1] == 1:
-                        # Column-oriented: transpose to row-oriented
-                        data["text"] = df.get_column(df.columns[0]).to_list()
-                    else:
-                        # Row-oriented: take first row
-                        data["text"] = list(df.row(0))
-            except ImportError:
-                pass
-        defaults = {
+            data["text"] = self._convert_dataframe_to_text(df)
+        return data
+    
+    def _convert_dataframe_to_text(self, df) -> list | None:
+        """Convert DataFrame to text list based on orientation."""
+        try:
+            import polars as pl
+            
+            if isinstance(df, pl.DataFrame):
+                return self._handle_dataframe_orientation(df)
+        except ImportError:
+            pass
+        return None
+    
+    def _handle_dataframe_orientation(self, df) -> list:
+        """Handle DataFrame orientation for column headers."""
+        # For backwards compatibility, assume single-row DataFrame
+        # If DataFrame has multiple rows, transpose it first
+        if df.shape[0] > 1 and df.shape[1] == 1:
+            # Column-oriented: transpose to row-oriented
+            return df.get_column(df.columns[0]).to_list()
+        else:
+            # Row-oriented: take first row
+            return list(df.row(0))
+    
+    def _get_column_header_defaults(self) -> dict:
+        """Get default configuration for column headers."""
+        return {
             "border_left": ["single"],
             "border_right": ["single"],
             "border_top": ["single"],
@@ -536,11 +575,6 @@ class RTFColumnHeader(TableAttributes):
             "text_hyphenation": [False],
             "text_convert": [True],
         }
-
-        # Update defaults with any provided values
-        defaults.update(data)
-        super().__init__(**defaults)
-        self._set_default()
 
     def _set_default(self):
         for attr, value in self.__dict__.items():
@@ -621,33 +655,36 @@ class RTFBody(TableAttributes):
         self._set_default()
 
     def _set_default(self):
+        self._set_table_attribute_defaults()
+        self._set_border_defaults()
+        self._validate_page_by_logic()
+        return self
+    
+    def _set_table_attribute_defaults(self) -> None:
+        """Set default values for table attributes, excluding special control attributes."""
+        excluded_attrs = {
+            "as_colheader", "page_by", "new_page", "pageby_header", 
+            "pageby_row", "subline_by", "last_row"
+        }
+        
         for attr, value in self.__dict__.items():
-            if isinstance(value, (str, int, float, bool)) and attr not in [
-                "as_colheader",
-                "page_by",
-                "new_page",
-                "pageby_header",
-                "pageby_row",
-                "subline_by",
-                "last_row",
-            ]:
+            if isinstance(value, (str, int, float, bool)) and attr not in excluded_attrs:
                 setattr(self, attr, [value])
-
+    
+    def _set_border_defaults(self) -> None:
+        """Set default values for border and justification attributes."""
         self.border_top = self.border_top or [""]
         self.border_bottom = self.border_bottom or [""]
         self.border_left = self.border_left or ["single"]
         self.border_right = self.border_right or ["single"]
         self.border_first = self.border_first or ["single"]
         self.border_last = self.border_last or ["single"]
-        self.cell_vertical_justification = self.cell_vertical_justification or [
-            "center"
-        ]
+        self.cell_vertical_justification = self.cell_vertical_justification or ["center"]
         self.text_justification = self.text_justification or ["c"]
-
-        if self.page_by is None:
-            if self.new_page:
-                raise ValueError(
-                    "`new_page` must be `False` if `page_by` is not specified"
-                )
-
-        return self
+    
+    def _validate_page_by_logic(self) -> None:
+        """Validate that page_by and new_page settings are consistent."""
+        if self.page_by is None and self.new_page:
+            raise ValueError(
+                "`new_page` must be `False` if `page_by` is not specified"
+            )
