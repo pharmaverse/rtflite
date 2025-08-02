@@ -112,7 +112,7 @@ class RTFPage(BaseModel):
 
 class RTFPageHeader(TextAttributes):
     text: Sequence[str] | None = Field(
-        default="Page \\pagenumber of \\pagefield",
+        default="Page \\chpgn of {\\field{\\*\\fldinst NUMPAGES }}",
         description="Page header text content",
     )
 
@@ -131,7 +131,7 @@ class RTFPageHeader(TextAttributes):
     def __init__(self, **data):
         defaults = {
             "text_font": [1],
-            "text_font_size": [9],
+            "text_font_size": [12],  # Match r2rtf default of 12pt
             "text_justification": ["r"],
             "text_indent_first": [0],
             "text_indent_left": [0],
@@ -140,7 +140,7 @@ class RTFPageHeader(TextAttributes):
             "text_space_before": [15.0],
             "text_space_after": [15.0],
             "text_hyphenation": [True],
-            "text_convert": [True],
+            "text_convert": [False],  # Disable to preserve RTF field codes
         }
 
         # Update defaults with any provided values
@@ -176,7 +176,7 @@ class RTFPageFooter(TextAttributes):
     def __init__(self, **data):
         defaults = {
             "text_font": [1],
-            "text_font_size": [9],
+            "text_font_size": [12],  # Match r2rtf default of 12pt
             "text_justification": ["c"],
             "text_indent_first": [0],
             "text_indent_left": [0],
@@ -185,7 +185,7 @@ class RTFPageFooter(TextAttributes):
             "text_space_before": [15.0],
             "text_space_after": [15.0],
             "text_hyphenation": [True],
-            "text_convert": [True],
+            "text_convert": [False],  # Disable to preserve RTF field codes
         }
 
         # Update defaults with any provided values

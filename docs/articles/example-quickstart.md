@@ -78,7 +78,10 @@ print(tbl.head(4))
 `rtflite` aims to provide one function for each type of table layout.
 Commonly used verbs includes:
 
-- `RTFPage`: RTF page information
+- `RTFPage`: RTF page information (orientation, margins, pagination)
+- `RTFPageHeader`: Page headers with page numbering (compatible with
+  r2rtf)
+- `RTFPageFooter`: Page footers for attribution and notices
 - `RTFTitle`: RTF title information
 - `RTFColumnHeader`: RTF column header information
 - `RTFBody`: RTF table body information
@@ -314,6 +317,85 @@ doc.write_rtf("../rtf/intro-ae7.rtf")
 
 <embed src="../pdf/intro-ae7.pdf" style="width:100%; height:400px" type="application/pdf">
 
+## Page Headers and Footers
+
+RTF documents can include page headers and footers that appear on every
+page, positioned outside the main content area (compatible with r2rtf):
+
+- `RTFPageHeader`: Add headers with page numbering and custom text
+- `RTFPageFooter`: Add footers with attribution or confidentiality
+  notices
+
+``` python
+# Create RTF document with page headers and footers
+doc = rtf.RTFDocument(
+    df=tbl.head(15),
+    rtf_page_header=rtf.RTFPageHeader(
+        # Default: "Page \chpgn of {\field{\*\fldinst NUMPAGES }}"
+        # Uses r2rtf-compatible RTF field codes
+    ),
+    rtf_page_footer=rtf.RTFPageFooter(
+        text="Confidential - Clinical Study Report"
+    ),
+    rtf_title=rtf.RTFTitle(
+        text=[
+            "Summary of Adverse Events by Treatment Group",
+            "With Page Headers and Footers"
+        ]
+    ),
+    rtf_column_header=rtf.RTFColumnHeader(
+        text=[
+            "Adverse Events",
+            "Placebo (N=86)",
+            "Xanomeline High Dose (N=84)",
+            "Xanomeline Low Dose (N=84)",
+        ],
+    ),
+    rtf_body=rtf.RTFBody(col_rel_width=[3, 2, 2, 2]),
+)
+
+doc.write_rtf("../rtf/intro-ae8.rtf")
+```
+
+<embed src="../pdf/intro-ae8.pdf" style="width:100%; height:400px" type="application/pdf">
+
+### Custom Header and Footer Formatting
+
+Headers and footers support full text formatting including custom
+alignment, font sizes, and styling:
+
+``` python
+# Create RTF document with custom formatted headers and footers
+doc = rtf.RTFDocument(
+    df=tbl.head(10),
+    rtf_page_header=rtf.RTFPageHeader(
+        text="Study XYZ-123 | Page \\chpgn",
+        text_font_size=10,
+        text_justification="c",  # Center aligned
+        text_format="b"         # Bold
+    ),
+    rtf_page_footer=rtf.RTFPageFooter(
+        text=[
+            "Generated: \\today",
+            "Company Confidential"
+        ],
+        text_font_size=8,
+        text_justification="l"  # Left aligned
+    ),
+    rtf_title=rtf.RTFTitle(
+        text="Adverse Events with Custom Headers/Footers"
+    ),
+    rtf_column_header=rtf.RTFColumnHeader(
+        text=["Adverse Events", "Placebo", "Xanomeline High Dose", "Xanomeline Low Dose"],
+    ),
+    rtf_body=rtf.RTFBody(col_rel_width=[3, 2, 2, 2]),
+)
+
+doc.write_rtf("../rtf/intro-ae8b.rtf")
+```
+
+<embed src="../pdf/intro-ae8b.pdf" style="width:100%; height:400px" type="application/pdf">
+
 ## Page Layout and Orientation
 
 `RTFPage` provides control over page layout:
@@ -347,10 +429,10 @@ doc = rtf.RTFDocument(
     rtf_body=rtf.RTFBody(col_rel_width=[4, 2, 2, 2]),
 )
 
-doc.write_rtf("../rtf/intro-ae8.rtf")
+doc.write_rtf("../rtf/intro-ae10.rtf")
 ```
 
-<embed src="../pdf/intro-ae8.pdf" style="width:100%; height:400px" type="application/pdf">
+<embed src="../pdf/intro-ae10.pdf" style="width:100%; height:400px" type="application/pdf">
 
 ## Cell-level Formatting
 
@@ -379,10 +461,10 @@ doc = rtf.RTFDocument(
     ),
 )
 
-doc.write_rtf("../rtf/intro-ae9.rtf")
+doc.write_rtf("../rtf/intro-ae11.rtf")
 ```
 
-<embed src="../pdf/intro-ae9.pdf" style="width:100%; height:400px" type="application/pdf">
+<embed src="../pdf/intro-ae11.pdf" style="width:100%; height:400px" type="application/pdf">
 
 ### Multi-page Considerations
 
@@ -431,7 +513,7 @@ doc = rtf.RTFDocument(
     ),
 )
 
-doc.write_rtf("../rtf/intro-ae10.rtf")
+doc.write_rtf("../rtf/intro-ae12.rtf")
 ```
 
-<embed src="../pdf/intro-ae10.pdf" style="width:100%; height:400px" type="application/pdf">
+<embed src="../pdf/intro-ae12.pdf" style="width:100%; height:400px" type="application/pdf">

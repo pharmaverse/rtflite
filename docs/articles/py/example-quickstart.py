@@ -133,6 +133,59 @@ doc = rtf.RTFDocument(
 doc.write_rtf("../rtf/intro-ae7.rtf")
 
 doc = rtf.RTFDocument(
+    df=tbl.head(15),
+    rtf_page_header=rtf.RTFPageHeader(
+        # Default: "Page \chpgn of {\field{\*\fldinst NUMPAGES }}"
+        # Uses r2rtf-compatible RTF field codes
+    ),
+    rtf_page_footer=rtf.RTFPageFooter(text="Confidential - Clinical Study Report"),
+    rtf_title=rtf.RTFTitle(
+        text=[
+            "Summary of Adverse Events by Treatment Group",
+            "With Page Headers and Footers",
+        ]
+    ),
+    rtf_column_header=rtf.RTFColumnHeader(
+        text=[
+            "Adverse Events",
+            "Placebo (N=86)",
+            "Xanomeline High Dose (N=84)",
+            "Xanomeline Low Dose (N=84)",
+        ],
+    ),
+    rtf_body=rtf.RTFBody(col_rel_width=[3, 2, 2, 2]),
+)
+
+doc.write_rtf("../rtf/intro-ae8.rtf")
+
+doc = rtf.RTFDocument(
+    df=tbl.head(10),
+    rtf_page_header=rtf.RTFPageHeader(
+        text="Study XYZ-123 | Page \\chpgn",
+        text_font_size=10,
+        text_justification="c",  # Center aligned
+        text_format="b",  # Bold
+    ),
+    rtf_page_footer=rtf.RTFPageFooter(
+        text=["Generated: \\today", "Company Confidential"],
+        text_font_size=8,
+        text_justification="l",  # Left aligned
+    ),
+    rtf_title=rtf.RTFTitle(text="Adverse Events with Custom Headers/Footers"),
+    rtf_column_header=rtf.RTFColumnHeader(
+        text=[
+            "Adverse Events",
+            "Placebo",
+            "Xanomeline High Dose",
+            "Xanomeline Low Dose",
+        ],
+    ),
+    rtf_body=rtf.RTFBody(col_rel_width=[3, 2, 2, 2]),
+)
+
+doc.write_rtf("../rtf/intro-ae8b.rtf")
+
+doc = rtf.RTFDocument(
     df=tbl.head(20),
     rtf_page=rtf.RTFPage(
         orientation="landscape",  # Landscape for wider tables
@@ -152,7 +205,7 @@ doc = rtf.RTFDocument(
     rtf_body=rtf.RTFBody(col_rel_width=[4, 2, 2, 2]),
 )
 
-doc.write_rtf("../rtf/intro-ae8.rtf")
+doc.write_rtf("../rtf/intro-ae10.rtf")
 
 from rtflite.attributes import BroadcastValue
 
@@ -178,7 +231,7 @@ doc = rtf.RTFDocument(
     ),
 )
 
-doc.write_rtf("../rtf/intro-ae9.rtf")
+doc.write_rtf("../rtf/intro-ae11.rtf")
 
 doc = rtf.RTFDocument(
     df=tbl.head(50),
@@ -214,4 +267,4 @@ doc = rtf.RTFDocument(
     rtf_source=rtf.RTFSource(text="Dataset: ADAE | Cutoff: 01JAN2023"),
 )
 
-doc.write_rtf("../rtf/intro-ae10.rtf")
+doc.write_rtf("../rtf/intro-ae12.rtf")
