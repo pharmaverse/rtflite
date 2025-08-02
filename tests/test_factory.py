@@ -28,8 +28,8 @@ class TestRTFComponentFactory:
         header = self.factory.create_component(ComponentType.COLUMN_HEADER)
         
         assert isinstance(header, RTFColumnHeader)
-        assert header.border_left == ["single"]
-        assert header.cell_vertical_justification == ["bottom"]
+        assert header.border_left == [["single"]]
+        assert header.cell_vertical_justification == [["bottom"]]
     
     def test_create_footnote_component_as_table_true(self):
         """Test creating a footnote component with as_table=True."""

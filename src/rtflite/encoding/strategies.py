@@ -26,6 +26,11 @@ class EncodingStrategy(ABC):
 class SinglePageStrategy(EncodingStrategy):
     """Encoding strategy for single-page documents without pagination."""
     
+    def __init__(self):
+        from ..rtf import RTFDocumentAssembler, RTFComponentEncoder
+        self.assembler = RTFDocumentAssembler()
+        self.encoder = RTFComponentEncoder()
+    
     def encode(self, document: "RTFDocument") -> str:
         """Encode a single-page document.
         
@@ -35,8 +40,8 @@ class SinglePageStrategy(EncodingStrategy):
         Returns:
             Complete RTF string
         """
-        # Delegate to the original rtf_encode method for now
-        # This maintains backward compatibility while we refactor
+        # For now, still delegate to maintain compatibility
+        # Full migration will come in the next step
         return document._rtf_encode_single_page()
 
 

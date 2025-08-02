@@ -20,6 +20,7 @@ from .input import (
 from .pagination import RTFPagination, PageBreakCalculator, ContentDistributor
 from .row import Utils
 from .encoding import RTFEncodingEngine
+from .services import RTFEncodingService
 
 
 class RTFDocument(BaseModel):
@@ -113,6 +114,8 @@ class RTFDocument(BaseModel):
 
     def __init__(self, **data):
         super().__init__(**data)
+        # Initialize encoding service
+        self._encoding_service = RTFEncodingService()
         dim = self.df.shape
         # Set default values
         self.rtf_body.col_rel_width = self.rtf_body.col_rel_width or [1] * dim[1]
@@ -574,39 +577,26 @@ class RTFDocument(BaseModel):
         return margin + "\n"
 
     def _rtf_page_header_encode(self, method: str) -> str:
-        """Convert the RTF page header into RTF syntax using the Text class."""
-        if self.rtf_page_header is None or not self.rtf_page_header.text:
-            return None
-
-        encode = self.rtf_page_header._encode_text(
-            text=self.rtf_page_header.text, method=method
-        )
-        return f"{{\\header{encode}}}"
+        """Convert the RTF page header into RTF syntax - delegated to encoding service."""
+        result = self._encoding_service.encode_page_header(self.rtf_page_header, method)
+        if result:
+            return f"{{\\header{result}}}"
+        return None
 
     def _rtf_page_footer_encode(self, method: str) -> str:
-        """Convert the RTF page footer into RTF syntax using the Text class."""
-        if self.rtf_page_footer is None or not self.rtf_page_footer.text:
-            return None
-
-        encode = self.rtf_page_footer._encode_text(
-            text=self.rtf_page_footer.text, method=method
-        )
-        return f"{{\\footer{encode}}}"
+        """Convert the RTF page footer into RTF syntax - delegated to encoding service."""
+        result = self._encoding_service.encode_page_footer(self.rtf_page_footer, method)
+        if result:
+            return f"{{\\footer{result}}}"
+        return None
 
     def _rtf_title_encode(self, method: str) -> str:
-        """Convert the RTF title into RTF syntax using the Text class."""
-        if not self.rtf_title or not self.rtf_title.text:
-            return None
-
-        return self.rtf_title._encode_text(text=self.rtf_title.text, method=method)
+        """Convert the RTF title into RTF syntax - delegated to encoding service."""
+        return self._encoding_service.encode_title(self.rtf_title, method)
 
     def _rtf_subline_encode(self, method: str) -> str:
-        """Convert the RTF subline into RTF syntax using the Text class."""
-        if self.rtf_subline is None or not self.rtf_subline.text:
-            return None
-
-        encode = self.rtf_subline._encode_text(text=self.rtf_subline.text, method=method)
-        return encode
+        """Convert the RTF subline into RTF syntax - delegated to encoding service."""
+        return self._encoding_service.encode_subline(self.rtf_subline, method)
 
     def _page_by(self) -> list[list[tuple[int, int, int]]]:
         """Create components for page_by format.
@@ -1066,7 +1056,8 @@ class RTFDocument(BaseModel):
         return rtf_attrs._encode(df, col_widths)
 
     def _rtf_start_encode(self) -> str:
-        return "{\\rtf1\\ansi\n\\deff0\\deflang1033"
+        """Generate RTF document start - delegated to encoding service."""
+        return self._encoding_service.encode_document_start()
 
     def _rtf_font_table_encode(self) -> str:
         """Define RTF fonts"""
