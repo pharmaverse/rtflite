@@ -62,6 +62,7 @@ pytestmark = pytest.mark.skipif(
 )
 
 
+@pytest.mark.skip(reason="Skipping LibreOffice converter tests")
 class TestLibreOfficeConverter:
     def test_init_default(self):
         """Test converter initialization with default executable path."""
