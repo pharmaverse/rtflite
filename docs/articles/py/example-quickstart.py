@@ -167,7 +167,7 @@ doc = rtf.RTFDocument(
         text_format="b",  # Bold
     ),
     rtf_page_footer=rtf.RTFPageFooter(
-        text=["Generated: \\today", "Company Confidential"],
+        text=["Company Confidential"],
         text_font_size=8,
         text_justification="l",  # Left aligned
     ),

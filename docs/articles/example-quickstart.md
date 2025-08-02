@@ -376,7 +376,6 @@ doc = rtf.RTFDocument(
     ),
     rtf_page_footer=rtf.RTFPageFooter(
         text=[
-            "Generated: \\today",
             "Company Confidential"
         ],
         text_font_size=8,

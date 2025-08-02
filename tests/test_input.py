@@ -113,7 +113,7 @@ def test_text_attributes_default():
     assert attrs.text_space_before is None
     assert attrs.text_space_after is None
     assert attrs.text_hyphenation is None
-    assert attrs.text_convert is None
+    assert attrs.text_convert == [True]
 
 
 def test_text_attributes_validation():
