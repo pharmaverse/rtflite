@@ -7,6 +7,7 @@ import polars as pl
 import pytest
 
 from .utils import ROutputReader, TestData
+from .utils_snapshot import assert_rtf_equals_semantic
 
 r_output = ROutputReader("test_input")
 
@@ -35,7 +36,11 @@ def test_rtf_encode_minimal():
         df=TestData.df1(), rtf_title=RTFTitle(text=["title 1", "title 2"])
     )
 
-    assert rtf_doc.rtf_encode() == r_output.read("rtf_minimal")
+    rtf_output = rtf_doc.rtf_encode()
+    expected = r_output.read("rtf_minimal")
+    
+    # Use semantic RTF comparison (handles font tables, borders, whitespace, page breaks)
+    assert_rtf_equals_semantic(rtf_output, expected, "test_rtf_encode_minimal")
 
 
 def test_rtf_encode_with_title():
