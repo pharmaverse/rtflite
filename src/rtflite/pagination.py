@@ -116,8 +116,9 @@ class PageBreakCalculator(BaseModel):
         page_by: List[str] = None,
         new_page: bool = False,
         table_attrs=None,
+        additional_rows_per_page: int = 0,
     ) -> List[Tuple[int, int]]:
-        """Find optimal page break positions
+        """Find optimal page break positions (r2rtf compatible)
 
         Args:
             df: DataFrame to paginate
@@ -125,6 +126,7 @@ class PageBreakCalculator(BaseModel):
             page_by: Columns to group by for page breaks
             new_page: Whether to force new pages between groups
             table_attrs: Table attributes for accurate row calculation
+            additional_rows_per_page: Additional rows per page (headers, footnotes, sources)
 
         Returns:
             List of (start_row, end_row) tuples for each page
@@ -136,10 +138,14 @@ class PageBreakCalculator(BaseModel):
         page_breaks = []
         current_page_start = 0
         current_page_rows = 0
+        
+        # Calculate available rows for data (r2rtf compatible)
+        # In r2rtf, nrow includes ALL rows (headers, data, footnotes, sources)
+        available_data_rows_per_page = max(1, self.pagination.nrow - additional_rows_per_page)
 
         for row_idx, row_height in enumerate(row_counts):
-            # Check if adding this row would exceed page limit
-            if current_page_rows + row_height > self.pagination.nrow:
+            # Check if adding this row would exceed page limit (accounting for additional rows)
+            if current_page_rows + row_height > available_data_rows_per_page:
                 # Create page break before this row
                 if current_page_start < row_idx:
                     page_breaks.append((current_page_start, row_idx - 1))
@@ -182,8 +188,9 @@ class ContentDistributor(BaseModel):
         new_page: bool = False,
         pageby_header: bool = True,
         table_attrs=None,
+        additional_rows_per_page: int = 0,
     ) -> List[Dict[str, Any]]:
-        """Distribute content across multiple pages
+        """Distribute content across multiple pages (r2rtf compatible)
 
         Args:
             df: DataFrame to distribute
@@ -192,12 +199,13 @@ class ContentDistributor(BaseModel):
             new_page: Force new pages between groups
             pageby_header: Repeat headers on new pages
             table_attrs: Table attributes for accurate calculations
+            additional_rows_per_page: Additional rows per page (headers, footnotes, sources)
 
         Returns:
             List of page information dictionaries
         """
         page_breaks = self.calculator.find_page_breaks(
-            df, col_widths, page_by, new_page, table_attrs
+            df, col_widths, page_by, new_page, table_attrs, additional_rows_per_page
         )
         pages = []
 

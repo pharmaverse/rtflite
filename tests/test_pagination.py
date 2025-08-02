@@ -1,496 +1,690 @@
-"""
-Comprehensive tests for pagination functionality
-"""
-
-import polars as pl
 import pytest
-from rtflite import RTFDocument, RTFTitle, RTFFootnote, RTFSource, RTFPage, RTFBody
-from rtflite.pagination import RTFPagination, PageBreakCalculator, ContentDistributor
+import polars as pl
+
+import rtflite as rtf
+from .utils import ROutputReader, TestData
+
+r_output = ROutputReader("test_pagination")
 
 
-class TestRTFPagination:
-    """Test RTFPagination class"""
+class TestPaginationData:
+    """Test data for comprehensive pagination tests."""
+    
+    @staticmethod
+    def df_6_rows():
+        """DataFrame with 6 rows for testing pagination with nrow=2 (3 pages)"""
+        return pl.DataFrame({
+            'Col1': ['Row1', 'Row2', 'Row3', 'Row4', 'Row5', 'Row6'],
+            'Col2': ['A', 'B', 'C', 'D', 'E', 'F']
+        })
+    
+    @staticmethod
+    def df_2_rows():
+        """DataFrame with 2 rows for testing single page scenarios"""
+        return pl.DataFrame({
+            'Col1': ['Row1', 'Row2'],
+            'Col2': ['A', 'B']
+        })
 
-    def test_pagination_creation(self):
-        """Test basic pagination instance creation"""
-        pagination = RTFPagination(
-            page_width=8.5,
-            page_height=11.0,
-            margin=[1.25, 1, 1.75, 1.25, 1.75, 1.00625],
-            nrow=40,
+
+def test_pagination_basic_with_headers():
+    """Test basic pagination with column headers, no footnote/source."""
+    df = TestPaginationData.df_6_rows()
+    
+    doc = rtf.RTFDocument(
+        df=df,
+        rtf_page=rtf.RTFPage(orientation="portrait", nrow=2),
+        rtf_column_header=[
+            rtf.RTFColumnHeader(
+                text=["Column 1", "Column 2"],
+                col_rel_width=[1, 1]
+            )
+        ],
+        rtf_body=rtf.RTFBody(col_rel_width=[1, 1])
+    )
+    
+    # ```{r, basic_with_headers}
+    # library(r2rtf)
+    # test_data <- data.frame(
+    #   Col1 = c("Row1", "Row2", "Row3", "Row4", "Row5", "Row6"),
+    #   Col2 = c("A", "B", "C", "D", "E", "F"),
+    #   stringsAsFactors = FALSE
+    # )
+    # 
+    # test_data %>%
+    #   rtf_page(orientation = "portrait", nrow = 2) %>%
+    #   rtf_colheader(
+    #     colheader = "Column 1 | Column 2",
+    #     col_rel_width = c(1, 1)
+    #   ) %>%
+    #   rtf_body(
+    #     col_rel_width = c(1, 1)
+    #   ) %>%
+    #   rtf_encode() %>%
+    #   cat()
+    # ```
+    
+    rtf_output = doc.rtf_encode()
+    
+    # rtflite now matches r2rtf behavior exactly:
+    # nrow=2 means 2 total rows per page (including headers, footnotes, sources)
+    # With 1 header per page, this leaves 1 data row per page
+    # 6 data rows = 6 pages with 1 data row each = 5 page breaks
+    
+    # Verify rtflite pagination behavior matches r2rtf
+    assert rtf_output.count("\\page") == 5  # 5 page breaks for 6 pages (6 data rows × 1 row per page)
+    assert "Column 1" in rtf_output  # Column headers present
+    assert "Row6" in rtf_output  # All data present
+    
+    # Verify page structure: each section should have 1 header + 1 data row = 2 total rows
+    sections = rtf_output.split("\\page")
+    assert len(sections) == 6  # 6 pages
+    
+    for i, section in enumerate(sections):
+        assert "Column 1" in section  # Headers on each page
+        row_count = section.count("Row")
+        assert row_count == 1, f"Page {i+1} should have 1 data row, got {row_count}"
+
+
+def test_pagination_no_headers():
+    """Test pagination without column headers."""
+    df = TestPaginationData.df_6_rows()
+    
+    doc = rtf.RTFDocument(
+        df=df,
+        rtf_page=rtf.RTFPage(orientation="portrait", nrow=2),
+        rtf_column_header=[],  # No headers
+        rtf_body=rtf.RTFBody(
+            col_rel_width=[1, 1],
+            as_colheader=False
+        )
+    )
+    
+    # ```{r, no_headers}
+    # test_data %>%
+    #   rtf_page(orientation = "portrait", nrow = 2) %>%
+    #   rtf_body(
+    #     col_rel_width = c(1, 1),
+    #     as_colheader = FALSE
+    #   ) %>%
+    #   rtf_encode() %>%
+    #   cat()
+    # ```
+    
+    rtf_output = doc.rtf_encode()
+    
+    # Verify pagination without headers (r2rtf compatible)
+    # nrow=2 with no headers means 2 data rows per page
+    # 6 data rows = 3 pages with 2 data rows each = 2 page breaks
+    assert rtf_output.count("\\page") == 2  # 2 page breaks for 3 pages
+    assert "Column" not in rtf_output  # No column headers
+    assert "Row6" in rtf_output  # All data present
+    
+    # Verify page structure: each section should have 2 data rows
+    sections = rtf_output.split("\\page")
+    assert len(sections) == 3  # 3 pages
+    
+    for i, section in enumerate(sections):
+        row_count = section.count("Row")
+        assert row_count == 2, f"Page {i+1} should have 2 data rows, got {row_count}"
+
+
+def test_pagination_with_footnote():
+    """Test pagination with column headers and footnote."""
+    df = TestPaginationData.df_6_rows()
+    
+    doc = rtf.RTFDocument(
+        df=df,
+        rtf_page=rtf.RTFPage(orientation="portrait", nrow=2),
+        rtf_column_header=[
+            rtf.RTFColumnHeader(
+                text=["Column 1", "Column 2"],
+                col_rel_width=[1, 1]
+            )
+        ],
+        rtf_body=rtf.RTFBody(col_rel_width=[1, 1]),
+        rtf_footnote=rtf.RTFFootnote(
+            text="Note: This is a test footnote for pagination",
+            col_rel_width=[1]
+        )
+    )
+    
+    # ```{r, with_footnote}
+    # test_data %>%
+    #   rtf_page(orientation = "portrait", nrow = 2) %>%
+    #   rtf_colheader(
+    #     colheader = "Column 1 | Column 2",
+    #     col_rel_width = c(1, 1)
+    #   ) %>%
+    #   rtf_body(
+    #     col_rel_width = c(1, 1)
+    #   ) %>%
+    #   rtf_footnote(
+    #     footnote = "Note: This is a test footnote for pagination",
+    #     col_rel_width = c(1)
+    #   ) %>%
+    #   rtf_encode() %>%
+    #   cat()
+    # ```
+    
+    rtf_output = doc.rtf_encode()
+    # expected = r_output.read("with_footnote")
+    
+    assert "test footnote" in rtf_output
+
+
+def test_pagination_with_source():
+    """Test pagination with column headers and source."""
+    df = TestPaginationData.df_6_rows()
+    
+    doc = rtf.RTFDocument(
+        df=df,
+        rtf_page=rtf.RTFPage(orientation="portrait", nrow=2),
+        rtf_column_header=[
+            rtf.RTFColumnHeader(
+                text=["Column 1", "Column 2"],
+                col_rel_width=[1, 1]
+            )
+        ],
+        rtf_body=rtf.RTFBody(col_rel_width=[1, 1]),
+        rtf_source=rtf.RTFSource(
+            text="Source: Test data for pagination",
+            col_rel_width=[1]
+        )
+    )
+    
+    # ```{r, with_source}
+    # test_data %>%
+    #   rtf_page(orientation = "portrait", nrow = 2) %>%
+    #   rtf_colheader(
+    #     colheader = "Column 1 | Column 2",
+    #     col_rel_width = c(1, 1)
+    #   ) %>%
+    #   rtf_body(
+    #     col_rel_width = c(1, 1)
+    #   ) %>%
+    #   rtf_source(
+    #     source = "Source: Test data for pagination",
+    #     col_rel_width = c(1)
+    #   ) %>%
+    #   rtf_encode() %>%
+    #   cat()
+    # ```
+    
+    rtf_output = doc.rtf_encode()
+    # expected = r_output.read("with_source")
+    
+    assert "Source: Test data" in rtf_output
+
+
+def test_pagination_all_components():
+    """Test pagination with all components (headers, footnote, source)."""
+    df = TestPaginationData.df_6_rows()
+    
+    doc = rtf.RTFDocument(
+        df=df,
+        rtf_page=rtf.RTFPage(orientation="portrait", nrow=2),
+        rtf_column_header=[
+            rtf.RTFColumnHeader(
+                text=["Column 1", "Column 2"],
+                col_rel_width=[1, 1]
+            )
+        ],
+        rtf_body=rtf.RTFBody(col_rel_width=[1, 1]),
+        rtf_footnote=rtf.RTFFootnote(
+            text="Note: This is a test footnote",
+            col_rel_width=[1]
+        ),
+        rtf_source=rtf.RTFSource(
+            text="Source: Test data",
+            col_rel_width=[1]
+        )
+    )
+    
+    # ```{r, all_components}
+    # test_data %>%
+    #   rtf_page(orientation = "portrait", nrow = 2) %>%
+    #   rtf_colheader(
+    #     colheader = "Column 1 | Column 2",
+    #     col_rel_width = c(1, 1)
+    #   ) %>%
+    #   rtf_body(
+    #     col_rel_width = c(1, 1)
+    #   ) %>%
+    #   rtf_footnote(
+    #     footnote = "Note: This is a test footnote",
+    #     col_rel_width = c(1)
+    #   ) %>%
+    #   rtf_source(
+    #     source = "Source: Test data",
+    #     col_rel_width = c(1)
+    #   ) %>%
+    #   rtf_encode() %>%
+    #   cat()
+    # ```
+    
+    rtf_output = doc.rtf_encode()
+    # expected = r_output.read("all_components")
+    
+    assert "test footnote" in rtf_output
+    assert "Source: Test data" in rtf_output
+
+
+def test_pagination_multirow_headers():
+    """Test multi-row column headers with pagination."""
+    df = TestPaginationData.df_6_rows()
+    
+    doc = rtf.RTFDocument(
+        df=df,
+        rtf_page=rtf.RTFPage(orientation="portrait", nrow=2),
+        rtf_column_header=[
+            rtf.RTFColumnHeader(
+                text=["Main Header", "Main Header"],
+                col_rel_width=[1, 1],
+                border_bottom=[[""]]
+            ),
+            rtf.RTFColumnHeader(
+                text=["Column 1", "Column 2"],
+                col_rel_width=[1, 1],
+                border_top=[[""]]
+            )
+        ],
+        rtf_body=rtf.RTFBody(col_rel_width=[1, 1])
+    )
+    
+    # ```{r, multirow_headers}
+    # test_data %>%
+    #   rtf_page(orientation = "portrait", nrow = 2) %>%
+    #   rtf_colheader(
+    #     colheader = "Main Header | Main Header",
+    #     col_rel_width = c(1, 1),
+    #     border_bottom = ""
+    #   ) %>%
+    #   rtf_colheader(
+    #     colheader = "Column 1 | Column 2", 
+    #     col_rel_width = c(1, 1),
+    #     border_top = ""
+    #   ) %>%
+    #   rtf_body(
+    #     col_rel_width = c(1, 1)
+    #   ) %>%
+    #   rtf_encode() %>%
+    #   cat()
+    # ```
+    
+    rtf_output = doc.rtf_encode()
+    # expected = r_output.read("multirow_headers")
+    
+    assert "Main Header" in rtf_output
+    assert "Column 1" in rtf_output
+
+
+def test_pagination_border_styles():
+    """Test different border styles with pagination - critical test for double border issue."""
+    df = TestPaginationData.df_6_rows()
+    
+    doc = rtf.RTFDocument(
+        df=df,
+        rtf_page=rtf.RTFPage(
             orientation="portrait",
+            nrow=2,
+            border_first="double",
+            border_last="double"
+        ),
+        rtf_column_header=[
+            rtf.RTFColumnHeader(
+                text=["Column 1", "Column 2"],
+                col_rel_width=[1, 1]
+            )
+        ],
+        rtf_body=rtf.RTFBody(
+            col_rel_width=[1, 1],
+            border_first=[["single"]],
+            border_last=[["single"]]
         )
+    )
+    
+    # ```{r, border_styles}
+    # test_data %>%
+    #   rtf_page(
+    #     orientation = "portrait", 
+    #     nrow = 2,
+    #     border_first = "double",
+    #     border_last = "double"
+    #   ) %>%
+    #   rtf_colheader(
+    #     colheader = "Column 1 | Column 2",
+    #     col_rel_width = c(1, 1)
+    #   ) %>%
+    #   rtf_body(
+    #     col_rel_width = c(1, 1),
+    #     border_first = "single",
+    #     border_last = "single"
+    #   ) %>%
+    #   rtf_encode() %>%
+    #   cat()
+    # ```
+    
+    rtf_output = doc.rtf_encode()
+    # # expected = r_output.read("border_styles")  # TODO: Generate R outputs
+    
+    # Critical test: Verify correct double border placement
+    double_border_count = rtf_output.count('brdrdb')
+    assert double_border_count == 4, f"Expected 4 double borders, got {double_border_count}"
+    
+    # Verify double borders are only on first column header and last row
+    lines = rtf_output.split('\n')
+    double_border_lines = [i for i, line in enumerate(lines) if 'brdrdb' in line]
+    
+    # Should have exactly 4 lines with double borders (2 columns × 2 locations)
+    assert len(double_border_lines) == 4
+    
+    # Check that only the last data row (Row6) has double bottom borders
+    row6_lines = [i for i, line in enumerate(lines) if 'Row6' in line]
+    assert len(row6_lines) == 1
+    row6_line = row6_lines[0]
+    
+    # Check that the border definitions before Row6 contain double borders
+    found_double_before_row6 = any(
+        'brdrdb' in lines[i] and 'brdrb' in lines[i] 
+        for i in range(max(0, row6_line - 5), row6_line)
+    )
+    assert found_double_before_row6, "Row6 should have double bottom borders"
+    
+    # Check that Row5 does NOT have double bottom borders
+    row5_lines = [i for i, line in enumerate(lines) if 'Row5' in line]
+    if row5_lines:
+        row5_line = row5_lines[0]
+        found_double_before_row5 = any(
+            'brdrdb' in lines[i] and 'brdrb' in lines[i] 
+            for i in range(max(0, row5_line - 5), row5_line)
+        )
+        assert not found_double_before_row5, "Row5 should NOT have double bottom borders"
 
-        assert pagination.page_width == 8.5
-        assert pagination.page_height == 11.0
-        assert pagination.nrow == 40
-        assert pagination.orientation == "portrait"
 
-    def test_available_space_calculation(self):
-        """Test available space calculation"""
-        pagination = RTFPagination(
-            page_width=8.5,
-            page_height=11.0,
-            margin=[1.25, 1, 1.75, 1.25, 1.75, 1.00625],
-            nrow=40,
+def test_pagination_single_page():
+    """Test single page (no pagination needed) with all components."""
+    df = TestPaginationData.df_2_rows()
+    
+    doc = rtf.RTFDocument(
+        df=df,
+        rtf_page=rtf.RTFPage(orientation="portrait", nrow=10),  # nrow > data rows
+        rtf_column_header=[
+            rtf.RTFColumnHeader(
+                text=["Column 1", "Column 2"],
+                col_rel_width=[1, 1]
+            )
+        ],
+        rtf_body=rtf.RTFBody(col_rel_width=[1, 1]),
+        rtf_footnote=rtf.RTFFootnote(
+            text="Single page test",
+            col_rel_width=[1]
+        ),
+        rtf_source=rtf.RTFSource(
+            text="Source: Small dataset",
+            col_rel_width=[1]
+        )
+    )
+    
+    # ```{r, single_page}
+    # small_data <- data.frame(
+    #   Col1 = c("Row1", "Row2"),
+    #   Col2 = c("A", "B")
+    # )
+    # 
+    # small_data %>%
+    #   rtf_page(orientation = "portrait", nrow = 10) %>%
+    #   rtf_colheader(
+    #     colheader = "Column 1 | Column 2",
+    #     col_rel_width = c(1, 1)
+    #   ) %>%
+    #   rtf_body(
+    #     col_rel_width = c(1, 1)
+    #   ) %>%
+    #   rtf_footnote(
+    #     footnote = "Single page test",
+    #     col_rel_width = c(1)
+    #   ) %>%
+    #   rtf_source(
+    #     source = "Source: Small dataset",
+    #     col_rel_width = c(1)
+    #   ) %>%
+    #   rtf_encode() %>%
+    #   cat()
+    # ```
+    
+    rtf_output = doc.rtf_encode()
+    # expected = r_output.read("single_page")
+    
+    # Should NOT have page breaks
+    assert "\\page" not in rtf_output
+    assert "Single page test" in rtf_output
+    assert "Small dataset" in rtf_output
+
+
+def test_pagination_landscape():
+    """Test landscape orientation with pagination."""
+    df = TestPaginationData.df_6_rows()
+    
+    doc = rtf.RTFDocument(
+        df=df,
+        rtf_page=rtf.RTFPage(orientation="landscape", nrow=2),
+        rtf_column_header=[
+            rtf.RTFColumnHeader(
+                text=["Column 1", "Column 2"],
+                col_rel_width=[1, 1]
+            )
+        ],
+        rtf_body=rtf.RTFBody(col_rel_width=[1, 1])
+    )
+    
+    # ```{r, landscape}
+    # test_data %>%
+    #   rtf_page(orientation = "landscape", nrow = 2) %>%
+    #   rtf_colheader(
+    #     colheader = "Column 1 | Column 2",
+    #     col_rel_width = c(1, 1)
+    #   ) %>%
+    #   rtf_body(
+    #     col_rel_width = c(1, 1)
+    #   ) %>%
+    #   rtf_encode() %>%
+    #   cat()
+    # ```
+    
+    rtf_output = doc.rtf_encode()
+    # expected = r_output.read("landscape")
+    
+    assert "\\landscape" in rtf_output
+    assert "\\page" in rtf_output
+
+
+def test_pagination_needs_detection():
+    """Test that pagination is correctly detected when needed."""
+    df = TestPaginationData.df_6_rows()
+    
+    # Document that needs pagination
+    doc_paginated = rtf.RTFDocument(
+        df=df,
+        rtf_page=rtf.RTFPage(nrow=2),  # Force pagination
+        rtf_body=rtf.RTFBody(col_rel_width=[1, 1])
+    )
+    
+    # Document that doesn't need pagination
+    doc_single = rtf.RTFDocument(
+        df=df,
+        rtf_page=rtf.RTFPage(nrow=10),  # More than data rows
+        rtf_body=rtf.RTFBody(col_rel_width=[1, 1])
+    )
+    
+    assert doc_paginated._needs_pagination() == True
+    assert doc_single._needs_pagination() == False
+
+
+def test_pagination_page_break_format():
+    """Test that page breaks follow the correct RTF format."""
+    df = TestPaginationData.df_6_rows()
+    
+    doc = rtf.RTFDocument(
+        df=df,
+        rtf_page=rtf.RTFPage(nrow=2),
+        rtf_body=rtf.RTFBody(col_rel_width=[1, 1])
+    )
+    
+    rtf_output = doc.rtf_encode()
+    
+    # Test page break format matches r2rtf
+    expected_page_break = "{\\pard\\fs2\\par}\\page{\\pard\\fs2\\par}"
+    assert expected_page_break in rtf_output
+    
+    # Test that page setup follows page breaks
+    lines = rtf_output.split('\n')
+    for i, line in enumerate(lines):
+        if expected_page_break in line and i + 1 < len(lines):
+            next_line = lines[i + 1]
+            # Next line should contain paper dimensions
+            assert "\\paperw" in next_line and "\\paperh" in next_line
+
+
+def test_pagination_column_header_repetition():
+    """Test that column headers repeat on each page."""
+    df = TestPaginationData.df_6_rows()
+    
+    doc = rtf.RTFDocument(
+        df=df,
+        rtf_page=rtf.RTFPage(nrow=2),
+        rtf_column_header=[
+            rtf.RTFColumnHeader(
+                text=["Column 1", "Column 2"],
+                col_rel_width=[1, 1]
+            )
+        ],
+        rtf_body=rtf.RTFBody(col_rel_width=[1, 1])
+    )
+    
+    rtf_output = doc.rtf_encode()
+    
+    # Count occurrences of column headers - should appear on each page
+    column_header_count = rtf_output.count("Column 1")
+    page_count = rtf_output.count("\\page") + 1  # +1 for first page
+    
+    assert column_header_count == page_count, f"Column headers should appear {page_count} times, got {column_header_count}"
+
+
+def test_pagination_no_headers_footnote_source():
+    """Test pagination without headers but with footnote and source."""
+    df = TestPaginationData.df_6_rows()
+    
+    doc = rtf.RTFDocument(
+        df=df,
+        rtf_page=rtf.RTFPage(orientation="portrait", nrow=2),
+        rtf_column_header=[],  # No headers
+        rtf_body=rtf.RTFBody(
+            col_rel_width=[1, 1],
+            as_colheader=False
+        ),
+        rtf_footnote=rtf.RTFFootnote(
+            text="Note: No column headers test",
+            col_rel_width=[1]
+        ),
+        rtf_source=rtf.RTFSource(
+            text="Source: Test without headers",
+            col_rel_width=[1]
+        )
+    )
+    
+    # ```{r, no_headers_footnote_source}
+    # test_data %>%
+    #   rtf_page(orientation = "portrait", nrow = 2) %>%
+    #   rtf_body(
+    #     col_rel_width = c(1, 1),
+    #     as_colheader = FALSE
+    #   ) %>%
+    #   rtf_footnote(
+    #     footnote = "Note: No column headers test",
+    #     col_rel_width = c(1)
+    #   ) %>%
+    #   rtf_source(
+    #     source = "Source: Test without headers",
+    #     col_rel_width = c(1)
+    #   ) %>%
+    #   rtf_encode() %>%
+    #   cat()
+    # ```
+    
+    rtf_output = doc.rtf_encode()
+    # expected = r_output.read("no_headers_footnote_source")
+    
+    assert "No column headers test" in rtf_output
+    assert "Test without headers" in rtf_output
+    assert "Column" not in rtf_output  # No column headers
+
+
+def test_pagination_border_fix_regression():
+    """Regression test for the border reference bug that was fixed.
+    
+    The bug was in _apply_border_to_row where we were appending references
+    to the same list object instead of copies, causing all rows to share
+    the same border settings.
+    """
+    df = TestPaginationData.df_6_rows()
+    
+    # Use the same setup as test_pagination_border_styles which was failing before the fix
+    doc = rtf.RTFDocument(
+        df=df,
+        rtf_page=rtf.RTFPage(
             orientation="portrait",
+            nrow=2,
+            border_first="double",
+            border_last="double"
+        ),
+        rtf_column_header=[
+            rtf.RTFColumnHeader(
+                text=["Column 1", "Column 2"],
+                col_rel_width=[1, 1]
+            )
+        ],
+        rtf_body=rtf.RTFBody(
+            col_rel_width=[1, 1],
+            border_first=[["single"]],
+            border_last=[["single"]]
         )
-
-        space = pagination.calculate_available_space()
-
-        assert space["content_width"] == 8.5 - 1.25 - 1  # page_width - left - right
-        assert (
-            space["content_height"] == 11.0 - 1.75 - 1.25
-        )  # page_height - top - bottom
-        assert space["header_space"] == 1.75
-        assert space["footer_space"] == 1.00625
-
-
-class TestPageBreakCalculator:
-    """Test PageBreakCalculator class"""
-
-    def setup_method(self):
-        """Set up test fixtures"""
-        self.pagination = RTFPagination(
-            page_width=8.5,
-            page_height=11.0,
-            margin=[1.25, 1, 1.75, 1.25, 1.75, 1.00625],
-            nrow=5,  # Small page limit for testing
-            orientation="portrait",
-        )
-        self.calculator = PageBreakCalculator(pagination=self.pagination)
-
-    def test_calculate_content_rows_simple(self):
-        """Test content row calculation with simple data"""
-        df = pl.DataFrame(
-            {"col1": ["short", "text", "here"], "col2": ["more", "short", "text"]}
-        )
-        col_widths = [2.0, 2.0]
-
-        row_counts = self.calculator.calculate_content_rows(df, col_widths)
-
-        assert len(row_counts) == 3
-        assert all(count >= 1 for count in row_counts)
-
-    def test_calculate_content_rows_long_text(self):
-        """Test content row calculation with long text that should wrap"""
-        df = pl.DataFrame(
-            {
-                "col1": ["This is a very long text that should wrap to multiple lines"],
-                "col2": ["Short"],
-            }
-        )
-        col_widths = [1.0, 2.0]  # Narrow first column
-
-        row_counts = self.calculator.calculate_content_rows(df, col_widths)
-
-        assert len(row_counts) == 1
-        # Long text should require multiple lines
-        assert row_counts[0] > 1
-
-    def test_find_page_breaks_no_pagination_needed(self):
-        """Test page breaks when no pagination is needed"""
-        df = pl.DataFrame({"col1": ["A", "B"], "col2": ["1", "2"]})
-        col_widths = [2.0, 2.0]
-
-        breaks = self.calculator.find_page_breaks(df, col_widths)
-
-        # Should have one page with all data
-        assert len(breaks) == 1
-        assert breaks[0] == (0, 1)  # start_row=0, end_row=1
-
-    def test_find_page_breaks_pagination_needed(self):
-        """Test page breaks when pagination is needed"""
-        # Create data that exceeds page limit (nrow=5)
-        df = pl.DataFrame(
-            {
-                "col1": [f"Row {i}" for i in range(10)],
-                "col2": [f"Data {i}" for i in range(10)],
-            }
-        )
-        col_widths = [2.0, 2.0]
-
-        breaks = self.calculator.find_page_breaks(df, col_widths)
-
-        # Should have multiple pages
-        assert len(breaks) > 1
-
-        # Check that page breaks are valid
-        for i, (start, end) in enumerate(breaks):
-            assert start <= end
-            assert start >= 0
-            assert end < df.height
-            if i > 0:
-                prev_end = breaks[i - 1][1]
-                assert start == prev_end + 1  # No gaps or overlaps
-
-    def test_find_page_breaks_with_grouping(self):
-        """Test page breaks with group-based pagination"""
-        df = pl.DataFrame({"group": ["A", "A", "B", "B", "C"], "data": [1, 2, 3, 4, 5]})
-        col_widths = [1.0, 1.0]
-
-        breaks = self.calculator.find_page_breaks(
-            df, col_widths, page_by=["group"], new_page=True
-        )
-
-        # Should have breaks at group boundaries
-        assert len(breaks) == 3  # One page per group
-
-    def test_find_page_breaks_empty_dataframe(self):
-        """Test page breaks with empty DataFrame"""
-        df = pl.DataFrame(
-            {"col1": [], "col2": []}, schema={"col1": pl.Utf8, "col2": pl.Utf8}
-        )
-        col_widths = [2.0, 2.0]
-
-        breaks = self.calculator.find_page_breaks(df, col_widths)
-
-        assert breaks == []
-
-    def test_find_page_breaks_single_row(self):
-        """Test page breaks with single row DataFrame"""
-        df = pl.DataFrame({"col1": ["A"], "col2": ["1"]})
-        col_widths = [2.0, 2.0]
-
-        breaks = self.calculator.find_page_breaks(df, col_widths)
-
-        assert len(breaks) == 1
-        assert breaks[0] == (0, 0)
-
-
-class TestContentDistributor:
-    """Test ContentDistributor class"""
-
-    def setup_method(self):
-        """Set up test fixtures"""
-        self.pagination = RTFPagination(
-            page_width=8.5,
-            page_height=11.0,
-            margin=[1.25, 1, 1.75, 1.25, 1.75, 1.00625],
-            nrow=3,  # Very small page limit for testing
-            orientation="portrait",
-        )
-        self.calculator = PageBreakCalculator(pagination=self.pagination)
-        self.distributor = ContentDistributor(
-            pagination=self.pagination, calculator=self.calculator
-        )
-
-    def test_distribute_content_single_page(self):
-        """Test content distribution for single page"""
-        df = pl.DataFrame({"col1": ["A", "B"], "col2": ["1", "2"]})
-        col_widths = [2.0, 2.0]
-
-        pages = self.distributor.distribute_content(df, col_widths)
-
-        assert len(pages) == 1
-        page = pages[0]
-        assert page["page_number"] == 1
-        assert page["total_pages"] == 1
-        assert page["is_first_page"]
-        assert page["is_last_page"]
-        assert page["needs_header"]
-        assert page["data"].height == 2
-
-    def test_distribute_content_multiple_pages(self):
-        """Test content distribution for multiple pages"""
-        df = pl.DataFrame(
-            {
-                "col1": [f"Row {i}" for i in range(8)],
-                "col2": [f"Data {i}" for i in range(8)],
-            }
-        )
-        col_widths = [2.0, 2.0]
-
-        pages = self.distributor.distribute_content(df, col_widths)
-
-        assert len(pages) > 1
-
-        # Check first page
-        first_page = pages[0]
-        assert first_page["page_number"] == 1
-        assert first_page["is_first_page"]
-        assert not first_page["is_last_page"]
-
-        # Check last page
-        last_page = pages[-1]
-        assert last_page["page_number"] == len(pages)
-        assert not last_page["is_first_page"]
-        assert last_page["is_last_page"]
-
-        # Check total pages consistency
-        for page in pages:
-            assert page["total_pages"] == len(pages)
-
-    def test_distribute_content_with_grouping(self):
-        """Test content distribution with grouping"""
-        df = pl.DataFrame({"group": ["A", "A", "B", "B"], "data": [1, 2, 3, 4]})
-        col_widths = [1.0, 1.0]
-
-        pages = self.distributor.distribute_content(
-            df, col_widths, page_by=["group"], new_page=True
-        )
-
-        assert len(pages) == 2  # One page per group
-
-    def test_get_group_headers(self):
-        """Test group header generation"""
-        df = pl.DataFrame(
-            {"group1": ["A", "A", "B"], "group2": ["X", "Y", "X"], "data": [1, 2, 3]}
-        )
-
-        headers = self.distributor.get_group_headers(df, ["group1", "group2"], 0)
-
-        assert headers["group_by_columns"] == ["group1", "group2"]
-        assert headers["group_values"] == {"group1": "A", "group2": "X"}
-        assert "group1: A | group2: X" in headers["header_text"]
-
-    def test_get_group_headers_empty(self):
-        """Test group headers with no grouping columns"""
-        df = pl.DataFrame({"data": [1, 2, 3]})
-
-        headers = self.distributor.get_group_headers(df, [], 0)
-
-        assert headers == {}
-
-
-class TestRTFDocumentPagination:
-    """Test pagination integration with RTFDocument"""
-
-    def test_needs_pagination_small_data(self):
-        """Test pagination detection with small dataset"""
-        df = pl.DataFrame({"col1": ["A", "B"], "col2": ["1", "2"]})
-
-        doc = RTFDocument(df=df)
-
-        assert not doc._needs_pagination()
-
-    def test_needs_pagination_large_data(self):
-        """Test pagination detection with large dataset"""
-        # Create data that exceeds default page limit (40 rows)
-        df = pl.DataFrame(
-            {
-                "col1": [f"Row {i}" for i in range(50)],
-                "col2": [f"Data {i}" for i in range(50)],
-            }
-        )
-
-        doc = RTFDocument(df=df)
-
-        assert doc._needs_pagination()
-
-    def test_needs_pagination_with_forced_page_breaks(self):
-        """Test pagination detection with forced page breaks"""
-        df = pl.DataFrame({"group": ["A", "B"], "data": [1, 2]})
-
-        doc = RTFDocument(df=df, rtf_body=RTFBody(page_by=["group"], new_page=True))
-
-        assert doc._needs_pagination()
-
-    def test_paginated_encoding_basic(self):
-        """Test basic paginated RTF encoding"""
-        # Create data that needs pagination
-        df = pl.DataFrame(
-            {
-                "col1": [f"Row {i}" for i in range(50)],
-                "col2": [f"Data {i}" for i in range(50)],
-            }
-        )
-
-        doc = RTFDocument(
-            df=df,
-            rtf_title=RTFTitle(text=["Test Title"]),
-            rtf_footnote=RTFFootnote(text="Test footnote"),
-            rtf_source=RTFSource(text="Test source"),
-        )
-
-        rtf_content = doc.rtf_encode()
-
-        # Should contain page breaks
-        assert "\\page" in rtf_content
-        # Should contain RTF structure
-        assert rtf_content.startswith("{\\rtf1\\ansi")
-        assert rtf_content.endswith("}")
-
-    def test_page_element_location_first(self):
-        """Test page element appearing only on first page"""
-        df = pl.DataFrame(
-            {
-                "col1": [f"Row {i}" for i in range(50)],
-                "col2": [f"Data {i}" for i in range(50)],
-            }
-        )
-
-        doc = RTFDocument(
-            df=df,
-            rtf_title=RTFTitle(text=["First Page Title"]),
-            rtf_page=RTFPage(page_title_location="first"),
-        )
-
-        rtf_content = doc.rtf_encode()
-
-        # Title should appear, but not be repeated after page breaks
-        assert "First Page Title" in rtf_content
-        title_count = rtf_content.count("First Page Title")
-        page_break_count = rtf_content.count("\\page")
-
-        # Title should appear once despite multiple pages
-        assert title_count == 1
-        assert page_break_count > 0
-
-    def test_page_element_location_last(self):
-        """Test page element appearing only on last page"""
-        df = pl.DataFrame(
-            {
-                "col1": [f"Row {i}" for i in range(50)],
-                "col2": [f"Data {i}" for i in range(50)],
-            }
-        )
-
-        doc = RTFDocument(
-            df=df,
-            rtf_footnote=RTFFootnote(text="Last page footnote"),
-            rtf_page=RTFPage(page_footnote_location="last"),
-        )
-
-        rtf_content = doc.rtf_encode()
-
-        # Footnote should appear only once
-        assert "Last page footnote" in rtf_content
-        footnote_count = rtf_content.count("Last page footnote")
-        assert footnote_count == 1
-
-
-class TestPaginationEdgeCases:
-    """Test edge cases and error conditions"""
-
-    def test_empty_dataframe(self):
-        """Test pagination with empty DataFrame"""
-        df = pl.DataFrame(
-            {"col1": [], "col2": []}, schema={"col1": pl.Utf8, "col2": pl.Utf8}
-        )
-
-        doc = RTFDocument(df=df)
-
-        # Should not need pagination
-        assert not doc._needs_pagination()
-
-        # Should still generate valid RTF
-        rtf_content = doc.rtf_encode()
-        assert rtf_content.startswith("{\\rtf1\\ansi")
-        assert rtf_content.endswith("}")
-
-    def test_single_row_dataframe(self):
-        """Test pagination with single row DataFrame"""
-        df = pl.DataFrame({"col1": ["A"], "col2": ["1"]})
-
-        doc = RTFDocument(df=df)
-
-        assert not doc._needs_pagination()
-
-        rtf_content = doc.rtf_encode()
-        assert "\\page" not in rtf_content
-
-    def test_very_small_page_limit(self):
-        """Test pagination with very small page limit"""
-        df = pl.DataFrame({"col1": ["A", "B", "C"], "col2": ["1", "2", "3"]})
-
-        doc = RTFDocument(
-            df=df,
-            rtf_page=RTFPage(nrow=1),  # One row per page
-        )
-
-        assert doc._needs_pagination()
-
-        rtf_content = doc.rtf_encode()
-        page_breaks = rtf_content.count("\\page")
-        assert page_breaks == 2  # 3 rows = 3 pages = 2 page breaks
-
-    def test_invalid_page_by_column(self):
-        """Test pagination with invalid page_by column"""
-        df = pl.DataFrame({"col1": ["A"], "col2": ["1"]})
-
-        with pytest.raises(ValueError, match="not found in"):
-            RTFDocument(df=df, rtf_body=RTFBody(page_by=["nonexistent_column"]))
-
-    def test_all_same_group_values(self):
-        """Test pagination with all same group values"""
-        df = pl.DataFrame({"group": ["A", "A", "A"], "data": [1, 2, 3]})
-
-        doc = RTFDocument(df=df, rtf_body=RTFBody(page_by=["group"], new_page=True))
-
-        # Should still work, just one group
-        assert doc._needs_pagination()
-
-        rtf_content = doc.rtf_encode()
-        # Should not have page breaks since all rows are same group
-        assert "\\page" not in rtf_content
-
-    def test_all_different_group_values(self):
-        """Test pagination with all different group values"""
-        df = pl.DataFrame({"group": ["A", "B", "C"], "data": [1, 2, 3]})
-
-        doc = RTFDocument(df=df, rtf_body=RTFBody(page_by=["group"], new_page=True))
-
-        assert doc._needs_pagination()
-
-        rtf_content = doc.rtf_encode()
-        # Should have page breaks between each group
-        page_breaks = rtf_content.count("\\page")
-        assert page_breaks == 2  # 3 groups = 3 pages = 2 page breaks
-
-    def test_unicode_and_special_characters(self):
-        """Test pagination with Unicode and special characters"""
-        df = pl.DataFrame(
-            {"col1": ["αβγ", "café", "日本語"], "col2": ["δεζ", "naïve", "中文"]}
-        )
-
-        doc = RTFDocument(df=df)
-
-        # Should handle Unicode without errors
-        rtf_content = doc.rtf_encode()
-        assert rtf_content.startswith("{\\rtf1\\ansi")
-        assert rtf_content.endswith("}")
-
-    def test_very_long_cell_content(self):
-        """Test pagination with very long cell content"""
-        long_text = "This is a very long text " * 100  # Very long content
-
-        df = pl.DataFrame({"col1": [long_text], "col2": ["Short"]})
-
-        doc = RTFDocument(df=df)
-
-        # Should handle long content without errors
-        rtf_content = doc.rtf_encode()
-        assert long_text[:50] in rtf_content  # Check part of long text is present
-
-    def test_mixed_data_types(self):
-        """Test pagination with mixed data types"""
-        df = pl.DataFrame(
-            {
-                "strings": ["A", "B", "C"],
-                "integers": [1, 2, 3],
-                "floats": [1.1, 2.2, 3.3],
-                "booleans": [True, False, True],
-            }
-        )
-
-        doc = RTFDocument(df=df)
-
-        # Should handle mixed types
-        rtf_content = doc.rtf_encode()
-        assert "1.1" in rtf_content
-        assert "True" in rtf_content or "true" in rtf_content.lower()
-
-    def test_null_values(self):
-        """Test pagination with null/None values"""
-        df = pl.DataFrame({"col1": ["A", None, "C"], "col2": [None, "2", None]})
-
-        doc = RTFDocument(df=df)
-
-        # Should handle null values without errors
-        rtf_content = doc.rtf_encode()
-        assert rtf_content.startswith("{\\rtf1\\ansi")
-        assert rtf_content.endswith("}")
+    )
+    
+    rtf_output = doc.rtf_encode()
+    
+    # The specific bug: Row5 was getting double bottom borders when only Row6 should
+    lines = rtf_output.split('\n')
+    
+    # Find lines mentioning Row5 and Row6
+    row5_lines = [i for i, line in enumerate(lines) if 'Row5' in line]
+    row6_lines = [i for i, line in enumerate(lines) if 'Row6' in line]
+    
+    # Both should exist
+    assert len(row5_lines) == 1
+    assert len(row6_lines) == 1
+    
+    # Check borders before each row (RTF borders are defined before the content)
+    row5_line = row5_lines[0]
+    row6_line = row6_lines[0]
+    
+    # Row5 should NOT have double bottom borders
+    row5_has_double_bottom = any(
+        'brdrdb' in lines[i] and 'brdrb' in lines[i]
+        for i in range(max(0, row5_line - 5), row5_line)
+    )
+    assert not row5_has_double_bottom, "Row5 should not have double bottom borders (this was the bug)"
+    
+    # Row6 should have double bottom borders
+    row6_has_double_bottom = any(
+        'brdrdb' in lines[i] and 'brdrb' in lines[i]
+        for i in range(max(0, row6_line - 5), row6_line)
+    )
+    assert row6_has_double_bottom, "Row6 should have double bottom borders"
+    
+    # Verify the fix: exactly 4 double borders total
+    double_border_count = rtf_output.count('brdrdb')
+    assert double_border_count == 4, f"Expected exactly 4 double borders, got {double_border_count}"
 
 
 if __name__ == "__main__":

@@ -152,8 +152,40 @@ class RTFDocument(BaseModel):
                     self._table_space + self.rtf_page_footer.text_space_after
                 )
 
+    def _calculate_additional_rows_per_page(self) -> int:
+        """Calculate additional rows needed per page for headers, footnotes, sources (r2rtf compatible)
+        
+        Returns:
+            Number of additional rows per page beyond data rows
+        """
+        additional_rows = 0
+        
+        # Count column headers (repeat on each page)
+        if self.rtf_column_header:
+            for header in self.rtf_column_header:
+                if header.text is not None:
+                    # Each header is typically 1 row, but could be multiline
+                    # For now, conservatively count 1 row per header
+                    additional_rows += 1
+        
+        # Count footnote rows (appears on pages based on page_footnote_location)
+        if self.rtf_footnote and self.rtf_footnote.text:
+            # Footnote is typically 1 row - for conservative estimate, assume it appears on each page
+            additional_rows += 1
+            
+        # Count source rows (appears on pages based on page_source_location)  
+        if self.rtf_source and self.rtf_source.text:
+            # Source is typically 1 row - for conservative estimate, assume it appears on each page
+            additional_rows += 1
+            
+        return additional_rows
+
     def _needs_pagination(self) -> bool:
-        """Check if document needs pagination based on content size and page limits"""
+        """Check if document needs pagination based on content size and page limits (r2rtf compatible)
+        
+        Now counts ALL rows including headers, footnotes, sources like r2rtf does.
+        In r2rtf, nrow includes headers, data, footnotes, sources - everything.
+        """
         if self.rtf_body.page_by and self.rtf_body.new_page:
             return True
 
@@ -170,13 +202,24 @@ class RTFDocument(BaseModel):
         col_total_width = self.rtf_page.col_width
         col_widths = Utils._col_widths(self.rtf_body.col_rel_width, col_total_width)
 
-        # Calculate rows needed for content
+        # Calculate rows needed for data content only
         content_rows = calculator.calculate_content_rows(
             self.df, col_widths, self.rtf_body
         )
 
-        total_rows = sum(content_rows)
-        return total_rows > self.rtf_page.nrow
+        # Calculate additional rows per page (headers, footnotes, sources)
+        additional_rows_per_page = self._calculate_additional_rows_per_page()
+        
+        # Calculate how many data rows can fit per page
+        data_rows = sum(content_rows)
+        available_data_rows_per_page = max(1, self.rtf_page.nrow - additional_rows_per_page)
+        
+        # If we can't fit even the additional components, we definitely need pagination
+        if additional_rows_per_page >= self.rtf_page.nrow:
+            return True
+            
+        # Check if data rows exceed what can fit on a single page
+        return data_rows > available_data_rows_per_page
 
     def _create_pagination_instance(self) -> tuple[RTFPagination, ContentDistributor]:
         """Create pagination and content distributor instances"""
@@ -580,7 +623,8 @@ class RTFDocument(BaseModel):
         """Encode body content with pagination support"""
         _, distributor = self._create_pagination_instance()
 
-        # Distribute content across pages
+        # Distribute content across pages (r2rtf compatible)
+        additional_rows = self._calculate_additional_rows_per_page()
         pages = distributor.distribute_content(
             df=df,
             col_widths=col_widths,
@@ -588,6 +632,7 @@ class RTFDocument(BaseModel):
             new_page=self.rtf_body.new_page,
             pageby_header=self.rtf_body.pageby_header,
             table_attrs=rtf_attrs,
+            additional_rows_per_page=additional_rows,
         )
 
         all_rows = []
@@ -631,6 +676,8 @@ class RTFDocument(BaseModel):
         col_total_width = self.rtf_page.col_width
         col_widths = Utils._col_widths(self.rtf_body.col_rel_width, col_total_width)
 
+        # Calculate additional rows per page for r2rtf compatibility
+        additional_rows = self._calculate_additional_rows_per_page()
         pages = distributor.distribute_content(
             df=self.df,
             col_widths=col_widths,
@@ -638,6 +685,7 @@ class RTFDocument(BaseModel):
             new_page=self.rtf_body.new_page,
             pageby_header=self.rtf_body.pageby_header,
             table_attrs=self.rtf_body,
+            additional_rows_per_page=additional_rows,
         )
 
         # Prepare border settings
