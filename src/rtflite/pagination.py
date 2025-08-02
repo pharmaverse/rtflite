@@ -138,10 +138,12 @@ class PageBreakCalculator(BaseModel):
         page_breaks = []
         current_page_start = 0
         current_page_rows = 0
-        
+
         # Calculate available rows for data (r2rtf compatible)
         # In r2rtf, nrow includes ALL rows (headers, data, footnotes, sources)
-        available_data_rows_per_page = max(1, self.pagination.nrow - additional_rows_per_page)
+        available_data_rows_per_page = max(
+            1, self.pagination.nrow - additional_rows_per_page
+        )
 
         for row_idx, row_height in enumerate(row_counts):
             # Check if adding this row would exceed page limit (accounting for additional rows)
