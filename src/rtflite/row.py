@@ -216,8 +216,9 @@ class TextContent(BaseModel):
             "≤": "\\leq ",
         }
 
+        text = self.text
         for char, rtf in rtf_chars.items():
-            text = self.text.replace(char, rtf)
+            text = text.replace(char, rtf)
 
         return text
 

@@ -200,7 +200,7 @@ class TextAttributes(BaseModel):
             return [v]
         return v
 
-    def _encode(self, text: Sequence[str], method: str) -> str:
+    def _encode_text(self, text: Sequence[str], method: str) -> str:
         """Convert the RTF title into RTF syntax using the Text class."""
 
         dim = [len(text), 1]

@@ -177,7 +177,7 @@ def test_text_attributes_encode():
 
     # Test paragraph encoding
     text = ["Test Title"]
-    result = attrs._encode(text, method="paragraph")
+    result = attrs._encode_text(text, method="paragraph")
     assert isinstance(result, list)
     assert len(result) == 1
     assert "\\b" in result[0]  # Bold format Red color
@@ -185,7 +185,7 @@ def test_text_attributes_encode():
 
     # Test line encoding
     text = ["Line 1", "Line 2"]
-    result = attrs._encode(text, method="line")
+    result = attrs._encode_text(text, method="line")
     assert isinstance(result, str)
     assert "\\line" in result
     assert "\\b" in result
@@ -193,7 +193,7 @@ def test_text_attributes_encode():
 
     # Test invalid method
     with pytest.raises(ValueError, match="Invalid method"):
-        attrs._encode(text, method="invalid")
+        attrs._encode_text(text, method="invalid")
 
 
 def test_rtf_footnote_as_table_true():

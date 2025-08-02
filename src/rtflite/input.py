@@ -308,7 +308,7 @@ class RTFFootnote(TableAttributes):
             "text_space": [[1]],
             "text_space_before": [[15]],
             "text_space_after": [[15]],
-            "text_hyphenation": [[False]],
+            "text_hyphenation": [[True]],
             "text_convert": [[True]],
         }
 
@@ -395,7 +395,7 @@ class RTFSource(TableAttributes):
             "text_space": [[1]],
             "text_space_before": [[15]],
             "text_space_after": [[15]],
-            "text_hyphenation": [[False]],
+            "text_hyphenation": [[True]],
             "text_convert": [[True]],
         }
 

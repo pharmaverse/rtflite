@@ -605,14 +605,14 @@ class RTFDocument(BaseModel):
         if not self.rtf_title or not self.rtf_title.text:
             return None
 
-        return self.rtf_title._encode(text=self.rtf_title.text, method=method)
+        return self.rtf_title._encode_text(text=self.rtf_title.text, method=method)
 
     def _rtf_subline_encode(self, method: str) -> str:
         """Convert the RTF subline into RTF syntax using the Text class."""
         if self.rtf_subline is None or not self.rtf_subline.text:
             return None
 
-        encode = self.rtf_subline._encode(text=self.rtf_subline.text, method=method)
+        encode = self.rtf_subline._encode_text(text=self.rtf_subline.text, method=method)
         return encode
 
     def _page_by(self) -> list[list[tuple[int, int, int]]]:
@@ -704,7 +704,7 @@ class RTFDocument(BaseModel):
 
         return output
 
-    def _rtf_footnote_encode(self, page_number: int = None) -> str:
+    def _rtf_footnote_encode(self, page_number: int = None) -> MutableSequence[str]:
         """Convert the RTF footnote into RTF syntax using the Text class."""
         rtf_attrs = self.rtf_footnote
 
@@ -721,14 +721,27 @@ class RTFDocument(BaseModel):
             rtf_attrs = rtf_attrs.model_copy()
             rtf_attrs.border_bottom = [[border_style]]
 
-        col_total_width = self.rtf_page.col_width
-        col_widths = Utils._col_widths(rtf_attrs.col_rel_width, col_total_width)
+        # Check if footnote should be rendered as table or paragraph
+        if hasattr(rtf_attrs, 'as_table') and not rtf_attrs.as_table:
+            # Render as paragraph (plain text)
+            if isinstance(rtf_attrs.text, list):
+                text_list = rtf_attrs.text
+            else:
+                text_list = [rtf_attrs.text] if rtf_attrs.text else []
+            
+            # Use TextAttributes._encode_text method directly for paragraph rendering
+            paragraphs = rtf_attrs._encode_text(text_list, method="paragraph")
+            return paragraphs
+        else:
+            # Render as table (default behavior)
+            col_total_width = self.rtf_page.col_width
+            col_widths = Utils._col_widths(rtf_attrs.col_rel_width, col_total_width)
 
-        # Create DataFrame from text string
-        df = pl.DataFrame([[rtf_attrs.text]])
-        return rtf_attrs._encode(df, col_widths)
+            # Create DataFrame from text string
+            df = pl.DataFrame([[rtf_attrs.text]])
+            return rtf_attrs._encode(df, col_widths)
 
-    def _rtf_source_encode(self, page_number: int = None) -> str:
+    def _rtf_source_encode(self, page_number: int = None) -> MutableSequence[str]:
         """Convert the RTF source into RTF syntax using the Text class."""
         rtf_attrs = self.rtf_source
 
@@ -745,12 +758,25 @@ class RTFDocument(BaseModel):
             rtf_attrs = rtf_attrs.model_copy()
             rtf_attrs.border_bottom = [[border_style]]
 
-        col_total_width = self.rtf_page.col_width
-        col_widths = Utils._col_widths(rtf_attrs.col_rel_width, col_total_width)
+        # Check if source should be rendered as table or paragraph
+        if hasattr(rtf_attrs, 'as_table') and not rtf_attrs.as_table:
+            # Render as paragraph (plain text)
+            if isinstance(rtf_attrs.text, list):
+                text_list = rtf_attrs.text
+            else:
+                text_list = [rtf_attrs.text] if rtf_attrs.text else []
+            
+            # Use TextAttributes._encode_text method directly for paragraph rendering
+            paragraphs = rtf_attrs._encode_text(text_list, method="paragraph")
+            return paragraphs
+        else:
+            # Render as table (default behavior)
+            col_total_width = self.rtf_page.col_width
+            col_widths = Utils._col_widths(rtf_attrs.col_rel_width, col_total_width)
 
-        # Create DataFrame from text string
-        df = pl.DataFrame([[rtf_attrs.text]])
-        return rtf_attrs._encode(df, col_widths)
+            # Create DataFrame from text string
+            df = pl.DataFrame([[rtf_attrs.text]])
+            return rtf_attrs._encode(df, col_widths)
 
     def _rtf_body_encode(
         self, df: pl.DataFrame, rtf_attrs: TableAttributes | None
