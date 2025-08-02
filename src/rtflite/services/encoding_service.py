@@ -2,6 +2,7 @@
 
 from typing import Optional, List, Dict, Any
 from collections.abc import MutableSequence
+from .text_conversion_service import TextConversionService
 
 class RTFEncodingService:
     """Service class that handles RTF component encoding operations.
@@ -13,6 +14,7 @@ class RTFEncodingService:
     def __init__(self):
         from ..rtf import RTFSyntaxGenerator
         self.syntax = RTFSyntaxGenerator()
+        self.text_conversion_service = TextConversionService()
     
     def encode_document_start(self) -> str:
         """Encode RTF document start."""
@@ -383,3 +385,38 @@ class RTFEncodingService:
             f"{code}{margin}" for code, margin in zip(margin_codes, margins)
         )
         return margin + "\n"
+    
+    def convert_text_for_encoding(self, text: str, enable_conversion: bool = True) -> str:
+        """
+        Convert text content using the text conversion service.
+        
+        This method provides a clean interface for text conversion within 
+        the encoding pipeline, with proper error handling and validation.
+        
+        Args:
+            text: Text content to convert
+            enable_conversion: Whether to enable LaTeX to Unicode conversion
+            
+        Returns:
+            Converted text ready for RTF encoding
+        """
+        if not text:
+            return text
+        
+        return self.text_conversion_service.convert_text_content(text, enable_conversion)
+    
+    def validate_and_convert_text(self, text: str, enable_conversion: bool = True) -> dict:
+        """
+        Convert text with validation information for debugging.
+        
+        This method is useful during development and debugging to understand
+        what text conversion operations are being performed.
+        
+        Args:
+            text: Text to convert and validate
+            enable_conversion: Whether to enable conversion
+            
+        Returns:
+            Dictionary with converted text and validation info
+        """
+        return self.text_conversion_service.convert_with_validation(text, enable_conversion)

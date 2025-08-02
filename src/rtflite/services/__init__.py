@@ -5,7 +5,9 @@ for RTF document generation, separating concerns from the main document class.
 """
 
 from .encoding_service import RTFEncodingService
+from .text_conversion_service import TextConversionService
 
 __all__ = [
     "RTFEncodingService",
+    "TextConversionService",
 ]
