@@ -10,6 +10,7 @@ df.select(["USUBJID", "TRTA", "AEDECOD"]).head(4)
 tbl = (
     df.group_by(["TRTA", "AEDECOD"])
     .agg(pl.len().alias("n"))
+    .sort("TRTA")
     .pivot(values="n", index="AEDECOD", on="TRTA")
     .fill_null(0)
     .sort("AEDECOD")  # Sort by adverse event name to match R output
@@ -41,7 +42,6 @@ doc = rtf.RTFDocument(
             "Xanomeline High Dose",
             "Xanomeline Low Dose",
         ],
-        col_rel_width=[3, 2, 2, 2],
     ),
     rtf_body=rtf.RTFBody(col_rel_width=[3, 2, 2, 2]),
 )
@@ -50,7 +50,6 @@ doc.write_rtf("../rtf/intro-ae3.rtf")
 
 doc = rtf.RTFDocument(
     df=tbl.head(50),
-    # rtf_page uses default settings (portrait: nrow=40, landscape: nrow=24)
     rtf_column_header=[
         rtf.RTFColumnHeader(text=[" ", "Treatment"], col_rel_width=[3, 3]),
         rtf.RTFColumnHeader(

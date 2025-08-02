@@ -63,8 +63,10 @@ In this AE example, we provide number of subjects with each type of AE by treatm
 
 ```{python}
 tbl = (
-    df.group_by(['TRTA', 'AEDECOD'])
+    df.
+    group_by(['TRTA', 'AEDECOD'])
     .agg(pl.len().alias('n'))
+    .sort("TRTA")
     .pivot(values='n', index='AEDECOD', on='TRTA')
     .fill_null(0)
     .sort('AEDECOD')  # Sort by adverse event name to match R output
@@ -129,15 +131,7 @@ doc = rtf.RTFDocument(
 doc.write_rtf("../rtf/intro-ae2.rtf")
 ```
 
-Note:
-
-- The `col_rel_width` in the `RTFBody()` function only control relative width of table body. Therefore the column header is not aligned as expected. More details will be provided in next example to take care of column header width.
-- The total column width is defined in the `col_width` argument of the `RTFPage()` function.
-
 ## Column Headers
-
-In the previous example, we found an issue of misaligned column header.
-We can fix the issue by using the `RTFColumnHeader()` function.
 
 In `RTFColumnHeader`, `text` argument is used to provide content of column header.
 We used a list to separate the columns.
@@ -148,7 +142,6 @@ doc = rtf.RTFDocument(
     df=tbl.head(6),
     rtf_column_header=rtf.RTFColumnHeader(
         text=["Adverse Events", "Placebo", "Xanomeline High Dose", "Xanomeline Low Dose"],
-        col_rel_width=[3, 2, 2, 2]
     ),
     rtf_body=rtf.RTFBody(
         col_rel_width=[3, 2, 2, 2]
@@ -159,9 +152,11 @@ doc.write_rtf("../rtf/intro-ae3.rtf")
 ```
 
 We also allow column headers be displayed in multiple lines.
-If an empty column name is needed for a column, you can insert an empty string; e.g., `["name 1", "", "name 3"]`.
+If an empty column name is needed for a column, 
+you can insert an empty string; e.g., `["name 1", "", "name 3"]`.
 
-The `col_rel_width` can be used to align column header with different number of columns.
+In `RTFColumnHeader`, the `col_rel_width` can be used to align column header 
+with different number of columns.
 
 By using `RTFColumnHeader` with `col_rel_width`, one can customize complicated column headers.
 If there are multiple pages, column header will repeat at each page by default.
@@ -170,7 +165,6 @@ If there are multiple pages, column header will repeat at each page by default.
 # Create RTF document with multi-line column headers
 doc = rtf.RTFDocument(
     df=tbl.head(50),
-    # rtf_page uses default settings (portrait: nrow=40, landscape: nrow=24)
     rtf_column_header=[
         rtf.RTFColumnHeader(
             text=[" ", "Treatment"],
