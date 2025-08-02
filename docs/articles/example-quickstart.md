@@ -171,6 +171,7 @@ will repeat at each page by default.
 # Create RTF document with multi-line column headers
 doc = rtf.RTFDocument(
     df=tbl.head(50),
+    rtf_page=rtf.RTFPage(nrow = 15),
     rtf_column_header=[
         rtf.RTFColumnHeader(
             text=[" ", "Treatment"],

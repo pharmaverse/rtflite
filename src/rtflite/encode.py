@@ -268,6 +268,7 @@ class RTFDocument(BaseModel):
         page_attrs = deepcopy(rtf_attrs)
         page_df_height = page_info["data"].height
         page_df_width = page_info["data"].width
+        page_shape = (page_df_height, page_df_width)
         
         if page_df_height == 0:
             return page_attrs
@@ -293,24 +294,39 @@ class RTFDocument(BaseModel):
         has_column_headers = self.rtf_column_header and len(self.rtf_column_header) > 0
         if page_info["is_first_page"] and not has_column_headers:
             if self.rtf_page.border_first:
-                page_attrs = self._apply_border_to_row(
-                    page_attrs, 0, "top", self.rtf_page.border_first, page_df_width
-                )
+                # Apply border to all cells in the first row
+                for col_idx in range(page_df_width):
+                    page_attrs = self._apply_border_to_cell(
+                        page_attrs, 0, col_idx, "top", self.rtf_page.border_first, page_shape
+                    )
+        
+        # For first page with column headers: ensure consistent border style
+        if page_info["is_first_page"] and has_column_headers:
+            # Apply same border style as non-first pages to maintain consistency
+            if self.rtf_body.border_first:
+                border_style = self.rtf_body.border_first[0][0] if isinstance(self.rtf_body.border_first, list) else self.rtf_body.border_first
+                # Apply single border style to first data row (same as other pages)
+                for col_idx in range(page_df_width):
+                    page_attrs = self._apply_border_to_cell(
+                        page_attrs, 0, col_idx, "top", border_style, page_shape
+                    )
         
         # Apply page-level borders for non-first/last pages
         if not page_info["is_first_page"] and self.rtf_body.border_first:
             # Apply border_first to first row of non-first pages
             border_style = self.rtf_body.border_first[0][0] if isinstance(self.rtf_body.border_first, list) else self.rtf_body.border_first
-            page_attrs = self._apply_border_to_row(
-                page_attrs, 0, "top", border_style, page_df_width
-            )
+            for col_idx in range(page_df_width):
+                page_attrs = self._apply_border_to_cell(
+                    page_attrs, 0, col_idx, "top", border_style, page_shape
+                )
             
         if not page_info["is_last_page"] and self.rtf_body.border_last:
             # Apply border_last to last row of non-last pages
             border_style = self.rtf_body.border_last[0][0] if isinstance(self.rtf_body.border_last, list) else self.rtf_body.border_last
-            page_attrs = self._apply_border_to_row(
-                page_attrs, page_df_height - 1, "bottom", border_style, page_df_width
-            )
+            for col_idx in range(page_df_width):
+                page_attrs = self._apply_border_to_cell(
+                    page_attrs, page_df_height - 1, col_idx, "bottom", border_style, page_shape
+                )
                 
         # For last page: Apply rtf_page.border_last only to the absolute last row
         if page_info["is_last_page"] and self.rtf_page.border_last:
@@ -320,10 +336,34 @@ class RTFDocument(BaseModel):
             
             if is_absolute_last_row:
                 last_row_idx = page_df_height - 1
-                page_attrs = self._apply_border_to_row(
-                    page_attrs, last_row_idx, "bottom", self.rtf_page.border_last, page_df_width
-                )
+                for col_idx in range(page_df_width):
+                    page_attrs = self._apply_border_to_cell(
+                        page_attrs, last_row_idx, col_idx, "bottom", self.rtf_page.border_last, page_shape
+                    )
                 
+        return page_attrs
+    
+    def _apply_border_to_cell(
+        self, page_attrs: TableAttributes, row_idx: int, col_idx: int, 
+        border_side: str, border_style: str, page_shape: tuple[int, int]
+    ) -> TableAttributes:
+        """Apply specified border style to a specific cell using BroadcastValue"""
+        border_attr = f"border_{border_side}"
+        
+        if not hasattr(page_attrs, border_attr):
+            return page_attrs
+            
+        # Get current border values
+        current_borders = getattr(page_attrs, border_attr)
+        
+        # Create BroadcastValue to expand borders to page shape
+        border_broadcast = BroadcastValue(value=current_borders, dimension=page_shape)
+        
+        # Update the specific cell
+        border_broadcast.update_cell(row_idx, col_idx, border_style)
+        
+        # Update the attribute with the expanded value
+        setattr(page_attrs, border_attr, border_broadcast.value)
         return page_attrs
     
     def _apply_border_to_row(

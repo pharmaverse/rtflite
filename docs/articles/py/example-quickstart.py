@@ -50,6 +50,7 @@ doc.write_rtf("../rtf/intro-ae3.rtf")
 
 doc = rtf.RTFDocument(
     df=tbl.head(50),
+    rtf_page=rtf.RTFPage(nrow=15),
     rtf_column_header=[
         rtf.RTFColumnHeader(text=[" ", "Treatment"], col_rel_width=[3, 3]),
         rtf.RTFColumnHeader(
