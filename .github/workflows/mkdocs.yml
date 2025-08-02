@@ -35,6 +35,7 @@ jobs:
           pip install mkdocs-material mkdocstrings-python
           pip install pytest pytest-cov
           pip install -e '.[all]'
+          pip install --force-reinstall "click<8.2.2" # Workaround for https://github.com/squidfunk/mkdocs-material/issues/8375
 
       - name: Generate coverage report and deploy mkdocs site
         run: |
