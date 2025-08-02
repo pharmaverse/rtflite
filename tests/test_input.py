@@ -359,41 +359,6 @@ def test_rtf_footnote_as_table_boolean_storage():
     assert footnote.border_bottom == [[""]]
 
 
-def test_rtf_footnote_as_table_false():
-    """Test RTFFootnote with as_table=False."""
-    footnote = RTFFootnote(text=["Footnote text"], as_table=False)
-    assert footnote.as_table is False
-
-    # Test that it has no borders when as_table=False
-    assert footnote.border_left == [[""]]
-    assert footnote.border_right == [[""]]
-    assert footnote.border_top == [[""]]
-    assert footnote.border_bottom == [[""]]
-
-
-def test_rtf_source_as_table_true():
-    """Test RTFSource with as_table=True."""
-    source = RTFSource(text=["Source text"], as_table=True)
-    assert source.as_table is True
-
-    # Test that it has table borders when as_table=True
-    assert source.border_left == [["single"]]
-    assert source.border_right == [["single"]]
-    assert source.border_top == [["single"]]
-    assert source.border_bottom == [[""]]
-
-
-def test_rtf_source_as_table_false():
-    """Test RTFSource with as_table=False explicitly set."""
-    source = RTFSource(text=["Source text"], as_table=False)
-    assert source.as_table is False
-
-    # Test that it has no borders when as_table=False
-    assert source.border_left == [[""]]
-    assert source.border_right == [[""]]
-    assert source.border_top == [[""]]
-    assert source.border_bottom == [[""]]
-
 
 def test_rtf_footnote_as_table_with_multiple_lines():
     """Test RTFFootnote as_table behavior with multiple text lines."""

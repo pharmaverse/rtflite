@@ -12,7 +12,6 @@ def remove_font_table(rtf_text: str) -> str:
     Returns:
         RTF text with font table removed
     """
-    import re
 
     # Use regex to remove the entire font table block
     # Pattern matches {\fonttbl...} including nested braces and newlines
@@ -80,10 +79,8 @@ def normalize_rtf_structure(rtf_text: str) -> str:
     rtf_header = []
     page_setups = []
     content_blocks = []
-    rtf_footer = []
 
     current_block = []
-    in_content = False
 
     for line in lines:
         line = line.strip()
@@ -129,7 +126,6 @@ def normalize_rtf_structure(rtf_text: str) -> str:
             or line.startswith(r"\intbl")
             or line == "}"
         ):
-            in_content = True
             current_block.append(line)
         # Everything else
         else:
@@ -180,7 +176,7 @@ def assert_rtf_equals_without_fonts(
         expected_no_fonts = normalize_rtf_whitespace(expected_no_fonts)
 
     # Add test name to assertion message if provided
-    message = f"RTF content should match after removing font tables"
+    message = "RTF content should match after removing font tables"
     if test_name:
         message = f"{test_name}: {message}"
 
@@ -205,7 +201,6 @@ def normalize_rtf_borders(rtf_text: str) -> str:
     Returns:
         RTF text with normalized border commands
     """
-    import re
 
     # Pattern to match border commands like \clbrdrt\brdrw15
     # where style is implied (default single)
@@ -240,7 +235,7 @@ def assert_rtf_equals_structural(rtf_output: str, expected: str, test_name: str 
     expected_normalized = normalize_rtf_structure(expected)
 
     # Add test name to assertion message if provided
-    message = f"RTF content should match after structural normalization"
+    message = "RTF content should match after structural normalization"
     if test_name:
         message = f"{test_name}: {message}"
 
@@ -270,7 +265,7 @@ def assert_rtf_equals_semantic(rtf_output: str, expected: str, test_name: str = 
     expected_normalized = normalize_rtf_borders(expected_normalized)
 
     # Add test name to assertion message if provided
-    message = f"RTF content should match after semantic normalization"
+    message = "RTF content should match after semantic normalization"
     if test_name:
         message = f"{test_name}: {message}"
 

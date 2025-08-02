@@ -1,5 +1,4 @@
 from collections.abc import MutableSequence
-from typing import Any
 
 import polars as pl
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -880,10 +879,10 @@ class RTFDocument(BaseModel):
         )
 
         # Prepare border settings
-        doc_border_top = BroadcastValue(
+        BroadcastValue(
             value=self.rtf_page.border_first, dimension=(1, dim[1])
         ).to_list()[0]
-        doc_border_bottom = BroadcastValue(
+        BroadcastValue(
             value=self.rtf_page.border_last, dimension=(1, dim[1])
         ).to_list()[0]
 

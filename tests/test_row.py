@@ -62,7 +62,7 @@ def test_border_initialization():
 
 
 def test_cell_initialization():
-    cell = Cell(text=TextContent(text="sample"), width=1)
+    Cell(text=TextContent(text="sample"), width=1)
 
 
 # Test default cell RTF string
@@ -125,7 +125,7 @@ def test_text_justification():
     try:
         TextContent(text="test", justification="left")._get_paragraph_formatting()
         assert False, "Should have raised ValueError"
-    except ValueError as e:
+    except ValueError:
         pass
 
 
@@ -156,7 +156,7 @@ def test_get_text_formatting():
     try:
         TextContent(text="test", format="xi")._get_text_formatting()
         assert False, "Should have raised ValueError"
-    except ValueError as e:
+    except ValueError:
         pass
 
 

@@ -1,5 +1,4 @@
 from collections.abc import Sequence
-from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -322,7 +321,10 @@ class RTFFootnote(TableAttributes):
         # Convert text to DataFrame during initialization
         if self.text is not None:
             if isinstance(self.text, Sequence):
-                self.text = "\\line ".join(self.text)
+                if len(self.text) == 0:
+                    self.text = []
+                else:
+                    self.text = "\\line ".join(self.text)
 
     def _set_default(self):
         for attr, value in self.__dict__.items():
@@ -407,7 +409,10 @@ class RTFSource(TableAttributes):
         # Convert text to DataFrame during initialization
         if self.text is not None:
             if isinstance(self.text, Sequence):
-                self.text = "\\line ".join(self.text)
+                if len(self.text) == 0:
+                    self.text = []
+                else:
+                    self.text = "\\line ".join(self.text)
 
     def _set_default(self):
         for attr, value in self.__dict__.items():

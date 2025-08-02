@@ -2,10 +2,8 @@ import pytest
 import polars as pl
 
 import rtflite as rtf
-from .utils import ROutputReader, TestData
+from .utils import ROutputReader
 from .utils_snapshot import (
-    assert_rtf_equals_without_fonts,
-    assert_rtf_equals_structural,
     assert_rtf_equals_semantic,
 )
 

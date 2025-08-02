@@ -1,5 +1,4 @@
 import pytest
-import numpy as np
 from rtflite.input import RTFBody, RTFTitle
 from rtflite.attributes import TextAttributes
 
@@ -84,7 +83,7 @@ class TestLineCalculation:
         import polars as pl
 
         # Create sample data
-        df = pl.DataFrame(
+        pl.DataFrame(
             {
                 "col1": ["Short", "This is a much longer text that needs wrapping"],
                 "col2": ["Text", "More content here"],

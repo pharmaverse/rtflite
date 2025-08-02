@@ -50,7 +50,7 @@ def output_dir(tmp_path) -> Path:
 def has_libreoffice():
     """Check if LibreOffice is available on the system."""
     try:
-        converter = LibreOfficeConverter()
+        LibreOfficeConverter()
         return True
     except (FileNotFoundError, RuntimeError):
         return False

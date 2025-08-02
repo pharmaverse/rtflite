@@ -1,5 +1,4 @@
 import pandas as pd
-import polars as pl
 import pytest
 
 from rtflite.attributes import BroadcastValue
