@@ -19,6 +19,7 @@ from .input import (
 )
 from .pagination import RTFPagination, PageBreakCalculator, ContentDistributor
 from .row import Utils
+from .encoding import RTFEncodingEngine
 
 
 class RTFDocument(BaseModel):
@@ -1085,11 +1086,14 @@ class RTFDocument(BaseModel):
         return font_table
 
     def rtf_encode(self) -> str:
-        """Generate RTF code"""
-        # Use paginated encoding if pagination is needed
-        if self._needs_pagination():
-            return self._rtf_encode_paginated()
-        # Otherwise use standard encoding
+        """Generate RTF code using the encoding engine."""
+        # Use the new encoding engine for strategy selection
+        engine = RTFEncodingEngine()
+        return engine.encode_document(self)
+    
+    def _rtf_encode_single_page(self) -> str:
+        """Generate RTF code for single-page documents (original implementation)."""
+        # Original single-page encoding logic
         dim = self.df.shape
 
         # Title
