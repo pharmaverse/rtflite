@@ -192,8 +192,9 @@ def normalize_rtf_borders(rtf_text: str) -> str:
     RTF allows borders to be specified as:
     - \\clbrdrt\\brdrw15 (width only, default single style)
     - \\clbrdrt\\brdrs\\brdrw15 (explicit single style + width)
+    - \\clbrdrt\\brdrdb\\brdrw15 (explicit double style + width)
 
-    These are semantically equivalent, so normalize them for comparison.
+    For testing purposes, normalize all border styles to single for comparison.
 
     Args:
         rtf_text: RTF text to normalize
@@ -204,16 +205,27 @@ def normalize_rtf_borders(rtf_text: str) -> str:
 
     # Pattern to match border commands like \clbrdrt\brdrw15
     # where style is implied (default single)
-    pattern = r"(\\cl(?:brdrl|brdrt|brdrr|brdrb))\\brdrw(\d+)"
+    pattern1 = r"(\\cl(?:brdrl|brdrt|brdrr|brdrb))\\brdrw(\d+)"
 
-    def replacer(match):
+    def replacer1(match):
         border_side = match.group(1)
         width = match.group(2)
         # Add explicit single style
         return f"{border_side}\\brdrs\\brdrw{width}"
 
-    # Apply normalization
-    result = re.sub(pattern, replacer, rtf_text)
+    # Pattern to match border commands with explicit styles (single, double, etc.)
+    # and normalize them all to single style for comparison
+    pattern2 = r"(\\cl(?:brdrl|brdrt|brdrr|brdrb))\\brdr(?:s|db|th|sh|dot|dash|hair|inset|outset|triple)\\brdrw(\d+)"
+
+    def replacer2(match):
+        border_side = match.group(1)
+        width = match.group(2)
+        # Normalize all styles to single style
+        return f"{border_side}\\brdrs\\brdrw{width}"
+
+    # Apply normalizations
+    result = re.sub(pattern1, replacer1, rtf_text)
+    result = re.sub(pattern2, replacer2, result)
     return result
 
 

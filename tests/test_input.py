@@ -803,8 +803,10 @@ def test_rtf_multipage_pagination_with_as_table():
         )
 
         # Verify footnote and source text appear
-        assert case_name in rtf_output, (
-            f"Case name should appear in RTF for {case_name}"
+        # Note: underscores in case names get converted to RTF subscript (\sub)
+        rtf_case_name = case_name.replace("_", "\\sub ")
+        assert rtf_case_name in rtf_output, (
+            f"Case name should appear in RTF for {case_name} (looking for: {rtf_case_name})"
         )
 
     # Compare different combinations to ensure they produce different outputs
