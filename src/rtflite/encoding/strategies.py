@@ -47,7 +47,11 @@ class SinglePageStrategy(EncodingStrategy):
         import polars as pl
         from ..attributes import BroadcastValue
 
-        # Original single-page encoding logic
+        # Handle figure-only documents (no table)
+        if document.df is None:
+            return self._encode_figure_only_document(document)
+            
+        # Original single-page encoding logic for table documents
         dim = document.df.shape
 
         # Title
@@ -189,6 +193,66 @@ class SinglePageStrategy(EncodingStrategy):
                     self.figure_service.encode_figure(document.rtf_figure)
                     if document.rtf_figure is not None
                     and document.rtf_figure.fig_pos == "after"
+                    else None,
+                    "\n\n",
+                    "}",
+                ]
+                if item is not None
+            ]
+        )
+
+    def _encode_figure_only_document(self, document: "RTFDocument") -> str:
+        """Encode a figure-only document (no table data).
+        
+        Args:
+            document: The RTF document with only figure content
+            
+        Returns:
+            Complete RTF string
+        """
+        # Build RTF components for figure-only document
+        rtf_title = self.encoding_service.encode_title(
+            document.rtf_title, method="line"
+        )
+        
+        # Assemble final RTF document
+        return "".join(
+            [
+                item
+                for item in [
+                    self.encoding_service.encode_document_start(),
+                    self.encoding_service.encode_font_table(),
+                    "\n",
+                    self.encoding_service.encode_page_header(
+                        document.rtf_page_header, method="line"
+                    ),
+                    self.encoding_service.encode_page_footer(
+                        document.rtf_page_footer, method="line"
+                    ),
+                    self.encoding_service.encode_page_settings(document.rtf_page),
+                    rtf_title,
+                    "\n",
+                    self.encoding_service.encode_subline(
+                        document.rtf_subline, method="line"
+                    ),
+                    self.figure_service.encode_figure(document.rtf_figure),
+                    "\n".join(
+                        self.encoding_service.encode_footnote(
+                            document.rtf_footnote,
+                            page_number=1,
+                            page_col_width=document.rtf_page.col_width,
+                        )
+                    )
+                    if document.rtf_footnote is not None
+                    else None,
+                    "\n".join(
+                        self.encoding_service.encode_source(
+                            document.rtf_source,
+                            page_number=1,
+                            page_col_width=document.rtf_page.col_width,
+                        )
+                    )
+                    if document.rtf_source is not None
                     else None,
                     "\n\n",
                     "}",

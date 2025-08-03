@@ -28,9 +28,9 @@ class RTFDocument(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     # Core data
-    df: pl.DataFrame = Field(
-        ...,
-        description="The DataFrame containing the data for the RTF document. Accepts pandas or polars DataFrame, internally converted to polars.",
+    df: pl.DataFrame | None = Field(
+        default=None,
+        description="The DataFrame containing the data for the RTF document. Accepts pandas or polars DataFrame, internally converted to polars. Optional when using figure-only documents.",
     )
     
     # Document structure
@@ -80,7 +80,7 @@ class RTFDocument(BaseModel):
     @classmethod
     def validate_dataframe(cls, values):
         """Convert DataFrame to polars for internal processing."""
-        if "df" in values:
+        if "df" in values and values["df"] is not None:
             df = values["df"]
             import polars as pl
 
@@ -100,6 +100,17 @@ class RTFDocument(BaseModel):
     @model_validator(mode="after")
     def validate_column_names(self):
         """Validate that column references exist in DataFrame."""
+        # Validate df and rtf_figure usage
+        if self.df is None and self.rtf_figure is None:
+            raise ValueError("Either 'df' or 'rtf_figure' must be provided")
+        
+        if self.df is not None and self.rtf_figure is not None:
+            raise ValueError("Cannot use both 'df' and 'rtf_figure' together. Use either tables or figures in a single document.")
+        
+        # Skip column validation if no DataFrame provided (figure-only documents)
+        if self.df is None:
+            return self
+            
         columns = self.df.columns
 
         if self.rtf_body.group_by is not None:
@@ -121,15 +132,17 @@ class RTFDocument(BaseModel):
 
     def __init__(self, **data):
         super().__init__(**data)
-        # Set default column widths based on DataFrame dimensions
-        dim = self.df.shape
-        self.rtf_body.col_rel_width = self.rtf_body.col_rel_width or [1] * dim[1]
+        
+        # Set default column widths based on DataFrame dimensions (if DataFrame provided)
+        if self.df is not None:
+            dim = self.df.shape
+            self.rtf_body.col_rel_width = self.rtf_body.col_rel_width or [1] * dim[1]
 
-        # Inherit col_rel_width from rtf_body to rtf_column_header if not specified
-        if self.rtf_column_header:
-            for header in self.rtf_column_header:
-                if header.col_rel_width is None:
-                    header.col_rel_width = self.rtf_body.col_rel_width.copy()
+            # Inherit col_rel_width from rtf_body to rtf_column_header if not specified
+            if self.rtf_column_header:
+                for header in self.rtf_column_header:
+                    if header.col_rel_width is None:
+                        header.col_rel_width = self.rtf_body.col_rel_width.copy()
 
         # Calculate table spacing for text components
         self._table_space = int(

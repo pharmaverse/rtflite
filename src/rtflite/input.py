@@ -1,5 +1,6 @@
 from collections.abc import Sequence
 from typing import Any
+from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -662,13 +663,9 @@ class RTFFigure(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     # Figure data
-    figures: list[bytes] | None = Field(
+    figures: str | Path | list[str | Path] | None = Field(
         default=None,
-        description="List of image data as bytes (PNG, JPEG, or EMF formats)",
-    )
-    figure_formats: list[str] | None = Field(
-        default=None,
-        description="List of image formats corresponding to figures ('png', 'jpeg', 'emf')",
+        description="Image file path(s) - single path or list of paths to PNG, JPEG, or EMF files",
     )
 
     # Figure dimensions
@@ -718,10 +715,16 @@ class RTFFigure(BaseModel):
 
     @model_validator(mode="after")
     def validate_figure_data(self):
-        """Validate that figures and formats are consistent."""
-        if self.figures is not None and self.figure_formats is not None:
-            if len(self.figures) != len(self.figure_formats):
-                raise ValueError(
-                    "Number of figures must match number of figure_formats"
-                )
+        """Validate figure paths and convert to list format."""
+        if self.figures is not None:
+            # Convert single path to list
+            if isinstance(self.figures, (str, Path)):
+                self.figures = [self.figures]
+            
+            # Validate that all files exist
+            for fig_path in self.figures:
+                path_obj = Path(fig_path)
+                if not path_obj.exists():
+                    raise FileNotFoundError(f"Figure file not found: {fig_path}")
+        
         return self

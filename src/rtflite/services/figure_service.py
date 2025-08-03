@@ -5,6 +5,7 @@ This module provides services for encoding images into RTF format.
 
 from typing import Optional
 from ..input import RTFFigure
+from ..figure import rtf_read_figure
 
 
 class RTFFigureService:
@@ -15,7 +16,7 @@ class RTFFigureService:
         """Encode figure component to RTF.
 
         Args:
-            rtf_figure: RTFFigure object containing image data and settings
+            rtf_figure: RTFFigure object containing image file paths and settings
 
         Returns:
             RTF string containing encoded figures
@@ -23,10 +24,13 @@ class RTFFigureService:
         if rtf_figure is None or rtf_figure.figures is None:
             return ""
 
+        # Read figure data and formats from file paths
+        figure_data_list, figure_formats = rtf_read_figure(rtf_figure.figures)
+        
         rtf_output = []
 
         for i, (figure_data, figure_format) in enumerate(
-            zip(rtf_figure.figures, rtf_figure.figure_formats)
+            zip(figure_data_list, figure_formats)
         ):
             # Get dimensions for this figure
             width = RTFFigureService._get_dimension(rtf_figure.fig_width, i)
@@ -39,7 +43,7 @@ class RTFFigureService:
             rtf_output.append(figure_rtf)
 
             # Add paragraph break between figures
-            if i < len(rtf_figure.figures) - 1:
+            if i < len(figure_data_list) - 1:
                 rtf_output.append("\\par\\par ")
 
         # Final paragraph after all figures

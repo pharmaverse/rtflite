@@ -33,6 +33,10 @@ class RTFDocumentService:
 
     def needs_pagination(self, document) -> bool:
         """Check if document needs pagination based on content size and page limits."""
+        # Figure-only documents don't need pagination
+        if document.df is None:
+            return False
+            
         if document.rtf_body.page_by and document.rtf_body.new_page:
             return True
 
