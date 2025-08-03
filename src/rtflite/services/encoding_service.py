@@ -235,15 +235,18 @@ class RTFEncodingService:
 
         # Initialize dimensions and widths
         from ..row import Utils
+        from .document_service import RTFDocumentService
+        
+        document_service = RTFDocumentService()
         col_total_width = document.rtf_page.col_width
         col_widths = Utils._col_widths(rtf_attrs.col_rel_width, col_total_width)
 
         # Check if pagination is needed
-        if document._needs_pagination():
+        if document_service.needs_pagination(document):
             return self._encode_body_paginated(document, df, rtf_attrs, col_widths)
 
         # Handle existing page_by grouping (non-paginated)
-        page_by = document._page_by()
+        page_by = document_service.process_page_by(document)
         if page_by is None:
             return rtf_attrs._encode(df, col_widths)
 
@@ -279,10 +282,13 @@ class RTFEncodingService:
     
     def _encode_body_paginated(self, document, df, rtf_attrs, col_widths) -> List[str]:
         """Encode body content with pagination support."""
-        _, distributor = document._create_pagination_instance()
+        from .document_service import RTFDocumentService
+        
+        document_service = RTFDocumentService()
+        _, distributor = document_service.create_pagination_instance(document)
 
         # Distribute content across pages (r2rtf compatible)
-        additional_rows = document._calculate_additional_rows_per_page()
+        additional_rows = document_service.calculate_additional_rows_per_page(document)
         pages = distributor.distribute_content(
             df=df,
             col_widths=col_widths,

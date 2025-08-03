@@ -28,7 +28,9 @@ class SinglePageStrategy(EncodingStrategy):
     
     def __init__(self):
         from ..services import RTFEncodingService
+        from ..services.document_service import RTFDocumentService
         self.encoding_service = RTFEncodingService()
+        self.document_service = RTFDocumentService()
     
     def encode(self, document: "RTFDocument") -> str:
         """Encode a single-page document with complete border and layout handling.
@@ -167,7 +169,9 @@ class PaginatedStrategy(EncodingStrategy):
     
     def __init__(self):
         from ..services import RTFEncodingService
+        from ..services.document_service import RTFDocumentService
         self.encoding_service = RTFEncodingService()
+        self.document_service = RTFDocumentService()
     
     def encode(self, document: "RTFDocument") -> str:
         """Encode a paginated document with full pagination support.
@@ -186,12 +190,12 @@ class PaginatedStrategy(EncodingStrategy):
         dim = document.df.shape
 
         # Get pagination instance and distribute content
-        _, distributor = document._create_pagination_instance()
+        _, distributor = self.document_service.create_pagination_instance(document)
         col_total_width = document.rtf_page.col_width
         col_widths = Utils._col_widths(document.rtf_body.col_rel_width, col_total_width)
 
         # Calculate additional rows per page for r2rtf compatibility
-        additional_rows = document._calculate_additional_rows_per_page()
+        additional_rows = self.document_service.calculate_additional_rows_per_page(document)
         pages = distributor.distribute_content(
             df=document.df,
             col_widths=col_widths,
@@ -218,13 +222,13 @@ class PaginatedStrategy(EncodingStrategy):
 
             # Add page break before each page (except first)
             if not page_info["is_first_page"]:
-                page_elements.append(document._rtf_page_break_encode())
+                page_elements.append(self.document_service.generate_page_break(document))
 
             # Add title if it should appear on this page
             if (
                 document.rtf_title
                 and document.rtf_title.text
-                and document._should_show_element_on_page(
+                and self.document_service.should_show_element_on_page(
                     document.rtf_page.page_title_location, page_info
                 )
             ):
@@ -237,7 +241,7 @@ class PaginatedStrategy(EncodingStrategy):
             if (
                 document.rtf_subline
                 and document.rtf_subline.text
-                and document._should_show_element_on_page(
+                and self.document_service.should_show_element_on_page(
                     document.rtf_page.page_title_location, page_info
                 )
             ):
@@ -294,8 +298,8 @@ class PaginatedStrategy(EncodingStrategy):
             page_df = page_info["data"]
 
             # Apply pagination borders to the body attributes
-            page_attrs = document._apply_pagination_borders(
-                document.rtf_body, page_info, len(pages)
+            page_attrs = self.document_service.apply_pagination_borders(
+                document, document.rtf_body, page_info, len(pages)
             )
 
             # Encode page content with modified borders
@@ -306,7 +310,7 @@ class PaginatedStrategy(EncodingStrategy):
             if (
                 document.rtf_footnote
                 and document.rtf_footnote.text
-                and document._should_show_element_on_page(
+                and self.document_service.should_show_element_on_page(
                     document.rtf_page.page_footnote_location, page_info
                 )
             ):
@@ -320,7 +324,7 @@ class PaginatedStrategy(EncodingStrategy):
             if (
                 document.rtf_source
                 and document.rtf_source.text
-                and document._should_show_element_on_page(
+                and self.document_service.should_show_element_on_page(
                     document.rtf_page.page_source_location, page_info
                 )
             ):

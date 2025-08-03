@@ -18,6 +18,8 @@ class RTFEncodingEngine:
     """
     
     def __init__(self):
+        from ..services.document_service import RTFDocumentService
+        self._document_service = RTFDocumentService()
         self._single_page_strategy = SinglePageStrategy()
         self._paginated_strategy = PaginatedStrategy()
     
@@ -42,26 +44,7 @@ class RTFEncodingEngine:
         Returns:
             The selected encoding strategy
         """
-        if self._needs_pagination(document):
+        if self._document_service.needs_pagination(document):
             return self._paginated_strategy
         else:
             return self._single_page_strategy
-    
-    def _needs_pagination(self, document: "RTFDocument") -> bool:
-        """Determine if the document requires pagination.
-        
-        Args:
-            document: The RTF document to analyze
-            
-        Returns:
-            True if pagination is needed, False otherwise
-        """
-        # Check if page_by is specified and enabled
-        if document.rtf_body.page_by and document.rtf_body.new_page:
-            return True
-            
-        # Check if content exceeds page capacity
-        if document.rtf_page.nrow and document.df.shape[0] > document.rtf_page.nrow:
-            return True
-            
-        return False
