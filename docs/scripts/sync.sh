@@ -76,6 +76,7 @@ done
 
 # Generate RTF files by running Python scripts
 generate_rtf_files
+sh docs/scripts/rtf_to_pdf.sh
 
 # Sync README.md with modified image path for docs/index.md
 awk '{gsub("https://github.com/pharmaverse/rtflite/raw/main/docs/assets/logo.png", "assets/logo.png"); print}' README.md >docs/index.md

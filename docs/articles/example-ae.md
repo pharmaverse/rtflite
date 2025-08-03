@@ -1,4 +1,4 @@
-# RTF Examples for AE Summary Count Tables
+# AE Summary
 
 
 <!-- `.md` and `.py` files are generated from the `.qmd` file. Please edit that file. -->
@@ -150,7 +150,6 @@ Write the RTF file:
 ``` python
 # Output .rtf file
 doc.write_rtf("../rtf/example_ae_summary.rtf")
-print("RTF document created: ../rtf/example_ae_summary.rtf")
 ```
 
 <embed src="../pdf/example_ae_summary.pdf" style="width:100%; height:400px" type="application/pdf">
