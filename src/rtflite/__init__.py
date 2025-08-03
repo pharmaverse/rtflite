@@ -4,6 +4,7 @@ from .encode import RTFDocument
 from .input import (
     RTFBody,
     RTFColumnHeader,
+    RTFFigure,
     RTFPage,
     RTFTitle,
     RTFPageHeader,
@@ -11,6 +12,7 @@ from .input import (
     RTFFootnote,
     RTFSource,
 )
+from .figure import rtf_read_figure
 from .pagination import (
     RTFPagination,
     PageBreakCalculator,
@@ -22,12 +24,14 @@ __all__ = [
     "RTFDocument", 
     "RTFBody",
     "RTFColumnHeader",
+    "RTFFigure",
     "RTFPage",
     "RTFTitle",
     "RTFPageHeader",
     "RTFPageFooter",
     "RTFFootnote",
     "RTFSource",
+    "rtf_read_figure",
     "RTFPagination",
     "PageBreakCalculator",
     "ContentDistributor",

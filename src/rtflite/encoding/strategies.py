@@ -9,14 +9,14 @@ if TYPE_CHECKING:
 
 class EncodingStrategy(ABC):
     """Abstract base class for RTF encoding strategies."""
-    
+
     @abstractmethod
     def encode(self, document: "RTFDocument") -> str:
         """Encode the document using this strategy.
-        
+
         Args:
             document: The RTF document to encode
-            
+
         Returns:
             Complete RTF string
         """
@@ -25,30 +25,35 @@ class EncodingStrategy(ABC):
 
 class SinglePageStrategy(EncodingStrategy):
     """Encoding strategy for single-page documents without pagination."""
-    
+
     def __init__(self):
         from ..services import RTFEncodingService
         from ..services.document_service import RTFDocumentService
+        from ..services.figure_service import RTFFigureService
+
         self.encoding_service = RTFEncodingService()
         self.document_service = RTFDocumentService()
-    
+        self.figure_service = RTFFigureService()
+
     def encode(self, document: "RTFDocument") -> str:
         """Encode a single-page document with complete border and layout handling.
-        
+
         Args:
             document: The RTF document to encode
-            
+
         Returns:
             Complete RTF string
         """
         import polars as pl
         from ..attributes import BroadcastValue
-        
+
         # Original single-page encoding logic
         dim = document.df.shape
 
         # Title
-        rtf_title = self.encoding_service.encode_title(document.rtf_title, method="line")
+        rtf_title = self.encoding_service.encode_title(
+            document.rtf_title, method="line"
+        )
 
         # Page Border
         doc_border_top = BroadcastValue(
@@ -73,7 +78,10 @@ class SinglePageStrategy(EncodingStrategy):
                     value=document.rtf_body.border_top, dimension=dim
                 ).update_row(0, doc_border_top)
         else:
-            if document.rtf_column_header[0].text is None and document.rtf_body.as_colheader:
+            if (
+                document.rtf_column_header[0].text is None
+                and document.rtf_body.as_colheader
+            ):
                 columns = [
                     col
                     for col in document.df.columns
@@ -94,7 +102,9 @@ class SinglePageStrategy(EncodingStrategy):
                 ).update_row(0, doc_border_top)
 
             rtf_column_header = [
-                self.encoding_service.encode_column_header(header.text, header, document.rtf_page.col_width)
+                self.encoding_service.encode_column_header(
+                    header.text, header, document.rtf_page.col_width
+                )
                 for header in document.rtf_column_header
             ]
 
@@ -125,7 +135,9 @@ class SinglePageStrategy(EncodingStrategy):
                 ).update_row(dim[0] - 1, doc_border_bottom)
 
         # Body
-        rtf_body = self.encoding_service.encode_body(document, document.df, document.rtf_body)
+        rtf_body = self.encoding_service.encode_body(
+            document, document.df, document.rtf_body
+        )
 
         return "\n".join(
             [
@@ -134,27 +146,49 @@ class SinglePageStrategy(EncodingStrategy):
                     self.encoding_service.encode_document_start(),
                     self.encoding_service.encode_font_table(),
                     "\n",
-                    self.encoding_service.encode_page_header(document.rtf_page_header, method="line"),
-                    self.encoding_service.encode_page_footer(document.rtf_page_footer, method="line"),
+                    self.encoding_service.encode_page_header(
+                        document.rtf_page_header, method="line"
+                    ),
+                    self.encoding_service.encode_page_footer(
+                        document.rtf_page_footer, method="line"
+                    ),
                     self.encoding_service.encode_page_settings(document.rtf_page),
                     rtf_title,
                     "\n",
-                    self.encoding_service.encode_subline(document.rtf_subline, method="line"),
+                    self.encoding_service.encode_subline(
+                        document.rtf_subline, method="line"
+                    ),
+                    self.figure_service.encode_figure(document.rtf_figure)
+                    if document.rtf_figure is not None
+                    and document.rtf_figure.fig_pos == "before"
+                    else None,
                     "\n".join(
                         header for sublist in rtf_column_header for header in sublist
                     )
                     if rtf_column_header
                     else None,
                     "\n".join(rtf_body),
-                    "\n".join(self.encoding_service.encode_footnote(
-                        document.rtf_footnote, page_number=1, page_col_width=document.rtf_page.col_width
-                    ))
+                    "\n".join(
+                        self.encoding_service.encode_footnote(
+                            document.rtf_footnote,
+                            page_number=1,
+                            page_col_width=document.rtf_page.col_width,
+                        )
+                    )
                     if document.rtf_footnote is not None
                     else None,
-                    "\n".join(self.encoding_service.encode_source(
-                        document.rtf_source, page_number=1, page_col_width=document.rtf_page.col_width
-                    ))
+                    "\n".join(
+                        self.encoding_service.encode_source(
+                            document.rtf_source,
+                            page_number=1,
+                            page_col_width=document.rtf_page.col_width,
+                        )
+                    )
                     if document.rtf_source is not None
+                    else None,
+                    self.figure_service.encode_figure(document.rtf_figure)
+                    if document.rtf_figure is not None
+                    and document.rtf_figure.fig_pos == "after"
                     else None,
                     "\n\n",
                     "}",
@@ -166,19 +200,22 @@ class SinglePageStrategy(EncodingStrategy):
 
 class PaginatedStrategy(EncodingStrategy):
     """Encoding strategy for multi-page documents with pagination."""
-    
+
     def __init__(self):
         from ..services import RTFEncodingService
         from ..services.document_service import RTFDocumentService
+        from ..services.figure_service import RTFFigureService
+
         self.encoding_service = RTFEncodingService()
         self.document_service = RTFDocumentService()
-    
+        self.figure_service = RTFFigureService()
+
     def encode(self, document: "RTFDocument") -> str:
         """Encode a paginated document with full pagination support.
-        
+
         Args:
             document: The RTF document to encode
-            
+
         Returns:
             Complete RTF string
         """
@@ -186,7 +223,7 @@ class PaginatedStrategy(EncodingStrategy):
         from ..row import Utils
         from ..attributes import BroadcastValue
         from copy import deepcopy
-        
+
         dim = document.df.shape
 
         # Get pagination instance and distribute content
@@ -195,7 +232,9 @@ class PaginatedStrategy(EncodingStrategy):
         col_widths = Utils._col_widths(document.rtf_body.col_rel_width, col_total_width)
 
         # Calculate additional rows per page for r2rtf compatibility
-        additional_rows = self.document_service.calculate_additional_rows_per_page(document)
+        additional_rows = self.document_service.calculate_additional_rows_per_page(
+            document
+        )
         pages = distributor.distribute_content(
             df=document.df,
             col_widths=col_widths,
@@ -222,7 +261,9 @@ class PaginatedStrategy(EncodingStrategy):
 
             # Add page break before each page (except first)
             if not page_info["is_first_page"]:
-                page_elements.append(self.document_service.generate_page_break(document))
+                page_elements.append(
+                    self.document_service.generate_page_break(document)
+                )
 
             # Add title if it should appear on this page
             if (
@@ -232,7 +273,9 @@ class PaginatedStrategy(EncodingStrategy):
                     document.rtf_page.page_title, page_info
                 )
             ):
-                title_content = self.encoding_service.encode_title(document.rtf_title, method="line")
+                title_content = self.encoding_service.encode_title(
+                    document.rtf_title, method="line"
+                )
                 if title_content:
                     page_elements.append(title_content)
                     page_elements.append("\n")
@@ -245,9 +288,22 @@ class PaginatedStrategy(EncodingStrategy):
                     document.rtf_page.page_title, page_info
                 )
             ):
-                subline_content = self.encoding_service.encode_subline(document.rtf_subline, method="line")
+                subline_content = self.encoding_service.encode_subline(
+                    document.rtf_subline, method="line"
+                )
                 if subline_content:
                     page_elements.append(subline_content)
+
+            # Add figures if they should appear on the first page and position is 'before'
+            if (
+                document.rtf_figure
+                and document.rtf_figure.figures
+                and document.rtf_figure.fig_pos == "before"
+                and page_info["is_first_page"]
+            ):
+                figure_content = self.figure_service.encode_figure(document.rtf_figure)
+                if figure_content:
+                    page_elements.append(figure_content)
                     page_elements.append("\n")
 
             # Add column headers if needed
@@ -277,7 +333,10 @@ class PaginatedStrategy(EncodingStrategy):
                     if (
                         page_info["is_first_page"] and i == 0
                     ):  # First header on first page
-                        if document.rtf_page.border_first and header_copy.text is not None:
+                        if (
+                            document.rtf_page.border_first
+                            and header_copy.text is not None
+                        ):
                             header_dims = header_copy.text.shape
                             # Apply page border_first to top of first column header
                             header_copy.border_top = BroadcastValue(
@@ -315,7 +374,9 @@ class PaginatedStrategy(EncodingStrategy):
                 )
             ):
                 footnote_content = self.encoding_service.encode_footnote(
-                    document.rtf_footnote, page_info["page_number"], document.rtf_page.col_width
+                    document.rtf_footnote,
+                    page_info["page_number"],
+                    document.rtf_page.col_width,
                 )
                 if footnote_content:
                     page_elements.extend(footnote_content)
@@ -329,10 +390,23 @@ class PaginatedStrategy(EncodingStrategy):
                 )
             ):
                 source_content = self.encoding_service.encode_source(
-                    document.rtf_source, page_info["page_number"], document.rtf_page.col_width
+                    document.rtf_source,
+                    page_info["page_number"],
+                    document.rtf_page.col_width,
                 )
                 if source_content:
                     page_elements.extend(source_content)
+
+            # Add figures if they should appear on the last page and position is 'after'
+            if (
+                document.rtf_figure
+                and document.rtf_figure.figures
+                and document.rtf_figure.fig_pos == "after"
+                and page_info["is_last_page"]
+            ):
+                figure_content = self.figure_service.encode_figure(document.rtf_figure)
+                if figure_content:
+                    page_elements.append(figure_content)
 
             page_contents.extend(page_elements)
 
@@ -344,8 +418,12 @@ class PaginatedStrategy(EncodingStrategy):
                     self.encoding_service.encode_document_start(),
                     self.encoding_service.encode_font_table(),
                     "\n",
-                    self.encoding_service.encode_page_header(document.rtf_page_header, method="line"),
-                    self.encoding_service.encode_page_footer(document.rtf_page_footer, method="line"),
+                    self.encoding_service.encode_page_header(
+                        document.rtf_page_header, method="line"
+                    ),
+                    self.encoding_service.encode_page_footer(
+                        document.rtf_page_footer, method="line"
+                    ),
                     self.encoding_service.encode_page_settings(document.rtf_page),
                     "\n".join(page_contents),
                     "\n\n",
@@ -358,13 +436,13 @@ class PaginatedStrategy(EncodingStrategy):
 
 class ListEncodingStrategy(EncodingStrategy):
     """Encoding strategy for RTF documents containing lists (future feature)."""
-    
+
     def encode(self, document: "RTFDocument") -> str:
         """Encode a document with list content.
-        
+
         Args:
             document: The RTF document to encode
-            
+
         Returns:
             Complete RTF string
         """
@@ -374,13 +452,13 @@ class ListEncodingStrategy(EncodingStrategy):
 
 class FigureEncodingStrategy(EncodingStrategy):
     """Encoding strategy for RTF documents containing figures (future feature)."""
-    
+
     def encode(self, document: "RTFDocument") -> str:
         """Encode a document with figure content.
-        
+
         Args:
             document: The RTF document to encode
-            
+
         Returns:
             Complete RTF string
         """

@@ -10,6 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 from .input import (
     RTFBody,
     RTFColumnHeader,
+    RTFFigure,
     RTFFootnote,
     RTFPage,
     RTFPageFooter,
@@ -63,6 +64,9 @@ class RTFDocument(BaseModel):
     )
     rtf_page_footer: RTFPageFooter | None = Field(
         default=None, description="Text to appear in the footer of each page"
+    )
+    rtf_figure: RTFFigure | None = Field(
+        default=None, description="Figure/image content to embed in the document"
     )
 
     @field_validator("rtf_column_header", mode="before")
