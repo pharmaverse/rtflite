@@ -236,6 +236,12 @@ class RTFComponent(BaseModel):
 
 The project includes Liberation and CrOS fonts for consistent string width calculations. Always use the strwidth module for text measurements rather than estimations.
 
+**IMPORTANT Font Mapping Rules**:
+- **DO NOT MODIFY `fonts_mapping.py`** - The charset values are intentionally different for each font
+- The charset mapping in `fonts_mapping.py` is correct as-is and matches R2RTF behavior
+- Font table generation in `rtf/syntax.py` handles the formatting and includes `\fprq2` parameter
+- The test suite ensures compatibility with R2RTF through semantic RTF comparison
+
 ### Testing Patterns
 
 **Test Architecture Components Independently**:
@@ -374,9 +380,11 @@ assert_rtf_equals_semantic(rtf_output, expected, "test_name")
 
 ### Font and Border Changes
 
-- Font changes: Update `src/rtflite/fonts_mapping.py` 
-- Border changes: May require updates to semantic comparison utilities
-- Always test against R2RTF fixtures for compatibility
+- **Font changes**: DO NOT modify `src/rtflite/fonts_mapping.py` - charset values are correct as-is
+- **Font table formatting**: Changes should be made in `src/rtflite/rtf/syntax.py` if needed
+- **Border changes**: May require updates to semantic comparison utilities
+- **Always test against R2RTF fixtures** for compatibility
+- **Trust the test suite**: Tests verify R2RTF compatibility through semantic comparison
 
 ### Quick Testing Commands
 

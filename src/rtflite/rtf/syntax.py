@@ -32,23 +32,23 @@ class RTFSyntaxGenerator:
         font_name = font_types["name"]
         font_charset = font_types["charset"]
 
-        font_table = "{\\fonttbl"
+        font_table = RTFConstants.Control.FONT_TABLE_START
         for rtf, style, name, charset in zip(
             font_rtf, font_style, font_name, font_charset
         ):
-            font_table = font_table + rtf + style + charset + " " + name + ";"
-        font_table = font_table + "}"
-        
+            font_table = font_table + "{" + rtf + style + charset + "\\fprq2 " + name + ";}\n"
+        font_table += "}"
         return font_table
     
     @staticmethod
-    def generate_page_settings(width: float, height: float, margins: List[float]) -> str:
+    def generate_page_settings(width: float, height: float, margins: List[float], orientation: str = "portrait") -> str:
         """Generate RTF page settings.
         
         Args:
             width: Page width in inches
             height: Page height in inches  
             margins: Margins [left, right, top, bottom, header, footer] in inches
+            orientation: Page orientation ('portrait' or 'landscape')
             
         Returns:
             RTF page settings string
@@ -61,8 +61,11 @@ class RTFSyntaxGenerator:
         
         margin_twips = [int(Utils._inch_to_twip(m)) for m in margins]
         
+        # Add landscape command if needed
+        landscape_cmd = "\\landscape " if orientation == "landscape" else ""
+        
         return (
-            f"\\paperw{width_twips}\\paperh{height_twips}"
+            f"\\paperw{width_twips}\\paperh{height_twips}{landscape_cmd}\n"
             f"\\margl{margin_twips[0]}\\margr{margin_twips[1]}"
             f"\\margt{margin_twips[2]}\\margb{margin_twips[3]}"
             f"\\headery{margin_twips[4]}\\footery{margin_twips[5]}"
@@ -112,7 +115,8 @@ class RTFDocumentAssembler:
         if "page_settings" in components:
             settings = components["page_settings"]
             parts.append(self.syntax.generate_page_settings(
-                settings["width"], settings["height"], settings["margins"]
+                settings["width"], settings["height"], settings["margins"],
+                settings.get("orientation", "portrait")
             ))
         
         # Content sections
@@ -133,74 +137,3 @@ class RTFDocumentAssembler:
         
         # Join with newlines, filtering out None/empty values
         return "\n".join(str(part) for part in parts if part)
-
-
-class RTFComponentEncoder:
-    """Encodes individual RTF components."""
-    
-    def __init__(self):
-        self.syntax = RTFSyntaxGenerator()
-    
-    def encode_page_header(self, header_config: Dict[str, Any]) -> Optional[str]:
-        """Encode page header component.
-        
-        Args:
-            header_config: Header configuration
-            
-        Returns:
-            RTF header string or None
-        """
-        if not header_config.get("text"):
-            return None
-        
-        # For now, delegate to existing method
-        # This will be fully implemented in the next step
-        return header_config.get("rtf_code", "")
-    
-    def encode_page_footer(self, footer_config: Dict[str, Any]) -> Optional[str]:
-        """Encode page footer component.
-        
-        Args:
-            footer_config: Footer configuration
-            
-        Returns:
-            RTF footer string or None
-        """
-        if not footer_config.get("text"):
-            return None
-        
-        # For now, delegate to existing method
-        # This will be fully implemented in the next step
-        return footer_config.get("rtf_code", "")
-    
-    def encode_title(self, title_config: Dict[str, Any]) -> Optional[str]:
-        """Encode title component.
-        
-        Args:
-            title_config: Title configuration
-            
-        Returns:
-            RTF title string or None
-        """
-        if not title_config.get("text"):
-            return None
-        
-        # For now, delegate to existing method
-        # This will be fully implemented in the next step
-        return title_config.get("rtf_code", "")
-    
-    def encode_subline(self, subline_config: Dict[str, Any]) -> Optional[str]:
-        """Encode subline component.
-        
-        Args:
-            subline_config: Subline configuration
-            
-        Returns:
-            RTF subline string or None
-        """
-        if not subline_config.get("text"):
-            return None
-        
-        # For now, delegate to existing method
-        # This will be fully implemented in the next step
-        return subline_config.get("rtf_code", "")

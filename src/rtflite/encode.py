@@ -529,36 +529,6 @@ class RTFDocument(BaseModel):
         setattr(page_attrs, border_attr, current_borders)
         return page_attrs
 
-    def _rtf_page_encode(self) -> str:
-        """Define RTF page settings - delegated to encoding service."""
-        return self._encoding_service.encode_page_settings(self.rtf_page)
-
-    def _rtf_page_margin_encode(self) -> str:
-        """Define RTF margin settings - delegated to encoding service."""
-        return self._encoding_service.encode_page_margin(self.rtf_page)
-
-    def _rtf_page_header_encode(self, method: str) -> str:
-        """Convert the RTF page header into RTF syntax - delegated to encoding service."""
-        result = self._encoding_service.encode_page_header(self.rtf_page_header, method)
-        if result:
-            return f"{{\\header{result}}}"
-        return None
-
-    def _rtf_page_footer_encode(self, method: str) -> str:
-        """Convert the RTF page footer into RTF syntax - delegated to encoding service."""
-        result = self._encoding_service.encode_page_footer(self.rtf_page_footer, method)
-        if result:
-            return f"{{\\footer{result}}}"
-        return None
-
-    def _rtf_title_encode(self, method: str) -> str:
-        """Convert the RTF title into RTF syntax - delegated to encoding service."""
-        return self._encoding_service.encode_title(self.rtf_title, method)
-
-    def _rtf_subline_encode(self, method: str) -> str:
-        """Convert the RTF subline into RTF syntax - delegated to encoding service."""
-        return self._encoding_service.encode_subline(self.rtf_subline, method)
-
     def _page_by(self) -> list[list[tuple[int, int, int]]]:
         """Create components for page_by format.
 
@@ -697,23 +667,23 @@ class RTFDocument(BaseModel):
     def _rtf_start_encode(self) -> str:
         """Generate RTF document start - delegated to encoding service."""
         return self._encoding_service.encode_document_start()
-
-    def _rtf_font_table_encode(self) -> str:
-        """Define RTF fonts"""
-        font_types = Utils._font_type()
-        font_rtf = [f"\\f{i}" for i in range(10)]
-        font_style = font_types["style"]
-        font_name = font_types["name"]
-        font_charset = font_types["charset"]
-
-        font_table = "{\\fonttbl"
-        for rtf, style, name, charset in zip(
-            font_rtf, font_style, font_name, font_charset
-        ):
-            font_table += f"{{{rtf}{style}{charset}\\fprq2 {name};}}\n"
-        font_table += "}"
-
-        return font_table
+    
+    def _rtf_title_encode(self, method: str = "line") -> str:
+        """Convert the RTF title into RTF syntax - delegated to encoding service."""
+        if not self.rtf_title:
+            return ""
+        return self._encoding_service.encode_title(self.rtf_title, method)
+    
+    def _rtf_page_encode(self) -> str:
+        """Generate RTF page settings (paper size only) - delegated to encoding service.""" 
+        from .core import RTFConstants
+        page_width_twips = int(self.rtf_page.width * RTFConstants.TWIPS_PER_INCH)
+        page_height_twips = int(self.rtf_page.height * RTFConstants.TWIPS_PER_INCH)
+        return f"\\paperw{page_width_twips}\\paperh{page_height_twips}\n"
+    
+    def _rtf_page_margin_encode(self) -> str:
+        """Define RTF margin settings - delegated to encoding service."""
+        return self._encoding_service.encode_page_margin(self.rtf_page)
 
     def rtf_encode(self) -> str:
         """Generate RTF code using the encoding engine."""

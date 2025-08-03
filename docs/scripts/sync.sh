@@ -64,7 +64,7 @@ generate_rtf_files() {
 }
 
 # Activate virtual environment first
-source .venv/bin/activate
+source ../../.venv/bin/activate
 
 # Sync all articles in the quarto folder
 for qmd_file in docs/articles/quarto/*.qmd; do

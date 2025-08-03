@@ -36,7 +36,8 @@ class RTFEncodingService:
         return self.syntax.generate_page_settings(
             page_config.width, 
             page_config.height, 
-            page_config.margin
+            page_config.margin,
+            page_config.orientation
         )
     
     def encode_page_header(self, header_config, method: str = "line") -> str:
@@ -53,9 +54,11 @@ class RTFEncodingService:
             return ""
         
         # Use the existing text encoding method
-        return header_config._encode_text(
+        result= header_config._encode_text(
             text=header_config.text, method=method
         )
+        
+        return f"{{\\header{result}}}"
     
     def encode_page_footer(self, footer_config, method: str = "line") -> str:
         """Encode page footer component.
@@ -71,9 +74,10 @@ class RTFEncodingService:
             return ""
         
         # Use the existing text encoding method
-        return footer_config._encode_text(
+        result = footer_config._encode_text(
             text=footer_config.text, method=method
         )
+        return f"{{\\footer{result}}}"
     
     def encode_title(self, title_config, method: str = "line") -> str:
         """Encode title component.
