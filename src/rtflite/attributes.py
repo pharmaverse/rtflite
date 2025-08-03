@@ -636,23 +636,6 @@ class BroadcastValue(BaseModel):
         value = [column * col_repeats for column in self.value] * row_repeats
         return [row[: self.dimension[1]] for row in value[: self.dimension[0]]]
 
-    def to_numpy(self) -> np.ndarray:
-        if self.value is None:
-            return None
-
-        return np.array(self.to_list())
-
-    def to_pandas(self) -> pd.DataFrame:
-        if self.value is None:
-            return None
-
-        return pd.DataFrame(self.to_list())
-
-    def to_polars(self) -> pl.DataFrame:
-        if self.value is None:
-            return None
-
-        return pl.DataFrame(self.to_list())
 
     def update_row(self, row_index: int, row_value: list):
         if self.value is None:
