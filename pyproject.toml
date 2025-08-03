@@ -12,7 +12,9 @@ dependencies = [
     "pillow>=11.0.0",
     "narwhals>=1.0.0",
     "pandas>=2.2.3",
-    "polars>=1.0.0", 
+    "polars>=1.0.0",
+    "plotnine>=0.15.0",
+    "pyarrow>=21.0.0",
 ]
 readme = "README.md"
 
