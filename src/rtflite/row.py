@@ -172,6 +172,17 @@ class TextContent(BaseModel):
         # First apply LaTeX to Unicode conversion if enabled
         text = text_convert(self.text, self.convert)
         
+        converted_text = ""
+        for char in text:
+            unicode_int = ord(char)
+            if unicode_int <= 255 and unicode_int != 177:
+                converted_text += char
+            else:
+                rtf_value = unicode_int - (0 if unicode_int < 32768 else 65536)
+                converted_text += f"\\uc1\\u{rtf_value}*"
+        
+        text = converted_text
+        
         # Basic RTF character conversion (matching r2rtf char_rtf mapping)
         rtf_chars = RTFConstants.RTF_CHAR_MAPPING
 

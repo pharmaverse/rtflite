@@ -78,7 +78,8 @@ doc = rtf.RTFDocument(
     rtf_column_header=[col_header1, col_header2],
     rtf_body=tbl_body,
     rtf_footnote=rtf.RTFFootnote(
-        text=["{^\\dagger}This is footnote 1", "This is footnote 2"]
+        text=["{^\\dagger}This is footnote 1", "This is footnote 2"],
+        text_convert=[[True]],  # Enable LaTeX symbol conversion
     ),
     rtf_source=rtf.RTFSource(text=["Source: xxx"]),
 )
