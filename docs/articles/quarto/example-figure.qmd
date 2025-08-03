@@ -67,7 +67,7 @@ doc_age = rtf.RTFDocument(
     ),
     rtf_footnote=rtf.RTFFootnote(
         text=["Analysis population: All randomized subjects (N=254)"],
-        as_table=False  # Explicit setting for figure documents
+        as_table=False  # Required when using RTFFigure
     ),
     rtf_source=rtf.RTFSource(text=["Source: ADSL dataset"])
 )
@@ -105,7 +105,7 @@ doc_multi_page = rtf.RTFDocument(
     ),
     rtf_footnote=rtf.RTFFootnote(
         text=["Note: Each histogram represents age distribution for one treatment group"],
-        as_table=False
+        as_table=False  # Required when using RTFFigure
     ),
     rtf_source=rtf.RTFSource(
         text=["Source: ADSL dataset, Clinical Database Lock Date: 2023-12-31"]

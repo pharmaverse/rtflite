@@ -33,9 +33,14 @@ class RTFDocumentService:
 
     def needs_pagination(self, document) -> bool:
         """Check if document needs pagination based on content size and page limits."""
-        # Figure-only documents don't need pagination
-        if document.df is None:
-            return False
+
+        # Multiple figures always need pagination (each figure on separate page)
+        if document.rtf_figure and document.rtf_figure.figures:
+            # Check if multiple figures are provided
+            figures = document.rtf_figure.figures
+            if isinstance(figures, (list, tuple)) and len(figures) > 1:
+                return True
+
             
         if document.rtf_body.page_by and document.rtf_body.new_page:
             return True

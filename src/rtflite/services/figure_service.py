@@ -42,9 +42,9 @@ class RTFFigureService:
             )
             rtf_output.append(figure_rtf)
 
-            # Add paragraph break between figures
+            # Add page break between figures (each figure on separate page)
             if i < len(figure_data_list) - 1:
-                rtf_output.append("\\par\\par ")
+                rtf_output.append("\\page ")
 
         # Final paragraph after all figures
         rtf_output.append("\\par ")

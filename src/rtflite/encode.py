@@ -107,6 +107,13 @@ class RTFDocument(BaseModel):
         if self.df is not None and self.rtf_figure is not None:
             raise ValueError("Cannot use both 'df' and 'rtf_figure' together. Use either tables or figures in a single document.")
         
+        # When RTFFigure is used, enforce as_table=False for footnotes and sources
+        if self.rtf_figure is not None:
+            if self.rtf_footnote is not None and getattr(self.rtf_footnote, 'as_table', True):
+                raise ValueError("When using RTFFigure, RTFFootnote must have as_table=False")
+            if self.rtf_source is not None and getattr(self.rtf_source, 'as_table', False):
+                raise ValueError("When using RTFFigure, RTFSource must have as_table=False")
+        
         # Skip column validation if no DataFrame provided (figure-only documents)
         if self.df is None:
             return self

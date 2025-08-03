@@ -49,7 +49,7 @@ class SinglePageStrategy(EncodingStrategy):
 
         # Handle figure-only documents (no table)
         if document.df is None:
-            return self._encode_figure_only_document(document)
+            return self._encode_figure_only_document_simple(document)
             
         # Original single-page encoding logic for table documents
         dim = document.df.shape
@@ -201,8 +201,11 @@ class SinglePageStrategy(EncodingStrategy):
             ]
         )
 
-    def _encode_figure_only_document(self, document: "RTFDocument") -> str:
-        """Encode a figure-only document (no table data).
+    def _encode_figure_only_document_simple(self, document: "RTFDocument") -> str:
+        """Encode a figure-only document with simple page layout.
+        
+        This handles figure-only documents with default page settings.
+        Multiple figures will have page breaks between them (handled by FigureService).
         
         Args:
             document: The RTF document with only figure content
@@ -210,7 +213,7 @@ class SinglePageStrategy(EncodingStrategy):
         Returns:
             Complete RTF string
         """
-        # Build RTF components for figure-only document
+        # Build RTF components for simple figure-only document
         rtf_title = self.encoding_service.encode_title(
             document.rtf_title, method="line"
         )
@@ -235,6 +238,7 @@ class SinglePageStrategy(EncodingStrategy):
                     self.encoding_service.encode_subline(
                         document.rtf_subline, method="line"
                     ),
+                    # FigureService handles page breaks between multiple figures
                     self.figure_service.encode_figure(document.rtf_figure),
                     "\n".join(
                         self.encoding_service.encode_footnote(
@@ -287,6 +291,10 @@ class PaginatedStrategy(EncodingStrategy):
         from ..row import Utils
         from ..attributes import BroadcastValue
         from copy import deepcopy
+
+        # Handle figure-only documents with multi-page behavior
+        if document.df is None:
+            return self._encode_figure_only_document_with_pagination(document)
 
         dim = document.df.shape
 
@@ -496,6 +504,133 @@ class PaginatedStrategy(EncodingStrategy):
                 if item is not None
             ]
         )
+
+    def _encode_figure_only_document_with_pagination(self, document: "RTFDocument") -> str:
+        """Encode a figure-only document with multi-page behavior.
+        
+        This method handles figure-only documents where the user has requested
+        elements to appear on all pages (page_title="all", etc.)
+        
+        For multiple figures, each figure will be on a separate page with 
+        repeated titles/footnotes/sources as specified.
+        
+        Args:
+            document: The RTF document with only figure content
+            
+        Returns:
+            Complete RTF string
+        """
+        from copy import deepcopy
+        from ..figure import rtf_read_figure
+        
+        # Get figure information
+        if document.rtf_figure is None or document.rtf_figure.figures is None:
+            return ""
+            
+        # Read figure data to determine number of figures
+        figure_data_list, figure_formats = rtf_read_figure(document.rtf_figure.figures)
+        num_figures = len(figure_data_list)
+        
+        # Build RTF components
+        rtf_title = self.encoding_service.encode_title(
+            document.rtf_title, method="line"
+        )
+        
+        # For figure-only documents, footnote should be as_table=False
+        footnote_component = document.rtf_footnote
+        if footnote_component is not None:
+            footnote_component = deepcopy(footnote_component)
+            footnote_component.as_table = False
+        
+        # Determine which elements should show on each page
+        show_title_on_all = document.rtf_page.page_title == "all"
+        show_footnote_on_all = document.rtf_page.page_footnote == "all"
+        show_source_on_all = document.rtf_page.page_source == "all"
+        
+        page_elements = []
+        
+        # Add document start
+        page_elements.append(self.encoding_service.encode_document_start())
+        page_elements.append(self.encoding_service.encode_font_table())
+        page_elements.append("\n")
+        
+        # Add page settings (headers/footers)
+        page_elements.append(self.encoding_service.encode_page_header(
+            document.rtf_page_header, method="line"
+        ))
+        page_elements.append(self.encoding_service.encode_page_footer(
+            document.rtf_page_footer, method="line"
+        ))
+        page_elements.append(self.encoding_service.encode_page_settings(document.rtf_page))
+        
+        # Create each page with figure and repeated elements
+        for i in range(num_figures):
+            is_first_page = (i == 0)
+            is_last_page = (i == num_figures - 1)
+            
+            # Add title based on page settings
+            if (show_title_on_all or 
+                (document.rtf_page.page_title == "first" and is_first_page) or
+                (document.rtf_page.page_title == "last" and is_last_page)):
+                page_elements.append(rtf_title)
+                page_elements.append("\n")
+            
+            # Add subline
+            if is_first_page:  # Only on first page
+                page_elements.append(self.encoding_service.encode_subline(
+                    document.rtf_subline, method="line"
+                ))
+            
+            # Add single figure
+            width = self.figure_service._get_dimension(document.rtf_figure.fig_width, i)
+            height = self.figure_service._get_dimension(document.rtf_figure.fig_height, i)
+            
+            figure_rtf = self.figure_service._encode_single_figure(
+                figure_data_list[i], figure_formats[i], width, height, 
+                document.rtf_figure.fig_align
+            )
+            page_elements.append(figure_rtf)
+            page_elements.append("\\par ")
+            
+            # Add footnote based on page settings
+            if (footnote_component is not None and
+                (show_footnote_on_all or 
+                 (document.rtf_page.page_footnote == "first" and is_first_page) or
+                 (document.rtf_page.page_footnote == "last" and is_last_page))):
+                footnote_content = "\n".join(
+                    self.encoding_service.encode_footnote(
+                        footnote_component,
+                        page_number=i + 1,
+                        page_col_width=document.rtf_page.col_width,
+                    )
+                )
+                if footnote_content:
+                    page_elements.append(footnote_content)
+            
+            # Add source based on page settings
+            if (document.rtf_source is not None and
+                (show_source_on_all or 
+                 (document.rtf_page.page_source == "first" and is_first_page) or
+                 (document.rtf_page.page_source == "last" and is_last_page))):
+                source_content = "\n".join(
+                    self.encoding_service.encode_source(
+                        document.rtf_source,
+                        page_number=i + 1,
+                        page_col_width=document.rtf_page.col_width,
+                    )
+                )
+                if source_content:
+                    page_elements.append(source_content)
+            
+            # Add page break between figures (except after last figure)
+            if not is_last_page:
+                page_elements.append("\\page ")
+        
+        # Close document
+        page_elements.append("\n\n")
+        page_elements.append("}")
+        
+        return "".join([item for item in page_elements if item is not None])
 
 
 class ListEncodingStrategy(EncodingStrategy):

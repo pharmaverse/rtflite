@@ -26,11 +26,9 @@ df = pl.read_parquet(data_path)
 ```
 
 ``` python
-# Create age histogram
 # Create multiple age group histograms for different treatments
 treatment_groups = df['TRT01A'].unique().sort()
 
-# Create a histogram for each treatment
 for i, treatment in enumerate(treatment_groups):
     treatment_df = df.filter(pl.col('TRT01A') == treatment)
     
@@ -53,8 +51,6 @@ for i, treatment in enumerate(treatment_groups):
 ## Single Figure
 
 ``` python
-# Create RTF document with age histogram
-# Note: For figure-only documents, we explicitly set as_table=False for footnotes
 doc_age = rtf.RTFDocument(
     rtf_title=rtf.RTFTitle(
         text=[
@@ -69,7 +65,7 @@ doc_age = rtf.RTFDocument(
     ),
     rtf_footnote=rtf.RTFFootnote(
         text=["Analysis population: All randomized subjects (N=254)"],
-        as_table=False  # Explicit setting for figure documents
+        as_table=False  # Required when using RTFFigure
     ),
     rtf_source=rtf.RTFSource(text=["Source: ADSL dataset"])
 )
@@ -107,7 +103,7 @@ doc_multi_page = rtf.RTFDocument(
     ),
     rtf_footnote=rtf.RTFFootnote(
         text=["Note: Each histogram represents age distribution for one treatment group"],
-        as_table=False
+        as_table=False  # Required when using RTFFigure
     ),
     rtf_source=rtf.RTFSource(
         text=["Source: ADSL dataset, Clinical Database Lock Date: 2023-12-31"]
