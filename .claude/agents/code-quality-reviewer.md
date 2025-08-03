@@ -1,5 +1,5 @@
 ---
-name: code-quality-reviewer
+name: reviewer
 description: Use this agent when you need to review code for engineering best practices, maintainability, and readability. Examples: <example>Context: The user has just written a function that processes data with multiple nested loops and conditional statements. user: "I've written this function to process the user data, can you take a look?" assistant: "I'll use the code-quality-reviewer agent to review your function for engineering best practices and maintainability."</example> <example>Context: The user is refactoring legacy code and wants to ensure it follows good engineering practices. user: "Here's my refactored authentication module. I want to make sure it's clean and maintainable." assistant: "Let me use the code-quality-reviewer agent to evaluate your refactored code for best practices and maintainability."</example>
 model: opus
 color: green
