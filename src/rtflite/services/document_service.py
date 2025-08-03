@@ -280,15 +280,30 @@ class RTFDocumentService:
             document.rtf_footnote
             and document.rtf_footnote.text
             and self.should_show_element_on_page(
-                document.rtf_page.page_footnote_location, page_info
+                document.rtf_page.page_footnote, page_info
             )
         )
         has_source_on_page = (
             document.rtf_source
             and document.rtf_source.text
             and self.should_show_element_on_page(
-                document.rtf_page.page_source_location, page_info
+                document.rtf_page.page_source, page_info
             )
+        )
+
+        # Determine if footnotes/sources appear as tables on the last page
+        # This is crucial for border placement when components are set to "first" only
+        footnote_as_table_on_last = (
+            document.rtf_footnote
+            and document.rtf_footnote.text
+            and getattr(document.rtf_footnote, "as_table", True)
+            and document.rtf_page.page_footnote == "last"
+        )
+        source_as_table_on_last = (
+            document.rtf_source
+            and document.rtf_source.text
+            and getattr(document.rtf_source, "as_table", False)
+            and document.rtf_page.page_source == "last"
         )
 
         # Apply border logic based on page position and footnote/source presence
@@ -319,15 +334,17 @@ class RTFDocumentService:
                     )
 
         else:  # is_last_page
-            # Last page: apply double border after footnote/source, or after data if no footnote/source
+            # Last page: check if we should apply border to data or footnote/source
             if document.rtf_page.border_last:
                 # Check if this page contains the absolute last row
                 total_rows = document.df.height
                 is_absolute_last_row = page_info["end_row"] == total_rows - 1
 
                 if is_absolute_last_row:
-                    if not (has_footnote_on_page or has_source_on_page):
-                        # No footnote/source: apply border to last data row
+                    # If footnotes/sources are set to "first" only and appear as tables,
+                    # they won't be on the last page, so apply border to last data row
+                    if not (footnote_as_table_on_last or source_as_table_on_last):
+                        # No footnote/source on last page: apply border to last data row
                         last_row_idx = page_df_height - 1
                         for col_idx in range(page_df_width):
                             page_attrs = self._apply_border_to_cell(
@@ -339,7 +356,7 @@ class RTFDocumentService:
                                 page_shape,
                             )
                     else:
-                        # Has footnote/source: set border for footnote/source (handled in separate method)
+                        # Has footnote/source on last page: set border for footnote/source
                         self._apply_footnote_source_borders(
                             document, page_info, document.rtf_page.border_last, is_last_page=True
                         )
@@ -353,14 +370,14 @@ class RTFDocumentService:
             document.rtf_footnote
             and document.rtf_footnote.text
             and self.should_show_element_on_page(
-                document.rtf_page.page_footnote_location, page_info
+                document.rtf_page.page_footnote, page_info
             )
         )
         has_source = (
             document.rtf_source
             and document.rtf_source.text
             and self.should_show_element_on_page(
-                document.rtf_page.page_source_location, page_info
+                document.rtf_page.page_source, page_info
             )
         )
 

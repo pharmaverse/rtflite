@@ -147,7 +147,11 @@ class RTFDocument(BaseModel):
                 )
 
     def rtf_encode(self) -> str:
-        """Generate RTF code using the encoding engine."""
+        """Generate RTF code using the encoding engine.
+        
+        Returns:
+            Complete RTF document string
+        """
         from .encoding import RTFEncodingEngine
         engine = RTFEncodingEngine()
         return engine.encode_document(self)

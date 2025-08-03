@@ -1,5 +1,5 @@
 ---
-title: "Row-level formatting"
+title: "Row Format"
 format: gfm
 eval: false
 ---

@@ -231,14 +231,14 @@ class RTFPage(BaseModel):
         default=False, description="Whether to use color in the document"
     )
 
-    page_title_location: str | None = Field(
-        default="all", description="Where to display titles ('all', 'first', 'last')"
+    page_title: str = Field(
+        default="all", description="Where to display titles in multi-page documents ('first', 'last', 'all')"
     )
-    page_footnote_location: str | None = Field(
-        default="all", description="Where to display footnotes ('all', 'first', 'last')"
+    page_footnote: str = Field(
+        default="last", description="Where to display footnotes in multi-page documents ('first', 'last', 'all')"
     )
-    page_source_location: str | None = Field(
-        default="all", description="Where to display source ('all', 'first', 'last')"
+    page_source: str = Field(
+        default="last", description="Where to display source in multi-page documents ('first', 'last', 'all')"
     )
 
     @field_validator("border_first", "border_last")
@@ -249,15 +249,15 @@ class RTFPage(BaseModel):
             )
         return v
 
-    @field_validator(
-        "page_title_location", "page_footnote_location", "page_source_location"
-    )
-    def validate_location(cls, v):
-        if v not in ["all", "first", "last"]:
+    @field_validator("page_title", "page_footnote", "page_source")
+    def validate_page_placement(cls, v):
+        valid_options = {"first", "last", "all"}
+        if v not in valid_options:
             raise ValueError(
-                f"Invalid location. Must be 'all', 'first', or 'last'. Given: {v}"
+                f"Invalid page placement option '{v}'. Must be one of {valid_options}"
             )
         return v
+
 
     @field_validator("width", "height", "nrow", "col_width")
     def validate_width_height(cls, v):

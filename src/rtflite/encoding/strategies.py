@@ -229,7 +229,7 @@ class PaginatedStrategy(EncodingStrategy):
                 document.rtf_title
                 and document.rtf_title.text
                 and self.document_service.should_show_element_on_page(
-                    document.rtf_page.page_title_location, page_info
+                    document.rtf_page.page_title, page_info
                 )
             ):
                 title_content = self.encoding_service.encode_title(document.rtf_title, method="line")
@@ -242,7 +242,7 @@ class PaginatedStrategy(EncodingStrategy):
                 document.rtf_subline
                 and document.rtf_subline.text
                 and self.document_service.should_show_element_on_page(
-                    document.rtf_page.page_title_location, page_info
+                    document.rtf_page.page_title, page_info
                 )
             ):
                 subline_content = self.encoding_service.encode_subline(document.rtf_subline, method="line")
@@ -311,7 +311,7 @@ class PaginatedStrategy(EncodingStrategy):
                 document.rtf_footnote
                 and document.rtf_footnote.text
                 and self.document_service.should_show_element_on_page(
-                    document.rtf_page.page_footnote_location, page_info
+                    document.rtf_page.page_footnote, page_info
                 )
             ):
                 footnote_content = self.encoding_service.encode_footnote(
@@ -325,7 +325,7 @@ class PaginatedStrategy(EncodingStrategy):
                 document.rtf_source
                 and document.rtf_source.text
                 and self.document_service.should_show_element_on_page(
-                    document.rtf_page.page_source_location, page_info
+                    document.rtf_page.page_source, page_info
                 )
             ):
                 source_content = self.encoding_service.encode_source(

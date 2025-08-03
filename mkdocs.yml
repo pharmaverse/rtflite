@@ -15,6 +15,7 @@ nav:
     - Formatting:
       - articles/formatting-row.md
       - articles/formatting-text.md
+      - articles/formatting-page.md
     - Converter:
       - reference/converter-setup.md
   - API Reference:
