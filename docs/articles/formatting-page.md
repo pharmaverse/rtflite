@@ -48,18 +48,6 @@ doc_default = RTFDocument(
 
 # Generate RTF and save to file
 doc_default.write_rtf("../rtf/formatting_page_default.rtf")
-print("RTF document created: ../rtf/formatting_page_default.rtf")
-
-# Count occurrences
-rtf_default = doc_default.rtf_encode()
-title_count = rtf_default.count('Adverse Events Summary by Treatment')
-footnote_count = rtf_default.count('Abbreviations:')
-source_count = rtf_default.count('ADAE Dataset')
-
-print(f"Default behavior:")
-print(f"  Title appears {title_count} time(s)")
-print(f"  Footnote appears {footnote_count} time(s)")
-print(f"  Source appears {source_count} time(s)")
 ```
 
 <embed src="../pdf/formatting_page_default.pdf" style="width:100%; height:400px" type="application/pdf">
@@ -83,16 +71,6 @@ doc_title_first = RTFDocument(
 
 # Generate RTF and save to file
 doc_title_first.write_rtf("../rtf/formatting_page_title_first.rtf")
-print("RTF document created: ../rtf/formatting_page_title_first.rtf")
-
-title_count = doc_title_first.rtf_encode().count('Adverse Events Summary by Treatment')
-footnote_count = doc_title_first.rtf_encode().count('Abbreviations:')
-source_count = doc_title_first.rtf_encode().count('ADAE Dataset')
-
-print(f"Title on first page only:")
-print(f"  Title appears {title_count} time(s)")
-print(f"  Footnote appears {footnote_count} time(s)")
-print(f"  Source appears {source_count} time(s)")
 ```
 
 <embed src="../pdf/formatting_page_title_first.pdf" style="width:100%; height:400px" type="application/pdf">
@@ -116,16 +94,6 @@ doc_footnote_first = RTFDocument(
 
 # Generate RTF and save to file
 doc_footnote_first.write_rtf("../rtf/formatting_page_footnote_first.rtf")
-print("RTF document created: ../rtf/formatting_page_footnote_first.rtf")
-
-title_count = doc_footnote_first.rtf_encode().count('Adverse Events Summary by Treatment')
-footnote_count = doc_footnote_first.rtf_encode().count('Abbreviations:')
-source_count = doc_footnote_first.rtf_encode().count('ADAE Dataset')
-
-print(f"Footnote on first page:")
-print(f"  Title appears {title_count} time(s)")
-print(f"  Footnote appears {footnote_count} time(s)")
-print(f"  Source appears {source_count} time(s)")
 ```
 
 <embed src="../pdf/formatting_page_footnote_first.pdf" style="width:100%; height:400px" type="application/pdf">
@@ -149,16 +117,6 @@ doc_all_pages = RTFDocument(
 
 # Generate RTF and save to file
 doc_all_pages.write_rtf("../rtf/formatting_page_all_pages.rtf")
-print("RTF document created: ../rtf/formatting_page_all_pages.rtf")
-
-title_count = doc_all_pages.rtf_encode().count('Adverse Events Summary by Treatment')
-footnote_count = doc_all_pages.rtf_encode().count('Abbreviations:')
-source_count = doc_all_pages.rtf_encode().count('ADAE Dataset')
-
-print(f"All components on all pages:")
-print(f"  Title appears {title_count} time(s)")
-print(f"  Footnote appears {footnote_count} time(s)")
-print(f"  Source appears {source_count} time(s)")
 ```
 
 <embed src="../pdf/formatting_page_all_pages.pdf" style="width:100%; height:400px" type="application/pdf">
@@ -182,83 +140,6 @@ doc_custom = RTFDocument(
 
 # Generate RTF and save to file
 doc_custom.write_rtf("../rtf/formatting_page_custom.rtf")
-print("RTF document created: ../rtf/formatting_page_custom.rtf")
-
-title_count = doc_custom.rtf_encode().count('Adverse Events Summary by Treatment')
-footnote_count = doc_custom.rtf_encode().count('Abbreviations:')
-source_count = doc_custom.rtf_encode().count('ADAE Dataset')
-
-print(f"Custom combination:")
-print(f"  Title appears {title_count} time(s) (all pages)")
-print(f"  Footnote appears {footnote_count} time(s) (first page only)")
-print(f"  Source appears {source_count} time(s) (last page only)")
 ```
 
 <embed src="../pdf/formatting_page_custom.pdf" style="width:100%; height:400px" type="application/pdf">
-
-## Single-Page Documents
-
-For single-page documents, all components appear regardless of the
-`page_title`, `page_footnote`, and `page_source` settings:
-
-``` python
-# Small dataset that fits on one page
-small_df = df.head(10)
-
-doc_single_page = RTFDocument(
-    df=small_df.select(['USUBJID', 'TRTA', 'AEDECOD', 'AESEV', 'AESER', 'AEREL']),
-    rtf_page=RTFPage(
-        nrow=50,                 # Large enough to fit all data on one page
-        page_title="last",       # This setting is ignored for single-page docs
-        page_footnote="first",   # This setting is ignored for single-page docs
-        page_source="all"        # This setting is ignored for single-page docs
-    ),
-    rtf_title=RTFTitle(text='Adverse Events Summary by Treatment'),
-    rtf_footnote=RTFFootnote(text='Abbreviations: USUBJID=Subject ID, TRTA=Treatment, AEDECOD=Adverse Event, AESEV=Severity, AESER=Serious, AEREL=Related'),
-    rtf_source=RTFSource(text='Source: ADAE Dataset from Clinical Trial Database')
-)
-
-rtf_single = doc_single_page.rtf_encode()
-
-title_count = rtf_single.count('Adverse Events Summary by Treatment')
-footnote_count = rtf_single.count('Abbreviations:')
-source_count = rtf_single.count('ADAE Dataset')
-
-print(f"Single-page document:")
-print(f"  Title appears {title_count} time(s)")
-print(f"  Footnote appears {footnote_count} time(s)")
-print(f"  Source appears {source_count} time(s)")
-print("  All components appear once regardless of page placement settings")
-```
-
-## Validation
-
-The `RTFPage` class validates the placement options:
-
-``` python
-# Valid options
-valid_options = ["first", "last", "all"]
-
-print("Valid options for page_title, page_footnote, and page_source:")
-for option in valid_options:
-    print(f"  - '{option}'")
-
-# Invalid options will raise ValueError
-try:
-    invalid_page = RTFPage(page_title="invalid")
-except ValueError as e:
-    print(f"\nValidation error: {e}")
-```
-
-## Summary
-
-| Parameter | Description | Default | Options |
-|----|----|----|----|
-| `page_title` | Controls where titles appear | `"all"` | `"first"`, `"last"`, `"all"` |
-| `page_footnote` | Controls where footnotes appear | `"last"` | `"first"`, `"last"`, `"all"` |
-| `page_source` | Controls where sources appear | `"last"` | `"first"`, `"last"`, `"all"` |
-
-These settings provide fine-grained control over component placement in
-multi-page documents, allowing you to create professional reports that
-meet specific formatting requirements for regulatory submissions and
-clinical reporting.
