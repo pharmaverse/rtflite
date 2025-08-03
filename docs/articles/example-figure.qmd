@@ -1,0 +1,143 @@
+# Figure Examples
+
+<!-- `.md` and `.py` files are generated from the `.qmd` file. Please edit that file. -->
+
+This example shows how to create RTF documents with embedded figures using rtflite.
+
+## Imports
+
+```{python}
+from pathlib import Path
+import rtflite as rtf
+```
+
+## Step 1: Single Figure Example
+
+Create a simple RTF document with a single embedded figure:
+
+```{python}
+# Define the figure path (relative to the py directory when script runs)
+figure_path = "../../../docs/assets/images/figure_examples/efficacy_chart.png"
+
+# Create RTF document with figure only (no table data)
+doc = rtf.RTFDocument(
+    rtf_title=rtf.RTFTitle(
+        text=[
+            "Efficacy Analysis Results",
+            "Primary Endpoint: Change from Baseline"
+        ]
+    ),
+    rtf_figure=rtf.RTFFigure(
+        figures=figure_path,
+        fig_width=6,
+        fig_height=4
+    ),
+    rtf_footnote=rtf.RTFFootnote(
+        text=["Note: Data shown are mean ± standard error."]
+    ),
+    rtf_source=rtf.RTFSource(
+        text=["Source: Clinical Study Report XYZ-123"]
+    )
+)
+
+print("Single figure document created")
+```
+
+## Step 2: Multiple Figures Example
+
+Create an RTF document with multiple figures:
+
+```{python}
+# Define multiple figure paths
+figure_paths = [
+    "../../../docs/assets/images/figure_examples/efficacy_chart.png",
+    "../../../docs/assets/images/figure_examples/safety_chart.png"
+]
+
+# Create RTF document with multiple figures
+doc_multi = rtf.RTFDocument(
+    rtf_title=rtf.RTFTitle(
+        text=[
+            "Integrated Summary of Efficacy and Safety",
+            "Study XYZ-123 Final Results"
+        ]
+    ),
+    rtf_figure=rtf.RTFFigure(
+        figures=figure_paths,
+        fig_width=6,
+        fig_height=4
+    ),
+    rtf_footnote=rtf.RTFFootnote(
+        text=[
+            "Figure 1: Efficacy endpoint analysis",
+            "Figure 2: Safety profile summary"
+        ]
+    ),
+    rtf_source=rtf.RTFSource(
+        text=["Source: Integrated Clinical Study Report"]
+    )
+)
+
+print("Multiple figures document created")
+```
+
+## Step 3: Figure with Custom Formatting
+
+Create a figure document with custom page formatting:
+
+```{python}
+# Create RTF document with custom page settings
+doc_custom = rtf.RTFDocument(
+    rtf_title=rtf.RTFTitle(
+        text=["Forest Plot Analysis", "Subgroup Efficacy Results"],
+        text_font_size=[16, 14]
+    ),
+    rtf_figure=rtf.RTFFigure(
+        figures="../../../docs/assets/images/figure_examples/forest_plot.png",
+        fig_width=8,
+        fig_height=6
+    ),
+    rtf_page=rtf.RTFPage(
+        orientation="landscape",
+        margin_left=0.8,
+        margin_right=0.8,
+        margin_top=1.0,
+        margin_bottom=1.0
+    ),
+    rtf_footnote=rtf.RTFFootnote(
+        text=[
+            "CI = Confidence Interval; OR = Odds Ratio",
+            "Analysis population: Intent-to-treat"
+        ]
+    ),
+    rtf_source=rtf.RTFSource(
+        text=["Source: Statistical Analysis Plan v2.0"]
+    )
+)
+
+print("Custom formatted figure document created")
+```
+
+## Step 4: Output RTF Files
+
+Write the RTF documents to files:
+
+```{python}
+# Output single figure RTF
+doc.write_rtf("../rtf/example_figure_single.rtf")
+print("Created: example_figure_single.rtf")
+
+# Output multiple figures RTF  
+doc_multi.write_rtf("../rtf/example_figure_multiple.rtf")
+print("Created: example_figure_multiple.rtf")
+
+# Output custom formatted RTF
+doc_custom.write_rtf("../rtf/example_figure_custom.rtf")
+print("Created: example_figure_custom.rtf")
+```
+
+<embed src="../pdf/example_figure_single.pdf" style="width:100%; height:400px" type="application/pdf">
+
+<embed src="../pdf/example_figure_multiple.pdf" style="width:100%; height:400px" type="application/pdf">
+
+<embed src="../pdf/example_figure_custom.pdf" style="width:100%; height:400px" type="application/pdf">
