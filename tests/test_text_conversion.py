@@ -10,7 +10,7 @@ import polars as pl
 
 from rtflite import RTFDocument, RTFTitle, RTFFootnote, RTFSource
 from rtflite.text_conversion import convert_text, TextConverter, LaTeXSymbolMapper
-from rtflite.services import TextConversionService, RTFEncodingService
+from rtflite.services import TextConversionService
 
 
 class TestLaTeXSymbolMapper:
@@ -168,28 +168,7 @@ class TestTextConversionService:
         assert result["validation"]["conversion_rate"] == 1.0
 
 
-class TestEncodingServiceIntegration:
-    """Test text conversion integration with encoding service."""
-    
-    def setup_method(self):
-        """Set up test fixtures."""
-        self.service = RTFEncodingService()
-    
-    def test_text_conversion_through_encoding_service(self):
-        """Test text conversion through encoding service."""
-        text = "\\alpha + \\beta"
-        result = self.service.convert_text_for_encoding(text, True)
-        assert result == "α + β"
-    
-    def test_validation_through_encoding_service(self):
-        """Test validation through encoding service."""
-        text = "\\alpha \\pm \\unknown"
-        result = self.service.validate_and_convert_text(text, True)
-        
-        assert result["conversion_applied"] is True
-        assert "α" in result["converted_text"]
-        assert "±" in result["converted_text"]
-        assert "\\unknown" in result["converted_text"]
+# Removed TestEncodingServiceIntegration class - wrapper methods were removed during refactoring
 
 
 class TestRTFDocumentIntegration:

@@ -5,6 +5,7 @@ import polars as pl
 from rtflite.encoding import RTFEncodingEngine, SinglePageStrategy, PaginatedStrategy
 from rtflite.encode import RTFDocument
 from rtflite.input import RTFPage, RTFBody
+from rtflite.services.document_service import RTFDocumentService
 
 
 class TestRTFEncodingEngine:
@@ -56,32 +57,32 @@ class TestRTFEncodingEngine:
     
     def test_needs_pagination_page_by_enabled(self):
         """Test pagination detection when page_by is enabled."""
-        engine = RTFEncodingEngine()
+        document_service = RTFDocumentService()
         
         df = pl.DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})
         rtf_body = RTFBody(page_by=["A"], new_page=True)
         document = RTFDocument(df=df, rtf_body=rtf_body)
         
-        assert engine._needs_pagination(document) is True
+        assert document_service.needs_pagination(document) is True
     
     def test_needs_pagination_content_exceeds_capacity(self):
         """Test pagination detection when content exceeds page capacity."""
-        engine = RTFEncodingEngine()
+        document_service = RTFDocumentService()
         
         df = pl.DataFrame({"A": list(range(50)), "B": list(range(50, 100))})
         rtf_page = RTFPage(nrow=10)
         document = RTFDocument(df=df, rtf_page=rtf_page)
         
-        assert engine._needs_pagination(document) is True
+        assert document_service.needs_pagination(document) is True
     
     def test_needs_pagination_false(self):
         """Test pagination detection when pagination is not needed."""
-        engine = RTFEncodingEngine()
+        document_service = RTFDocumentService()
         
         df = pl.DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})
         document = RTFDocument(df=df)
         
-        assert engine._needs_pagination(document) is False
+        assert document_service.needs_pagination(document) is False
     
     def test_encode_document_single_page(self):
         """Test encoding a single-page document."""
