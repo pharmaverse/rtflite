@@ -63,8 +63,12 @@ generate_rtf_files() {
     done
 }
 
+# Get the script directory and project root
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
 # Activate virtual environment first
-source ../../.venv/bin/activate
+source "$PROJECT_ROOT/.venv/bin/activate"
 
 # Sync all articles in the quarto folder
 for qmd_file in docs/articles/quarto/*.qmd; do

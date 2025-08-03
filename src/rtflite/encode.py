@@ -1,5 +1,3 @@
-from collections.abc import MutableSequence
-
 import polars as pl
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -490,45 +488,6 @@ class RTFDocument(BaseModel):
         setattr(page_attrs, border_attr, border_broadcast.value)
         return page_attrs
 
-    def _apply_border_to_row(
-        self,
-        page_attrs: TableAttributes,
-        row_idx: int,
-        border_side: str,
-        border_style: str,
-        num_cols: int,
-    ) -> TableAttributes:
-        """Apply specified border style to a specific row"""
-        border_attr = f"border_{border_side}"
-
-        if not hasattr(page_attrs, border_attr):
-            return page_attrs
-
-        # Get current border values
-        current_borders = getattr(page_attrs, border_attr)
-
-        # Ensure borders list is large enough
-        while len(current_borders) <= row_idx:
-            # Create a copy of the last row's borders, not a reference
-            if current_borders:
-                current_borders.append(current_borders[-1].copy())
-            else:
-                current_borders.append([""] * num_cols)
-
-        # Ensure the row has enough columns
-        while len(current_borders[row_idx]) < num_cols:
-            current_borders[row_idx].append(
-                current_borders[row_idx][-1] if current_borders[row_idx] else ""
-            )
-
-        # Apply specified border to all cells in this row
-        for col_idx in range(num_cols):
-            current_borders[row_idx][col_idx] = border_style
-
-        # Update the attribute
-        setattr(page_attrs, border_attr, current_borders)
-        return page_attrs
-
     def _page_by(self) -> list[list[tuple[int, int, int]]]:
         """Create components for page_by format.
 
@@ -618,26 +577,6 @@ class RTFDocument(BaseModel):
 
         return output
 
-    def _rtf_footnote_encode(self, page_number: int = None) -> MutableSequence[str]:
-        """Convert the RTF footnote into RTF syntax - delegated to encoding service."""
-        result = self._encoding_service.encode_footnote(
-            self.rtf_footnote, page_number, self.rtf_page.col_width
-        )
-        return result if result else None
-
-    def _rtf_source_encode(self, page_number: int = None) -> MutableSequence[str]:
-        """Convert the RTF source into RTF syntax - delegated to encoding service."""
-        result = self._encoding_service.encode_source(
-            self.rtf_source, page_number, self.rtf_page.col_width
-        )
-        return result if result else None
-
-    def _rtf_body_encode(
-        self, df: pl.DataFrame, rtf_attrs: TableAttributes | None
-    ) -> MutableSequence[str]:
-        """Convert the RTF table into RTF syntax - delegated to encoding service."""
-        return self._encoding_service.encode_body(self, df, rtf_attrs)
-
 
     def _should_show_element_on_page(
         self, element_location: str, page_info: dict
@@ -652,22 +591,6 @@ class RTFDocument(BaseModel):
         else:
             return False
 
-    def _rtf_encode_paginated(self) -> str:
-        """Generate RTF code for paginated documents - delegated to PaginatedStrategy."""
-        from .encoding.strategies import PaginatedStrategy
-        strategy = PaginatedStrategy()
-        return strategy.encode(self)
-
-    def _rtf_column_header_encode(
-        self, df: pl.DataFrame, rtf_attrs: TableAttributes | None
-    ) -> MutableSequence[str]:
-        """Convert column header into RTF syntax - delegated to encoding service."""
-        return self._encoding_service.encode_column_header(df, rtf_attrs, self.rtf_page.col_width)
-
-    def _rtf_start_encode(self) -> str:
-        """Generate RTF document start - delegated to encoding service."""
-        return self._encoding_service.encode_document_start()
-    
     def _rtf_title_encode(self, method: str = "line") -> str:
         """Convert the RTF title into RTF syntax - delegated to encoding service."""
         if not self.rtf_title:
@@ -690,12 +613,6 @@ class RTFDocument(BaseModel):
         # Use the new encoding engine for strategy selection
         engine = RTFEncodingEngine()
         return engine.encode_document(self)
-    
-    def _rtf_encode_single_page(self) -> str:
-        """Generate RTF code for single-page documents - delegated to SinglePageStrategy."""
-        from .encoding.strategies import SinglePageStrategy
-        strategy = SinglePageStrategy()
-        return strategy.encode(self)
 
     def write_rtf(self, file_path: str) -> None:
         """Write the RTF code into a `.rtf` file."""
