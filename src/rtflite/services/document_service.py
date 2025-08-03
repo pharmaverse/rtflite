@@ -309,13 +309,13 @@ class RTFDocumentService:
             document.rtf_footnote
             and document.rtf_footnote.text
             and getattr(document.rtf_footnote, "as_table", True)
-            and document.rtf_page.page_footnote == "last"
+            and document.rtf_page.page_footnote in ("last", "all")
         )
         source_as_table_on_last = (
             document.rtf_source
             and document.rtf_source.text
             and getattr(document.rtf_source, "as_table", False)
-            and document.rtf_page.page_source == "last"
+            and document.rtf_page.page_source in ("last", "all")
         )
 
         # Apply border logic based on page position and footnote/source presence
