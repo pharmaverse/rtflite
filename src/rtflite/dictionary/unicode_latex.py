@@ -686,7 +686,10 @@ unicode_latex = [
     ("02AFE", "\\talloblong", 11006),
 ]
 
-# Convert to dictionary for easier lookup
+# Convert to dictionaries for easier lookup
 unicode_to_latex = {item[0]: item[1] for item in unicode_latex}
 latex_to_unicode = {item[1]: item[0] for item in unicode_latex}
 unicode_to_int = {item[0]: item[2] for item in unicode_latex}
+
+# Optimized dictionary: direct LaTeX to Unicode character mapping (single lookup)
+latex_to_char = {item[1]: chr(item[2]) for item in unicode_latex}

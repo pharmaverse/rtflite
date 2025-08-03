@@ -7,7 +7,7 @@ maintainability and readability.
 """
 
 from typing import Dict, Optional
-from ..dictionary.unicode_latex import latex_to_unicode, unicode_to_int
+from ..dictionary.unicode_latex import latex_to_unicode, unicode_to_int, latex_to_char
 
 
 class LaTeXSymbolMapper:
@@ -23,6 +23,7 @@ class LaTeXSymbolMapper:
         """Initialize the symbol mapper with the standard LaTeX mappings."""
         self.latex_to_unicode = latex_to_unicode
         self.unicode_to_int = unicode_to_int
+        self.latex_to_char = latex_to_char  # Optimized single-lookup mapping
     
     def get_unicode_char(self, latex_command: str) -> str:
         """
@@ -43,11 +44,8 @@ class LaTeXSymbolMapper:
             >>> mapper.get_unicode_char("\\unknown")
             "\\unknown"
         """
-        if latex_command in self.latex_to_unicode:
-            unicode_hex = self.latex_to_unicode[latex_command]
-            unicode_int = self.unicode_to_int[unicode_hex]
-            return chr(unicode_int)
-        return latex_command
+        # Optimized: single dictionary lookup instead of double lookup
+        return self.latex_to_char.get(latex_command, latex_command)
     
     def has_mapping(self, latex_command: str) -> bool:
         """
@@ -59,7 +57,8 @@ class LaTeXSymbolMapper:
         Returns:
             True if the command has a mapping, False otherwise
         """
-        return latex_command in self.latex_to_unicode
+        # Optimized: use the single-lookup dictionary for consistency
+        return latex_command in self.latex_to_char
     
     def get_all_supported_commands(self) -> list[str]:
         """
@@ -68,7 +67,8 @@ class LaTeXSymbolMapper:
         Returns:
             List of all LaTeX commands that can be converted
         """
-        return list(self.latex_to_unicode.keys())
+        # Optimized: use the single-lookup dictionary
+        return list(self.latex_to_char.keys())
     
     def get_commands_by_category(self) -> Dict[str, list[str]]:
         """
@@ -77,60 +77,48 @@ class LaTeXSymbolMapper:
         Returns:
             Dictionary mapping categories to lists of commands
         """
+        # Optimized categorization with pre-defined sets for O(1) lookup
+        greek_letters = {
+            "\\alpha", "\\beta", "\\gamma", "\\delta", "\\epsilon", "\\varepsilon", 
+            "\\zeta", "\\eta", "\\theta", "\\vartheta", "\\iota", "\\kappa", "\\varkappa",
+            "\\lambda", "\\mu", "\\nu", "\\xi", "\\pi", "\\varpi", "\\rho", "\\varrho",
+            "\\sigma", "\\varsigma", "\\tau", "\\upsilon", "\\phi", "\\varphi", 
+            "\\chi", "\\psi", "\\omega",
+            "\\Gamma", "\\Delta", "\\Theta", "\\Lambda", "\\Xi", "\\Pi", "\\Sigma", 
+            "\\Upsilon", "\\Phi", "\\Psi", "\\Omega"
+        }
+        
+        operators = {
+            "\\pm", "\\mp", "\\times", "\\div", "\\cdot", "\\sum", "\\prod", "\\int",
+            "\\oint", "\\partial", "\\nabla", "\\infty", "\\propto", "\\approx",
+            "\\equiv", "\\neq", "\\leq", "\\geq", "\\ll", "\\gg", "\\subset", "\\supset",
+            "\\in", "\\notin", "\\cup", "\\cap", "\\setminus", "\\oplus", "\\otimes"
+        }
+        
+        accents = {
+            "\\hat", "\\bar", "\\dot", "\\ddot", "\\dddot", "\\ddddot", "\\tilde", 
+            "\\grave", "\\acute", "\\check", "\\breve", "\\vec", "\\overline", "\\underline"
+        }
+        
         categories = {
             "Greek Letters": [],
             "Mathematical Operators": [], 
-            "Mathematical Symbols": [],
             "Blackboard Bold": [],
             "Accents": [],
             "Other": []
         }
         
-        for command in self.latex_to_unicode.keys():
-            if self._is_greek_letter(command):
+        # Optimized: use single dictionary and set lookups
+        for command in self.latex_to_char.keys():
+            if command in greek_letters:
                 categories["Greek Letters"].append(command)
-            elif self._is_mathematical_operator(command):
+            elif command in operators:
                 categories["Mathematical Operators"].append(command)
-            elif self._is_blackboard_bold(command):
+            elif "\\mathbb{" in command:
                 categories["Blackboard Bold"].append(command)
-            elif self._is_accent(command):
+            elif command in accents:
                 categories["Accents"].append(command)
-            elif self._is_mathematical_symbol(command):
-                categories["Mathematical Symbols"].append(command)
             else:
                 categories["Other"].append(command)
         
         return categories
-    
-    def _is_greek_letter(self, command: str) -> bool:
-        """Check if command is a Greek letter."""
-        greek_letters = ["alpha", "beta", "gamma", "delta", "epsilon", "zeta", 
-                        "eta", "theta", "iota", "kappa", "lambda", "mu", "nu", 
-                        "xi", "pi", "rho", "sigma", "tau", "upsilon", "phi", 
-                        "chi", "psi", "omega"]
-        command_name = command.lstrip("\\").lower()
-        return any(greek in command_name for greek in greek_letters)
-    
-    def _is_mathematical_operator(self, command: str) -> bool:
-        """Check if command is a mathematical operator."""
-        operators = ["pm", "mp", "times", "div", "cdot", "sum", "prod", "int",
-                    "oint", "partial", "nabla", "infty", "propto", "approx",
-                    "equiv", "neq", "leq", "geq", "ll", "gg", "subset", "supset"]
-        command_name = command.lstrip("\\")
-        return command_name in operators
-    
-    def _is_blackboard_bold(self, command: str) -> bool:
-        """Check if command is blackboard bold."""
-        return "mathbb" in command
-    
-    def _is_accent(self, command: str) -> bool:
-        """Check if command is an accent."""
-        accents = ["hat", "bar", "dot", "ddot", "tilde", "grave", "acute", 
-                  "check", "breve", "vec"]
-        command_name = command.lstrip("\\")
-        return command_name in accents
-    
-    def _is_mathematical_symbol(self, command: str) -> bool:
-        """Check if command is a general mathematical symbol."""
-        # This catches remaining mathematical symbols not in other categories
-        return True  # Default category for mathematical content

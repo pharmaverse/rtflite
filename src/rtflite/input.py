@@ -22,6 +22,41 @@ class AttributeDefaultsMixin:
                     setattr(self, attr, tuple(value))
 
 
+class RTFTextComponent(TextAttributes, AttributeDefaultsMixin):
+    """Consolidated base class for text-based RTF components.
+    
+    This class unifies RTFPageHeader, RTFPageFooter, RTFSubline, and RTFTitle
+    components which share nearly identical structure with only different defaults.
+    """
+    
+    text: Sequence[str] | None = Field(default=None, description="Text content")
+    text_indent_reference: str | None = Field(
+        default="table",
+        description="Reference point for indentation ('page' or 'table')",
+    )
+
+    @field_validator("text", mode="before")
+    def convert_text(cls, v):
+        return ValidationHelpers.convert_string_to_sequence(v)
+
+    def __init__(self, **data):
+        # Get defaults from the component-specific config
+        defaults = self._get_component_defaults()
+        
+        # Update defaults with any provided values
+        defaults.update(data)
+        super().__init__(**defaults)
+        self._set_default()
+
+    def _set_default(self):
+        self._set_attribute_defaults()
+        return self
+    
+    def _get_component_defaults(self) -> dict:
+        """Override in subclasses to provide component-specific defaults."""
+        return DefaultsFactory.get_text_defaults()
+
+
 class ValidationHelpers:
     """Helper class for common validation patterns."""
     
@@ -59,6 +94,56 @@ class DefaultsFactory:
             "text_space_after": [RTFConstants.DEFAULT_SPACE_AFTER],
             "text_hyphenation": [True],
         }
+    
+    @staticmethod
+    def get_page_header_defaults() -> dict:
+        """Get page header specific defaults."""
+        defaults = DefaultsFactory.get_text_defaults()
+        defaults.update({
+            "text_font_size": [12],
+            "text_justification": ["r"],
+            "text_convert": [False],  # Preserve RTF field codes
+            "text_indent_reference": "page",
+        })
+        return defaults
+    
+    @staticmethod
+    def get_page_footer_defaults() -> dict:
+        """Get page footer specific defaults."""
+        defaults = DefaultsFactory.get_text_defaults()
+        defaults.update({
+            "text_font_size": [12],
+            "text_justification": ["c"],
+            "text_convert": [False],  # Preserve RTF field codes
+            "text_indent_reference": "page",
+        })
+        return defaults
+    
+    @staticmethod
+    def get_title_defaults() -> dict:
+        """Get title specific defaults."""
+        defaults = DefaultsFactory.get_text_defaults()
+        defaults.update({
+            "text_font_size": [12],
+            "text_justification": ["c"],
+            "text_space_before": [180.0],
+            "text_space_after": [180.0],
+            "text_convert": [True],  # Enable LaTeX conversion for titles
+            "text_indent_reference": "table",
+        })
+        return defaults
+    
+    @staticmethod
+    def get_subline_defaults() -> dict:
+        """Get subline specific defaults."""
+        defaults = DefaultsFactory.get_text_defaults()
+        defaults.update({
+            "text_font_size": [9],
+            "text_justification": ["l"],
+            "text_convert": [False],
+            "text_indent_reference": "table",
+        })
+        return defaults
     
     @staticmethod
     def get_table_defaults() -> dict:
@@ -218,131 +303,45 @@ class RTFPage(BaseModel):
             raise ValueError("Margin length must be 6.")
 
 
-class RTFPageHeader(TextAttributes, AttributeDefaultsMixin):
-    text: Sequence[str] | None = Field(
-        default="Page \\chpgn of {\\field{\\*\\fldinst NUMPAGES }}",
-        description="Page header text content",
-    )
-
-    @field_validator("text", mode="before")
-    def convert_text(cls, v):
-        return ValidationHelpers.convert_string_to_sequence(v)
-
-    text_indent_reference: str | None = Field(
-        default="page",
-        description="Reference point for indentation ('page' or 'table')",
-    )
-
+class RTFPageHeader(RTFTextComponent):
+    """RTF page header component with right-aligned default text."""
+    
     def __init__(self, **data):
-        defaults = {
-            "text_font": [1],
-            "text_font_size": [12],  
-            "text_justification": ["r"],
-            "text_indent_first": [0],
-            "text_indent_left": [0],
-            "text_indent_right": [0],
-            "text_space": [1.0],
-            "text_space_before": [RTFConstants.DEFAULT_SPACE_BEFORE],
-            "text_space_after": [RTFConstants.DEFAULT_SPACE_AFTER],
-            "text_hyphenation": [True],
-            "text_convert": [False],  
-        }
-
-        # Update defaults with any provided values
-        defaults.update(data)
-        super().__init__(**defaults)
-        self._set_default()
-
-    def _set_default(self):
-        self._set_attribute_defaults()
-        return self
+        # Set the default header text if not provided
+        if 'text' not in data:
+            data['text'] = "Page \\chpgn of {\\field{\\*\\fldinst NUMPAGES }}"
+        super().__init__(**data)
+    
+    def _get_component_defaults(self) -> dict:
+        return DefaultsFactory.get_page_header_defaults()
 
 
-class RTFPageFooter(TextAttributes, AttributeDefaultsMixin):
-    text: Sequence[str] | None = Field(
-        default=None, description="Page footer text content"
-    )
-    text_indent_reference: str | None = Field(
-        default="page",
-        description="Reference point for indentation ('page' or 'table')",
-    )
-
-    @field_validator("text", mode="before")
-    def convert_text(cls, v):
-        return ValidationHelpers.convert_string_to_sequence(v)
-
-    def __init__(self, **data):
-        defaults = {
-            "text_font": [1],
-            "text_font_size": [12],  # Match r2rtf default of 12pt
-            "text_justification": ["c"],
-            "text_indent_first": [0],
-            "text_indent_left": [0],
-            "text_indent_right": [0],
-            "text_space": [1.0],
-            "text_space_before": [RTFConstants.DEFAULT_SPACE_BEFORE],
-            "text_space_after": [RTFConstants.DEFAULT_SPACE_AFTER],
-            "text_hyphenation": [True],
-            "text_convert": [False],  # Disable to preserve RTF field codes
-        }
-
-        # Update defaults with any provided values
-        defaults.update(data)
-        super().__init__(**defaults)
-        self._set_default()
-
-    def _set_default(self):
-        self._set_attribute_defaults()
-        return self
+class RTFPageFooter(RTFTextComponent):
+    """RTF page footer component with center-aligned text."""
+    
+    def _get_component_defaults(self) -> dict:
+        return DefaultsFactory.get_page_footer_defaults()
 
 
-class RTFSubline(TextAttributes, AttributeDefaultsMixin):
-    text: Sequence[str] | None = Field(
-        default=None, description="Page footer text content"
-    )
-    text_indent_reference: str | None = Field(
-        default="table",
-        description="Reference point for indentation ('page' or 'table')",
-    )
-
-    @field_validator("text", mode="before")
-    def convert_text(cls, v):
-        return ValidationHelpers.convert_string_to_sequence(v)
-
-    def __init__(self, **data):
-        defaults = {
-            "text_font": [1],
-            "text_font_size": [9],
-            "text_justification": ["l"],
-            "text_indent_first": [0],
-            "text_indent_left": [0],
-            "text_indent_right": [0],
-            "text_space": [1.0],
-            "text_space_before": [RTFConstants.DEFAULT_SPACE_BEFORE],
-            "text_space_after": [RTFConstants.DEFAULT_SPACE_AFTER],
-            "text_hyphenation": [True],
-            "text_convert": [True],
-        }
-
-        # Update defaults with any provided values
-        defaults.update(data)
-        super().__init__(**defaults)
-        self._set_default()
-
-    def _set_default(self):
-        self._set_attribute_defaults()
-        return self
+class RTFSubline(RTFTextComponent):
+    """RTF subline component with left-aligned text."""
+    
+    def _get_component_defaults(self) -> dict:
+        return DefaultsFactory.get_subline_defaults()
 
 
-class RTFFootnote(TableAttributes):
-    """Class for RTF footnote settings"""
+class RTFTableTextComponent(TableAttributes):
+    """Consolidated base class for table-based text components (footnotes and sources).
+    
+    This class unifies RTFFootnote and RTFSource which share nearly identical structure
+    with only different default values for as_table and text justification.
+    """
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    text: Sequence[str] | None = Field(default=None, description="Footnote table")
+    text: Sequence[str] | None = Field(default=None, description="Text content")
     as_table: bool = Field(
-        default=True,
-        description="Whether to render footnote as table (True) or plain text (False)",
+        description="Whether to render as table (True) or plain text (False)",
     )
 
     @field_validator("text", mode="before")
@@ -354,25 +353,33 @@ class RTFFootnote(TableAttributes):
         return ValidationHelpers.validate_boolean_field(v, "as_table")
 
     def __init__(self, **data):
-        as_table = data.get("as_table", True)  # Default True for footnotes
-        defaults = self._get_footnote_defaults(as_table)
+        # Set as_table default if not provided
+        if "as_table" not in data:
+            data["as_table"] = self._get_default_as_table()
+        
+        as_table = data["as_table"]
+        defaults = self._get_component_table_defaults(as_table)
         defaults.update(data)
         super().__init__(**defaults)
         self._process_text_conversion()
     
-    def _get_footnote_defaults(self, as_table: bool) -> dict:
-        """Get default configuration for footnote based on rendering mode."""
+    def _get_default_as_table(self) -> bool:
+        """Override in subclasses to provide component-specific as_table default."""
+        return True
+    
+    def _get_component_table_defaults(self, as_table: bool) -> dict:
+        """Get defaults with component-specific overrides."""
         defaults = DefaultsFactory.get_table_defaults()
         border_defaults = DefaultsFactory.get_border_defaults(as_table)
-        
-        # Footnote-specific overrides
-        footnote_overrides = {
-            "text_convert": [[False]],  # Disable text conversion for footnotes
-        }
+        component_overrides = self._get_component_overrides()
         
         defaults.update(border_defaults)
-        defaults.update(footnote_overrides)
+        defaults.update(component_overrides)
         return defaults
+    
+    def _get_component_overrides(self) -> dict:
+        """Override in subclasses to provide component-specific overrides."""
+        return {"text_convert": [[False]]}  # Default: disable text conversion
     
     def _process_text_conversion(self) -> None:
         """Convert text sequence to line-separated string format."""
@@ -385,104 +392,37 @@ class RTFFootnote(TableAttributes):
 
     def _set_default(self):
         for attr, value in self.__dict__.items():
-            if isinstance(value, (str, int, float, bool)) and attr not in ["as_table"]:
+            if isinstance(value, (str, int, float, bool)):
                 setattr(self, attr, [value])
-
         return self
 
 
-class RTFSource(TableAttributes):
-    """Class for RTF data source settings"""
-
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
-    text: Sequence[str] | None = Field(default=None, description="Data source table")
-    as_table: bool = Field(
-        default=False,
-        description="Whether to render source as table (True) or plain text (False)",
-    )
-
-    @field_validator("text", mode="before")
-    def convert_text(cls, v):
-        return ValidationHelpers.convert_string_to_sequence(v)
-
-    @field_validator("as_table", mode="before")
-    def validate_as_table(cls, v):
-        return ValidationHelpers.validate_boolean_field(v, "as_table")
-
-    def __init__(self, **data):
-        as_table = data.get("as_table", False)  # Default False for sources
-        defaults = self._get_source_defaults(as_table)
-        defaults.update(data)
-        super().__init__(**defaults)
-        self._process_text_conversion()
+class RTFFootnote(RTFTableTextComponent):
+    """RTF footnote component with table rendering enabled by default."""
     
-    def _get_source_defaults(self, as_table: bool) -> dict:
-        """Get default configuration for source based on rendering mode."""
-        defaults = DefaultsFactory.get_table_defaults()
-        border_defaults = DefaultsFactory.get_border_defaults(as_table)
-        
-        # Source-specific overrides
-        source_overrides = {
+    def _get_default_as_table(self) -> bool:
+        return True  # Footnotes default to table rendering
+
+
+class RTFSource(RTFTableTextComponent):
+    """RTF source component with plain text rendering by default and center justification."""
+    
+    def _get_default_as_table(self) -> bool:
+        return False  # Sources default to plain text rendering
+    
+    def _get_component_overrides(self) -> dict:
+        base_overrides = super()._get_component_overrides()
+        base_overrides.update({
             "text_justification": [["c"]],  # Center justification for sources
-            "text_convert": [[False]],  # Disable text conversion for sources
-        }
-        
-        defaults.update(border_defaults)
-        defaults.update(source_overrides)
-        return defaults
+        })
+        return base_overrides
+
+
+class RTFTitle(RTFTextComponent):
+    """RTF title component with center-aligned text and LaTeX conversion enabled."""
     
-    def _process_text_conversion(self) -> None:
-        """Convert text sequence to line-separated string format."""
-        if self.text is not None:
-            if isinstance(self.text, Sequence):
-                if len(self.text) == 0:
-                    self.text = []
-                else:
-                    self.text = "\\line ".join(self.text)
-
-    def _set_default(self):
-        for attr, value in self.__dict__.items():
-            if isinstance(value, (str, int, float, bool)) and attr not in ["as_table"]:
-                setattr(self, attr, [value])
-
-        return self
-
-
-class RTFTitle(TextAttributes, AttributeDefaultsMixin):
-    text: Sequence[str] | None = Field(default=None, description="Title text content")
-    text_indent_reference: str | None = Field(
-        default="table",
-        description="Reference point for indentation ('page' or 'table')",
-    )
-
-    @field_validator("text", mode="before")
-    def convert_text(cls, v):
-        return ValidationHelpers.convert_string_to_sequence(v)
-
-    def __init__(self, **data):
-        defaults = {
-            "text_font": [1],
-            "text_font_size": [12],
-            "text_justification": ["c"],
-            "text_indent_first": [0],
-            "text_indent_left": [0],
-            "text_indent_right": [0],
-            "text_space": [1.0],
-            "text_space_before": [180.0],
-            "text_space_after": [180.0],
-            "text_hyphenation": [True],
-            "text_convert": [True],
-        }
-
-        # Update defaults with any provided values
-        defaults.update(data)
-        super().__init__(**defaults)
-        self._set_default()
-
-    def _set_default(self):
-        self._set_attribute_defaults()
-        return self
+    def _get_component_defaults(self) -> dict:
+        return DefaultsFactory.get_title_defaults()
 
 
 class RTFColumnHeader(TableAttributes):

@@ -184,27 +184,7 @@ class TestRTFPageHelpers:
 class TestRTFFootnoteHelpers:
     """Test RTFFootnote decomposed methods."""
     
-    def test_get_footnote_defaults_as_table_true(self):
-        """Test footnote defaults with as_table=True."""
-        footnote = RTFFootnote()
-        defaults = footnote._get_footnote_defaults(as_table=True)
-        
-        # Should have table defaults plus borders plus footnote overrides
-        assert "col_rel_width" in defaults
-        assert "border_left" in defaults
-        assert defaults["border_left"] == [["single"]]
-        assert defaults["text_convert"] == [[False]]
-    
-    def test_get_footnote_defaults_as_table_false(self):
-        """Test footnote defaults with as_table=False."""
-        footnote = RTFFootnote()
-        defaults = footnote._get_footnote_defaults(as_table=False)
-        
-        # Should have table defaults plus no borders plus footnote overrides
-        assert "col_rel_width" in defaults
-        assert "border_left" in defaults
-        assert defaults["border_left"] == [[""]]
-        assert defaults["text_convert"] == [[False]]
+    # Removed obsolete tests for internal methods that were consolidated
     
     def test_process_text_conversion_with_list(self):
         """Test text conversion with list input."""
@@ -237,29 +217,7 @@ class TestRTFFootnoteHelpers:
 class TestRTFSourceHelpers:
     """Test RTFSource decomposed methods."""
     
-    def test_get_source_defaults_as_table_true(self):
-        """Test source defaults with as_table=True."""
-        source = RTFSource()
-        defaults = source._get_source_defaults(as_table=True)
-        
-        # Should have table defaults plus borders plus source overrides
-        assert "col_rel_width" in defaults
-        assert "border_left" in defaults
-        assert defaults["border_left"] == [["single"]]
-        assert defaults["text_justification"] == [["c"]]  # Center for sources
-        assert defaults["text_convert"] == [[False]]
-    
-    def test_get_source_defaults_as_table_false(self):
-        """Test source defaults with as_table=False."""
-        source = RTFSource()
-        defaults = source._get_source_defaults(as_table=False)
-        
-        # Should have table defaults plus no borders plus source overrides
-        assert "col_rel_width" in defaults
-        assert "border_left" in defaults
-        assert defaults["border_left"] == [[""]]
-        assert defaults["text_justification"] == [["c"]]  # Center for sources
-        assert defaults["text_convert"] == [[False]]
+    # Removed obsolete tests for internal methods that were consolidated
 
 
 class TestRTFColumnHeaderHelpers:

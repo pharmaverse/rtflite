@@ -383,12 +383,8 @@ class RTFDocumentService:
         elif has_footnote and footnote_as_table:
             # Footnote is rendered as table: use footnote for borders
             target_component = ("footnote", document.rtf_footnote)
-        elif has_source:
-            # Fallback: source even if plain text
-            target_component = ("source", document.rtf_source)
-        elif has_footnote:
-            # Fallback: footnote even if plain text
-            target_component = ("footnote", document.rtf_footnote)
+        # Note: Removed fallback to plain text components - borders should only be applied
+        # to components that are rendered as tables (as_table=True)
 
         if target_component:
             component_name, component = target_component
