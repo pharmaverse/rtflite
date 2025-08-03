@@ -19,7 +19,7 @@ from plotnine import *
 import rtflite as rtf
 ```
 
-## Create Age Histogram
+## Create Age Histogram by Treatment
 
 ```{python}
 # Load ADSL data
@@ -29,52 +29,34 @@ df = pl.read_parquet(data_path)
 
 ```{python}
 # Create age histogram
-age_plot = (
-    ggplot(df, aes(x='AGE')) +
-    geom_histogram(bins=20, fill='#4472C4', color='black', alpha=0.7) +
-    labs(
-        x='Age (years)',
-        y='Number of Subjects'
-    ) +
-    theme_minimal() +
-    theme(
-        figure_size=(8, 6)
+# Create multiple age group histograms for different treatments
+treatment_groups = df['TRT01A'].unique().sort()
+
+# Create a histogram for each treatment
+for i, treatment in enumerate(treatment_groups):
+    treatment_df = df.filter(pl.col('TRT01A') == treatment)
+    
+    treatment_plot = (
+        ggplot(treatment_df, aes(x='AGE')) +
+        geom_histogram(bins=15, fill='#70AD47', color='black', alpha=0.7) +
+        labs(
+            x='Age (years)',
+            y='Number of Subjects'
+        ) +
+        theme_minimal() +
+        theme(
+            figure_size=(6, 4)
+        )
     )
-)
-
-# Save the plot
-age_plot.save("../image/age_histogram.png", dpi=300, width=8, height=6)
-```
-
-## Create Sex Histogram
-
-Create a histogram of sex distribution:
-
-```{python}
-# Create sex distribution summary
-sex_counts = df.group_by('SEX').agg(pl.len()).sort('SEX')
-
-# Create sex distribution histogram
-sex_plot = (
-    ggplot(sex_counts, aes(x='SEX', y='len')) +
-    geom_col(fill='#4472C4', color='black', alpha=0.7) +
-    labs(
-        x='Sex',
-        y='Number of Subjects'
-    ) +
-    theme_minimal() +
-    theme(
-        figure_size=(6, 6)
-    )
-)
-
-sex_plot.save("../image/sex_histogram.png", dpi=300, width=6, height=6)
+    
+    treatment_plot.save(f"../image/age_histogram_treatment_{i}.png", dpi=300, width=6, height=4)
 ```
 
 ## Single Figure
 
 ```{python}
 # Create RTF document with age histogram
+# Note: For figure-only documents, we explicitly set as_table=False for footnotes
 doc_age = rtf.RTFDocument(
     rtf_title=rtf.RTFTitle(
         text=[
@@ -83,39 +65,59 @@ doc_age = rtf.RTFDocument(
         ]
     ),
     rtf_figure=rtf.RTFFigure(
-        figures="../image/age_histogram.png",
+        figures="../image/age_histogram_treatment_0.png",
         fig_width=6,
         fig_height=4
     ),
-    rtf_footnote=rtf.RTFFootnote(text=["Analysis population: All randomized subjects (N=254)"]),
+    rtf_footnote=rtf.RTFFootnote(
+        text=["Analysis population: All randomized subjects (N=254)"],
+        as_table=False  # Explicit setting for figure documents
+    ),
     rtf_source=rtf.RTFSource(text=["Source: ADSL dataset"])
 )
+
+# Write RTF
+doc_age.write_rtf("../rtf/example_figure_age.rtf")
 ```
 
 <embed src="../pdf/example_figure_age.pdf" style="width:100%; height:400px" type="application/pdf">
 
-## Multiple Figures
+## Multiple Figures with Elements on Every Page
 
 ```{python}
-# Create RTF document with both histograms
-doc_both = rtf.RTFDocument(
+# Create RTF document with multiple figures and elements on every page
+doc_multi_page = rtf.RTFDocument(
+    rtf_page=rtf.RTFPage(
+        page_title="all",      # Show title on all pages
+        page_footnote="all",   # Show footnote on all pages
+        page_source="all"      # Show source on all pages
+    ),
     rtf_title=rtf.RTFTitle(
         text=[
-            "Study Population Demographics",
-            "Age and Sex Distribution"
+            "Clinical Study XYZ-123",
+            "Age Distribution by Treatment Group"
         ]
     ),
     rtf_figure=rtf.RTFFigure(
         figures=[
-            "../image/age_histogram.png",
-            "../image/sex_histogram.png"
+            "../image/age_histogram_treatment_0.png",
+            "../image/age_histogram_treatment_1.png", 
+            "../image/age_histogram_treatment_2.png",  
         ],
         fig_width=6,
         fig_height=4
     ),
-    rtf_footnote=rtf.RTFFootnote(text=["A footnote"]),
-    rtf_source=rtf.RTFSource(text=["Source: ADSL dataset analysis"])
+    rtf_footnote=rtf.RTFFootnote(
+        text=["Note: Each histogram represents age distribution for one treatment group"],
+        as_table=False
+    ),
+    rtf_source=rtf.RTFSource(
+        text=["Source: ADSL dataset, Clinical Database Lock Date: 2023-12-31"]
+    )
 )
+
+# Write RTF
+doc_multi_page.write_rtf("../rtf/example_figure_multipage.rtf")
 ```
 
-<embed src="../pdf/example_figure_demographics.pdf" style="width:100%; height:400px" type="application/pdf">
+<embed src="../pdf/example_figure_multipage.pdf" style="width:100%; height:400px" type="application/pdf">

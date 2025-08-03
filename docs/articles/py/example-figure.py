@@ -6,48 +6,64 @@ import rtflite as rtf
 data_path = files("rtflite.data").joinpath("adsl.parquet")
 df = pl.read_parquet(data_path)
 
-age_plot = (
-    ggplot(df, aes(x="AGE"))
-    + geom_histogram(bins=20, fill="#4472C4", color="black", alpha=0.7)
-    + labs(x="Age (years)", y="Number of Subjects")
-    + theme_minimal()
-    + theme(figure_size=(8, 6))
-)
+treatment_groups = df["TRT01A"].unique().sort()
 
-age_plot.save("../image/age_histogram.png", dpi=300, width=8, height=6)
+for i, treatment in enumerate(treatment_groups):
+    treatment_df = df.filter(pl.col("TRT01A") == treatment)
 
-sex_counts = df.group_by("SEX").agg(pl.len()).sort("SEX")
+    treatment_plot = (
+        ggplot(treatment_df, aes(x="AGE"))
+        + geom_histogram(bins=15, fill="#70AD47", color="black", alpha=0.7)
+        + labs(x="Age (years)", y="Number of Subjects")
+        + theme_minimal()
+        + theme(figure_size=(6, 4))
+    )
 
-sex_plot = (
-    ggplot(sex_counts, aes(x="SEX", y="len"))
-    + geom_col(fill="#4472C4", color="black", alpha=0.7)
-    + labs(x="Sex", y="Number of Subjects")
-    + theme_minimal()
-    + theme(figure_size=(6, 6))
-)
-
-sex_plot.save("../image/sex_histogram.png", dpi=300, width=6, height=6)
+    treatment_plot.save(
+        f"../image/age_histogram_treatment_{i}.png", dpi=300, width=6, height=4
+    )
 
 doc_age = rtf.RTFDocument(
     rtf_title=rtf.RTFTitle(text=["Study Population Demographics", "Age Distribution"]),
     rtf_figure=rtf.RTFFigure(
-        figures="../image/age_histogram.png", fig_width=6, fig_height=4
+        figures="../image/age_histogram_treatment_0.png", fig_width=6, fig_height=4
     ),
     rtf_footnote=rtf.RTFFootnote(
-        text=["Analysis population: All randomized subjects (N=254)"]
+        text=["Analysis population: All randomized subjects (N=254)"],
+        as_table=False,  # Explicit setting for figure documents
     ),
     rtf_source=rtf.RTFSource(text=["Source: ADSL dataset"]),
 )
 
-doc_both = rtf.RTFDocument(
+doc_age.write_rtf("../rtf/example_figure_age.rtf")
+
+doc_multi_page = rtf.RTFDocument(
+    rtf_page=rtf.RTFPage(
+        page_title="all",  # Show title on all pages
+        page_footnote="all",  # Show footnote on all pages
+        page_source="all",  # Show source on all pages
+    ),
     rtf_title=rtf.RTFTitle(
-        text=["Study Population Demographics", "Age and Sex Distribution"]
+        text=["Clinical Study XYZ-123", "Age Distribution by Treatment Group"]
     ),
     rtf_figure=rtf.RTFFigure(
-        figures=["../image/age_histogram.png", "../image/sex_histogram.png"],
+        figures=[
+            "../image/age_histogram_treatment_0.png",
+            "../image/age_histogram_treatment_1.png",
+            "../image/age_histogram_treatment_2.png",
+        ],
         fig_width=6,
         fig_height=4,
     ),
-    rtf_footnote=rtf.RTFFootnote(text=["A footnote"]),
-    rtf_source=rtf.RTFSource(text=["Source: ADSL dataset analysis"]),
+    rtf_footnote=rtf.RTFFootnote(
+        text=[
+            "Note: Each histogram represents age distribution for one treatment group"
+        ],
+        as_table=False,
+    ),
+    rtf_source=rtf.RTFSource(
+        text=["Source: ADSL dataset, Clinical Database Lock Date: 2023-12-31"]
+    ),
 )
+
+doc_multi_page.write_rtf("../rtf/example_figure_multipage.rtf")
