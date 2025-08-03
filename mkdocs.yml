@@ -7,8 +7,8 @@ edit_uri: edit/main/docs/
 
 nav:
   - Home: index.md
+  - Quick Start: articles/example-quickstart.md
   - Articles:
-    - Quick Start: articles/example-quickstart.md
     - Examples:
       - articles/example-baseline.md
       - articles/example-ae.md
@@ -16,14 +16,13 @@ nav:
       - articles/formatting-row.md
       - articles/formatting-text.md
       - articles/formatting-page.md
-    - Converter:
-      - reference/converter-setup.md
   - API Reference:
     - Row: reference/row.md
     - Input: reference/input.md
     - Encode: reference/encode.md
     - Convert: reference/convert.md
     - String width: reference/strwidth.md
+    - Converter: reference/converter-setup.md
   - Changelog: changelog.md
   - Coverage: coverage/
   - Contributing: contributing.md

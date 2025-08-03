@@ -1,5 +1,5 @@
 ---
-title: "Baseline characteristics"
+title: "Baseline Characteristics"
 format: gfm
 eval: false
 ---
