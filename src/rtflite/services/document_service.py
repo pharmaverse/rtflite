@@ -41,6 +41,9 @@ class RTFDocumentService:
             if isinstance(figures, (list, tuple)) and len(figures) > 1:
                 return True
 
+        # Figure-only documents don't need pagination beyond multi-figure handling above
+        if document.df is None:
+            return False
             
         if document.rtf_body.page_by and document.rtf_body.new_page:
             return True
