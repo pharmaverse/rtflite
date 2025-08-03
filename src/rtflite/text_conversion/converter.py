@@ -63,13 +63,13 @@ class TextConverter:
         Examples:
             >>> converter = TextConverter()
             >>> converter.convert_latex_to_unicode("\\alpha + \\beta = \\gamma")
-            "α + β = γ"
+            "alpha + beta = gamma"
             
             >>> converter.convert_latex_to_unicode("Mean \\pm SD")
-            "Mean ± SD"
+            "Mean +/- SD"
             
             >>> converter.convert_latex_to_unicode("Set \\mathbb{R}")
-            "Set ℝ"
+            "Set R"
         """
         if not text:
             return text

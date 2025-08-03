@@ -6,7 +6,7 @@ characters. It organizes the symbols into logical categories for better
 maintainability and readability.
 """
 
-from typing import Dict, Optional
+from typing import Dict
 from ..dictionary.unicode_latex import latex_to_unicode, unicode_to_int, latex_to_char
 
 
@@ -38,9 +38,9 @@ class LaTeXSymbolMapper:
         Examples:
             >>> mapper = LaTeXSymbolMapper()
             >>> mapper.get_unicode_char("\\alpha")
-            "α"
+            "alpha"
             >>> mapper.get_unicode_char("\\pm") 
-            "±"
+            "+/-"
             >>> mapper.get_unicode_char("\\unknown")
             "\\unknown"
         """

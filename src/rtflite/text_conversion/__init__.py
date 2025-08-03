@@ -30,7 +30,7 @@ def convert_text(text: str | None, enable_conversion: bool = True) -> str | None
         
     Examples:
         >>> convert_text("Area: \\pm 0.05", True)
-        "Area: ± 0.05"
+        "Area: +/- 0.05"
         
         >>> convert_text("\\alpha + \\beta", False) 
         "\\alpha + \\beta"
