@@ -1,11 +1,10 @@
 ---
-title: "Baseline Characteristics"
+title: "Baseline characteristics"
 format: gfm
 eval: false
 ---
 
 <!-- `.md` and `.py` files are generated from the `.qmd` file. Please edit that file. -->
-
 
 ## Imports
 

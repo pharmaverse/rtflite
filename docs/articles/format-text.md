@@ -1,4 +1,4 @@
-# Text Format
+# Text format
 
 
 <!-- `.md` and `.py` files are generated from the `.qmd` file. Please edit that file. -->
@@ -14,7 +14,7 @@ clinical documents that meet regulatory standards. Key formatting
 features include:
 
 - Text format styles (bold, italic, underline, superscript, subscript)
-- Font sizes and alignment options (left, center, right, justified)  
+- Font sizes and alignment options (left, center, right, justified)
 - Text colors and background colors
 - Indentation and spacing control
 - Special symbols and mathematical notation
@@ -55,7 +55,7 @@ Apply text formatting using column-based approach:
 doc_formats = rtf.RTFDocument(
     df=df_formats,
     rtf_body=rtf.RTFBody(
-        text_format=("", "b", "i", "bi", "u", "s"),  
+        text_format=("", "b", "i", "bi", "u", "s"),
     )
 )
 
@@ -86,8 +86,8 @@ print(df_font_align)
 doc_font_align = rtf.RTFDocument(
     df=df_font_align,
     rtf_body=rtf.RTFBody(
-        text_justification=("l", "c", "r", "j"), 
-        text_font_size=(12, 14, 10, 11), 
+        text_justification=("l", "c", "r", "j"),
+        text_font_size=(12, 14, 10, 11),
     )
 )
 

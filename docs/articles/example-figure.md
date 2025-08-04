@@ -1,9 +1,7 @@
-# Baseline Characteristics
+# Figures
 
 
 <!-- `.md` and `.py` files are generated from the `.qmd` file. Please edit that file. -->
-
-# Figure Examples
 
 This example shows how to create RTF documents with embedded figures
 using rtflite.
@@ -31,7 +29,7 @@ treatment_groups = df['TRT01A'].unique().sort()
 
 for i, treatment in enumerate(treatment_groups):
     treatment_df = df.filter(pl.col('TRT01A') == treatment)
-    
+
     treatment_plot = (
         ggplot(treatment_df, aes(x='AGE')) +
         geom_histogram(bins=15, fill='#70AD47', color='black', alpha=0.7) +
@@ -44,7 +42,7 @@ for i, treatment in enumerate(treatment_groups):
             figure_size=(6, 4)
         )
     )
-    
+
     treatment_plot.save(f"../image/age_histogram_treatment_{i}.png", dpi=300, width=6, height=4)
 ```
 
@@ -95,8 +93,8 @@ doc_multi_page = rtf.RTFDocument(
     rtf_figure=rtf.RTFFigure(
         figures=[
             "../image/age_histogram_treatment_0.png",
-            "../image/age_histogram_treatment_1.png", 
-            "../image/age_histogram_treatment_2.png",  
+            "../image/age_histogram_treatment_1.png",
+            "../image/age_histogram_treatment_2.png",
         ],
         fig_width=6,
         fig_height=4

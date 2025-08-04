@@ -1,31 +1,31 @@
----
-title: "Page Format"
-format: gfm
-eval: false
----
+# Page format
+
 
 <!-- `.md` and `.py` files are generated from the `.qmd` file. Please edit that file. -->
 
-# Controlling Component Placement in Multi-page Documents
+This article demonstrates how to control component placement in
+multi-page documents using rtflite.
 
-When generating multi-page RTF documents, you may want to control where titles, footnotes, and sources appear. The `RTFPage` class provides three parameters to control this behavior:
+When generating multi-page RTF documents, you may want to control where
+titles, footnotes, and sources appear. The `RTFPage` class provides
+three parameters to control this behavior:
 
-- `page_title`: Controls where titles appear ("first", "last", "all")
-- `page_footnote`: Controls where footnotes appear ("first", "last", "all") 
-- `page_source`: Controls where sources appear ("first", "last", "all")
+- `page_title`: Controls where titles appear (“first”, “last”, “all”)
+- `page_footnote`: Controls where footnotes appear (“first”, “last”,
+  “all”)
+- `page_source`: Controls where sources appear (“first”, “last”, “all”)
 
 ## Default Behavior
 
-By default:
-- Titles appear on **all pages** (`page_title="all"`)
-- Footnotes appear on the **last page only** (`page_footnote="last"`)
-- Sources appear on the **last page only** (`page_source="last"`)
+By default: - Titles appear on **all pages** (`page_title="all"`) -
+Footnotes appear on the **last page only** (`page_footnote="last"`) -
+Sources appear on the **last page only** (`page_source="last"`)
 
 ## Examples
 
 ### Basic Setup
 
-```{python}
+``` python
 import polars as pl
 from rtflite import RTFDocument, RTFTitle, RTFFootnote, RTFSource, RTFPage
 from importlib.resources import files
@@ -37,7 +37,7 @@ df = pl.read_parquet(data_path).head(30)
 
 ### Example 1: Default Behavior
 
-```{python}
+``` python
 # Default: title on all pages, footnote and source on last page
 doc_default = RTFDocument(
     df=df.select(['USUBJID', 'TRTA', 'AEDECOD', 'AESEV', 'AESER', 'AEREL']),  # Select key columns
@@ -55,7 +55,7 @@ doc_default.write_rtf("../rtf/formatting_page_default.rtf")
 
 ### Example 2: Title on First Page Only
 
-```{python}
+``` python
 # Title on first page only, footnote and source on last page
 doc_title_first = RTFDocument(
     df=df.select(['USUBJID', 'TRTA', 'AEDECOD', 'AESEV', 'AESER', 'AEREL']),
@@ -78,7 +78,7 @@ doc_title_first.write_rtf("../rtf/formatting_page_title_first.rtf")
 
 ### Example 3: Footnote on First Page
 
-```{python}
+``` python
 # Title on first page (default), footnote on first page, source on last page
 doc_footnote_first = RTFDocument(
     df=df.select(['USUBJID', 'TRTA', 'AEDECOD', 'AESEV', 'AESER', 'AEREL']),
@@ -101,7 +101,7 @@ doc_footnote_first.write_rtf("../rtf/formatting_page_footnote_first.rtf")
 
 ### Example 4: All Components on All Pages
 
-```{python}
+``` python
 # All components on all pages
 doc_all_pages = RTFDocument(
     df=df.select(['USUBJID', 'TRTA', 'AEDECOD', 'AESEV', 'AESER', 'AEREL']),
@@ -124,7 +124,7 @@ doc_all_pages.write_rtf("../rtf/formatting_page_all_pages.rtf")
 
 ### Example 5: Custom Combination
 
-```{python}
+``` python
 # Custom combination: title everywhere, footnote on first page, source on last page
 doc_custom = RTFDocument(
     df=df.select(['USUBJID', 'TRTA', 'AEDECOD', 'AESEV', 'AESER', 'AEREL']),

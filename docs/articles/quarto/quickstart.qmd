@@ -1,5 +1,5 @@
 ---
-title: "Introduction to rtflite"
+title: "Quick start guide to rtflite"
 format: gfm
 eval: false
 ---
@@ -113,7 +113,7 @@ doc.write_rtf("../rtf/intro-ae1.rtf")
 
 ## Column Width
 
-If we want to adjust the width of each column to provide more space to the first column, 
+If we want to adjust the width of each column to provide more space to the first column,
 this can be achieved by updating `col_rel_width` in `RTFBody`.
 
 The input of `col_rel_width` is a list with same length for number of columns.
@@ -160,10 +160,10 @@ doc.write_rtf("../rtf/intro-ae3.rtf")
 <embed src="../pdf/intro-ae3.pdf" style="width:100%; height:400px" type="application/pdf">
 
 We also allow column headers be displayed in multiple lines.
-If an empty column name is needed for a column, 
+If an empty column name is needed for a column,
 you can insert an empty string; e.g., `["name 1", "", "name 3"]`.
 
-In `RTFColumnHeader`, the `col_rel_width` can be used to align column header 
+In `RTFColumnHeader`, the `col_rel_width` can be used to align column header
 with different number of columns.
 
 By using `RTFColumnHeader` with `col_rel_width`, one can customize complicated column headers.
@@ -263,7 +263,7 @@ doc = rtf.RTFDocument(
     ),
     rtf_body=rtf.RTFBody(
         col_rel_width=[3, 1, 1, 1],
-        text_justification=["l", "c", "c", "c"], 
+        text_justification=["l", "c", "c", "c"],
     ),
 )
 
@@ -287,7 +287,7 @@ doc = rtf.RTFDocument(
     rtf_column_header=rtf.RTFColumnHeader(
         text=[
             "Adverse Events",
-            "Placebo", 
+            "Placebo",
             "Xanomeline High Dose",
             "Xanomeline Low Dose",
         ],
@@ -295,7 +295,7 @@ doc = rtf.RTFDocument(
     ),
     rtf_body=rtf.RTFBody(
         col_rel_width=[3, 2, 2, 2],
-        border_left=["single", "", "", ""],  
+        border_left=["single", "", "", ""],
     ),
 )
 
@@ -405,7 +405,7 @@ doc = rtf.RTFDocument(
         text=[
             "Adverse Events",
             "Placebo (N=86)",
-            "Xanomeline High Dose (N=84)", 
+            "Xanomeline High Dose (N=84)",
             "Xanomeline Low Dose (N=84)",
         ],
     ),
@@ -460,9 +460,9 @@ For large tables spanning multiple pages, `rtflite` handles:
 ```{python}
 # Large table with consistent formatting across pages
 doc = rtf.RTFDocument(
-    df=tbl.head(50),  
+    df=tbl.head(50),
     rtf_page=rtf.RTFPage(
-        nrow=15, 
+        nrow=15,
     ),
     rtf_title=rtf.RTFTitle(
         text=[
@@ -491,7 +491,7 @@ doc = rtf.RTFDocument(
         ]
     ),
     rtf_source=rtf.RTFSource(
-        text="Dataset: ADAE | Cutoff: 01JAN2023" 
+        text="Dataset: ADAE | Cutoff: 01JAN2023"
     ),
 )
 
