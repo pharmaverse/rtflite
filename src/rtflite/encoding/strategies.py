@@ -479,7 +479,7 @@ class PaginatedStrategy(EncodingStrategy):
         from ..services.color_service import color_service
         color_service.set_document_context(document)
 
-        # Get pagination instance and distribute content
+        # Get pagination instance and distribute content (use original data for distribution)
         _, distributor = self.document_service.create_pagination_instance(document)
         col_total_width = document.rtf_page.col_width
         col_widths = Utils._col_widths(document.rtf_body.col_rel_width, col_total_width)
@@ -489,7 +489,7 @@ class PaginatedStrategy(EncodingStrategy):
             document
         )
         pages = distributor.distribute_content(
-            df=document.df,
+            df=document.df,  # Use original DataFrame for proper pagination distribution
             col_widths=col_widths,
             page_by=document.rtf_body.page_by,
             new_page=document.rtf_body.new_page,
@@ -497,6 +497,43 @@ class PaginatedStrategy(EncodingStrategy):
             table_attrs=document.rtf_body,
             additional_rows_per_page=additional_rows,
         )
+
+        # Apply group_by processing to each page if needed
+        if document.rtf_body.group_by:
+            from ..services.grouping_service import grouping_service
+            
+            # Calculate global page start indices for context restoration
+            page_start_indices = []
+            cumulative_rows = 0
+            for i, page_info in enumerate(pages):
+                if i > 0:  # Skip first page (starts at 0) 
+                    page_start_indices.append(cumulative_rows)
+                cumulative_rows += len(page_info["data"])
+            
+            # Process all pages together for proper group_by and page context restoration
+            all_page_data = []
+            for page_info in pages:
+                all_page_data.append(page_info["data"])
+            
+            # Concatenate all page data
+            full_df = all_page_data[0]
+            for page_df in all_page_data[1:]:
+                full_df = full_df.vstack(page_df)
+            
+            # Apply group_by suppression to the full dataset
+            suppressed_df = grouping_service.enhance_group_by(full_df, document.rtf_body.group_by)
+            
+            # Apply page context restoration
+            restored_df = grouping_service.restore_page_context(
+                suppressed_df, full_df, document.rtf_body.group_by, page_start_indices
+            )
+            
+            # Split the processed data back to pages
+            start_idx = 0
+            for page_info in pages:
+                page_rows = len(page_info["data"])
+                page_info["data"] = restored_df.slice(start_idx, page_rows)
+                start_idx += page_rows
 
         # Prepare border settings
         BroadcastValue(

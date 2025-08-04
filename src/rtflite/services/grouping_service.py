@@ -154,14 +154,22 @@ class GroupingService:
         # For each page start, restore the group values from original data
         for page_start_idx in page_start_indices:
             if page_start_idx < len(original_df):
+                # Create updates for each group column
                 for col in group_by:
                     # Get the original value for this row
                     original_value = original_df[col][page_start_idx]
                     
-                    # Update the suppressed DataFrame at this position
-                    # Note: This is a simplified approach; in practice we'd need
-                    # to use polars' update mechanisms properly
-                    pass  # Implementation would depend on polars version and approach
+                    # Update the result DataFrame at this position
+                    # Create a mask for this specific row
+                    mask = pl.int_range(len(result_df)) == page_start_idx
+                    
+                    # Update the column value where the mask is true
+                    result_df = result_df.with_columns(
+                        pl.when(mask)
+                        .then(pl.lit(original_value))
+                        .otherwise(pl.col(col))
+                        .alias(col)
+                    )
         
         return result_df
     
