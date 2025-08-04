@@ -4,7 +4,6 @@
 ![Python versions](https://img.shields.io/pypi/pyversions/rtflite)
 [![CI Tests](https://github.com/pharmaverse/rtflite/actions/workflows/ci-tests.yml/badge.svg)](https://github.com/pharmaverse/rtflite/actions/workflows/ci-tests.yml)
 [![mkdocs](https://github.com/pharmaverse/rtflite/actions/workflows/mkdocs.yml/badge.svg)](https://pharmaverse.github.io/rtflite/)
-[![PyPI Downloads](https://img.shields.io/pypi/dm/rtflite)](https://pypistats.org/packages/rtflite)
 ![License](https://img.shields.io/pypi/l/rtflite)
 
 Lightweight RTF composer for Python.
