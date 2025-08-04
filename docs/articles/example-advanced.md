@@ -141,3 +141,53 @@ doc_multipage = rtf.RTFDocument(
 # Generate the RTF file
 doc_multipage.write_rtf("../rtf/example_advance_multipage.rtf")
 ```
+
+## Step 6: Combining group_by with new_page (treatment separation)
+
+Demonstrate the powerful combination of `group_by` and `new_page` for
+clinical trial reporting:
+
+``` python
+# Create treatment-separated document with group_by within each page
+# Filter data to have multiple treatment groups
+ae_with_treatments = (
+    ae_t1.
+    filter(pl.col('TRTA').is_in(['Placebo', 'Xanomeline High Dose'])).
+    select(['TRTA', 'USUBJID', 'ASTDY', 'AEDECD1', 'AESEV']).
+    head(40).
+    sort(['TRTA', 'USUBJID', 'ASTDY'])
+)
+
+doc_treatment_separated = rtf.RTFDocument(
+    df=ae_with_treatments,
+    rtf_title=rtf.RTFTitle(
+        text=["Adverse Events Listing", "Example 5: group_by + new_page (Treatment Separation)"],
+        text_convert=False,
+    ),
+    rtf_column_header=rtf.RTFColumnHeader(
+        text=["Treatment", "Subject ID", "Study Day", "Adverse Event", "Severity"],
+        text_format="b",
+        text_justification=["l", "l", "c", "l", "c"],
+    ),
+    rtf_body=rtf.RTFBody(
+        page_by=["TRTA"],           # Separate pages by treatment
+        new_page=True,              # Force new page for each treatment
+        group_by=["TRTA", "USUBJID", "ASTDY"],  # Suppress duplicates within each treatment page
+        col_rel_width=[2, 3, 1, 4, 2],
+        text_justification=["l", "l", "c", "l", "c"],
+        pageby_header=True,         # Repeat headers on each treatment page
+    ),
+    rtf_footnote=rtf.RTFFootnote(
+        text=[
+            "Example of group_by + new_page combination:",
+            "- Each treatment group gets its own page(s) (new_page=True)",
+            "- Within each treatment, USUBJID and ASTDY are suppressed when duplicate (group_by)",
+            "- Headers are repeated on each treatment page (pageby_header=True)"
+        ],
+        text_convert=False,
+    ),
+)
+
+# Generate the RTF file
+doc_treatment_separated.write_rtf("../rtf/example_advance_group_newpage.rtf")
+```
