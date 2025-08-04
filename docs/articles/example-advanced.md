@@ -40,10 +40,6 @@ df = pl.read_parquet(data_path)
 
 # Take a subset of the data for this example (rows 200-260)
 ae_subset = df.slice(200, 60)
-
-# Display the raw data structure
-print("Raw adverse events data:")
-print(ae_subset.select(['USUBJID', 'TRTA', 'AEDECOD', 'AESEV', 'ASTDY']).head(10))
 ```
 
 Create additional columns for a more comprehensive listing format:
@@ -73,9 +69,6 @@ ae_t1 = ae_subset.with_columns([
 
 # Sort by key variables to group related events together
 ae_t1 = ae_t1.sort(['SUBLINEBY', 'TRTA', 'SUBJLINE', 'USUBJID', 'ASTDY'])
-
-print("Processed adverse events data:")
-print(ae_t1.select(['USUBJID', 'ASTDY', 'AEDECD1', 'AESEV']).head(10))
 ```
 
 ## Step 2: Demonstrate single column group_by
@@ -110,45 +103,7 @@ doc_single = rtf.RTFDocument(
 doc_single.write_rtf("../rtf/example_advance_single.rtf")
 ```
 
-## Step 3: Demonstrate hierarchical group_by
-
-Show the power of multi-column grouping with hierarchical value
-suppression:
-
-``` python
-# Create RTF document with hierarchical group_by
-doc_group = rtf.RTFDocument(
-    df=ae_t1.select(['USUBJID', 'ASTDY', 'AEDECD1', 'AESEV', 'AESER']),
-    rtf_title=rtf.RTFTitle(
-        text=["Adverse Events Listing", "Example 2: Hierarchical group_by Usage"],
-        text_convert=False,
-    ),
-    rtf_column_header=rtf.RTFColumnHeader(
-        text=["Subject ID", "Study Day", "Adverse Event", "Severity", "Serious"],
-        text_format="b",
-        text_justification=["l", "c", "l", "c", "c"],
-    ),
-    rtf_body=rtf.RTFBody(
-        group_by=['USUBJID', 'ASTDY'],  # Hierarchical grouping
-        col_rel_width=[3, 1, 4, 2, 2],
-        text_justification=['l', 'c', 'l', 'c', 'c'],
-    ),
-    rtf_footnote=rtf.RTFFootnote(
-        text=[
-            "Note: group_by feature provides hierarchical value suppression:",
-            "• Subject ID: shown once per subject",
-            "• Study Day: shown once per subject-day combination",
-            "• Blank cells indicate values suppressed for readability"
-        ],
-        text_convert=False,
-    ),
-)
-
-# Generate the RTF file
-doc_group.write_rtf("../rtf/example_advance_group.rtf")
-```
-
-## Step 4: Multi-page example with group context
+## Step 3: Multi-page example with group context
 
 Demonstrate how group_by works with pagination, including context
 restoration:
@@ -186,57 +141,3 @@ doc_multipage = rtf.RTFDocument(
 # Generate the RTF file
 doc_multipage.write_rtf("../rtf/example_advance_multipage.rtf")
 ```
-
-## Step 5: Comparison without group_by
-
-For comparison, create the same table without group_by to show the
-difference:
-
-``` python
-# Create the same table without group_by for comparison
-doc_no_group = rtf.RTFDocument(
-    df=ae_t1.select(['USUBJID', 'ASTDY', 'AEDECD1', 'AESEV', 'AESER']).head(20),
-    rtf_title=rtf.RTFTitle(
-        text=["Adverse Events Listing", "Example 4: Without group_by (for comparison)"],
-        text_convert=False,
-    ),
-    rtf_column_header=rtf.RTFColumnHeader(
-        text=["Subject ID", "Study Day", "Adverse Event", "Severity", "Serious"],
-        text_format="b",
-        text_justification=["l", "c", "l", "c", "c"],
-    ),
-    rtf_body=rtf.RTFBody(
-        # No group_by specified - all values will be displayed
-        col_rel_width=[3, 1, 4, 2, 2],
-        text_justification=['l', 'c', 'l', 'c', 'c'],
-    ),
-    rtf_footnote=rtf.RTFFootnote(
-        text="Note: Without group_by, all values are displayed in every row",
-        text_convert=False,
-    ),
-)
-
-# Generate the RTF file
-doc_no_group.write_rtf("../rtf/example_advance_no_group.rtf")
-```
-
-## Summary
-
-The `group_by` feature in rtflite provides:
-
-1.  **Single column grouping**: Suppress duplicates in one column (e.g.,
-    Subject ID)
-2.  **Hierarchical grouping**: Multi-level value suppression with nested
-    relationships
-3.  **Pagination support**: Automatic context restoration at page
-    boundaries
-4.  **Clinical compliance**: Follows pharmaceutical industry standards
-    for listing formats
-
-This feature is particularly valuable for: - Subject-level adverse event
-listings - Medical history summaries - Concomitant medication listings -
-Any tabular data with natural grouping relationships
-
-The group_by functionality enhances readability while maintaining all
-the original data integrity, making it an essential tool for creating
-professional clinical trial documentation.

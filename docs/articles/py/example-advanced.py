@@ -7,9 +7,6 @@ df = pl.read_parquet(data_path)
 
 ae_subset = df.slice(200, 60)
 
-print("Raw adverse events data:")
-print(ae_subset.select(["USUBJID", "TRTA", "AEDECOD", "AESEV", "ASTDY"]).head(10))
-
 ae_t1 = ae_subset.with_columns(
     [
         # Create subline header with study and site information
@@ -57,9 +54,6 @@ ae_t1 = ae_subset.with_columns(
 
 ae_t1 = ae_t1.sort(["SUBLINEBY", "TRTA", "SUBJLINE", "USUBJID", "ASTDY"])
 
-print("Processed adverse events data:")
-print(ae_t1.select(["USUBJID", "ASTDY", "AEDECD1", "AESEV"]).head(10))
-
 doc_single = rtf.RTFDocument(
     df=ae_t1.select(["USUBJID", "AEDECD1", "AESEV", "AESER"]).head(15),
     rtf_title=rtf.RTFTitle(
@@ -83,35 +77,6 @@ doc_single = rtf.RTFDocument(
 )
 
 doc_single.write_rtf("../rtf/example_advance_single.rtf")
-
-doc_group = rtf.RTFDocument(
-    df=ae_t1.select(["USUBJID", "ASTDY", "AEDECD1", "AESEV", "AESER"]),
-    rtf_title=rtf.RTFTitle(
-        text=["Adverse Events Listing", "Example 2: Hierarchical group_by Usage"],
-        text_convert=False,
-    ),
-    rtf_column_header=rtf.RTFColumnHeader(
-        text=["Subject ID", "Study Day", "Adverse Event", "Severity", "Serious"],
-        text_format="b",
-        text_justification=["l", "c", "l", "c", "c"],
-    ),
-    rtf_body=rtf.RTFBody(
-        group_by=["USUBJID", "ASTDY"],  # Hierarchical grouping
-        col_rel_width=[3, 1, 4, 2, 2],
-        text_justification=["l", "c", "l", "c", "c"],
-    ),
-    rtf_footnote=rtf.RTFFootnote(
-        text=[
-            "Note: group_by feature provides hierarchical value suppression:",
-            "• Subject ID: shown once per subject",
-            "• Study Day: shown once per subject-day combination",
-            "• Blank cells indicate values suppressed for readability",
-        ],
-        text_convert=False,
-    ),
-)
-
-doc_group.write_rtf("../rtf/example_advance_group.rtf")
 
 ae_large = ae_t1.head(100)  # Use more rows to trigger pagination
 
@@ -142,27 +107,3 @@ doc_multipage = rtf.RTFDocument(
 )
 
 doc_multipage.write_rtf("../rtf/example_advance_multipage.rtf")
-
-doc_no_group = rtf.RTFDocument(
-    df=ae_t1.select(["USUBJID", "ASTDY", "AEDECD1", "AESEV", "AESER"]).head(20),
-    rtf_title=rtf.RTFTitle(
-        text=["Adverse Events Listing", "Example 4: Without group_by (for comparison)"],
-        text_convert=False,
-    ),
-    rtf_column_header=rtf.RTFColumnHeader(
-        text=["Subject ID", "Study Day", "Adverse Event", "Severity", "Serious"],
-        text_format="b",
-        text_justification=["l", "c", "l", "c", "c"],
-    ),
-    rtf_body=rtf.RTFBody(
-        # No group_by specified - all values will be displayed
-        col_rel_width=[3, 1, 4, 2, 2],
-        text_justification=["l", "c", "l", "c", "c"],
-    ),
-    rtf_footnote=rtf.RTFFootnote(
-        text="Note: Without group_by, all values are displayed in every row",
-        text_convert=False,
-    ),
-)
-
-doc_no_group.write_rtf("../rtf/example_advance_no_group.rtf")
