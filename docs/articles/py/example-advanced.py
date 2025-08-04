@@ -55,7 +55,9 @@ ae_t1 = ae_subset.with_columns(
 ae_t1 = ae_t1.sort(["SUBLINEBY", "TRTA", "SUBJLINE", "USUBJID", "ASTDY"])
 
 doc_single = rtf.RTFDocument(
-    df=ae_t1.select(["USUBJID", "AEDECD1", "AESEV", "AESER"]).head(15),
+    df=ae_t1.select(["USUBJID", "AEDECD1", "AESEV", "AESER"])
+    .head(15)
+    .sort(["USUBJID", "AEDECD1"]),
     rtf_title=rtf.RTFTitle(
         text=["Adverse Events Listing", "Example 1: Single Column group_by"],
         text_convert=False,
@@ -66,12 +68,12 @@ doc_single = rtf.RTFDocument(
         text_justification=["l", "l", "c", "c"],
     ),
     rtf_body=rtf.RTFBody(
-        group_by=["USUBJID", "AEDECD1"],  # Group by subject ID only
+        group_by=["USUBJID", "AEDECD1"],  # Group by subject ID and adverse event
         col_rel_width=[3, 4, 2, 2],
         text_justification=["l", "l", "c", "c"],
     ),
     rtf_footnote=rtf.RTFFootnote(
-        text="Note: Subject ID values are shown only once per subject for better readability",
+        text="Note: Subject ID and Adverse Event values are shown only once per group for better readability",
         text_convert=False,
     ),
 )
@@ -81,7 +83,9 @@ doc_single.write_rtf("../rtf/example_advance_single.rtf")
 ae_large = ae_t1.head(100)  # Use more rows to trigger pagination
 
 doc_multipage = rtf.RTFDocument(
-    df=ae_large.select(["USUBJID", "ASTDY", "AEDECD1", "AESEV", "AESER"]),
+    df=ae_large.select(["USUBJID", "ASTDY", "AEDECD1", "AESEV", "AESER"]).sort(
+        ["USUBJID", "ASTDY"]
+    ),
     rtf_page=rtf.RTFPage(nrow=25),  # Force pagination
     rtf_title=rtf.RTFTitle(
         text=["Adverse Events Listing", "Example 3: Multi-page with group_by"],

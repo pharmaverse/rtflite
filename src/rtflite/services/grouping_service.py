@@ -31,6 +31,9 @@ class GroupingService:
         Returns:
             DataFrame with group_by columns showing values only on first occurrence
             within each group
+            
+        Raises:
+            ValueError: If data is not properly sorted by group_by columns
         """
         if not group_by or df.is_empty():
             return df
@@ -39,6 +42,9 @@ class GroupingService:
         missing_cols = [col for col in group_by if col not in df.columns]
         if missing_cols:
             raise ValueError(f"group_by columns not found in DataFrame: {missing_cols}")
+        
+        # Validate data sorting (based on r2rtf logic)
+        self.validate_data_sorting(df, group_by=group_by)
         
         # Create a copy to avoid modifying original
         result_df = df.clone()
@@ -246,6 +252,127 @@ class GroupingService:
                     issues.append(f"Column '{col}' contains only null values")
         
         return issues
+    
+    def validate_data_sorting(
+        self, 
+        df: pl.DataFrame, 
+        group_by: Optional[List[str]] = None,
+        page_by: Optional[List[str]] = None,
+        subline_by: Optional[List[str]] = None
+    ) -> None:
+        """Validate that data is properly sorted for grouping operations
+        
+        Based on r2rtf logic: ensures data is sorted by all grouping variables
+        in the correct order for proper group_by, page_by, and subline_by functionality.
+        
+        Args:
+            df: Input DataFrame to validate
+            group_by: List of group_by columns (optional)
+            page_by: List of page_by columns (optional) 
+            subline_by: List of subline_by columns (optional)
+            
+        Raises:
+            ValueError: If data is not properly sorted or if there are overlapping columns
+        """
+        if df.is_empty():
+            return
+        
+        # Collect all grouping variables
+        all_grouping_vars = []
+        
+        # Add variables in priority order (page_by, subline_by, group_by)
+        if page_by:
+            all_grouping_vars.extend(page_by)
+        if subline_by:
+            all_grouping_vars.extend(subline_by)  
+        if group_by:
+            all_grouping_vars.extend(group_by)
+        
+        if not all_grouping_vars:
+            return  # No grouping variables to validate
+        
+        # Check for overlapping variables between different grouping types
+        self._validate_no_overlapping_grouping_vars(group_by, page_by, subline_by)
+        
+        # Remove duplicates while preserving order
+        unique_vars = []
+        seen = set()
+        for var in all_grouping_vars:
+            if var not in seen:
+                unique_vars.append(var)
+                seen.add(var)
+        
+        # Validate all grouping columns exist
+        missing_cols = [col for col in unique_vars if col not in df.columns]
+        if missing_cols:
+            raise ValueError(f"Grouping columns not found in DataFrame: {missing_cols}")
+        
+        # Check if data is properly sorted
+        # Create a sorted version and compare with original
+        sorted_df = df.sort(unique_vars)
+        
+        # Compare the sorting columns between original and sorted DataFrames
+        original_sort_cols = df.select(unique_vars)
+        expected_sort_cols = sorted_df.select(unique_vars)
+        
+        # Check if they are equal (same order)
+        if not original_sort_cols.equals(expected_sort_cols):
+            # Data is not properly sorted - provide helpful error message
+            var_names = ", ".join(unique_vars)
+            raise ValueError(
+                f"Data is not sorted by the grouping variables: [{var_names}]. "
+                f"Please sort your data using these columns in the specified order before "
+                f"applying group_by, page_by, or subline_by operations."
+            )
+    
+    def _validate_no_overlapping_grouping_vars(
+        self,
+        group_by: Optional[List[str]] = None,
+        page_by: Optional[List[str]] = None, 
+        subline_by: Optional[List[str]] = None
+    ) -> None:
+        """Validate that grouping variables don't overlap between different types
+        
+        Based on r2rtf validation logic to prevent conflicts between
+        group_by, page_by, and subline_by parameters.
+        
+        Args:
+            group_by: List of group_by columns (optional)
+            page_by: List of page_by columns (optional)
+            subline_by: List of subline_by columns (optional)
+            
+        Raises:
+            ValueError: If there are overlapping variables between grouping types
+        """
+        # Convert None to empty lists for easier processing
+        group_by = group_by or []
+        page_by = page_by or []
+        subline_by = subline_by or []
+        
+        # Check for overlaps between each pair
+        overlaps = []
+        
+        # group_by vs page_by
+        group_page_overlap = set(group_by) & set(page_by)
+        if group_page_overlap:
+            overlaps.append(f"group_by and page_by: {sorted(group_page_overlap)}")
+        
+        # group_by vs subline_by  
+        group_subline_overlap = set(group_by) & set(subline_by)
+        if group_subline_overlap:
+            overlaps.append(f"group_by and subline_by: {sorted(group_subline_overlap)}")
+        
+        # page_by vs subline_by
+        page_subline_overlap = set(page_by) & set(subline_by)
+        if page_subline_overlap:
+            overlaps.append(f"page_by and subline_by: {sorted(page_subline_overlap)}")
+        
+        if overlaps:
+            overlap_details = "; ".join(overlaps)
+            raise ValueError(
+                f"Overlapping variables found between grouping parameters: {overlap_details}. "
+                f"Each variable can only be used in one grouping parameter (group_by, page_by, or subline_by)."
+            )
 
 
 # Create a singleton instance for easy access
