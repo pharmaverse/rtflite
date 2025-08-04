@@ -50,6 +50,10 @@ class SinglePageStrategy(EncodingStrategy):
         # Handle figure-only documents (no table)
         if document.df is None:
             return self._encode_figure_only_document_simple(document)
+        
+        # Check if this is a multi-section document
+        if isinstance(document.df, list):
+            return self._encode_multi_section_document(document)
             
         # Original single-page encoding logic for table documents
         dim = document.df.shape
@@ -200,6 +204,168 @@ class SinglePageStrategy(EncodingStrategy):
                 if item is not None
             ]
         )
+
+    def _encode_multi_section_document(self, document: "RTFDocument") -> str:
+        """Encode a multi-section document where sections are concatenated row by row.
+
+        Args:
+            document: The RTF document with multiple df/rtf_body sections
+
+        Returns:
+            Complete RTF string
+        """
+        from ..attributes import BroadcastValue
+        
+        # Calculate total rows across all sections for border management
+        total_rows = sum(df.shape[0] for df in document.df)
+        first_section_cols = document.df[0].shape[1]
+        
+        # Document structure components
+        rtf_title = self.encoding_service.encode_title(
+            document.rtf_title, method="line"
+        )
+        
+        # Handle page borders (use first section for dimensions)
+        doc_border_top = BroadcastValue(
+            value=document.rtf_page.border_first, dimension=(1, first_section_cols)
+        ).to_list()[0]
+        doc_border_bottom = BroadcastValue(
+            value=document.rtf_page.border_last, dimension=(1, first_section_cols)
+        ).to_list()[0]
+
+        # Encode sections
+        all_section_content = []
+        is_nested_headers = isinstance(document.rtf_column_header[0], list)
+        
+        for i, (section_df, section_body) in enumerate(zip(document.df, document.rtf_body)):
+            dim = section_df.shape
+            
+            # Handle column headers for this section
+            section_headers = []
+            if is_nested_headers:
+                # Nested format: [[header1], [None], [header3]]
+                if i < len(document.rtf_column_header) and document.rtf_column_header[i]:
+                    for header in document.rtf_column_header[i]:
+                        if header is not None:
+                            # Apply top border to first section's first header
+                            if i == 0 and not section_headers:
+                                header.border_top = BroadcastValue(
+                                    value=header.border_top, dimension=dim
+                                ).update_row(0, doc_border_top)
+                            
+                            section_headers.append(
+                                self.encoding_service.encode_column_header(
+                                    header.text, header, document.rtf_page.col_width
+                                )
+                            )
+            else:
+                # Flat format - only apply to first section
+                if i == 0:
+                    for header in document.rtf_column_header:
+                        if header.text is None and section_body.as_colheader:
+                            # Auto-generate headers from column names
+                            columns = [col for col in section_df.columns
+                                     if col not in (section_body.page_by or [])]
+                            import polars as pl
+                            header.text = pl.DataFrame(
+                                [columns],
+                                schema=[f"col_{j}" for j in range(len(columns))],
+                                orient="row",
+                            )
+                        
+                        # Apply top border to first header
+                        if not section_headers:
+                            header.border_top = BroadcastValue(
+                                value=header.border_top, dimension=dim
+                            ).update_row(0, doc_border_top)
+                        
+                        section_headers.append(
+                            self.encoding_service.encode_column_header(
+                                header.text, header, document.rtf_page.col_width
+                            )
+                        )
+
+            # Handle borders for section body
+            if i == 0 and not section_headers:  # First section, no headers
+                # Apply top border to first row of first section
+                section_body.border_top = BroadcastValue(
+                    value=section_body.border_top, dimension=dim
+                ).update_row(0, doc_border_top)
+            
+            # Create a temporary document for this section to maintain compatibility
+            from copy import deepcopy
+            temp_document = deepcopy(document)
+            temp_document.df = section_df
+            temp_document.rtf_body = section_body
+            
+            # Encode section body
+            section_body_content = self.encoding_service.encode_body(
+                temp_document, section_df, section_body
+            )
+            
+            # Add section content
+            if section_headers:
+                all_section_content.extend(["\n".join(
+                    header for sublist in section_headers for header in sublist
+                )])
+            all_section_content.extend(section_body_content)
+
+        # Handle bottom borders on last section
+        if document.rtf_footnote is not None:
+            document.rtf_footnote.border_bottom = BroadcastValue(
+                value=document.rtf_footnote.border_bottom, dimension=(1, 1)
+            ).update_row(0, doc_border_bottom[0])
+        else:
+            # Apply bottom border to last section's last row
+            last_section_body = document.rtf_body[-1]
+            last_section_dim = document.df[-1].shape
+            if last_section_dim[0] > 0:
+                last_section_body.border_bottom = BroadcastValue(
+                    value=last_section_body.border_bottom, dimension=last_section_dim
+                ).update_row(last_section_dim[0] - 1, doc_border_bottom)
+
+        return "\n".join([
+            item
+            for item in [
+                self.encoding_service.encode_document_start(),
+                self.encoding_service.encode_font_table(),
+                "\n",
+                self.encoding_service.encode_page_header(
+                    document.rtf_page_header, method="line"
+                ),
+                self.encoding_service.encode_page_footer(
+                    document.rtf_page_footer, method="line"
+                ),
+                self.encoding_service.encode_page_settings(document.rtf_page),
+                rtf_title,
+                "\n",
+                self.encoding_service.encode_subline(
+                    document.rtf_subline, method="line"
+                ),
+                "\n".join(all_section_content),
+                "\n".join(
+                    self.encoding_service.encode_footnote(
+                        document.rtf_footnote,
+                        page_number=1,
+                        page_col_width=document.rtf_page.col_width,
+                    )
+                )
+                if document.rtf_footnote is not None
+                else None,
+                "\n".join(
+                    self.encoding_service.encode_source(
+                        document.rtf_source,
+                        page_number=1,
+                        page_col_width=document.rtf_page.col_width,
+                    )
+                )
+                if document.rtf_source is not None
+                else None,
+                "\n\n",
+                "}",
+            ]
+            if item is not None
+        ])
 
     def _encode_figure_only_document_simple(self, document: "RTFDocument") -> str:
         """Encode a figure-only document with simple page layout.

@@ -17,9 +17,19 @@ class RTFDocumentService:
 
         # Count column headers (repeat on each page)
         if document.rtf_column_header:
-            for header in document.rtf_column_header:
-                if header.text is not None:
-                    additional_rows += 1
+            # Handle nested column headers for multi-section documents
+            if isinstance(document.rtf_column_header[0], list):
+                # Nested format: count all non-None headers across all sections
+                for section_headers in document.rtf_column_header:
+                    if section_headers:  # Skip [None] sections
+                        for header in section_headers:
+                            if header and header.text is not None:
+                                additional_rows += 1
+            else:
+                # Flat format: original logic
+                for header in document.rtf_column_header:
+                    if header.text is not None:
+                        additional_rows += 1
 
         # Count footnote rows
         if document.rtf_footnote and document.rtf_footnote.text:
@@ -45,8 +55,18 @@ class RTFDocumentService:
         if document.df is None:
             return False
             
-        if document.rtf_body.page_by and document.rtf_body.new_page:
-            return True
+        # Handle multi-section documents
+        if isinstance(document.df, list):
+            # Check if any section needs pagination
+            for body in document.rtf_body:
+                if body.page_by and body.new_page:
+                    return True
+            # For now, multi-section documents use single page strategy
+            return False
+        else:
+            # Single section document
+            if document.rtf_body.page_by and document.rtf_body.new_page:
+                return True
 
         # Create pagination instance to calculate rows needed
         from ..pagination import RTFPagination, PageBreakCalculator
@@ -61,12 +81,24 @@ class RTFDocumentService:
         calculator = PageBreakCalculator(pagination=pagination)
         from ..row import Utils
         col_total_width = document.rtf_page.col_width
-        col_widths = Utils._col_widths(document.rtf_body.col_rel_width, col_total_width)
-
-        # Calculate rows needed for data content only
-        content_rows = calculator.calculate_content_rows(
-            document.df, col_widths, document.rtf_body
-        )
+        
+        # Handle multi-section vs single section for column widths
+        if isinstance(document.df, list):
+            # Use first section for pagination calculation
+            col_widths = Utils._col_widths(document.rtf_body[0].col_rel_width, col_total_width)
+            # Calculate rows needed for all sections combined
+            total_content_rows = []
+            for df, body in zip(document.df, document.rtf_body):
+                section_col_widths = Utils._col_widths(body.col_rel_width, col_total_width)
+                section_content_rows = calculator.calculate_content_rows(df, section_col_widths, body)
+                total_content_rows.extend(section_content_rows)
+            content_rows = total_content_rows
+        else:
+            col_widths = Utils._col_widths(document.rtf_body.col_rel_width, col_total_width)
+            # Calculate rows needed for data content only
+            content_rows = calculator.calculate_content_rows(
+                document.df, col_widths, document.rtf_body
+            )
 
         # Calculate additional rows per page
         additional_rows_per_page = self.calculate_additional_rows_per_page(document)
