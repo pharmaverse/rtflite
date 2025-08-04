@@ -17,6 +17,7 @@ from rtflite.row import (
     TextContent,
     Utils,
 )
+from rtflite.services.color_service import color_service
 from rtflite.strwidth import get_string_width
 
 
@@ -126,9 +127,58 @@ class TextAttributes(BaseModel):
     text_color: list[str] | list[list[str]] | None = Field(
         default=None, description="Text color name or RGB value"
     )
+    
+    @field_validator("text_color", mode="after")
+    def validate_text_color(cls, v):
+        if v is None:
+            return v
+
+        # Check if it's a nested list
+        if v and isinstance(v[0], list):
+            for row in v:
+                for color in row:
+                    # Allow empty string for "no color"
+                    if color and not color_service.validate_color(color):
+                        suggestions = color_service.get_color_suggestions(color, 3)
+                        suggestion_text = f" Did you mean: {', '.join(suggestions)}?" if suggestions else ""
+                        raise ValueError(f"Invalid text color: '{color}'.{suggestion_text}")
+        else:
+            # Flat list
+            for color in v:
+                # Allow empty string for "no color"
+                if color and not color_service.validate_color(color):
+                    suggestions = color_service.get_color_suggestions(color, 3)
+                    suggestion_text = f" Did you mean: {', '.join(suggestions)}?" if suggestions else ""
+                    raise ValueError(f"Invalid text color: '{color}'.{suggestion_text}")
+        return v
+    
     text_background_color: list[str] | list[list[str]] | None = Field(
         default=None, description="Background color name or RGB value"
     )
+    
+    @field_validator("text_background_color", mode="after")
+    def validate_text_background_color(cls, v):
+        if v is None:
+            return v
+
+        # Check if it's a nested list
+        if v and isinstance(v[0], list):
+            for row in v:
+                for color in row:
+                    # Allow empty string for "no color"
+                    if color and not color_service.validate_color(color):
+                        suggestions = color_service.get_color_suggestions(color, 3)
+                        suggestion_text = f" Did you mean: {', '.join(suggestions)}?" if suggestions else ""
+                        raise ValueError(f"Invalid text background color: '{color}'.{suggestion_text}")
+        else:
+            # Flat list
+            for color in v:
+                # Allow empty string for "no color"
+                if color and not color_service.validate_color(color):
+                    suggestions = color_service.get_color_suggestions(color, 3)
+                    suggestion_text = f" Did you mean: {', '.join(suggestions)}?" if suggestions else ""
+                    raise ValueError(f"Invalid text background color: '{color}'.{suggestion_text}")
+        return v
     text_justification: list[str] | list[list[str]] | None = Field(
         default=None,
         description="Text alignment ('l'=left, 'c'=center, 'r'=right, 'j'=justify)",
@@ -349,6 +399,29 @@ class TableAttributes(TextAttributes):
     border_color_last: list[list[str]] = Field(
         default=[[""]], description="Last row border color"
     )
+    
+    @field_validator(
+        "border_color_left",
+        "border_color_right", 
+        "border_color_top",
+        "border_color_bottom",
+        "border_color_first",
+        "border_color_last",
+        mode="after"
+    )
+    def validate_border_colors(cls, v):
+        if v is None:
+            return v
+
+        for row in v:
+            for color in row:
+                # Allow empty string for no color
+                if color and not color_service.validate_color(color):
+                    suggestions = color_service.get_color_suggestions(color, 3)
+                    suggestion_text = f" Did you mean: {', '.join(suggestions)}?" if suggestions else ""
+                    raise ValueError(f"Invalid border color: '{color}'.{suggestion_text}")
+        return v
+    
     border_width: list[list[int]] = Field(
         default=[[15]], description="Border width in twips"
     )

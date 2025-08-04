@@ -41,6 +41,20 @@ class RTFSyntaxGenerator:
         return font_table
     
     @staticmethod
+    def generate_color_table(used_colors: Optional[List[str]] = None) -> str:
+        """Generate RTF color table using comprehensive 657-color support.
+        
+        Args:
+            used_colors: List of color names used in document. If None, includes all 657 colors.
+            
+        Returns:
+            RTF color table string
+        """
+        from ..services.color_service import color_service
+        
+        return color_service.generate_rtf_color_table(used_colors)
+    
+    @staticmethod
     def generate_page_settings(width: float, height: float, margins: List[float], orientation: str = "portrait") -> str:
         """Generate RTF page settings.
         

@@ -19,12 +19,17 @@ def test_inch_to_twip():
 
 
 def test_get_color_index():
-    # Test existing colors
-    assert Utils._get_color_index("black") == 1
-    assert Utils._get_color_index("red") == 2
-    assert Utils._get_color_index("blue") == 4
+    # Test existing colors with new comprehensive color table indices
+    assert Utils._get_color_index("black") == 0  # Black is default color (index 0)
+    assert Utils._get_color_index("red") == 552
+    assert Utils._get_color_index("blue") == 26
 
-    # Test non-existent color (should return 0 for black)
+    # Test additional colors from comprehensive table
+    assert Utils._get_color_index("orange") == 498
+    assert Utils._get_color_index("white") == 1
+    assert Utils._get_color_index("lightgray") == 416
+
+    # Test non-existent color (should return 0 for default/black)
     assert Utils._get_color_index("nonexistent") == 0
 
 

@@ -22,6 +22,23 @@ class RTFEncodingService:
         """Encode RTF font table."""
         return self.syntax.generate_font_table()
     
+    def encode_color_table(self, document=None, used_colors: Optional[List[str]] = None) -> str:
+        """Encode RTF color table with comprehensive 657-color support.
+        
+        Args:
+            document: RTF document to analyze for color usage (preferred)
+            used_colors: List of color names used in document. If None and document provided, colors are auto-detected.
+            
+        Returns:
+            RTF color table string (empty if no colors beyond black/"" are used)
+        """
+        if document is not None and used_colors is None:
+            # Auto-detect colors from document
+            from ..services.color_service import color_service
+            used_colors = color_service.collect_document_colors(document)
+        
+        return self.syntax.generate_color_table(used_colors)
+    
     def encode_page_settings(self, page_config) -> str:
         """Encode RTF page settings.
         

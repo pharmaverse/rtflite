@@ -19,36 +19,6 @@ VERTICAL_ALIGNMENT_CODES = RTFConstants.VERTICAL_ALIGNMENT_CODES
 
 
 class Utils:
-    @staticmethod
-    def _color_table() -> Mapping:
-        """Define color table."""
-        return {
-            "color": [
-                "black",
-                "red",
-                "green",
-                "blue",
-                "white",
-                "lightgray",
-                "darkgray",
-                "yellow",
-                "magenta",
-                "cyan",
-            ],
-            "type": list(range(1, 11)),
-            "rtf_code": [
-                "\\red0\\green0\\blue0;",  # black
-                "\\red255\\green0\\blue0;",  # red
-                "\\red0\\green255\\blue0;",  # green
-                "\\red0\\green0\\blue255;",  # blue
-                "\\red255\\green255\\blue255;",  # white
-                "\\red211\\green211\\blue211;",  # lightgray
-                "\\red169\\green169\\blue169;",  # darkgray
-                "\\red255\\green255\\blue0;",  # yellow
-                "\\red255\\green0\\blue255;",  # magenta
-                "\\red0\\green255\\blue255;",  # cyan
-            ],
-        }
 
     @staticmethod
     def _font_type() -> Mapping:
@@ -73,13 +43,19 @@ class Utils:
         ]
 
     @staticmethod
-    def _get_color_index(color: str) -> int:
+    def _get_color_index(color: str, used_colors=None) -> int:
         """Get the index of a color in the color table."""
-        colors = Utils._color_table()
+        if not color or color == "black":
+            return 0  # Default/black color
+            
+        from .services.color_service import color_service, ColorValidationError
+        
         try:
-            return colors["color"].index(color) + 1
-        except ValueError:
-            return 0  # Default to black
+            # If no explicit used_colors provided, the color service will use document context
+            return color_service.get_rtf_color_index(color, used_colors)
+        except ColorValidationError:
+            # Invalid color name - return default
+            return 0
 
 
 class TextContent(BaseModel):

@@ -142,17 +142,22 @@ class SinglePageStrategy(EncodingStrategy):
                     value=document.rtf_body.border_bottom, dimension=dim
                 ).update_row(dim[0] - 1, doc_border_bottom)
 
+        # Set document color context for accurate color index resolution
+        from ..services.color_service import color_service
+        color_service.set_document_context(document)
+
         # Body
         rtf_body = self.encoding_service.encode_body(
             document, document.df, document.rtf_body
         )
 
-        return "\n".join(
+        result = "\n".join(
             [
                 item
                 for item in [
                     self.encoding_service.encode_document_start(),
                     self.encoding_service.encode_font_table(),
+                    self.encoding_service.encode_color_table(document),
                     "\n",
                     self.encoding_service.encode_page_header(
                         document.rtf_page_header, method="line"
@@ -204,6 +209,11 @@ class SinglePageStrategy(EncodingStrategy):
                 if item is not None
             ]
         )
+        
+        # Clear document context after encoding
+        color_service.clear_document_context()
+        
+        return result
 
     def _encode_multi_section_document(self, document: "RTFDocument") -> str:
         """Encode a multi-section document where sections are concatenated row by row.
@@ -391,6 +401,7 @@ class SinglePageStrategy(EncodingStrategy):
                 for item in [
                     self.encoding_service.encode_document_start(),
                     self.encoding_service.encode_font_table(),
+                    self.encoding_service.encode_color_table(document),
                     "\n",
                     self.encoding_service.encode_page_header(
                         document.rtf_page_header, method="line"
@@ -463,6 +474,10 @@ class PaginatedStrategy(EncodingStrategy):
             return self._encode_figure_only_document_with_pagination(document)
 
         dim = document.df.shape
+
+        # Set document color context for accurate color index resolution
+        from ..services.color_service import color_service
+        color_service.set_document_context(document)
 
         # Get pagination instance and distribute content
         _, distributor = self.document_service.create_pagination_instance(document)
@@ -649,12 +664,13 @@ class PaginatedStrategy(EncodingStrategy):
             page_contents.extend(page_elements)
 
         # Build complete RTF document
-        return "\n".join(
+        result = "\n".join(
             [
                 item
                 for item in [
                     self.encoding_service.encode_document_start(),
                     self.encoding_service.encode_font_table(),
+                    self.encoding_service.encode_color_table(document),
                     "\n",
                     self.encoding_service.encode_page_header(
                         document.rtf_page_header, method="line"
@@ -670,6 +686,11 @@ class PaginatedStrategy(EncodingStrategy):
                 if item is not None
             ]
         )
+        
+        # Clear document context after encoding
+        color_service.clear_document_context()
+        
+        return result
 
     def _encode_figure_only_document_with_pagination(self, document: "RTFDocument") -> str:
         """Encode a figure-only document with multi-page behavior.
@@ -718,6 +739,7 @@ class PaginatedStrategy(EncodingStrategy):
         # Add document start
         page_elements.append(self.encoding_service.encode_document_start())
         page_elements.append(self.encoding_service.encode_font_table())
+        page_elements.append(self.encoding_service.encode_color_table(document))
         page_elements.append("\n")
         
         # Add page settings (headers/footers)
