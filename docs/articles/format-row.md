@@ -1,4 +1,4 @@
-# Row Format
+# Row format
 
 
 <!-- `.md` and `.py` files are generated from the `.qmd` file. Please edit that file. -->
@@ -31,7 +31,7 @@ Demonstrate different border types:
 ``` python
 # Create border demonstration data from BORDER_CODES
 border_data = [
-    [border_type, f"Example of {border_type or 'no'} border"] 
+    [border_type, f"Example of {border_type or 'no'} border"]
     for border_type in rtf.attributes.BORDER_CODES.keys()
 ]
 

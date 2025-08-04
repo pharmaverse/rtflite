@@ -1,4 +1,4 @@
-# Introduction to rtflite
+# Quick start guide to rtflite
 
 
 <!-- `.md` and `.py` files are generated from the `.qmd` file. Please edit that file. -->
@@ -274,7 +274,7 @@ doc = rtf.RTFDocument(
     ),
     rtf_body=rtf.RTFBody(
         col_rel_width=[3, 1, 1, 1],
-        text_justification=["l", "c", "c", "c"], 
+        text_justification=["l", "c", "c", "c"],
     ),
 )
 
@@ -300,7 +300,7 @@ doc = rtf.RTFDocument(
     rtf_column_header=rtf.RTFColumnHeader(
         text=[
             "Adverse Events",
-            "Placebo", 
+            "Placebo",
             "Xanomeline High Dose",
             "Xanomeline Low Dose",
         ],
@@ -308,7 +308,7 @@ doc = rtf.RTFDocument(
     ),
     rtf_body=rtf.RTFBody(
         col_rel_width=[3, 2, 2, 2],
-        border_left=["single", "", "", ""],  
+        border_left=["single", "", "", ""],
     ),
 )
 
@@ -421,7 +421,7 @@ doc = rtf.RTFDocument(
         text=[
             "Adverse Events",
             "Placebo (N=86)",
-            "Xanomeline High Dose (N=84)", 
+            "Xanomeline High Dose (N=84)",
             "Xanomeline Low Dose (N=84)",
         ],
     ),
@@ -477,9 +477,9 @@ For large tables spanning multiple pages, `rtflite` handles:
 ``` python
 # Large table with consistent formatting across pages
 doc = rtf.RTFDocument(
-    df=tbl.head(50),  
+    df=tbl.head(50),
     rtf_page=rtf.RTFPage(
-        nrow=15, 
+        nrow=15,
     ),
     rtf_title=rtf.RTFTitle(
         text=[
@@ -508,7 +508,7 @@ doc = rtf.RTFDocument(
         ]
     ),
     rtf_source=rtf.RTFSource(
-        text="Dataset: ADAE | Cutoff: 01JAN2023" 
+        text="Dataset: ADAE | Cutoff: 01JAN2023"
     ),
 )
 

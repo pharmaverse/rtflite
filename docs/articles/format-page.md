@@ -1,9 +1,10 @@
-# Page Format
+# Page format
 
 
 <!-- `.md` and `.py` files are generated from the `.qmd` file. Please edit that file. -->
 
-# Controlling Component Placement in Multi-page Documents
+This article demonstrates how to control component placement in
+multi-page documents using rtflite.
 
 When generating multi-page RTF documents, you may want to control where
 titles, footnotes, and sources appear. The `RTFPage` class provides
