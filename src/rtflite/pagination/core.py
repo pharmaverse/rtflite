@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Tuple
 import polars as pl
 from pydantic import BaseModel, ConfigDict, Field
 
-from .strwidth import get_string_width
+from ..strwidth import get_string_width
 
 
 class RTFPagination(BaseModel):
@@ -79,7 +79,7 @@ class PageBreakCalculator(BaseModel):
                     # Get actual font size from table attributes if available
                     actual_font_size = font_size
                     if table_attrs and hasattr(table_attrs, "text_font_size"):
-                        from .attributes import BroadcastValue
+                        from ..attributes import BroadcastValue
 
                         actual_font_size = BroadcastValue(
                             value=table_attrs.text_font_size, dimension=dim
@@ -96,7 +96,7 @@ class PageBreakCalculator(BaseModel):
             # Account for cell height if specified in table attributes
             cell_height_lines = 1
             if table_attrs and hasattr(table_attrs, "cell_height"):
-                from .attributes import BroadcastValue
+                from ..attributes import BroadcastValue
 
                 cell_height = BroadcastValue(
                     value=table_attrs.cell_height, dimension=dim
