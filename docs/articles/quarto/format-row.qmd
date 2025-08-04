@@ -1,5 +1,5 @@
 ---
-title: "Row Format"
+title: "Row format"
 format: gfm
 eval: false
 ---
@@ -7,7 +7,7 @@ eval: false
 <!-- `.md` and `.py` files are generated from the `.qmd` file. Please edit that file. -->
 
 This article demonstrates row-level formatting capabilities in rtflite.
-It covers borders, cell alignment, column widths, and text formatting 
+It covers borders, cell alignment, column widths, and text formatting
 for creating professional tables.
 
 ## Overview
@@ -26,14 +26,14 @@ import rtflite as rtf
 
 ## Border Styles
 
-> please refer `rtf` output. PDF version has known issue for some border type. 
+> please refer `rtf` output. PDF version has known issue for some border type.
 
 Demonstrate different border types:
 
 ```{python}
 # Create border demonstration data from BORDER_CODES
 border_data = [
-    [border_type, f"Example of {border_type or 'no'} border"] 
+    [border_type, f"Example of {border_type or 'no'} border"]
     for border_type in rtf.attributes.BORDER_CODES.keys()
 ]
 

@@ -1,5 +1,5 @@
 ---
-title: "Text Format"
+title: "Text format"
 format: gfm
 eval: false
 ---
@@ -11,12 +11,12 @@ It covers fonts, colors, alignment, indentation, special characters, and compreh
 
 ## Overview
 
-Advanced text formatting is essential for creating production ready clinical documents 
-that meet regulatory standards. 
+Advanced text formatting is essential for creating production ready clinical documents
+that meet regulatory standards.
 Key formatting features include:
 
 - Text format styles (bold, italic, underline, superscript, subscript)
-- Font sizes and alignment options (left, center, right, justified)  
+- Font sizes and alignment options (left, center, right, justified)
 - Text colors and background colors
 - Indentation and spacing control
 - Special symbols and mathematical notation
@@ -50,14 +50,14 @@ print(df_formats)
 
 Apply text formatting using column-based approach:
 
-> Using tuples `()` allow user define parameters by row. 
+> Using tuples `()` allow user define parameters by row.
 
 ```{python}
 # Apply text formatting by row
 doc_formats = rtf.RTFDocument(
     df=df_formats,
     rtf_body=rtf.RTFBody(
-        text_format=("", "b", "i", "bi", "u", "s"),  
+        text_format=("", "b", "i", "bi", "u", "s"),
     )
 )
 
@@ -89,8 +89,8 @@ print(df_font_align)
 doc_font_align = rtf.RTFDocument(
     df=df_font_align,
     rtf_body=rtf.RTFBody(
-        text_justification=("l", "c", "r", "j"), 
-        text_font_size=(12, 14, 10, 11), 
+        text_justification=("l", "c", "r", "j"),
+        text_font_size=(12, 14, 10, 11),
     )
 )
 
