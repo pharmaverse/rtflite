@@ -392,7 +392,7 @@ class RTFTableTextComponent(TableAttributes):
 
     def _get_component_overrides(self) -> dict:
         """Override in subclasses to provide component-specific overrides."""
-        return {"text_convert": [[False]]}  # Default: disable text conversion
+        return {"text_convert": [[True]]}  # Default: enable text conversion
 
     def _process_text_conversion(self) -> None:
         """Convert text sequence to line-separated string format."""

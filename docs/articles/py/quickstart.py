@@ -113,6 +113,33 @@ doc = rtf.RTFDocument(
 
 doc.write_rtf("../rtf/intro-ae6.rtf")
 
+import polars as pl
+
+data_with_underscores = pl.DataFrame(
+    {
+        "Parameter": ["x_max", "y_min", "z_avg", "a_b_ratio"],
+        "Value": [15.2, 8.7, 12.1, 0.85],
+        "Unit": ["mg/L", "cm", "C", "ratio"],
+    }
+)
+
+doc_converted = rtf.RTFDocument(
+    df=data_with_underscores,
+    rtf_title=rtf.RTFTitle(text="Study Parameters with Text Conversion Enabled"),
+    rtf_column_header=rtf.RTFColumnHeader(
+        text=["Parameter", "Value", "Unit"],
+    ),
+    rtf_body=rtf.RTFBody(
+        col_rel_width=[2, 1, 1],
+    ),
+    rtf_footnote=rtf.RTFFootnote(
+        text="Note: Underscores x_max and y_min in footnote as is",
+        text_convert=False,  # Keep footnote text as-is
+    ),
+)
+
+doc_converted.write_rtf("../rtf/text-convert.rtf")
+
 doc = rtf.RTFDocument(
     df=tbl.head(8),
     rtf_column_header=rtf.RTFColumnHeader(

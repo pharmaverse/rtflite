@@ -283,6 +283,70 @@ doc.write_rtf("../rtf/intro-ae6.rtf")
 
 <embed src="../pdf/intro-ae6.pdf" style="width:100%; height:400px" type="application/pdf">
 
+## Text Conversion Control
+
+`rtflite` supports LaTeX-style text conversion for mathematical symbols
+and formatting. By default, text conversion is enabled for titles and
+data content, but can be controlled with `text_convert` parameter.
+
+### Text Conversion Examples
+
+When `text_convert = True` (default for titles and data): - `\\alpha`
+converts to α - `\\beta` converts to β - `a_b` converts to subscript
+format (a subscript b)
+
+When `text_convert = False`: - LaTeX patterns like `a_b` remain
+unchanged as literal text - Underscores stay as underscores: `a_b`
+displays as `a_b`
+
+``` python
+# Example showing text_convert behavior with subscript patterns
+import polars as pl
+
+# Create example data with underscore patterns
+data_with_underscores = pl.DataFrame({
+    "Parameter": ["x_max", "y_min", "z_avg", "a_b_ratio"],
+    "Value": [15.2, 8.7, 12.1, 0.85],
+    "Unit": ["mg/L", "cm", "C", "ratio"]
+})
+```
+
+``` python
+doc_converted = rtf.RTFDocument(
+    df=data_with_underscores,
+    rtf_title=rtf.RTFTitle(
+        text="Study Parameters with Text Conversion Enabled"
+    ),
+    rtf_column_header=rtf.RTFColumnHeader(
+        text=["Parameter", "Value", "Unit"],
+    ),
+    rtf_body=rtf.RTFBody(
+        col_rel_width=[2, 1, 1],
+    ),
+    rtf_footnote=rtf.RTFFootnote(
+        text="Note: Underscores x_max and y_min in footnote as is",
+        text_convert=False  # Keep footnote text as-is
+    )
+)
+
+doc_converted.write_rtf("../rtf/text-convert.rtf")
+```
+
+<embed src="../pdf/text-convert.pdf" style="width:100%; height:400px" type="application/pdf">
+
+### Key Points About Text Conversion
+
+- **Default behavior**: `text_convert = True` for all components
+  (titles, data, footnotes, and sources)
+- **Underscore patterns**: `a_b` becomes subscript when conversion is
+  enabled
+- **LaTeX symbols**: `\\alpha`, `\\beta`, etc. convert to Unicode
+  symbols
+- **Control per component**: Each RTF component can have independent
+  conversion settings
+- **Performance**: Disabling conversion can improve performance for
+  large tables with no LaTeX content
+
 ## Border Customization
 
 Table borders can be customized extensively:

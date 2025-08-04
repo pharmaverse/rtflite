@@ -160,10 +160,11 @@ class TextContent(BaseModel):
         text = converted_text
         
         # Basic RTF character conversion (matching r2rtf char_rtf mapping)
-        rtf_chars = RTFConstants.RTF_CHAR_MAPPING
-
-        for char, rtf in rtf_chars.items():
-            text = text.replace(char, rtf)
+        # Only apply character conversions if text conversion is enabled
+        if self.convert:
+            rtf_chars = RTFConstants.RTF_CHAR_MAPPING
+            for char, rtf in rtf_chars.items():
+                text = text.replace(char, rtf)
 
         return text
 
