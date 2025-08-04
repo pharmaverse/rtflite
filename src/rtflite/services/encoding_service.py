@@ -234,6 +234,26 @@ class RTFEncodingService:
                 df = pl.DataFrame([[rtf_attrs.text]])
                 return rtf_attrs._encode(df)
     
+    def prepare_dataframe_for_body_encoding(self, df, rtf_attrs):
+        """Prepare DataFrame for body encoding with group_by processing.
+        
+        Args:
+            df: Input DataFrame
+            rtf_attrs: RTFBody attributes
+            
+        Returns:
+            Tuple of (processed_df, original_df) where processed_df has group_by applied
+        """
+        original_df = df.clone() if rtf_attrs.group_by is not None else None
+        processed_df = df.clone()
+        
+        # Apply group_by suppression if specified
+        if rtf_attrs.group_by is not None:
+            from .grouping_service import grouping_service
+            processed_df = grouping_service.enhance_group_by(processed_df, rtf_attrs.group_by)
+        
+        return processed_df, original_df
+    
     def encode_body(self, document, df, rtf_attrs) -> List[str]:
         """Encode table body component with full pagination support.
         
@@ -256,14 +276,17 @@ class RTFEncodingService:
         col_total_width = document.rtf_page.col_width
         col_widths = Utils._col_widths(rtf_attrs.col_rel_width, col_total_width)
 
+        # Apply group_by processing if specified
+        processed_df, original_df = self.prepare_dataframe_for_body_encoding(df, rtf_attrs)
+
         # Check if pagination is needed
         if document_service.needs_pagination(document):
-            return self._encode_body_paginated(document, df, rtf_attrs, col_widths)
+            return self._encode_body_paginated(document, processed_df, rtf_attrs, col_widths)
 
         # Handle existing page_by grouping (non-paginated)
         page_by = document_service.process_page_by(document)
         if page_by is None:
-            return rtf_attrs._encode(df, col_widths)
+            return rtf_attrs._encode(processed_df, col_widths)
 
         rows = []
         for section in page_by:
@@ -277,7 +300,7 @@ class RTFEncodingService:
             import polars as pl
             section_df = pl.DataFrame(
                 {
-                    str(i): [BroadcastValue(value=df).iloc(row, col)]
+                    str(i): [BroadcastValue(value=processed_df).iloc(row, col)]
                     for i, (row, col) in enumerate(indices)
                 }
             )
