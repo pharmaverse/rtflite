@@ -1,4 +1,4 @@
-# RTF Table Pagination in rtflite
+# Pagination
 
 This document summarizes the pagination feature implementation in rtflite, designed to match r2rtf behavior for automatic table splitting across multiple pages.
 
