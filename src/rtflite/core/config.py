@@ -53,7 +53,7 @@ class ColorConfiguration:
     
     def __post_init__(self):
         if self.color_table is None:
-            object.__setattr__(self, 'color_table', RTFDefaults.DEFAULT_COLORS.copy())
+            object.__setattr__(self, 'color_table', RTFDefaults.DEFAULT_COLORS())
     
     @classmethod
     def create_default(cls) -> 'ColorConfiguration':

@@ -153,18 +153,21 @@ class RTFDefaults:
     TABLE_ALIGNMENT: Final[str] = "c"  # Center
     
     # === Color Defaults ===
-    DEFAULT_COLORS: Final[Dict[str, str]] = {
-        "black": "\\red0\\green0\\blue0;",
-        "red": "\\red255\\green0\\blue0;",
-        "green": "\\red0\\green255\\blue0;",
-        "blue": "\\red0\\green0\\blue255;",
-        "white": "\\red255\\green255\\blue255;",
-        "lightgray": "\\red211\\green211\\blue211;",
-        "darkgray": "\\red169\\green169\\blue169;",
-        "yellow": "\\red255\\green255\\blue0;",
-        "magenta": "\\red255\\green0\\blue255;",
-        "cyan": "\\red0\\green255\\blue255;",
-    }
+    @classmethod
+    def get_default_colors(cls) -> Dict[str, str]:
+        """Get all colors from the comprehensive color table."""
+        from rtflite.dictionary.color_table import name_to_rtf
+        return name_to_rtf
+    
+    # Provide DEFAULT_COLORS as a cached property for backward compatibility
+    _default_colors_cache = None
+    
+    @classmethod
+    def DEFAULT_COLORS(cls) -> Dict[str, str]:
+        """Get all colors from the comprehensive color table (cached)."""
+        if cls._default_colors_cache is None:
+            cls._default_colors_cache = cls.get_default_colors()
+        return cls._default_colors_cache
 
 
 class RTFMeasurements:
