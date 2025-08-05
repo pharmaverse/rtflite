@@ -64,7 +64,7 @@ width_demo = [
     ["Small", "Medium text content", "Much wider column for longer text"]
 ]
 
-df_widths = pl.DataFrame(width_demo, schema=["narrow", "standard", "wide"], orient="row")
+df_widths = pl.DataFrame(width_demo, schema=["narrow", "standard", "wide"])
 
 # Apply different column width ratios
 doc_widths = rtf.RTFDocument(

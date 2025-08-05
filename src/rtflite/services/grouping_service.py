@@ -375,11 +375,12 @@ class GroupingService:
         subline_by: List[str],
         rtf_body
     ) -> List[str]:
-        """Validate RTFBody formatting consistency across subline_by groups
+        """Validate that formatting is consistent within each column after broadcasting
         
-        When using subline_by, RTFBody attributes should be consistent across
-        different subline groups since the first group's formatting is used for
-        the entire table. This method checks for inconsistencies and returns warnings.
+        When using subline_by, we need to ensure that after broadcasting formatting
+        attributes, each remaining column (after removing subline_by columns) has
+        consistent formatting values. Otherwise, different rows within a subline
+        group would have different formatting.
         
         Args:
             df: Input DataFrame
@@ -387,67 +388,65 @@ class GroupingService:
             rtf_body: RTFBody instance with formatting attributes
             
         Returns:
-            List of warning messages for inconsistent formatting (empty if consistent)
+            List of warning messages
         """
         warnings = []
         
         if not subline_by or df.is_empty():
             return warnings
         
-        # Get unique subline combinations
-        subline_groups = df.select(subline_by).unique().sort(subline_by)
+        # Get the columns that will remain after removing subline_by columns
+        remaining_cols = [col for col in df.columns if col not in subline_by]
+        if not remaining_cols:
+            return warnings
         
-        if subline_groups.height <= 1:
-            return warnings  # Only one group, no consistency issues
+        num_cols = len(remaining_cols)
+        num_rows = df.height
         
-        # Attributes to check for consistency across subline groups
+        # Format attributes to check
         format_attributes = [
             'text_format', 'text_justification', 'text_font_size', 'text_color',
             'border_top', 'border_bottom', 'border_left', 'border_right',
             'border_color_top', 'border_color_bottom', 'border_color_left', 'border_color_right'
         ]
         
-        # Check each formatting attribute
         for attr_name in format_attributes:
             if hasattr(rtf_body, attr_name):
                 attr_value = getattr(rtf_body, attr_name)
-                
-                # Skip None or empty attributes
                 if attr_value is None:
                     continue
                 
-                # Handle nested list structure (RTFBody uses broadcast values)
-                if isinstance(attr_value, list) and len(attr_value) > 0:
-                    # Check if it's a nested list (broadcast pattern)
-                    if isinstance(attr_value[0], list):
-                        inner_list = attr_value[0]
-                        if len(inner_list) > 1:
-                            # Check if values vary within the list
-                            unique_values = set(v for v in inner_list if v not in [None, ''])
-                            if len(unique_values) > 1:
-                                warnings.append(
-                                    f"RTFBody attribute '{attr_name}' contains varying values: {list(unique_values)}. "
-                                    f"When using subline_by, formatting will be applied uniformly to the entire table. "
-                                    f"Consider using consistent formatting across all columns."
-                                )
-                    else:
-                        # Single-level list with multiple values
-                        if len(attr_value) > 1:
-                            unique_values = set(v for v in attr_value if v not in [None, ''])
-                            if len(unique_values) > 1:
-                                warnings.append(
-                                    f"RTFBody attribute '{attr_name}' contains varying values: {list(unique_values)}. "
-                                    f"When using subline_by, formatting will be applied uniformly to the entire table. "
-                                    f"Consider using consistent formatting across all columns."
-                                )
-        
-        # Add general warning about subline_by formatting behavior
-        if len([attr for attr in format_attributes if hasattr(rtf_body, attr) and getattr(rtf_body, attr) is not None]) > 0:
-            warnings.append(
-                f"When using subline_by with {len(subline_groups)} different groups, "
-                f"RTFBody formatting attributes will be applied uniformly to the entire table. "
-                f"Ensure formatting is consistent across all subline groups."
-            )
+                # Use BroadcastValue to expand the attribute to full matrix
+                from ..attributes import BroadcastValue
+                try:
+                    broadcast_obj = BroadcastValue(
+                        value=attr_value,
+                        dimension=(num_rows, num_cols)
+                    )
+                    broadcasted = broadcast_obj.to_list()
+                except:
+                    # If broadcasting fails, skip this attribute
+                    continue
+                
+                # Check each column for consistency
+                for col_idx in range(num_cols):
+                    # Get all values for this column
+                    col_values = [broadcasted[row_idx][col_idx] for row_idx in range(num_rows)]
+                    
+                    # Filter out None and empty string values
+                    meaningful_values = [v for v in col_values if v not in [None, '']]
+                    if not meaningful_values:
+                        continue
+                    
+                    # Check if all values in this column are the same
+                    unique_values = set(meaningful_values)
+                    if len(unique_values) > 1:
+                        col_name = remaining_cols[col_idx]
+                        warnings.append(
+                            f"Column '{col_name}' has inconsistent {attr_name} values {list(unique_values)} "
+                            f"after broadcasting. When using subline_by, formatting should be consistent "
+                            f"within each column to ensure uniform appearance within subline groups."
+                        )
         
         return warnings
     

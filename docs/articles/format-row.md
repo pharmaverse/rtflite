@@ -35,7 +35,7 @@ border_data = [
     for border_type in rtf.attributes.BORDER_CODES.keys()
 ]
 
-df_borders = pl.DataFrame(border_data, schema=["border_type", "description"])
+df_borders = pl.DataFrame(border_data, schema=["border_type", "description"], orient="row")
 
 # Apply different border styles to each row
 doc_borders = rtf.RTFDocument(
