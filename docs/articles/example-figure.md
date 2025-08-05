@@ -43,7 +43,7 @@ for i, treatment in enumerate(treatment_groups):
         )
     )
 
-    treatment_plot.save(f"../image/age_histogram_treatment_{i}.png", dpi=300, width=6, height=4)
+    treatment_plot.save(f"../image/age_histogram_treatment_{i}.png", dpi=300, width=6, height=4, verbose=False)
 ```
 
 ## Single Figure
