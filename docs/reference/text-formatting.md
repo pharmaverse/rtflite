@@ -6,7 +6,7 @@ Components and utilities for text styling and formatting in RTF documents.
 
 Base attributes for text formatting.
 
-::: rtflite.input.TextAttributes
+::: rtflite.attributes.TextAttributes
     options:
       show_root_heading: false
       show_source: false
@@ -15,7 +15,7 @@ Base attributes for text formatting.
 
 Attributes specific to table formatting.
 
-::: rtflite.input.TableAttributes
+::: rtflite.attributes.TableAttributes
     options:
       show_root_heading: false
       show_source: false
@@ -33,7 +33,7 @@ Component for handling text content in cells.
 
 Utility for broadcasting values across rows and columns.
 
-::: rtflite.input.BroadcastValue
+::: rtflite.attributes.BroadcastValue
     options:
       show_root_heading: false
       show_source: false
