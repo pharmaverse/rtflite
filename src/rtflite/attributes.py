@@ -2,7 +2,7 @@ from collections.abc import MutableSequence, Sequence
 from typing import Any, Tuple
 
 import numpy as np
-import pandas as pd
+import narwhals as nw
 import polars as pl
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -40,11 +40,18 @@ def _to_nested_list(v):
         else:
             raise TypeError("Invalid value type. Must be a list or tuple.")
 
-    if isinstance(v, pd.DataFrame):
-        v = pl.from_pandas(v).rows()
-
-    if isinstance(v, pl.DataFrame):
-        v = v.rows()
+    # Use narwhals to handle any DataFrame type
+    if hasattr(v, '__dataframe__') or hasattr(v, 'columns'):  # Check if it's DataFrame-like
+        if isinstance(v, pl.DataFrame):
+            v = v.rows()
+        else:
+            try:
+                nw_df = nw.from_native(v)
+                v = nw_df.to_native(pl.DataFrame).rows()
+            except Exception:
+                # If narwhals can't handle it, try direct conversion
+                if isinstance(v, pl.DataFrame):
+                    v = v.rows()
 
     if isinstance(v, np.ndarray):
         v = v.tolist()

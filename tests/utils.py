@@ -1,6 +1,6 @@
 from pathlib import Path
 
-import pandas as pd
+import polars as pl
 
 
 class ROutputReader:
@@ -24,4 +24,4 @@ class TestData:
             "Column1": ["Data 1.1", "Data 2.1"],
             "Column2": ["Data 1.2", "Data 2.2"],
         }
-        return pd.DataFrame(data)
+        return pl.DataFrame(data)

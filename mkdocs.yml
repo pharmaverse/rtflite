@@ -21,11 +21,18 @@ nav:
       - articles/pagination.md
       - articles/converter-setup.md
   - API Reference:
-    - Row: reference/row.md
-    - Input: reference/input.md
-    - Encode: reference/encode.md
-    - Convert: reference/convert.md
-    - String width: reference/strwidth.md
+    - Core:
+      - RTFDocument: reference/rtf-document.md
+    - Components:
+      - Page Layout: reference/page-layout.md
+      - Tables: reference/tables.md
+      - Text & Formatting: reference/text-formatting.md
+    - Utilities:
+      - File Conversion: reference/convert.md
+      - String Width: reference/strwidth.md
+    - Advanced:
+      - Pagination: reference/pagination.md
+      - Low-level API: reference/low-level.md
   - Changelog: changelog.md
   - Coverage: coverage/
   - Contributing: contributing.md

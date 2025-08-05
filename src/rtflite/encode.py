@@ -174,34 +174,33 @@ class RTFDocument(BaseModel):
             df = values["df"]
             import polars as pl
 
-            try:
-                import pandas as pd
+            import narwhals as nw
 
-                # Handle single DataFrame
-                if isinstance(df, pd.DataFrame):
-                    values["df"] = pl.from_pandas(df)
-                elif isinstance(df, pl.DataFrame):
+            # Handle single DataFrame
+            if not isinstance(df, list):
+                if isinstance(df, pl.DataFrame):
                     pass  # Already polars
-                # Handle list of DataFrames
-                elif isinstance(df, list):
-                    converted_dfs = []
-                    for i, single_df in enumerate(df):
-                        if isinstance(single_df, pd.DataFrame):
-                            converted_dfs.append(pl.from_pandas(single_df))
-                        elif isinstance(single_df, pl.DataFrame):
-                            converted_dfs.append(single_df)
-                        else:
-                            raise ValueError(f"DataFrame at index {i} must be a pandas or polars DataFrame")
-                    values["df"] = converted_dfs
-
-            except ImportError:
-                # pandas not available, ensure it's polars
-                if isinstance(df, list):
-                    for i, single_df in enumerate(df):
-                        if not isinstance(single_df, pl.DataFrame):
-                            raise ValueError(f"DataFrame at index {i} must be a polars DataFrame")
-                elif not isinstance(df, pl.DataFrame):
-                    raise ValueError("DataFrame must be a polars DataFrame")
+                else:
+                    # Use narwhals to handle any DataFrame type
+                    try:
+                        nw_df = nw.from_native(df)
+                        values["df"] = nw_df.to_native(pl.DataFrame)
+                    except Exception as e:
+                        raise ValueError(f"DataFrame must be a valid DataFrame: {str(e)}")
+            # Handle list of DataFrames
+            else:
+                converted_dfs = []
+                for i, single_df in enumerate(df):
+                    if isinstance(single_df, pl.DataFrame):
+                        converted_dfs.append(single_df)
+                    else:
+                        try:
+                            # Use narwhals to handle any DataFrame type
+                            nw_df = nw.from_native(single_df)
+                            converted_dfs.append(nw_df.to_native(pl.DataFrame))
+                        except Exception as e:
+                            raise ValueError(f"DataFrame at index {i} must be a valid DataFrame: {str(e)}")
+                values["df"] = converted_dfs
         return values
 
     @model_validator(mode="after")

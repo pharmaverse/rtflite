@@ -1,6 +1,5 @@
 """Clean tests for BroadcastValue functionality without legacy pandas dependencies."""
 
-import pandas as pd
 import polars as pl
 import pytest
 from pydantic import ValidationError
@@ -59,7 +58,7 @@ def test_broadcast_value_string():
 
 def test_broadcast_value_dataframe():
     """Test BroadcastValue with DataFrame input."""
-    df = pd.DataFrame({"Column 1": [1, 2], "Column 2": [3, 4]})
+    df = pl.DataFrame({"Column 1": [1, 2], "Column 2": [3, 4]})
     table = BroadcastValue(value=df, dimension=(2, 2))
     
     # Test iloc access
