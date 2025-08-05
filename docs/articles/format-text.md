@@ -42,7 +42,7 @@ format_demo = [
     ["Strikethrough", "s", "Crossed out", "Deprecated content"]
 ]
 
-df_formats = pl.DataFrame(format_demo, schema=["format_type", "code", "example", "usage"])
+df_formats = pl.DataFrame(format_demo, schema=["format_type", "code", "example", "usage"], orient="row")
 print(df_formats)
 ```
 
@@ -77,7 +77,7 @@ font_align_demo = [
     ["Justified", "11pt", "j"],
 ]
 
-df_font_align = pl.DataFrame(font_align_demo, schema=["alignment", "size", "text_justification"])
+df_font_align = pl.DataFrame(font_align_demo, schema=["alignment", "size", "text_justification"], orient="row")
 print(df_font_align)
 ```
 
@@ -112,7 +112,7 @@ color_demo = [
     ["Info", "Blue text for information"]
 ]
 
-df_colors = pl.DataFrame(color_demo, schema=["status", "description"])
+df_colors = pl.DataFrame(color_demo, schema=["status", "description"], orient="row")
 print(df_colors)
 ```
 
@@ -143,7 +143,7 @@ indent_demo = [
     ["Third level item", "900 twips indent"]
 ]
 
-df_indent = pl.DataFrame(indent_demo, schema=["level", "description"])
+df_indent = pl.DataFrame(indent_demo, schema=["level", "description"], orient="row")
 print(df_indent)
 ```
 
