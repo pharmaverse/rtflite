@@ -191,6 +191,7 @@ class ContentDistributor(BaseModel):
         pageby_header: bool = True,
         table_attrs=None,
         additional_rows_per_page: int = 0,
+        subline_by: List[str] = None,
     ) -> List[Dict[str, Any]]:
         """Distribute content across multiple pages (r2rtf compatible)
 
@@ -202,10 +203,16 @@ class ContentDistributor(BaseModel):
             pageby_header: Repeat headers on new pages
             table_attrs: Table attributes for accurate calculations
             additional_rows_per_page: Additional rows per page (headers, footnotes, sources)
+            subline_by: Columns to create subline headers by (forces new_page=True)
 
         Returns:
             List of page information dictionaries
         """
+        # If subline_by is specified, treat it as page_by with new_page=True
+        if subline_by:
+            page_by = subline_by
+            new_page = True
+        
         page_breaks = self.calculator.find_page_breaks(
             df, col_widths, page_by, new_page, table_attrs, additional_rows_per_page
         )
@@ -225,6 +232,10 @@ class ContentDistributor(BaseModel):
                 "needs_header": pageby_header or page_num == 0,
                 "col_widths": col_widths,
             }
+            
+            # Add subline_by header information for each page
+            if subline_by:
+                page_info["subline_header"] = self.get_group_headers(df, subline_by, start_row)
 
             pages.append(page_info)
 

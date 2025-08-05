@@ -185,3 +185,90 @@ doc_treatment_separated = rtf.RTFDocument(
 # Generate the RTF file
 doc_treatment_separated.write_rtf("../rtf/example_advance_group_newpage.rtf")
 ```
+
+## Step 7: Demonstrating subline_by with subheader generation
+
+The `subline_by` feature creates visually distinct subheader rows that group related data, making listings easier to read and follow:
+
+```{python}
+# Create data with clear grouping structure for subline demonstration
+ae_subline_data = ae_t1.filter(
+    pl.col('TRTA').is_in(['Placebo', 'Xanomeline High Dose'])
+).head(30).sort(['SUBLINEBY', 'TRTA', 'USUBJID'])
+
+# Create RTF document with subline_by to generate subheaders
+doc_subline = rtf.RTFDocument(
+    df=ae_subline_data.select(['SUBLINEBY', 'USUBJID', 'AEDECD1', 'AESEV', 'AESER']),
+    rtf_title=rtf.RTFTitle(
+        text=["Adverse Events Listing", "Example 6: subline_by with Subheader Generation"],
+        text_convert=False,
+    ),
+    rtf_column_header=rtf.RTFColumnHeader(
+        text=["Subject ID", "Adverse Event", "Severity", "Serious"],  # Headers for remaining columns after SUBLINEBY removal
+        text_format="b",
+        text_justification=["l", "l", "c", "c"],
+    ),
+    rtf_body=rtf.RTFBody(
+        subline_by=['SUBLINEBY'],  # Creates subheader rows from SUBLINEBY values
+        col_rel_width=[3, 4, 2, 2],  # Widths for remaining 4 columns after SUBLINEBY removal
+        text_justification=["l", "l", "c", "c"],
+    ),
+    rtf_footnote=rtf.RTFFootnote(
+        text=[
+            "Note: subline_by creates subheader rows that span all columns",
+            "- SUBLINEBY column values become bold subheader text",
+            "- Original SUBLINEBY column is removed from table data",
+            "- Subheaders provide clear visual grouping of related records"
+        ],
+        text_convert=False,
+    ),
+)
+
+# Generate the RTF file
+doc_subline.write_rtf("../rtf/example_advance_subline.rtf")
+```
+
+## Step 8: Advanced combination - subline_by with group_by
+
+Demonstrate the powerful combination of `subline_by` and `group_by` for comprehensive clinical listings:
+
+```{python}
+# Create data with multiple visits per subject for comprehensive demonstration
+ae_comprehensive = ae_t1.head(40).with_columns([
+    # Add visit information to create multiple rows per subject
+    pl.when(pl.int_range(pl.len()) % 3 == 0).then(pl.lit('Visit 1'))
+     .when(pl.int_range(pl.len()) % 3 == 1).then(pl.lit('Visit 2'))
+     .otherwise(pl.lit('Visit 3')).alias('VISIT')
+]).sort(['SUBLINEBY', 'USUBJID', 'VISIT'])
+
+doc_comprehensive = rtf.RTFDocument(
+    df=ae_comprehensive.select(['SUBLINEBY', 'USUBJID', 'VISIT', 'AEDECD1', 'AESEV']),
+    rtf_title=rtf.RTFTitle(
+        text=["Adverse Events Listing", "Example 7: subline_by + group_by Comprehensive"],
+        text_convert=False,
+    ),
+    rtf_column_header=rtf.RTFColumnHeader(
+        text=["Subject ID", "Visit", "Adverse Event", "Severity"],  # Headers for remaining columns after SUBLINEBY removal
+        text_format="b",
+        text_justification=["l", "c", "l", "c"],
+    ),
+    rtf_body=rtf.RTFBody(
+        subline_by=['SUBLINEBY'],      # Creates trial/site subheaders
+        group_by=['USUBJID'],          # Suppresses duplicate subject IDs
+        col_rel_width=[3, 2, 4, 2],    # Widths for remaining 4 columns after SUBLINEBY removal
+        text_justification=["l", "c", "l", "c"],
+    ),
+    rtf_footnote=rtf.RTFFootnote(
+        text=[
+            "Advanced example combining subline_by and group_by:",
+            "- SUBLINEBY creates bold subheader rows for trial/site information",
+            "- group_by suppresses duplicate USUBJID values within each group",
+            "- Result: Clear visual hierarchy with minimal redundancy"
+        ],
+        text_convert=False,
+    ),
+)
+
+# Generate the RTF file
+doc_comprehensive.write_rtf("../rtf/example_advance_comprehensive.rtf")
+```

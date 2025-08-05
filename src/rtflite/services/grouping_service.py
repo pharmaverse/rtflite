@@ -43,8 +43,10 @@ class GroupingService:
         if missing_cols:
             raise ValueError(f"group_by columns not found in DataFrame: {missing_cols}")
         
-        # Validate data sorting (based on r2rtf logic)
-        self.validate_data_sorting(df, group_by=group_by)
+        # Note: Full data sorting validation happens at the document level
+        # Here we only validate that group_by columns exist
+        # The full sorting validation including subline_by and page_by
+        # is done in the encoding service
         
         # Create a copy to avoid modifying original
         result_df = df.clone()

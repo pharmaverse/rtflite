@@ -235,26 +235,31 @@ class RTFEncodingService:
                 return rtf_attrs._encode(df)
     
     def prepare_dataframe_for_body_encoding(self, df, rtf_attrs):
-        """Prepare DataFrame for body encoding with group_by processing.
+        """Prepare DataFrame for body encoding with group_by processing and column removal.
         
         Args:
             df: Input DataFrame
             rtf_attrs: RTFBody attributes
             
         Returns:
-            Tuple of (processed_df, original_df) where processed_df has group_by applied
+            Tuple of (processed_df, original_df) where processed_df has transformations applied
         """
-        original_df = df.clone() if rtf_attrs.group_by is not None else None
+        original_df = df.clone()
         processed_df = df.clone()
         
-        # Apply group_by suppression if specified
-        if rtf_attrs.group_by is not None:
-            from .grouping_service import grouping_service
-            processed_df = grouping_service.enhance_group_by(processed_df, rtf_attrs.group_by)
+        # Remove subline_by columns from the processed DataFrame
+        if rtf_attrs.subline_by is not None:
+            columns_to_remove = set(rtf_attrs.subline_by)
+            remaining_columns = [col for col in processed_df.columns if col not in columns_to_remove]
+            processed_df = processed_df.select(remaining_columns)
+        
+        # Note: group_by suppression is handled in the pagination strategy
+        # for documents that need pagination. For non-paginated documents,
+        # group_by is handled separately in encode_body method.
         
         return processed_df, original_df
     
-    def encode_body(self, document, df, rtf_attrs) -> List[str]:
+    def encode_body(self, document, df, rtf_attrs, force_single_page=False) -> List[str]:
         """Encode table body component with full pagination support.
         
         Args:
@@ -276,16 +281,31 @@ class RTFEncodingService:
         col_total_width = document.rtf_page.col_width
         col_widths = Utils._col_widths(rtf_attrs.col_rel_width, col_total_width)
 
-        # Apply group_by processing if specified
+        # Validate data sorting for all grouping parameters
+        if any([rtf_attrs.group_by, rtf_attrs.page_by, rtf_attrs.subline_by]):
+            from .grouping_service import grouping_service
+            grouping_service.validate_data_sorting(
+                df,
+                group_by=rtf_attrs.group_by,
+                page_by=rtf_attrs.page_by,
+                subline_by=rtf_attrs.subline_by
+            )
+        
+        # Apply group_by and subline_by processing if specified
         processed_df, original_df = self.prepare_dataframe_for_body_encoding(df, rtf_attrs)
 
-        # Check if pagination is needed
-        if document_service.needs_pagination(document):
+        # Check if pagination is needed (unless forced to single page)
+        if not force_single_page and document_service.needs_pagination(document):
             return self._encode_body_paginated(document, processed_df, rtf_attrs, col_widths)
 
         # Handle existing page_by grouping (non-paginated)
         page_by = document_service.process_page_by(document)
         if page_by is None:
+            # Note: subline_by documents should use pagination, so this path should not be reached for them
+            # Apply group_by processing for non-paginated documents
+            if rtf_attrs.group_by is not None:
+                from .grouping_service import grouping_service
+                processed_df = grouping_service.enhance_group_by(processed_df, rtf_attrs.group_by)
             return rtf_attrs._encode(processed_df, col_widths)
 
         rows = []
@@ -330,7 +350,7 @@ class RTFEncodingService:
         pages = distributor.distribute_content(
             df=df,
             col_widths=col_widths,
-            table_attributes=rtf_attrs,
+            table_attrs=rtf_attrs,
             additional_rows_per_page=additional_rows,
         )
 
@@ -347,10 +367,17 @@ class RTFEncodingService:
                         page_rows.append(header_text)
 
             # Add table data
-            if page_content.get("data"):
-                data_rows = page_content["data"]
-                if data_rows:
-                    page_rows.extend(data_rows)
+            page_data = page_content.get("data")
+            if page_data is not None:
+                # Check if it's a DataFrame or a list
+                if hasattr(page_data, 'is_empty'):
+                    # It's a DataFrame
+                    if not page_data.is_empty():
+                        page_rows.extend(page_data)
+                else:
+                    # It's a list or other iterable
+                    if page_data:
+                        page_rows.extend(page_data)
 
             # Add footer content
             if page_content.get("footers"):
@@ -361,7 +388,7 @@ class RTFEncodingService:
 
             # Add page break between pages (except last page)
             if page_num < len(pages):
-                page_rows.append(document._rtf_page_break_encode())
+                page_rows.append(document_service.generate_page_break(document))
 
             all_rows.extend(page_rows)
 

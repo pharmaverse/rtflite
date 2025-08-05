@@ -15,6 +15,10 @@ class RTFDocumentService:
         """Calculate additional rows needed per page for headers, footnotes, sources."""
         additional_rows = 0
 
+        # Count subline_by header (appears on each page)
+        if document.rtf_body.subline_by:
+            additional_rows += 1  # Each subline_by header consumes 1 row
+
         # Count column headers (repeat on each page)
         if document.rtf_column_header:
             # Handle nested column headers for multi-section documents
@@ -59,13 +63,13 @@ class RTFDocumentService:
         if isinstance(document.df, list):
             # Check if any section needs pagination
             for body in document.rtf_body:
-                if body.page_by and body.new_page:
+                if (body.page_by and body.new_page) or body.subline_by:
                     return True
             # For now, multi-section documents use single page strategy
             return False
         else:
             # Single section document
-            if document.rtf_body.page_by and document.rtf_body.new_page:
+            if (document.rtf_body.page_by and document.rtf_body.new_page) or document.rtf_body.subline_by:
                 return True
 
         # Create pagination instance to calculate rows needed

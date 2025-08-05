@@ -90,10 +90,12 @@ class SinglePageStrategy(EncodingStrategy):
                 document.rtf_column_header[0].text is None
                 and document.rtf_body.as_colheader
             ):
+                # Determine which columns to exclude from headers
+                excluded_columns = (document.rtf_body.page_by or []) + (document.rtf_body.subline_by or [])
                 columns = [
                     col
                     for col in document.df.columns
-                    if col not in (document.rtf_body.page_by or [])
+                    if col not in excluded_columns
                 ]
                 # Create DataFrame with explicit column names to ensure single row
                 document.rtf_column_header[0].text = pl.DataFrame(
@@ -101,6 +103,22 @@ class SinglePageStrategy(EncodingStrategy):
                     schema=[f"col_{i}" for i in range(len(columns))],
                     orient="row",
                 )
+                
+                # Adjust col_rel_width to match the processed columns
+                if excluded_columns:
+                    original_cols = list(document.df.columns)
+                    excluded_cols_set = set(excluded_columns)
+                    processed_col_indices = [i for i, col in enumerate(original_cols) if col not in excluded_cols_set]
+                    
+                    # Ensure we have enough col_rel_width values for all original columns
+                    if len(document.rtf_body.col_rel_width) >= len(original_cols):
+                        document.rtf_column_header[0].col_rel_width = [
+                            document.rtf_body.col_rel_width[i] for i in processed_col_indices
+                        ]
+                    else:
+                        # Fallback: use equal widths if col_rel_width doesn't match
+                        document.rtf_column_header[0].col_rel_width = [1] * len(columns)
+                
                 document.rtf_column_header = document.rtf_column_header[:1]
 
             # Only update borders if DataFrame has rows
@@ -148,7 +166,7 @@ class SinglePageStrategy(EncodingStrategy):
 
         # Body
         rtf_body = self.encoding_service.encode_body(
-            document, document.df, document.rtf_body
+            document, document.df, document.rtf_body, force_single_page=True
         )
 
         result = "\n".join(
@@ -479,7 +497,10 @@ class PaginatedStrategy(EncodingStrategy):
         from ..services.color_service import color_service
         color_service.set_document_context(document)
 
-        # Get pagination instance and distribute content (use original data for distribution)
+        # Prepare DataFrame for processing (remove subline_by columns, apply group_by if needed)
+        processed_df, original_df = self.encoding_service.prepare_dataframe_for_body_encoding(document.df, document.rtf_body)
+        
+        # Get pagination instance and distribute content (use processed data for distribution)
         _, distributor = self.document_service.create_pagination_instance(document)
         col_total_width = document.rtf_page.col_width
         col_widths = Utils._col_widths(document.rtf_body.col_rel_width, col_total_width)
@@ -488,15 +509,25 @@ class PaginatedStrategy(EncodingStrategy):
         additional_rows = self.document_service.calculate_additional_rows_per_page(
             document
         )
+        
+        # Use original DataFrame for pagination logic (to identify subline_by breaks)
+        # but processed DataFrame for the actual content
         pages = distributor.distribute_content(
-            df=document.df,  # Use original DataFrame for proper pagination distribution
+            df=original_df,  # Use original DataFrame for proper pagination distribution logic
             col_widths=col_widths,
             page_by=document.rtf_body.page_by,
             new_page=document.rtf_body.new_page,
             pageby_header=document.rtf_body.pageby_header,
             table_attrs=document.rtf_body,
             additional_rows_per_page=additional_rows,
+            subline_by=document.rtf_body.subline_by,
         )
+        
+        # Replace page data with processed data (without subline_by columns)
+        for i, page_info in enumerate(pages):
+            start_row = page_info["start_row"]
+            end_row = page_info["end_row"]
+            page_info["data"] = processed_df.slice(start_row, end_row - start_row + 1)
 
         # Apply group_by processing to each page if needed
         if document.rtf_body.group_by:
@@ -584,6 +615,14 @@ class PaginatedStrategy(EncodingStrategy):
                 if subline_content:
                     page_elements.append(subline_content)
 
+            # Add subline_by header paragraph if specified
+            if page_info.get("subline_header"):
+                subline_header_content = self._generate_subline_header(
+                    page_info["subline_header"], document.rtf_body
+                )
+                if subline_header_content:
+                    page_elements.append(subline_header_content)
+
             # Add figures if they should appear on the first page and position is 'before'
             if (
                 document.rtf_figure
@@ -602,16 +641,29 @@ class PaginatedStrategy(EncodingStrategy):
                     document.rtf_column_header[0].text is None
                     and document.rtf_body.as_colheader
                 ):
-                    columns = [
-                        col
-                        for col in document.df.columns
-                        if col not in (document.rtf_body.page_by or [])
-                    ]
+                    # Use the processed page data columns (which already have subline_by columns removed)
+                    page_df = page_info["data"]
+                    columns = list(page_df.columns)
                     document.rtf_column_header[0].text = pl.DataFrame(
                         [columns],
                         schema=[f"col_{i}" for i in range(len(columns))],
                         orient="row",
                     )
+                    
+                    # Adjust col_rel_width to match the processed columns (without subline_by)
+                    if document.rtf_body.subline_by:
+                        original_cols = list(document.df.columns)
+                        subline_cols = set(document.rtf_body.subline_by)
+                        processed_col_indices = [i for i, col in enumerate(original_cols) if col not in subline_cols]
+                        
+                        # Ensure we have enough col_rel_width values for all original columns
+                        if len(document.rtf_body.col_rel_width) >= len(original_cols):
+                            document.rtf_column_header[0].col_rel_width = [
+                                document.rtf_body.col_rel_width[i] for i in processed_col_indices
+                            ]
+                        else:
+                            # Fallback: use equal widths if col_rel_width doesn't match
+                            document.rtf_column_header[0].col_rel_width = [1] * len(columns)
 
                 # Apply pagination borders to column headers
                 # Process each column header with proper borders
@@ -636,6 +688,7 @@ class PaginatedStrategy(EncodingStrategy):
                             )
 
                     # Encode the header with modified borders
+                    # Use the header_copy to preserve border modifications
                     header_rtf = self.encoding_service.encode_column_header(
                         header_copy.text, header_copy, document.rtf_page.col_width
                     )
@@ -856,6 +909,46 @@ class PaginatedStrategy(EncodingStrategy):
         page_elements.append("}")
         
         return "".join([item for item in page_elements if item is not None])
+
+    def _generate_subline_header(self, subline_header_info: dict, rtf_body) -> str:
+        """Generate RTF paragraph for subline_by header.
+        
+        Args:
+            subline_header_info: Dictionary with column values for the subline header
+            rtf_body: RTFBody attributes for formatting
+            
+        Returns:
+            RTF string for the subline paragraph
+        """
+        if not subline_header_info:
+            return ""
+        
+        # Use the raw group values without column names
+        if "group_values" in subline_header_info:
+            # Extract just the values without column prefixes
+            header_parts = []
+            for col, value in subline_header_info["group_values"].items():
+                if value is not None:
+                    header_parts.append(str(value))
+            
+            if not header_parts:
+                return ""
+                
+            header_text = ", ".join(header_parts)
+        else:
+            # Fallback for backward compatibility
+            header_parts = []
+            for col, value in subline_header_info.items():
+                if value is not None and col not in ["group_by_columns", "header_text"]:
+                    header_parts.append(str(value))
+            
+            if not header_parts:
+                return ""
+                
+            header_text = ", ".join(header_parts)
+        
+        # Create RTF paragraph with minimal spacing (no sb180/sa180 to eliminate space between header and table)
+        return f"{{\\pard\\hyphpar\\fi0\\li0\\ri0\\ql\\fs18{{\\f0 {header_text}}}\\par}}"
 
 
 class ListEncodingStrategy(EncodingStrategy):
