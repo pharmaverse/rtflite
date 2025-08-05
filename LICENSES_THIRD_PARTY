@@ -16,11 +16,7 @@ MIT License (https://opensource.org/license/mit)
   * polars - https://github.com/pola-rs/polars/blob/main/LICENSE
   * pydantic - https://github.com/pydantic/pydantic/blob/main/LICENSE
 
-BSD 3-Clause License (https://opensource.org/license/bsd-3-clause)
-  * pandas - https://github.com/pandas-dev/pandas/blob/main/LICENSE
 
-Modified BSD license (https://opensource.org/license/bsd-3-clause)
-  * numpy - https://github.com/numpy/numpy/blob/main/LICENSE.txt
 
 MIT-CMU License (https://opensource.org/license/cmu-license)
   * pillow - https://github.com/python-pillow/Pillow/blob/main/LICENSE

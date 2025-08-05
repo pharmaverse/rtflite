@@ -1,7 +1,7 @@
+import math
 from collections.abc import MutableSequence, Sequence
 from typing import Any, Tuple
 
-import numpy as np
 import narwhals as nw
 import polars as pl
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -53,7 +53,8 @@ def _to_nested_list(v):
                 if isinstance(v, pl.DataFrame):
                     v = v.rows()
 
-    if isinstance(v, np.ndarray):
+    # Convert numpy arrays or array-like objects to lists
+    if hasattr(v, '__array__') and hasattr(v, 'tolist'):
         v = v.tolist()
 
     return v
@@ -362,7 +363,7 @@ class TextAttributes(BaseModel):
         )
 
         # Simple approximation: divide total width by available width and round up
-        return max(1, int(np.ceil(total_width / available_width)))
+        return max(1, int(math.ceil(total_width / available_width)))
 
 
 class TableAttributes(TextAttributes):
@@ -509,8 +510,16 @@ class TableAttributes(TextAttributes):
         "col_rel_width", "border_width", "cell_height", "cell_nrow", mode="after"
     )
     def validate_positive_value(cls, v):
-        if v is not None and np.any(np.array(v) <= 0):
-            raise ValueError(f"{cls.__field_name__.capitalize()} must be positive")
+        if v is not None:
+            # Check if any value is <= 0
+            if isinstance(v[0], (list, tuple)):
+                # 2D array
+                if any(val <= 0 for row in v for val in row):
+                    raise ValueError(f"{cls.__field_name__.capitalize()} must be positive")
+            else:
+                # 1D array
+                if any(val <= 0 for val in v):
+                    raise ValueError(f"{cls.__field_name__.capitalize()} must be positive")
         return v
 
     @field_validator("cell_justification", mode="after")
@@ -582,7 +591,7 @@ class TableAttributes(TextAttributes):
             )
 
         if self.cell_nrow is None:
-            self.cell_nrow = np.zeros(dim)
+            self.cell_nrow = [[0.0 for _ in range(dim[1])] for _ in range(dim[0])]
 
             for i in range(dim[0]):
                 for j in range(dim[1]):
