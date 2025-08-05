@@ -12,7 +12,7 @@ using rtflite.
 from importlib.resources import files
 
 import polars as pl
-from plotnine import *
+from plotnine import ggplot, aes, geom_histogram, labs, theme_minimal, theme
 
 import rtflite as rtf
 ```

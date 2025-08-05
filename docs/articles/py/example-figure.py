@@ -1,7 +1,7 @@
 from importlib.resources import files
 
 import polars as pl
-from plotnine import *
+from plotnine import aes, geom_histogram, ggplot, labs, theme, theme_minimal
 
 import rtflite as rtf
 
