@@ -30,7 +30,7 @@ from importlib.resources import files
 
 import polars as pl
 
-from rtflite import RTFDocument, RTFTitle, RTFFootnote, RTFSource, RTFPage
+from rtflite import RTFDocument, RTFFootnote, RTFPage, RTFSource, RTFTitle
 ```
 
 ``` python
