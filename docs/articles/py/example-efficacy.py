@@ -1,5 +1,7 @@
 from importlib.resources import files
+
 import polars as pl
+
 import rtflite as rtf
 
 data_path1 = files("rtflite.data").joinpath("tbl1.parquet")

@@ -1,6 +1,8 @@
-import polars as pl
-from rtflite import RTFDocument, RTFTitle, RTFFootnote, RTFSource, RTFPage
 from importlib.resources import files
+
+import polars as pl
+
+from rtflite import RTFDocument, RTFTitle, RTFFootnote, RTFSource, RTFPage
 
 data_path = files("rtflite.data").joinpath("adae.parquet")
 df = pl.read_parquet(data_path).head(30)

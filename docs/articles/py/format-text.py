@@ -1,4 +1,5 @@
 import polars as pl
+
 import rtflite as rtf
 
 format_demo = [
