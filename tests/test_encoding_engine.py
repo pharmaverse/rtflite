@@ -147,27 +147,3 @@ class TestPaginatedStrategy:
         assert result.startswith("{\\rtf1")
 
 
-class TestFutureStrategies:
-    """Test future strategy placeholders."""
-    
-    def test_list_encoding_strategy_not_implemented(self):
-        """Test that list encoding strategy raises NotImplementedError."""
-        from rtflite.encoding.strategies import ListEncodingStrategy
-        
-        strategy = ListEncodingStrategy()
-        df = pl.DataFrame({"A": [1, 2], "B": [3, 4]})
-        document = RTFDocument(df=df)
-        
-        with pytest.raises(NotImplementedError, match="List encoding strategy not yet implemented"):
-            strategy.encode(document)
-    
-    def test_figure_encoding_strategy_not_implemented(self):
-        """Test that figure encoding strategy raises NotImplementedError."""
-        from rtflite.encoding.strategies import FigureEncodingStrategy
-        
-        strategy = FigureEncodingStrategy()
-        df = pl.DataFrame({"A": [1, 2], "B": [3, 4]})
-        document = RTFDocument(df=df)
-        
-        with pytest.raises(NotImplementedError, match="Figure encoding strategy not yet implemented"):
-            strategy.encode(document)

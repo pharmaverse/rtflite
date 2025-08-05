@@ -959,35 +959,3 @@ class PaginatedStrategy(EncodingStrategy):
         
         # Create RTF paragraph with minimal spacing (no sb180/sa180 to eliminate space between header and table)
         return f"{{\\pard\\hyphpar\\fi0\\li0\\ri0\\ql\\fs18{{\\f0 {header_text}}}\\par}}"
-
-
-class ListEncodingStrategy(EncodingStrategy):
-    """Encoding strategy for RTF documents containing lists (future feature)."""
-
-    def encode(self, document: "RTFDocument") -> str:
-        """Encode a document with list content.
-
-        Args:
-            document: The RTF document to encode
-
-        Returns:
-            Complete RTF string
-        """
-        # Placeholder for future rtf_encode_list functionality
-        raise NotImplementedError("List encoding strategy not yet implemented")
-
-
-class FigureEncodingStrategy(EncodingStrategy):
-    """Encoding strategy for RTF documents containing figures (future feature)."""
-
-    def encode(self, document: "RTFDocument") -> str:
-        """Encode a document with figure content.
-
-        Args:
-            document: The RTF document to encode
-
-        Returns:
-            Complete RTF string
-        """
-        # Placeholder for future rtf_encode_figure functionality
-        raise NotImplementedError("Figure encoding strategy not yet implemented")
