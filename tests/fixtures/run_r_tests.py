@@ -117,6 +117,7 @@ if __name__ == "__main__":
             "tests/test_row.py",
             "tests/test_input.py",
             "tests/test_convert.py",
+            "tests/test_single_page_rtf.py",
             "tests/test_pagination.py",
         ],
     )

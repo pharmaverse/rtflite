@@ -46,7 +46,7 @@ class TestDataSortingValidation:
             'AEDECOD': ['Dizziness', 'Headache', 'Fatigue', 'Headache']
         })
         
-        with pytest.raises(ValueError, match="Data is not sorted by the grouping variables"):
+        with pytest.raises(ValueError, match="Data is not properly grouped"):
             grouping_service.enhance_group_by(df, group_by=['USUBJID', 'ASTDY'])
             
     def test_validate_data_sorting_overlapping_variables(self):

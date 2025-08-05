@@ -266,6 +266,31 @@ def normalize_rtf_hyphenation(rtf_text: str) -> str:
     return rtf_text
 
 
+def normalize_column_widths(rtf_content: str) -> str:
+    """Normalize column widths to handle small rounding differences.
+    
+    RTF column widths can vary by 1-2 units due to floating point precision
+    differences between R and Python. This function normalizes these small
+    differences that don't affect the visual output.
+    
+    Args:
+        rtf_content: RTF content string
+        
+    Returns:
+        Normalized RTF content
+    """
+    import re
+    
+    def normalize_cellx(match):
+        value = int(match.group(1))
+        # Round to nearest 10 to handle small differences
+        normalized = round(value / 10) * 10
+        return f"\\cellx{normalized}"
+    
+    # Normalize \cellx values
+    return re.sub(r'\\cellx(\d+)', normalize_cellx, rtf_content)
+
+
 def assert_rtf_equals_semantic(rtf_output: str, expected: str, test_name: str = ""):
     """Compare RTF outputs after semantic normalization.
 
@@ -275,6 +300,7 @@ def assert_rtf_equals_semantic(rtf_output: str, expected: str, test_name: str = 
     - Whitespace normalization
     - Border style semantic equivalence (\\brdrw15 vs \\brdrs\\brdrw15)
     - Structural RTF command grouping
+    - Column width rounding differences
 
     Args:
         rtf_output: RTF output from rtflite
@@ -285,10 +311,12 @@ def assert_rtf_equals_semantic(rtf_output: str, expected: str, test_name: str = 
     rtf_normalized = normalize_rtf_structure(rtf_output)
     rtf_normalized = normalize_rtf_borders(rtf_normalized)
     rtf_normalized = normalize_rtf_hyphenation(rtf_normalized)
+    rtf_normalized = normalize_column_widths(rtf_normalized)
 
     expected_normalized = normalize_rtf_structure(expected)
     expected_normalized = normalize_rtf_borders(expected_normalized)
     expected_normalized = normalize_rtf_hyphenation(expected_normalized)
+    expected_normalized = normalize_column_widths(expected_normalized)
 
     # Add test name to assertion message if provided
     message = "RTF content should match after semantic normalization"
