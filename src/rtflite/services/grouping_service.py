@@ -337,8 +337,16 @@ class GroupingService:
             else:
                 # For subsequent variables, check contiguity within parent groups
                 # Create a composite key from all grouping variables up to this level
-                df_with_key = df.with_columns(
-                    pl.concat_str(group_cols, separator="|").alias("_group_key")
+                # Handle null values by first converting to string with null handling
+                df_with_key = df.with_columns([
+                    pl.col(col).cast(pl.Utf8).fill_null("__NULL__").alias(f"_str_{col}")
+                    for col in group_cols
+                ])
+                
+                # Create the group key from the string columns
+                str_cols = [f"_str_{col}" for col in group_cols]
+                df_with_key = df_with_key.with_columns(
+                    pl.concat_str(str_cols, separator="|").alias("_group_key")
                 )
                 
                 group_keys = df_with_key["_group_key"].to_list()

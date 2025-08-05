@@ -13,7 +13,6 @@ dependencies = [
     "narwhals>=1.0.0",
     "pandas>=2.2.3",
     "polars>=1.0.0",
-    "plotnine>=0.15.0",
     "pyarrow>=21.0.0",
 ]
 readme = "README.md"
@@ -62,4 +61,5 @@ dev = [
     "jupyter>=1.1.1",
     "ruff>=0.7.4",
     "isort>=5.13.2",
+    "plotnine>=0.15.0",
 ]
