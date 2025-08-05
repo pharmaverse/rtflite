@@ -212,7 +212,7 @@ class ContentDistributor(BaseModel):
         if subline_by:
             page_by = subline_by
             new_page = True
-        
+
         page_breaks = self.calculator.find_page_breaks(
             df, col_widths, page_by, new_page, table_attrs, additional_rows_per_page
         )
@@ -232,10 +232,12 @@ class ContentDistributor(BaseModel):
                 "needs_header": pageby_header or page_num == 0,
                 "col_widths": col_widths,
             }
-            
+
             # Add subline_by header information for each page
             if subline_by:
-                page_info["subline_header"] = self.get_group_headers(df, subline_by, start_row)
+                page_info["subline_header"] = self.get_group_headers(
+                    df, subline_by, start_row
+                )
 
             pages.append(page_info)
 

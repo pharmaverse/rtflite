@@ -1,6 +1,6 @@
 import re
-import subprocess
 import shutil
+import subprocess
 from pathlib import Path
 
 
@@ -45,25 +45,25 @@ def extract_r_tests(test_files):
             code_lines = []
             for line in code.strip().split("\n"):
                 line = line.rstrip()
-                
+
                 # Skip completely empty lines
                 if not line.strip():
                     continue
-                
+
                 # Find the "# " pattern (may be after indentation)
                 # Look for the pattern of whitespace followed by "# "
-                match = re.match(r'^(\s*)# (.*)$', line)
+                match = re.match(r"^(\s*)# (.*)$", line)
                 if match:
                     indent, content = match.groups()
                     # Keep the original indentation, but remove the "# " part
                     cleaned_line = indent + content
-                elif re.match(r'^(\s*)#$', line):
+                elif re.match(r"^(\s*)#$", line):
                     # Handle lines that are just whitespace + "#" (empty comment lines)
                     continue  # Skip empty comment lines
                 else:
                     # This shouldn't happen in well-formed R blocks, but handle it
                     cleaned_line = line
-                
+
                 # Now check if the content (after indentation) starts with "#"
                 content_part = cleaned_line.lstrip()
                 if content_part.startswith("#"):
@@ -75,11 +75,11 @@ def extract_r_tests(test_files):
                 else:
                     # This is R code - keep as is
                     pass
-                
+
                 # Add non-empty lines
                 if cleaned_line.strip():
                     code_lines.append(cleaned_line)
-            
+
             clean_code = "\n".join(code_lines)
 
             r_script.append(f"""

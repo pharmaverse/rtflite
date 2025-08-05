@@ -4,6 +4,7 @@ from typing import Literal, overload
 from PIL import ImageFont
 
 import rtflite.fonts
+
 from .fonts_mapping import FontMapping, FontName, FontNumber
 
 Unit = Literal["in", "mm", "px"]

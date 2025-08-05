@@ -1,14 +1,14 @@
 """RTF Document Service - handles all document-level operations."""
 
-from typing import Dict, Any, List, Tuple
-from collections.abc import MutableSequence
+from typing import List, Tuple
 
 
 class RTFDocumentService:
     """Service for handling RTF document operations including pagination and layout."""
-    
+
     def __init__(self):
         from .encoding_service import RTFEncodingService
+
         self.encoding_service = RTFEncodingService()
 
     def calculate_additional_rows_per_page(self, document) -> int:
@@ -58,7 +58,7 @@ class RTFDocumentService:
         # Figure-only documents don't need pagination beyond multi-figure handling above
         if document.df is None:
             return False
-            
+
         # Handle multi-section documents
         if isinstance(document.df, list):
             # Check if any section needs pagination
@@ -69,11 +69,14 @@ class RTFDocumentService:
             return False
         else:
             # Single section document
-            if (document.rtf_body.page_by and document.rtf_body.new_page) or document.rtf_body.subline_by:
+            if (
+                document.rtf_body.page_by and document.rtf_body.new_page
+            ) or document.rtf_body.subline_by:
                 return True
 
         # Create pagination instance to calculate rows needed
-        from ..pagination import RTFPagination, PageBreakCalculator
+        from ..pagination import PageBreakCalculator, RTFPagination
+
         pagination = RTFPagination(
             page_width=document.rtf_page.width,
             page_height=document.rtf_page.height,
@@ -84,21 +87,30 @@ class RTFDocumentService:
 
         calculator = PageBreakCalculator(pagination=pagination)
         from ..row import Utils
+
         col_total_width = document.rtf_page.col_width
-        
+
         # Handle multi-section vs single section for column widths
         if isinstance(document.df, list):
             # Use first section for pagination calculation
-            col_widths = Utils._col_widths(document.rtf_body[0].col_rel_width, col_total_width)
+            col_widths = Utils._col_widths(
+                document.rtf_body[0].col_rel_width, col_total_width
+            )
             # Calculate rows needed for all sections combined
             total_content_rows = []
             for df, body in zip(document.df, document.rtf_body):
-                section_col_widths = Utils._col_widths(body.col_rel_width, col_total_width)
-                section_content_rows = calculator.calculate_content_rows(df, section_col_widths, body)
+                section_col_widths = Utils._col_widths(
+                    body.col_rel_width, col_total_width
+                )
+                section_content_rows = calculator.calculate_content_rows(
+                    df, section_col_widths, body
+                )
                 total_content_rows.extend(section_content_rows)
             content_rows = total_content_rows
         else:
-            col_widths = Utils._col_widths(document.rtf_body.col_rel_width, col_total_width)
+            col_widths = Utils._col_widths(
+                document.rtf_body.col_rel_width, col_total_width
+            )
             # Calculate rows needed for data content only
             content_rows = calculator.calculate_content_rows(
                 document.df, col_widths, document.rtf_body
@@ -122,7 +134,8 @@ class RTFDocumentService:
 
     def create_pagination_instance(self, document) -> Tuple:
         """Create pagination and content distributor instances."""
-        from ..pagination import RTFPagination, PageBreakCalculator, ContentDistributor
+        from ..pagination import ContentDistributor, PageBreakCalculator, RTFPagination
+
         pagination = RTFPagination(
             page_width=document.rtf_page.width,
             page_height=document.rtf_page.height,
@@ -139,11 +152,13 @@ class RTFDocumentService:
     def generate_page_break(self, document) -> str:
         """Generate proper RTF page break sequence."""
         return self.encoding_service.encode_page_break(
-            document.rtf_page, 
-            lambda: self.encoding_service.encode_page_margin(document.rtf_page)
+            document.rtf_page,
+            lambda: self.encoding_service.encode_page_margin(document.rtf_page),
         )
 
-    def should_show_element_on_page(self, element_location: str, page_info: dict) -> bool:
+    def should_show_element_on_page(
+        self, element_location: str, page_info: dict
+    ) -> bool:
         """Determine if an element should be shown on a specific page."""
         if element_location == "all":
             return True
@@ -232,7 +247,9 @@ class RTFDocumentService:
 
         return output
 
-    def apply_pagination_borders(self, document, rtf_attrs, page_info: dict, total_pages: int):
+    def apply_pagination_borders(
+        self, document, rtf_attrs, page_info: dict, total_pages: int
+    ):
         """Apply proper borders for paginated context following r2rtf design:
 
         rtf_page.border_first/last: Controls borders for the entire table
@@ -247,6 +264,7 @@ class RTFDocumentService:
         - All other rows: Use existing border_top/bottom from rtf_body
         """
         from copy import deepcopy
+
         from ..attributes import BroadcastValue
         from ..input import TableAttributes
 
@@ -281,7 +299,9 @@ class RTFDocumentService:
 
         # Apply borders based on page position
         # For first page: only apply rtf_page.border_first to table body if NO column headers
-        has_column_headers = document.rtf_column_header and len(document.rtf_column_header) > 0
+        has_column_headers = (
+            document.rtf_column_header and len(document.rtf_column_header) > 0
+        )
         if page_info["is_first_page"] and not has_column_headers:
             if document.rtf_page.border_first:
                 # Apply border to all cells in the first row
@@ -406,12 +426,17 @@ class RTFDocumentService:
                     else:
                         # Has footnote/source on last page: set border for footnote/source
                         self._apply_footnote_source_borders(
-                            document, page_info, document.rtf_page.border_last, is_last_page=True
+                            document,
+                            page_info,
+                            document.rtf_page.border_last,
+                            is_last_page=True,
                         )
 
         return page_attrs
 
-    def _apply_footnote_source_borders(self, document, page_info: dict, border_style: str, is_last_page: bool):
+    def _apply_footnote_source_borders(
+        self, document, page_info: dict, border_style: str, is_last_page: bool
+    ):
         """Apply borders to footnote and source components based on page position."""
         # Determine which component should get the border
         has_footnote = (
@@ -457,10 +482,18 @@ class RTFDocumentService:
                 component._page_border_style = {}
             component._page_border_style[page_info["page_number"]] = border_style
 
-    def _apply_border_to_cell(self, page_attrs, row_idx: int, col_idx: int, border_side: str, border_style: str, page_shape: tuple):
+    def _apply_border_to_cell(
+        self,
+        page_attrs,
+        row_idx: int,
+        col_idx: int,
+        border_side: str,
+        border_style: str,
+        page_shape: tuple,
+    ):
         """Apply specified border style to a specific cell using BroadcastValue"""
         from ..attributes import BroadcastValue
-        
+
         border_attr = f"border_{border_side}"
 
         if not hasattr(page_attrs, border_attr):

@@ -10,12 +10,9 @@ This module tests all components of the text conversion functionality:
 """
 
 import pytest
-from rtflite.text_conversion import (
-    convert_text,
-    TextConverter,
-    LaTeXSymbolMapper,
-    text_convert,  # backward compatibility
-)
+
+from rtflite.text_conversion import text_convert  # backward compatibility
+from rtflite.text_conversion import LaTeXSymbolMapper, TextConverter, convert_text
 
 
 class TestConvertTextFunction:
@@ -129,7 +126,7 @@ class TestTextConverter:
         assert result != "\\alpha"  # Should be converted
         assert len(result) == 1  # Should be single character
         assert ord(result) > 127  # Should be Unicode character
-        
+
         result = self.converter.convert_latex_to_unicode("\\beta")
         assert result != "\\beta"  # Should be converted
         assert len(result) == 1  # Should be single character
@@ -250,17 +247,17 @@ class TestLaTeXSymbolMapper:
         assert result != "\\alpha"  # Should be converted
         assert len(result) == 1  # Single character
         assert ord(result) > 127  # Unicode character
-        
+
         result = self.mapper.get_unicode_char("\\beta")
         assert result != "\\beta"  # Should be converted
         assert len(result) == 1  # Single character
         assert ord(result) > 127  # Unicode character
-        
+
         result = self.mapper.get_unicode_char("\\pm")
         assert result != "\\pm"  # Should be converted
         assert len(result) == 1  # Single character
         assert ord(result) > 127  # Unicode character
-        
+
         result = self.mapper.get_unicode_char("\\cdot")
         assert result != "\\cdot"  # Should be converted
         assert len(result) == 1  # Single character
@@ -338,7 +335,7 @@ class TestEdgeCasesAndErrorHandling:
         result = converter.convert_latex_to_unicode(large_text)
         # Check that LaTeX commands were converted (no longer present)
         assert "\\alpha" not in result
-        assert "\\beta" not in result  
+        assert "\\beta" not in result
         assert "\\gamma" not in result
         assert len(result) > 0
         # Check that result is different from input
@@ -361,7 +358,7 @@ class TestEdgeCasesAndErrorHandling:
         result = converter.convert_latex_to_unicode(text)
 
         assert "\\alpha" not in result  # Should be converted
-        assert "\\beta" not in result   # Should be converted
+        assert "\\beta" not in result  # Should be converted
         # \\newline might or might not be converted depending on mapping
         assert result != text  # Result should be different
 
