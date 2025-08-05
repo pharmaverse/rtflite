@@ -23,7 +23,97 @@ from .row import Utils
 
 
 class RTFDocument(BaseModel):
-    """RTF Document - clean data model with service-based encoding."""
+    """Main class for creating RTF documents with tables, text, and figures.
+    
+    RTFDocument is the central class for generating Rich Text Format (RTF) files
+    containing formatted tables, titles, footnotes, and other document elements.
+    It provides a comprehensive API for creating professional documents commonly
+    used in clinical trials, scientific research, and data reporting.
+    
+    Examples:
+        Simple table with title:
+        ```python
+        import rtflite as rtf
+        import polars as pl
+        
+        df = pl.DataFrame({
+            "Subject": ["001", "002", "003"],
+            "Age": [45, 52, 38],
+            "Treatment": ["Drug A", "Drug B", "Placebo"]
+        })
+        
+        doc = rtf.RTFDocument(
+            df=df,
+            rtf_title=rtf.RTFTitle(text="Patient Demographics"),
+            rtf_body=rtf.RTFBody(col_rel_width=[2, 1, 2])
+        )
+        doc.write_rtf("demographics.rtf")
+        ```
+        
+        Multi-page document with headers and footers:
+        ```python
+        doc = rtf.RTFDocument(
+            df=large_df,
+            rtf_page=rtf.RTFPage(nrow=40, orientation="landscape"),
+            rtf_page_header=rtf.RTFPageHeader(),  # Default page numbering
+            rtf_page_footer=rtf.RTFPageFooter(text="Confidential"),
+            rtf_title=rtf.RTFTitle(text="Clinical Study Results"),
+            rtf_column_header=rtf.RTFColumnHeader(
+                text=["Subject ID", "Visit", "Result", "Units"]
+            ),
+            rtf_body=rtf.RTFBody(
+                col_rel_width=[2, 1, 1, 1],
+                text_justification=[["l", "c", "r", "c"]]
+            ),
+            rtf_footnote=rtf.RTFFootnote(
+                text="Results are mean +/- SD"
+            )
+        )
+        doc.write_rtf("results.rtf")
+        ```
+        
+        Document with grouped data and sublines:
+        ```python
+        doc = rtf.RTFDocument(
+            df=grouped_df,
+            rtf_body=rtf.RTFBody(
+                group_by=["SITE", "TREATMENT"],  # Suppress duplicate values
+                subline_by=["STUDY_PHASE"],      # Create section headers
+                col_rel_width=[2, 2, 1, 1]
+            )
+        )
+        ```
+    
+    Attributes:
+        df: Data to display in the table. Can be a single DataFrame or list of
+            DataFrames for multi-section documents. Accepts pandas or polars
+            DataFrames (automatically converted to polars internally).
+        
+        rtf_page: Page configuration including size, orientation, margins, and
+            pagination settings.
+        
+        rtf_page_header: Optional header appearing at the top of every page.
+        
+        rtf_page_footer: Optional footer appearing at the bottom of every page.
+        
+        rtf_title: Document title(s) displayed at the top.
+        
+        rtf_column_header: Column headers for the table. Can be a single header
+            or list of headers for multi-row headers.
+        
+        rtf_body: Table body configuration including column widths, formatting,
+            borders, and special features like group_by and subline_by.
+        
+        rtf_footnote: Optional footnote text displayed after the table.
+        
+        rtf_source: Optional source citation displayed at the very bottom.
+        
+        rtf_figure: Optional figure/image to embed in the document.
+    
+    Methods:
+        rtf_encode(): Generate the complete RTF document as a string.
+        write_rtf(file_path): Write the RTF document to a file.
+    """
     
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
@@ -235,17 +325,48 @@ class RTFDocument(BaseModel):
                 )
 
     def rtf_encode(self) -> str:
-        """Generate RTF code using the encoding engine.
+        """Generate the complete RTF document as a string.
+        
+        This method processes all document components and generates the final
+        RTF code including headers, formatting, tables, and all other elements.
+        The resulting string can be written to a file or processed further.
         
         Returns:
-            Complete RTF document string
+            str: Complete RTF document string ready to be saved as an .rtf file.
+        
+        Examples:
+            ```python
+            doc = RTFDocument(df=data, rtf_title=RTFTitle(text="Report"))
+            rtf_string = doc.rtf_encode()
+            # Can write manually or process further
+            with open("output.rtf", "w") as f:
+                f.write(rtf_string)
+            ```
         """
         from .encoding import RTFEncodingEngine
         engine = RTFEncodingEngine()
         return engine.encode_document(self)
 
     def write_rtf(self, file_path: str) -> None:
-        """Write the RTF code into a `.rtf` file."""
+        """Write the RTF document to a file.
+        
+        Generates the complete RTF document and writes it to the specified file path.
+        The file is written in UTF-8 encoding and will have the .rtf extension.
+        
+        Args:
+            file_path: Path where the RTF file should be saved. Can be absolute
+                or relative path. Directory must exist.
+        
+        Examples:
+            ```python
+            doc = RTFDocument(df=data, rtf_title=RTFTitle(text="Report"))
+            doc.write_rtf("output/report.rtf")
+            ```
+        
+        Note:
+            The method prints the file path to stdout for confirmation.
+            Ensure the directory exists before calling this method.
+        """
         print(file_path)
         rtf_code = self.rtf_encode()
         with open(file_path, "w", encoding="utf-8") as f:

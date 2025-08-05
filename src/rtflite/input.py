@@ -200,7 +200,49 @@ class DefaultsFactory:
 
 
 class RTFPage(BaseModel):
-    """RTF page configuration"""
+    """Configure RTF page layout and pagination settings.
+    
+    The RTFPage component controls page dimensions, margins, orientation,
+    and pagination behavior including rows per page and border styles for
+    first/last rows across page boundaries.
+    
+    Examples:
+        Basic portrait page with custom margins:
+        ```python
+        page = RTFPage(
+            orientation="portrait",
+            margin=[1.0, 1.0, 1.5, 1.0, 1.5, 1.0]  # left, right, top, bottom, header, footer
+        )
+        ```
+        
+        Landscape layout for wide tables:
+        ```python
+        page = RTFPage(
+            orientation="landscape",
+            nrow=30,  # Fewer rows due to landscape
+            border_first="double",  # Double border on first row
+            border_last="single"    # Single border on last row
+        )
+        ```
+    
+    Attributes:
+        nrow: Total number of rows per page including ALL components:
+            - Column headers (if displayed)
+            - Data rows
+            - Footnotes (if present)
+            - Source lines (if present)
+            This is NOT just data rows - it's the complete row budget.
+        
+        border_first: Border style for the first row of the table.
+            Defaults to "double" for emphasis.
+        
+        border_last: Border style for the last row of the table.
+            Defaults to "double" for closure.
+    
+    Note:
+        The nrow parameter represents the total row capacity of a page,
+        not just data rows. Plan accordingly when setting this value.
+    """
 
     orientation: str | None = Field(
         default="portrait", description="Page orientation ('portrait' or 'landscape')"
@@ -227,7 +269,10 @@ class RTFPage(BaseModel):
             raise ValueError("Margin must be a sequence of 6 values.")
         return v
 
-    nrow: int | None = Field(default=None, description="Number of rows per page")
+    nrow: int | None = Field(
+        default=None, 
+        description="Total rows per page including headers, data, footnotes, and sources. NOT just data rows - this is the complete page row budget."
+    )
 
     border_first: str | None = Field(
         default="double", description="First row border style"
@@ -317,7 +362,40 @@ class RTFPage(BaseModel):
 
 
 class RTFPageHeader(RTFTextComponent):
-    """RTF page header component with right-aligned default text."""
+    """RTF page header component for document headers.
+    
+    The RTFPageHeader appears at the top of every page, typically used for
+    page numbering, document titles, or study identifiers. Right-aligned by
+    default with automatic page numbering.
+    
+    Examples:
+        Default page numbering:
+        ```python
+        header = RTFPageHeader()  # Shows "Page X of Y"
+        ```
+        
+        Custom header text:
+        ```python
+        header = RTFPageHeader(
+            text="Protocol ABC-123 | Confidential",
+            text_justification=["c"]  # Center align
+        )
+        ```
+        
+        Header with page number:
+        ```python
+        header = RTFPageHeader(
+            text="Study Report - Page \\\\chpgn",  # Current page number
+            text_format=["b"],  # Bold
+            text_font_size=[10]
+        )
+        ```
+    
+    Note:
+        - Default text is "Page \\\\chpgn of {\\\\field{\\\\*\\\\fldinst NUMPAGES }}"
+        - Text conversion is disabled by default to preserve RTF field codes
+        - Right-aligned by default
+    """
 
     def __init__(self, **data):
         # Set the default header text if not provided
@@ -330,7 +408,44 @@ class RTFPageHeader(RTFTextComponent):
 
 
 class RTFPageFooter(RTFTextComponent):
-    """RTF page footer component with center-aligned text."""
+    """RTF page footer component for document footers.
+    
+    The RTFPageFooter appears at the bottom of every page, typically used for
+    confidentiality notices, timestamps, or file paths. Center-aligned by default.
+    
+    Examples:
+        Simple footer:
+        ```python
+        footer = RTFPageFooter(
+            text="Company Confidential"
+        )
+        ```
+        
+        Multi-line footer:
+        ```python
+        footer = RTFPageFooter(
+            text=[
+                "Proprietary and Confidential",
+                "Do Not Distribute"
+            ],
+            text_font_size=[8, 8]
+        )
+        ```
+        
+        Footer with timestamp:
+        ```python
+        footer = RTFPageFooter(
+            text="Generated: 2024-01-15 14:30:00 | program.py",
+            text_justification=["l"],  # Left align
+            text_font_size=[8]
+        )
+        ```
+    
+    Note:
+        - Center-aligned by default
+        - Text conversion is disabled by default to preserve special characters
+        - Appears on every page of the document
+    """
 
     def _get_component_defaults(self) -> dict:
         return DefaultsFactory.get_page_footer_defaults()
@@ -411,14 +526,89 @@ class RTFTableTextComponent(TableAttributes):
 
 
 class RTFFootnote(RTFTableTextComponent):
-    """RTF footnote component with table rendering enabled by default."""
+    """RTF footnote component for explanatory notes and citations.
+    
+    The RTFFootnote component displays footnote text at the bottom of tables.
+    Supports multiple footnote lines and can be rendered as a table (with borders)
+    or plain text. Text conversion is enabled by default.
+    
+    Examples:
+        Single footnote:
+        ```python
+        footnote = RTFFootnote(
+            text="CI = Confidence Interval; N = Number of subjects"
+        )
+        ```
+        
+        Multiple footnotes:
+        ```python
+        footnote = RTFFootnote(
+            text=[
+                "* p-value from ANCOVA model",
+                "** Missing values were imputed using LOCF",
+                "*** Baseline is defined as last value before first dose"
+            ]
+        )
+        ```
+        
+        Footnote without table borders:
+        ```python
+        footnote = RTFFootnote(
+            text="Data cutoff date: 2023-12-31",
+            as_table=False  # No borders around footnote
+        )
+        ```
+    
+    Note:
+        - Multiple footnote lines are joined with \\\\line separator
+        - Text conversion is enabled by default (LaTeX symbols supported)
+        - Default rendering includes table borders (as_table=True)
+    """
 
     def _get_default_as_table(self) -> bool:
         return True  # Footnotes default to table rendering
 
 
 class RTFSource(RTFTableTextComponent):
-    """RTF source component with plain text rendering by default and center justification."""
+    """RTF source component for data source citations.
+    
+    The RTFSource component displays source information at the very bottom
+    of the document. Typically used for dataset names, program references,
+    or generation timestamps. Rendered as plain text without borders by default.
+    
+    Examples:
+        Simple source citation:
+        ```python
+        source = RTFSource(
+            text="Source: ADAE dataset, generated 2024-01-15"
+        )
+        ```
+        
+        Multiple source lines:
+        ```python
+        source = RTFSource(
+            text=[
+                "Dataset: ADAE version 3.0",
+                "Program: ae_summary.py",
+                "Generated: 2024-01-15 14:30:00"
+            ]
+        )
+        ```
+        
+        Source with table borders:
+        ```python
+        source = RTFSource(
+            text="Database lock: 2023-12-31",
+            as_table=True,  # Add borders around source
+            text_justification=[["l"]]  # Left align instead of center
+        )
+        ```
+    
+    Note:
+        - Center-aligned by default
+        - Rendered without borders by default (as_table=False)
+        - Text conversion is enabled by default
+    """
 
     def _get_default_as_table(self) -> bool:
         return False  # Sources default to plain text rendering
@@ -434,18 +624,96 @@ class RTFSource(RTFTableTextComponent):
 
 
 class RTFTitle(RTFTextComponent):
-    """RTF title component with center-aligned text and LaTeX conversion enabled."""
+    """RTF title component with center-aligned text and LaTeX conversion enabled.
+    
+    The RTFTitle component displays centered title text at the top of the document
+    or table. It supports multiple title lines and LaTeX-style text conversion
+    for mathematical symbols and formatting.
+    
+    Examples:
+        Single line title:
+        ```python
+        title = RTFTitle(text="Adverse Events Summary")
+        ```
+        
+        Multi-line title with formatting:
+        ```python
+        title = RTFTitle(
+            text=["Clinical Study Report", "Safety Analysis Set"],
+            text_format=["b", ""]  # First line bold, second normal
+        )
+        ```
+        
+        Title with LaTeX symbols:
+        ```python
+        title = RTFTitle(
+            text="Efficacy Analysis (\\\\alpha = 0.05)"
+        )
+        # Renders as: Efficacy Analysis (alpha = 0.05) with Greek alpha symbol
+        ```
+    
+    Note:
+        Text conversion is enabled by default for titles, converting:
+        - LaTeX symbols (e.g., \\\\alpha to Greek alpha, \\\\beta to Greek beta)
+        - Subscripts (e.g., x_1 to x with subscript 1)
+        - Other mathematical notation
+    """
 
     def _get_component_defaults(self) -> dict:
         return DefaultsFactory.get_title_defaults()
 
 
 class RTFColumnHeader(TableAttributes):
-    """Class for RTF column header settings"""
+    """Configure column headers for RTF tables.
+    
+    The RTFColumnHeader component defines column headers that appear at the
+    top of tables and repeat on each page in multi-page documents. Supports
+    multi-row headers and flexible column spanning.
+    
+    Examples:
+        Simple column headers:
+        ```python
+        header = RTFColumnHeader(
+            text=["Name", "Age", "Treatment", "Response"]
+        )
+        ```
+        
+        Headers with custom formatting:
+        ```python
+        header = RTFColumnHeader(
+            text=["Subject", "Baseline", "Week 4", "Week 8"],
+            text_format=["b", "b", "b", "b"],  # All bold
+            text_justification=["l", "c", "c", "c"],  # Left, center, center, center
+            border_bottom=["double", "double", "double", "double"]
+        )
+        ```
+        
+        Multi-row headers with col_rel_width:
+        ```python
+        # First row spans multiple columns
+        header1 = RTFColumnHeader(
+            text=["Patient Info", "Treatment Results"],
+            col_rel_width=[2, 3]  # Spans 2 and 3 columns respectively
+        )
+        # Second row with individual columns
+        header2 = RTFColumnHeader(
+            text=["ID", "Age", "Drug A", "Drug B", "Placebo"],
+            col_rel_width=[1, 1, 1, 1, 1]
+        )
+        ```
+    
+    Note:
+        - Headers automatically repeat on each page in multi-page documents
+        - Use col_rel_width to create spanning headers
+        - Border styles from RTFPage are applied to the first row
+    """
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    text: Sequence[str] | None = Field(default=None, description="Column header table")
+    text: Sequence[str] | None = Field(
+        default=None, 
+        description="Column header text. List of strings, one per column."
+    )
 
     @field_validator("text", mode="before")
     def convert_text_before(cls, v):
@@ -540,7 +808,44 @@ class RTFColumnHeader(TableAttributes):
 
 
 class RTFBody(TableAttributes):
-    """Class for RTF document body settings"""
+    """Configure table body formatting and layout.
+    
+    The RTFBody component controls how data is displayed in the RTF table,
+    including column widths, text formatting, borders, and advanced features
+    like group_by for value suppression and subline_by for section headers.
+    
+    Examples:
+        Basic table with custom column widths:
+        ```python
+        body = RTFBody(
+            col_rel_width=[3, 2, 2, 2],
+            text_justification=[["l", "c", "c", "c"]]
+        )
+        ```
+        
+        Using group_by to suppress duplicate values:
+        ```python
+        body = RTFBody(
+            group_by=["SITE", "SUBJECT"],
+            col_rel_width=[2, 2, 3, 1]
+        )
+        ```
+        
+        Using subline_by for section headers:
+        ```python
+        body = RTFBody(
+            subline_by=["SITE", "STUDY"],  # Creates paragraph headers
+            col_rel_width=[3, 2, 2]  # Note: subline_by columns are removed from table
+        )
+        ```
+    
+    Note:
+        When using subline_by:
+        - The specified columns are removed from the table display
+        - Values appear as paragraph headers before each section
+        - Pagination is automatically enabled (new_page=True)
+        - Formatting attributes apply uniformly to the entire table
+    """
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
@@ -548,19 +853,28 @@ class RTFBody(TableAttributes):
         default=True, description="Whether to display column headers"
     )
     group_by: Sequence[str] | None = Field(
-        default=None, description="Column name to group rows by"
+        default=None, 
+        description="Column names for hierarchical value suppression. Values are shown only on first occurrence within groups, with page context restoration for multi-page tables."
     )
     page_by: Sequence[str] | None = Field(
-        default=None, description="Column name to create page breaks by"
+        default=None, 
+        description="Column names to trigger page breaks when values change"
     )
-    new_page: bool = Field(default=False, description="Force new page before table")
-    pageby_header: bool = Field(default=True, description="Repeat headers on new pages")
+    new_page: bool = Field(
+        default=False, 
+        description="Force new page before table. Automatically set to True when using subline_by."
+    )
+    pageby_header: bool = Field(
+        default=True, 
+        description="Repeat column headers on new pages"
+    )
     pageby_row: str = Field(
         default="column",
-        description="Page break handling for rows ('column' or 'value')",
+        description="Page break handling: 'column' (keep column) or 'first_row' (use first row as header)",
     )
     subline_by: Sequence[str] | None = Field(
-        default=None, description="Column name to create sublines by"
+        default=None, 
+        description="Column names to create paragraph headers. These columns are removed from the table and their values appear as section headers above each group. Forces pagination."
     )
     last_row: bool = Field(
         default=True,

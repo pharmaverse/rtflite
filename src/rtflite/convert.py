@@ -11,10 +11,68 @@ from .dictionary.libreoffice import DEFAULT_PATHS, MIN_VERSION
 
 
 class LibreOfficeConverter:
-    """LibreOffice-based document converter."""
+    """Convert RTF documents to other formats using LibreOffice.
+    
+    The LibreOfficeConverter enables conversion of RTF files to various formats
+    including PDF, DOCX, HTML, and others using LibreOffice in headless mode.
+    It automatically detects LibreOffice installation on Windows, macOS, and Linux.
+    
+    Examples:
+        Basic PDF conversion:
+        ```python
+        from rtflite import LibreOfficeConverter
+        
+        converter = LibreOfficeConverter()
+        converter.convert("report.rtf", format="pdf")
+        # Creates report.pdf in the same directory
+        ```
+        
+        Convert multiple files to specific directory:
+        ```python
+        converter = LibreOfficeConverter()
+        converter.convert(
+            input_files=["report1.rtf", "report2.rtf"],
+            output_dir="pdf_output/",
+            format="pdf",
+            overwrite=True
+        )
+        ```
+        
+        Convert to Word format:
+        ```python
+        converter.convert("report.rtf", format="docx")
+        # Creates report.docx
+        ```
+    
+    Supported Formats:
+        - pdf: Portable Document Format
+        - docx: Microsoft Word (Office Open XML)
+        - doc: Microsoft Word 97-2003
+        - html: HTML Document
+        - odt: OpenDocument Text
+        - txt: Plain Text
+    
+    Requirements:
+        - LibreOffice 7.3 or later must be installed
+        - Automatically finds LibreOffice in standard installation paths
+        - For custom installations, provide executable_path parameter
+    
+    Note:
+        The converter runs LibreOffice in headless mode, so no GUI is required.
+        This makes it suitable for server environments and automated workflows.
+    """
 
     def __init__(self, executable_path: str | None = None):
-        """Initialize converter with optional executable path."""
+        """Initialize converter with optional executable path.
+        
+        Args:
+            executable_path: Path to LibreOffice executable. If None, searches
+                standard installation locations for each platform.
+        
+        Raises:
+            FileNotFoundError: If LibreOffice executable cannot be found.
+            ValueError: If LibreOffice version is below minimum requirement.
+        """
         self.executable_path = executable_path or self._find_executable()
         if not self.executable_path:
             raise FileNotFoundError("Can't find LibreOffice executable.")
@@ -66,17 +124,58 @@ class LibreOfficeConverter:
         format: str = "pdf",
         overwrite: bool = False,
     ) -> Path | Sequence[Path]:
-        """
-        Convert RTF file(s) to specified format using LibreOffice.
+        """Convert RTF file(s) to specified format using LibreOffice.
+        
+        Performs the actual conversion of RTF files to the target format using
+        LibreOffice in headless mode. Supports single file or batch conversion.
 
         Args:
-            input_files: Path to input RTF file or list of paths.
-            output_dir: Directory for output files.
-            format: Output format (`'pdf'`, `'docx'`, or `'html'`).
-            overwrite: Whether to overwrite existing output files.
+            input_files: Path to input RTF file or list of paths. Can be string
+                or Path object. For batch conversion, provide a list/tuple.
+            output_dir: Directory where converted files will be saved. Created
+                if it doesn't exist. Can be string or Path object.
+            format: Target format for conversion. Supported formats:
+                - 'pdf': Portable Document Format (default)
+                - 'docx': Microsoft Word (Office Open XML)
+                - 'doc': Microsoft Word 97-2003
+                - 'html': HTML Document
+                - 'odt': OpenDocument Text
+                - 'txt': Plain Text
+            overwrite: If True, overwrites existing files in output directory.
+                If False, raises error if output file already exists.
 
         Returns:
-            Path to converted file, or list of paths for multiple files.
+            Path | Sequence[Path]: For single file input, returns Path to the
+                converted file. For multiple files, returns list of Paths.
+        
+        Raises:
+            FileExistsError: If output file exists and overwrite=False.
+            RuntimeError: If LibreOffice conversion fails.
+            
+        Examples:
+            Single file conversion:
+            ```python
+            converter = LibreOfficeConverter()
+            pdf_path = converter.convert(
+                "report.rtf",
+                output_dir="pdfs/",
+                format="pdf"
+            )
+            print(f"Created: {pdf_path}")
+            ```
+            
+            Batch conversion with overwrite:
+            ```python
+            rtf_files = ["report1.rtf", "report2.rtf", "report3.rtf"]
+            pdf_paths = converter.convert(
+                input_files=rtf_files,
+                output_dir="output/pdfs/",
+                format="pdf",
+                overwrite=True
+            )
+            for path in pdf_paths:
+                print(f"Converted: {path}")
+            ```
         """
         output_dir = Path(os.path.expanduser(str(output_dir)))
         if not output_dir.exists():

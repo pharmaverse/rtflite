@@ -140,22 +140,22 @@ The project follows a **modern service-oriented architecture** with clean separa
    - **`RTFEncodingEngine`**: Strategy selection and orchestration
    - Extensible for future features (lists, figures)
 
-4. **Component Factory** (`src/rtflite/factory/`):
-   - **`RTFComponentFactory`**: Consistent component creation
-   - **Builder patterns**: TableBuilder, TextBuilder, PageBuilder
-   - Centralized default management and configuration
+4. **Component System** (`src/rtflite/input.py`):
+   - **DefaultsFactory**: Centralized default configuration management
+   - **Pydantic models**: Type-safe component definitions
+   - **Validation**: Comprehensive input validation
 
 5. **Text Conversion System** (`src/rtflite/text_conversion/`):
    - **`LaTeXSymbolMapper`**: 682 symbols organized by category
    - **`TextConverter`**: Readable conversion engine with statistics
    - **Public interface**: `convert_text()` function for easy use
 
-### Legacy Components (Stable)
+### Additional Core Components
 
-6. **Component System** (`src/rtflite/input.py`): Pydantic-based models for RTF components
-7. **Attribute Broadcasting** (`src/rtflite/attributes.py`): Pattern for row/column attribute application
-8. **String Width Calculation** (`src/rtflite/strwidth.py`): Precise layout calculations
-9. **Format Conversion** (`src/rtflite/convert.py`): LibreOffice integration
+6. **Attribute Broadcasting** (`src/rtflite/attributes.py`): Pattern for row/column attribute application
+7. **String Width Calculation** (`src/rtflite/strwidth.py`): Precise layout calculations
+8. **Format Conversion** (`src/rtflite/convert.py`): LibreOffice integration
+9. **Dictionary System** (`src/rtflite/dictionary/`): Color and symbol mappings
 
 ## Key Development Patterns
 
@@ -175,17 +175,17 @@ result = text_service.convert_with_validation("\\alpha test", True)
 converted = encoding_service.convert_text_for_encoding("\\beta", True)
 ```
 
-### Component Creation via Factory
+### Component Creation
 
-**Use the factory for consistent component creation**:
+**Create components directly using Pydantic models**:
 
 ```python
-# ✅ Correct: Use component factory
-from rtflite.factory import RTFComponentFactory, ComponentType
+# ✅ Correct: Direct component creation
+from rtflite import RTFTitle, RTFFootnote, RTFBody
 
-factory = RTFComponentFactory()
-title = factory.create_component(ComponentType.TITLE, text_font_size=[14])
-footnote = factory.create_component(ComponentType.FOOTNOTE, as_table=True)
+title = RTFTitle(text="Clinical Study Report", text_font_size=[14])
+footnote = RTFFootnote(text="CI = Confidence Interval", as_table=True)
+body = RTFBody(col_rel_width=[2, 1, 1], text_justification=[["l", "c", "c"]])
 ```
 
 ### Text Conversion Best Practices
@@ -419,10 +419,10 @@ pytest tests/test_factory.py -v
 - **Keep strategies focused** on single responsibilities
 - **Test strategies independently** of the engine
 
-### 3. Component Factory Extension
-- **Add new builders** for new component types
-- **Centralize default management** in builders
-- **Use factory for all component creation** in new code
+### 3. Component System Extension
+- **Add new Pydantic models** for new component types
+- **Centralize default management** in DefaultsFactory
+- **Use direct component creation** with type validation
 
 ### 4. Text Conversion Enhancement
 - **Extend symbol mappings** through the dictionary system
@@ -441,3 +441,36 @@ pytest tests/test_factory.py -v
   - Strategies: Integration tests with real documents
   - Factories: Component creation and configuration tests
   - Full pipeline: End-to-end RTF generation tests
+
+## Recent Features and Updates
+
+### Subline_by Feature (v0.2.0)
+- Creates paragraph headers before each page (not table rows)
+- Automatically removes subline_by columns from table display
+- Forces pagination (new_page=True) when used
+- Values appear as clean section headers above each group
+
+### Enhanced group_by (v0.2.0)
+- Hierarchical value suppression within groups
+- Page context restoration for multi-page tables
+- Proper handling with pagination system
+- Compatible with subline_by for complex layouts
+
+### Documentation Maintenance
+
+When updating documentation:
+1. **Update docstrings in source code** - Primary documentation source
+2. **Use ASCII-only characters** - No Unicode in source files
+3. **Focus on rtflite behavior** - Avoid comparing to other tools
+4. **Test examples** - Ensure all code examples work
+5. **Follow Google style** - For docstring formatting
+
+See `DOCUMENTATION_GUIDE.md` for detailed documentation practices.
+
+### Key Files for New Contributors
+
+- `src/rtflite/encode.py` - Main RTFDocument class
+- `src/rtflite/input.py` - RTF component definitions
+- `src/rtflite/services/` - Service layer implementations
+- `src/rtflite/encoding/strategies.py` - Encoding strategies
+- `tests/fixtures/run_r_tests.py` - Test fixture generation
