@@ -309,23 +309,141 @@ class GroupingService:
         if missing_cols:
             raise ValueError(f"Grouping columns not found in DataFrame: {missing_cols}")
         
-        # Check if data is properly sorted
-        # Create a sorted version and compare with original
-        sorted_df = df.sort(unique_vars)
+        # Check if groups are contiguous (values in same group are together)
+        # This ensures proper grouping behavior without requiring alphabetical sorting
         
-        # Compare the sorting columns between original and sorted DataFrames
-        original_sort_cols = df.select(unique_vars)
-        expected_sort_cols = sorted_df.select(unique_vars)
+        # For each grouping variable, check if its groups are contiguous
+        for i, var in enumerate(unique_vars):
+            # Get the values for this variable and all previous variables
+            group_cols = unique_vars[:i+1]
+            
+            # Create a key for each row based on grouping columns up to this level
+            if i == 0:
+                # For the first variable, just check if its values are contiguous
+                values = df[var].to_list()
+                current_value = values[0]
+                seen_values = {current_value}
+                
+                for j in range(1, len(values)):
+                    if values[j] != current_value:
+                        if values[j] in seen_values:
+                            # Found a value that appeared before but with different values in between
+                            raise ValueError(
+                                f"Data is not properly grouped by '{var}'. "
+                                f"Values with the same '{var}' must be contiguous (together). "
+                                f"Found '{values[j]}' at position {j} but it also appeared earlier. "
+                                f"Please reorder your data so that all rows with the same '{var}' are together."
+                            )
+                        current_value = values[j]
+                        seen_values.add(current_value)
+            else:
+                # For subsequent variables, check contiguity within parent groups
+                # Create a composite key from all grouping variables up to this level
+                df_with_key = df.with_columns(
+                    pl.concat_str(group_cols, separator="|").alias("_group_key")
+                )
+                
+                group_keys = df_with_key["_group_key"].to_list()
+                current_key = group_keys[0]
+                seen_keys = {current_key}
+                
+                for j in range(1, len(group_keys)):
+                    if group_keys[j] != current_key:
+                        if group_keys[j] in seen_keys:
+                            # Found a group that appeared before
+                            group_values = df.row(j, named=True)
+                            key_parts = [f"{col}='{group_values[col]}'" for col in group_cols]
+                            key_desc = ", ".join(key_parts)
+                            
+                            raise ValueError(
+                                f"Data is not properly grouped. "
+                                f"Group with {key_desc} appears in multiple non-contiguous sections. "
+                                f"Please reorder your data so that rows with the same grouping values are together."
+                            )
+                        current_key = group_keys[j]
+                        seen_keys.add(current_key)
+    
+    def validate_subline_formatting_consistency(
+        self,
+        df: pl.DataFrame,
+        subline_by: List[str],
+        rtf_body
+    ) -> List[str]:
+        """Validate RTFBody formatting consistency across subline_by groups
         
-        # Check if they are equal (same order)
-        if not original_sort_cols.equals(expected_sort_cols):
-            # Data is not properly sorted - provide helpful error message
-            var_names = ", ".join(unique_vars)
-            raise ValueError(
-                f"Data is not sorted by the grouping variables: [{var_names}]. "
-                f"Please sort your data using these columns in the specified order before "
-                f"applying group_by, page_by, or subline_by operations."
+        When using subline_by, RTFBody attributes should be consistent across
+        different subline groups since the first group's formatting is used for
+        the entire table. This method checks for inconsistencies and returns warnings.
+        
+        Args:
+            df: Input DataFrame
+            subline_by: List of subline_by columns
+            rtf_body: RTFBody instance with formatting attributes
+            
+        Returns:
+            List of warning messages for inconsistent formatting (empty if consistent)
+        """
+        warnings = []
+        
+        if not subline_by or df.is_empty():
+            return warnings
+        
+        # Get unique subline combinations
+        subline_groups = df.select(subline_by).unique().sort(subline_by)
+        
+        if subline_groups.height <= 1:
+            return warnings  # Only one group, no consistency issues
+        
+        # Attributes to check for consistency across subline groups
+        format_attributes = [
+            'text_format', 'text_justification', 'text_font_size', 'text_color',
+            'border_top', 'border_bottom', 'border_left', 'border_right',
+            'border_color_top', 'border_color_bottom', 'border_color_left', 'border_color_right'
+        ]
+        
+        # Check each formatting attribute
+        for attr_name in format_attributes:
+            if hasattr(rtf_body, attr_name):
+                attr_value = getattr(rtf_body, attr_name)
+                
+                # Skip None or empty attributes
+                if attr_value is None:
+                    continue
+                
+                # Handle nested list structure (RTFBody uses broadcast values)
+                if isinstance(attr_value, list) and len(attr_value) > 0:
+                    # Check if it's a nested list (broadcast pattern)
+                    if isinstance(attr_value[0], list):
+                        inner_list = attr_value[0]
+                        if len(inner_list) > 1:
+                            # Check if values vary within the list
+                            unique_values = set(v for v in inner_list if v not in [None, ''])
+                            if len(unique_values) > 1:
+                                warnings.append(
+                                    f"RTFBody attribute '{attr_name}' contains varying values: {list(unique_values)}. "
+                                    f"When using subline_by, formatting will be applied uniformly to the entire table. "
+                                    f"Consider using consistent formatting across all columns."
+                                )
+                    else:
+                        # Single-level list with multiple values
+                        if len(attr_value) > 1:
+                            unique_values = set(v for v in attr_value if v not in [None, ''])
+                            if len(unique_values) > 1:
+                                warnings.append(
+                                    f"RTFBody attribute '{attr_name}' contains varying values: {list(unique_values)}. "
+                                    f"When using subline_by, formatting will be applied uniformly to the entire table. "
+                                    f"Consider using consistent formatting across all columns."
+                                )
+        
+        # Add general warning about subline_by formatting behavior
+        if len([attr for attr in format_attributes if hasattr(rtf_body, attr) and getattr(rtf_body, attr) is not None]) > 0:
+            warnings.append(
+                f"When using subline_by with {len(subline_groups)} different groups, "
+                f"RTFBody formatting attributes will be applied uniformly to the entire table. "
+                f"Ensure formatting is consistent across all subline groups."
             )
+        
+        return warnings
     
     def _validate_no_overlapping_grouping_vars(
         self,

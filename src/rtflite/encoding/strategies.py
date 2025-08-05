@@ -500,6 +500,16 @@ class PaginatedStrategy(EncodingStrategy):
         # Prepare DataFrame for processing (remove subline_by columns, apply group_by if needed)
         processed_df, original_df = self.encoding_service.prepare_dataframe_for_body_encoding(document.df, document.rtf_body)
         
+        # Validate subline_by formatting consistency before processing
+        if document.rtf_body.subline_by is not None:
+            from ..services.grouping_service import grouping_service
+            import warnings
+            formatting_warnings = grouping_service.validate_subline_formatting_consistency(
+                original_df, document.rtf_body.subline_by, document.rtf_body
+            )
+            for warning_msg in formatting_warnings:
+                warnings.warn(f"subline_by formatting: {warning_msg}", UserWarning, stacklevel=3)
+        
         # Get pagination instance and distribute content (use processed data for distribution)
         _, distributor = self.document_service.create_pagination_instance(document)
         col_total_width = document.rtf_page.col_width

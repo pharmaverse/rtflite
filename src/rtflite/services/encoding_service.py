@@ -291,6 +291,16 @@ class RTFEncodingService:
                 subline_by=rtf_attrs.subline_by
             )
         
+        # Validate subline_by formatting consistency and issue warnings
+        if rtf_attrs.subline_by is not None:
+            from .grouping_service import grouping_service
+            import warnings
+            formatting_warnings = grouping_service.validate_subline_formatting_consistency(
+                df, rtf_attrs.subline_by, rtf_attrs
+            )
+            for warning_msg in formatting_warnings:
+                warnings.warn(f"subline_by formatting: {warning_msg}", UserWarning, stacklevel=2)
+        
         # Apply group_by and subline_by processing if specified
         processed_df, original_df = self.prepare_dataframe_for_body_encoding(df, rtf_attrs)
 
