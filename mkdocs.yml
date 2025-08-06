@@ -12,6 +12,7 @@ nav:
     - Examples:
       - articles/example-baseline.md
       - articles/example-ae.md
+      - articles/example-efficacy.md
       - articles/example-figure.md
     - Formatting:
       - articles/format-row.md
