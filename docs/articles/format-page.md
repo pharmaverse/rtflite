@@ -59,7 +59,7 @@ doc_default = RTFDocument(
 doc_default.write_rtf("../rtf/formatting-page-default.rtf")
 ```
 
-<embed src="../pdf/formatting_page_default.pdf" style="width:100%; height:400px" type="application/pdf">
+<embed src="../pdf/formatting-page-default.pdf" style="width:100%; height:400px" type="application/pdf">
 
 ### Example 2: Title on First Page Only
 
@@ -84,7 +84,7 @@ doc_title_first = RTFDocument(
 doc_title_first.write_rtf("../rtf/formatting-page-title-first.rtf")
 ```
 
-<embed src="../pdf/formatting_page_title_first.pdf" style="width:100%; height:400px" type="application/pdf">
+<embed src="../pdf/formatting-page-title-first.pdf" style="width:100%; height:400px" type="application/pdf">
 
 ### Example 3: Footnote on First Page
 
@@ -109,7 +109,7 @@ doc_footnote_first = RTFDocument(
 doc_footnote_first.write_rtf("../rtf/formatting-page-footnote-first.rtf")
 ```
 
-<embed src="../pdf/formatting_page_footnote_first.pdf" style="width:100%; height:400px" type="application/pdf">
+<embed src="../pdf/formatting-page-footnote-first.pdf" style="width:100%; height:400px" type="application/pdf">
 
 ### Example 4: All Components on All Pages
 
@@ -134,7 +134,7 @@ doc_all_pages = RTFDocument(
 doc_all_pages.write_rtf("../rtf/formatting-page-all-pages.rtf")
 ```
 
-<embed src="../pdf/formatting_page_all_pages.pdf" style="width:100%; height:400px" type="application/pdf">
+<embed src="../pdf/formatting-page-all-pages.pdf" style="width:100%; height:400px" type="application/pdf">
 
 ### Example 5: Custom Combination
 
@@ -159,4 +159,4 @@ doc_custom = RTFDocument(
 doc_custom.write_rtf("../rtf/formatting-page-custom.rtf")
 ```
 
-<embed src="../pdf/formatting_page_custom.pdf" style="width:100%; height:400px" type="application/pdf">
+<embed src="../pdf/formatting-page-custom.pdf" style="width:100%; height:400px" type="application/pdf">

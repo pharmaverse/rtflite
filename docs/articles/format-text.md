@@ -65,7 +65,7 @@ doc_formats = rtf.RTFDocument(
 doc_formats.write_rtf("../rtf/text-format-styles.rtf")
 ```
 
-<embed src="../pdf/text_format_styles.pdf" style="width:100%; height:400px" type="application/pdf">
+<embed src="../pdf/text-format-styles.pdf" style="width:100%; height:400px" type="application/pdf">
 
 ## Font Size and Alignment
 
@@ -99,7 +99,7 @@ doc_font_align = rtf.RTFDocument(
 doc_font_align.write_rtf("../rtf/text-font-size-alignment.rtf")
 ```
 
-<embed src="../pdf/text_font_size_alignment.pdf" style="width:100%; height:400px" type="application/pdf">
+<embed src="../pdf/text-font-size-alignment.pdf" style="width:100%; height:400px" type="application/pdf">
 
 ## Text Color
 
@@ -133,7 +133,7 @@ doc_colors = rtf.RTFDocument(
 doc_colors.write_rtf("../rtf/text-color.rtf")
 ```
 
-<embed src="../pdf/text_color.pdf" style="width:100%; height:400px" type="application/pdf">
+<embed src="../pdf/text-color.pdf" style="width:100%; height:400px" type="application/pdf">
 
 ## Indentation
 
@@ -165,4 +165,4 @@ doc_indent = rtf.RTFDocument(
 doc_indent.write_rtf("../rtf/text-indentation.rtf")
 ```
 
-<embed src="../pdf/text_indentation.pdf" style="width:100%; height:400px" type="application/pdf">
+<embed src="../pdf/text-indentation.pdf" style="width:100%; height:400px" type="application/pdf">

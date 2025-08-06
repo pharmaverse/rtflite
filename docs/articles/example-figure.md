@@ -68,7 +68,7 @@ doc_age = rtf.RTFDocument(
 doc_age.write_rtf("../rtf/example-figure-age.rtf")
 ```
 
-<embed src="../pdf/example_figure_age.pdf" style="width:100%; height:400px" type="application/pdf">
+<embed src="../pdf/example-figure-age.pdf" style="width:100%; height:400px" type="application/pdf">
 
 ## Multiple Figures with Elements on Every Page
 
@@ -107,4 +107,4 @@ doc_multi_page = rtf.RTFDocument(
 doc_multi_page.write_rtf("../rtf/example-figure-multipage.rtf")
 ```
 
-<embed src="../pdf/example_figure_multipage.pdf" style="width:100%; height:400px" type="application/pdf">
+<embed src="../pdf/example-figure-multipage.pdf" style="width:100%; height:400px" type="application/pdf">
