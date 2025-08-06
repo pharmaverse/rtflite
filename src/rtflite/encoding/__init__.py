@@ -5,10 +5,10 @@ supporting multiple encoding strategies and preparing for future content types.
 """
 
 from .engine import RTFEncodingEngine
-from .strategies import SinglePageStrategy, PaginatedStrategy
+from .strategies import PaginatedStrategy, SinglePageStrategy
 
 __all__ = [
     "RTFEncodingEngine",
-    "SinglePageStrategy", 
+    "SinglePageStrategy",
     "PaginatedStrategy",
 ]

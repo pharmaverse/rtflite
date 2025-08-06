@@ -1,5 +1,7 @@
 from importlib.resources import files
+
 import polars as pl
+
 import rtflite as rtf
 
 data_path = files("rtflite.data").joinpath("adae.parquet")
@@ -78,7 +80,7 @@ doc_single = rtf.RTFDocument(
     ),
 )
 
-doc_single.write_rtf("../rtf/example_advance_single.rtf")
+doc_single.write_rtf("../rtf/advanced-group-by-single.rtf")
 
 ae_large = ae_t1.head(100)  # Use more rows to trigger pagination
 
@@ -110,7 +112,7 @@ doc_multipage = rtf.RTFDocument(
     ),
 )
 
-doc_multipage.write_rtf("../rtf/example_advance_multipage.rtf")
+doc_multipage.write_rtf("../rtf/advanced-group-by-multipage.rtf")
 
 ae_with_treatments = (
     ae_t1.filter(pl.col("TRTA").is_in(["Placebo", "Xanomeline High Dose"]))
@@ -156,7 +158,7 @@ doc_treatment_separated = rtf.RTFDocument(
     ),
 )
 
-doc_treatment_separated.write_rtf("../rtf/example_advance_group_newpage.rtf")
+doc_treatment_separated.write_rtf("../rtf/advanced-group-by-group-newpage.rtf")
 
 ae_subline_data = (
     ae_t1.filter(pl.col("TRTA").is_in(["Placebo", "Xanomeline High Dose"]))
@@ -204,7 +206,7 @@ doc_subline = rtf.RTFDocument(
     ),
 )
 
-doc_subline.write_rtf("../rtf/example_advance_subline.rtf")
+doc_subline.write_rtf("../rtf/advanced-group-by-subline.rtf")
 
 ae_comprehensive = (
     ae_t1.head(40)
@@ -263,4 +265,4 @@ doc_comprehensive = rtf.RTFDocument(
     ),
 )
 
-doc_comprehensive.write_rtf("../rtf/example_advance_comprehensive.rtf")
+doc_comprehensive.write_rtf("../rtf/advanced-group-by-comprehensive.rtf")

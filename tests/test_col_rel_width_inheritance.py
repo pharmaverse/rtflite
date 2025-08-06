@@ -1,4 +1,5 @@
 import polars as pl
+
 from rtflite.encode import RTFDocument
 from rtflite.input import RTFBody, RTFColumnHeader
 

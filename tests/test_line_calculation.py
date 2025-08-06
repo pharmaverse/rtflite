@@ -1,6 +1,7 @@
 import pytest
-from rtflite.input import RTFBody, RTFTitle
+
 from rtflite.attributes import TextAttributes
+from rtflite.input import RTFBody, RTFTitle
 
 
 class TestLineCalculation:

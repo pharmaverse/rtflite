@@ -4,9 +4,9 @@ This module provides functions for reading and processing images
 for embedding in RTF documents.
 """
 
+import mimetypes
 from pathlib import Path
 from typing import Union
-import mimetypes
 
 
 def rtf_read_figure(

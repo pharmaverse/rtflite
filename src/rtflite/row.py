@@ -19,7 +19,6 @@ VERTICAL_ALIGNMENT_CODES = RTFConstants.VERTICAL_ALIGNMENT_CODES
 
 
 class Utils:
-
     @staticmethod
     def _font_type() -> Mapping:
         """Define font types"""
@@ -47,9 +46,9 @@ class Utils:
         """Get the index of a color in the color table."""
         if not color or color == "black":
             return 0  # Default/black color
-            
-        from .services.color_service import color_service, ColorValidationError
-        
+
+        from .services.color_service import ColorValidationError, color_service
+
         try:
             # If no explicit used_colors provided, the color service will use document context
             return color_service.get_rtf_color_index(color, used_colors)
@@ -77,9 +76,15 @@ class TextContent(BaseModel):
     indent_left: int = Field(default=0, description="Left indent")
     indent_right: int = Field(default=0, description="Right indent")
     space: int = Field(default=1, description="Line spacing")
-    space_before: int = Field(default=RTFConstants.DEFAULT_SPACE_BEFORE, description="Space before paragraph")
-    space_after: int = Field(default=RTFConstants.DEFAULT_SPACE_AFTER, description="Space after paragraph")
-    convert: bool = Field(default=True, description="Enable LaTeX to Unicode conversion")
+    space_before: int = Field(
+        default=RTFConstants.DEFAULT_SPACE_BEFORE, description="Space before paragraph"
+    )
+    space_after: int = Field(
+        default=RTFConstants.DEFAULT_SPACE_AFTER, description="Space after paragraph"
+    )
+    convert: bool = Field(
+        default=True, description="Enable LaTeX to Unicode conversion"
+    )
     hyphenation: bool = Field(default=True, description="Enable hyphenation")
 
     def _get_paragraph_formatting(self) -> str:
@@ -96,12 +101,20 @@ class TextContent(BaseModel):
         rtf.append(f"\\sb{self.space_before}")
         rtf.append(f"\\sa{self.space_after}")
         if self.space != 1:
-            rtf.append(f"\\sl{int(self.space * RTFConstants.LINE_SPACING_FACTOR)}\\slmult1")
+            rtf.append(
+                f"\\sl{int(self.space * RTFConstants.LINE_SPACING_FACTOR)}\\slmult1"
+            )
 
         # Indentation
-        rtf.append(f"\\fi{Utils._inch_to_twip(self.indent_first / RTFConstants.TWIPS_PER_INCH)}")
-        rtf.append(f"\\li{Utils._inch_to_twip(self.indent_left / RTFConstants.TWIPS_PER_INCH)}")
-        rtf.append(f"\\ri{Utils._inch_to_twip(self.indent_right / RTFConstants.TWIPS_PER_INCH)}")
+        rtf.append(
+            f"\\fi{Utils._inch_to_twip(self.indent_first / RTFConstants.TWIPS_PER_INCH)}"
+        )
+        rtf.append(
+            f"\\li{Utils._inch_to_twip(self.indent_left / RTFConstants.TWIPS_PER_INCH)}"
+        )
+        rtf.append(
+            f"\\ri{Utils._inch_to_twip(self.indent_right / RTFConstants.TWIPS_PER_INCH)}"
+        )
 
         # Justification
         if self.justification not in TEXT_JUSTIFICATION_CODES:
@@ -147,7 +160,7 @@ class TextContent(BaseModel):
         """Convert special characters to RTF codes."""
         # First apply LaTeX to Unicode conversion if enabled
         text = text_convert(self.text, self.convert)
-        
+
         converted_text = ""
         for char in text:
             unicode_int = ord(char)
@@ -156,9 +169,9 @@ class TextContent(BaseModel):
             else:
                 rtf_value = unicode_int - (0 if unicode_int < 32768 else 65536)
                 converted_text += f"\\uc1\\u{rtf_value}*"
-        
+
         text = converted_text
-        
+
         # Basic RTF character conversion (matching r2rtf char_rtf mapping)
         # Only apply character conversions if text conversion is enabled
         if self.convert:
@@ -193,7 +206,9 @@ class Border(BaseModel):
     style: str = Field(
         default="single", description="Border style (single, double, dashed, etc)"
     )
-    width: int = Field(default=RTFConstants.DEFAULT_BORDER_WIDTH, description="Border width in twips")
+    width: int = Field(
+        default=RTFConstants.DEFAULT_BORDER_WIDTH, description="Border width in twips"
+    )
     color: str | None = Field(default=None, description="Border color")
 
     def _as_rtf(self) -> str:

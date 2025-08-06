@@ -1,6 +1,7 @@
 import pytest
-from rtflite.input import RTFTitle
+
 from rtflite.attributes import TextAttributes
+from rtflite.input import RTFTitle
 from rtflite.strwidth import get_string_width
 
 

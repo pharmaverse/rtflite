@@ -1,5 +1,7 @@
 from importlib.resources import files
+
 import polars as pl
+
 import rtflite as rtf
 
 data_path1 = files("rtflite.data").joinpath("tbl1.parquet")
@@ -76,4 +78,4 @@ doc = rtf.RTFDocument(
     rtf_source=rtf.RTFSource(text=["Source: [study999: adam-adeff]"]),
 )
 
-doc.write_rtf("../rtf/example_efficacy.rtf")
+doc.write_rtf("../rtf/example-efficacy.rtf")

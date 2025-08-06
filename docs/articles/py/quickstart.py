@@ -1,5 +1,7 @@
 from importlib.resources import files
+
 import polars as pl
+
 import rtflite as rtf
 
 data_path = files("rtflite.data").joinpath("adae.parquet")
@@ -112,8 +114,6 @@ doc = rtf.RTFDocument(
 )
 
 doc.write_rtf("../rtf/intro-ae6.rtf")
-
-import polars as pl
 
 data_with_underscores = pl.DataFrame(
     {

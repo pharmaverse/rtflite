@@ -1,14 +1,15 @@
-from rtflite.encode import RTFDocument
-from rtflite.input import (
-    RTFTitle,
-    RTFFootnote,
-    RTFSource,
-    RTFBody,
-    TextAttributes,
-    RTFPage,
-)
 import polars as pl
 import pytest
+
+from rtflite.encode import RTFDocument
+from rtflite.input import (
+    RTFBody,
+    RTFFootnote,
+    RTFPage,
+    RTFSource,
+    RTFTitle,
+    TextAttributes,
+)
 
 from .utils import ROutputReader, TestData
 from .utils_snapshot import assert_rtf_equals_semantic
@@ -55,7 +56,7 @@ def test_rtf_encode_with_title():
         rtf_title=RTFTitle(text=["title 1", "title 2"], text_font_size=[1, 2]),
     )
     assert rtf_doc.rtf_title.text_font_size == (1.0, 2.0)
-    
+
     # Test that document encodes successfully with title
     rtf_output = rtf_doc.rtf_encode()
     assert isinstance(rtf_output, str)
@@ -330,7 +331,6 @@ def test_rtf_footnote_as_table_boolean_storage():
     assert footnote.border_right == [["single"]]
     assert footnote.border_top == [["single"]]
     assert footnote.border_bottom == [[""]]
-
 
 
 def test_rtf_footnote_as_table_with_multiple_lines():

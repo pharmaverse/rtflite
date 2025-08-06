@@ -26,12 +26,16 @@ By default:
 ### Basic Setup
 
 ```{python}
-import polars as pl
-from rtflite import RTFDocument, RTFTitle, RTFFootnote, RTFSource, RTFPage
 from importlib.resources import files
 
+import polars as pl
+
+from rtflite import RTFDocument, RTFFootnote, RTFPage, RTFSource, RTFTitle
+```
+
+```{python}
 # Load the adverse events dataset
-data_path = files('rtflite.data').joinpath('adae.parquet')
+data_path = files("rtflite.data").joinpath("adae.parquet")
 df = pl.read_parquet(data_path).head(30)
 ```
 
@@ -40,107 +44,119 @@ df = pl.read_parquet(data_path).head(30)
 ```{python}
 # Default: title on all pages, footnote and source on last page
 doc_default = RTFDocument(
-    df=df.select(['USUBJID', 'TRTA', 'AEDECOD', 'AESEV', 'AESER', 'AEREL']),  # Select key columns
+    df=df.select(
+        ["USUBJID", "TRTA", "AEDECOD", "AESEV", "AESER", "AEREL"]
+    ),  # Select key columns
     rtf_page=RTFPage(nrow=15),  # Force pagination with 15 rows per page
-    rtf_title=RTFTitle(text='Adverse Events Summary by Treatment'),
-    rtf_footnote=RTFFootnote(text='Abbreviations: USUBJID=Subject ID, TRTA=Treatment, AEDECOD=Adverse Event, AESEV=Severity, AESER=Serious, AEREL=Related'),
-    rtf_source=RTFSource(text='Source: ADAE Dataset from Clinical Trial Database')
+    rtf_title=RTFTitle(text="Adverse Events Summary by Treatment"),
+    rtf_footnote=RTFFootnote(
+        text="Abbreviations: USUBJID=Subject ID, TRTA=Treatment, AEDECOD=Adverse Event, AESEV=Severity, AESER=Serious, AEREL=Related"
+    ),
+    rtf_source=RTFSource(text="Source: ADAE Dataset from Clinical Trial Database"),
 )
 
 # Generate RTF and save to file
-doc_default.write_rtf("../rtf/formatting_page_default.rtf")
+doc_default.write_rtf("../rtf/formatting-page-default.rtf")
 ```
 
-<embed src="../pdf/formatting_page_default.pdf" style="width:100%; height:400px" type="application/pdf">
+<embed src="../pdf/formatting-page-default.pdf" style="width:100%; height:400px" type="application/pdf">
 
 ### Example 2: Title on First Page Only
 
 ```{python}
 # Title on first page only, footnote and source on last page
 doc_title_first = RTFDocument(
-    df=df.select(['USUBJID', 'TRTA', 'AEDECOD', 'AESEV', 'AESER', 'AEREL']),
+    df=df.select(["USUBJID", "TRTA", "AEDECOD", "AESEV", "AESER", "AEREL"]),
     rtf_page=RTFPage(
         nrow=15,
-        page_title="first",      # Title on first page only
-        page_footnote="last",    # Footnote on last page (default)
-        page_source="last"       # Source on last page (default)
+        page_title="first",  # Title on first page only
+        page_footnote="last",  # Footnote on last page (default)
+        page_source="last",  # Source on last page (default)
     ),
-    rtf_title=RTFTitle(text='Adverse Events Summary by Treatment'),
-    rtf_footnote=RTFFootnote(text='Abbreviations: USUBJID=Subject ID, TRTA=Treatment, AEDECOD=Adverse Event, AESEV=Severity, AESER=Serious, AEREL=Related'),
-    rtf_source=RTFSource(text='Source: ADAE Dataset from Clinical Trial Database')
+    rtf_title=RTFTitle(text="Adverse Events Summary by Treatment"),
+    rtf_footnote=RTFFootnote(
+        text="Abbreviations: USUBJID=Subject ID, TRTA=Treatment, AEDECOD=Adverse Event, AESEV=Severity, AESER=Serious, AEREL=Related"
+    ),
+    rtf_source=RTFSource(text="Source: ADAE Dataset from Clinical Trial Database"),
 )
 
 # Generate RTF and save to file
-doc_title_first.write_rtf("../rtf/formatting_page_title_first.rtf")
+doc_title_first.write_rtf("../rtf/formatting-page-title-first.rtf")
 ```
 
-<embed src="../pdf/formatting_page_title_first.pdf" style="width:100%; height:400px" type="application/pdf">
+<embed src="../pdf/formatting-page-title-first.pdf" style="width:100%; height:400px" type="application/pdf">
 
 ### Example 3: Footnote on First Page
 
 ```{python}
 # Title on first page (default), footnote on first page, source on last page
 doc_footnote_first = RTFDocument(
-    df=df.select(['USUBJID', 'TRTA', 'AEDECOD', 'AESEV', 'AESER', 'AEREL']),
+    df=df.select(["USUBJID", "TRTA", "AEDECOD", "AESEV", "AESER", "AEREL"]),
     rtf_page=RTFPage(
         nrow=15,
-        page_title="first",      # Title on first page
-        page_footnote="first",   # Footnote on first page
-        page_source="last"       # Source on last page (default)
+        page_title="first",  # Title on first page
+        page_footnote="first",  # Footnote on first page
+        page_source="last",  # Source on last page (default)
     ),
-    rtf_title=RTFTitle(text='Adverse Events Summary by Treatment'),
-    rtf_footnote=RTFFootnote(text='Abbreviations: USUBJID=Subject ID, TRTA=Treatment, AEDECOD=Adverse Event, AESEV=Severity, AESER=Serious, AEREL=Related'),
-    rtf_source=RTFSource(text='Source: ADAE Dataset from Clinical Trial Database')
+    rtf_title=RTFTitle(text="Adverse Events Summary by Treatment"),
+    rtf_footnote=RTFFootnote(
+        text="Abbreviations: USUBJID=Subject ID, TRTA=Treatment, AEDECOD=Adverse Event, AESEV=Severity, AESER=Serious, AEREL=Related"
+    ),
+    rtf_source=RTFSource(text="Source: ADAE Dataset from Clinical Trial Database"),
 )
 
 # Generate RTF and save to file
-doc_footnote_first.write_rtf("../rtf/formatting_page_footnote_first.rtf")
+doc_footnote_first.write_rtf("../rtf/formatting-page-footnote-first.rtf")
 ```
 
-<embed src="../pdf/formatting_page_footnote_first.pdf" style="width:100%; height:400px" type="application/pdf">
+<embed src="../pdf/formatting-page-footnote-first.pdf" style="width:100%; height:400px" type="application/pdf">
 
 ### Example 4: All Components on All Pages
 
 ```{python}
 # All components on all pages
 doc_all_pages = RTFDocument(
-    df=df.select(['USUBJID', 'TRTA', 'AEDECOD', 'AESEV', 'AESER', 'AEREL']),
+    df=df.select(["USUBJID", "TRTA", "AEDECOD", "AESEV", "AESER", "AEREL"]),
     rtf_page=RTFPage(
         nrow=15,
-        page_title="all",        # Title on all pages
-        page_footnote="all",     # Footnote on all pages
-        page_source="all"        # Source on all pages
+        page_title="all",  # Title on all pages
+        page_footnote="all",  # Footnote on all pages
+        page_source="all",  # Source on all pages
     ),
-    rtf_title=RTFTitle(text='Adverse Events Summary by Treatment'),
-    rtf_footnote=RTFFootnote(text='Abbreviations: USUBJID=Subject ID, TRTA=Treatment, AEDECOD=Adverse Event, AESEV=Severity, AESER=Serious, AEREL=Related'),
-    rtf_source=RTFSource(text='Source: ADAE Dataset from Clinical Trial Database')
+    rtf_title=RTFTitle(text="Adverse Events Summary by Treatment"),
+    rtf_footnote=RTFFootnote(
+        text="Abbreviations: USUBJID=Subject ID, TRTA=Treatment, AEDECOD=Adverse Event, AESEV=Severity, AESER=Serious, AEREL=Related"
+    ),
+    rtf_source=RTFSource(text="Source: ADAE Dataset from Clinical Trial Database"),
 )
 
 # Generate RTF and save to file
-doc_all_pages.write_rtf("../rtf/formatting_page_all_pages.rtf")
+doc_all_pages.write_rtf("../rtf/formatting-page-all-pages.rtf")
 ```
 
-<embed src="../pdf/formatting_page_all_pages.pdf" style="width:100%; height:400px" type="application/pdf">
+<embed src="../pdf/formatting-page-all-pages.pdf" style="width:100%; height:400px" type="application/pdf">
 
 ### Example 5: Custom Combination
 
 ```{python}
 # Custom combination: title everywhere, footnote on first page, source on last page
 doc_custom = RTFDocument(
-    df=df.select(['USUBJID', 'TRTA', 'AEDECOD', 'AESEV', 'AESER', 'AEREL']),
+    df=df.select(["USUBJID", "TRTA", "AEDECOD", "AESEV", "AESER", "AEREL"]),
     rtf_page=RTFPage(
         nrow=15,
-        page_title="all",        # Title on all pages
-        page_footnote="first",   # Footnote on first page only
-        page_source="last"       # Source on last page only
+        page_title="all",  # Title on all pages
+        page_footnote="first",  # Footnote on first page only
+        page_source="last",  # Source on last page only
     ),
-    rtf_title=RTFTitle(text='Adverse Events Summary by Treatment'),
-    rtf_footnote=RTFFootnote(text='Abbreviations: USUBJID=Subject ID, TRTA=Treatment, AEDECOD=Adverse Event, AESEV=Severity, AESER=Serious, AEREL=Related'),
-    rtf_source=RTFSource(text='Source: ADAE Dataset from Clinical Trial Database')
+    rtf_title=RTFTitle(text="Adverse Events Summary by Treatment"),
+    rtf_footnote=RTFFootnote(
+        text="Abbreviations: USUBJID=Subject ID, TRTA=Treatment, AEDECOD=Adverse Event, AESEV=Severity, AESER=Serious, AEREL=Related"
+    ),
+    rtf_source=RTFSource(text="Source: ADAE Dataset from Clinical Trial Database"),
 )
 
 # Generate RTF and save to file
-doc_custom.write_rtf("../rtf/formatting_page_custom.rtf")
+doc_custom.write_rtf("../rtf/formatting-page-custom.rtf")
 ```
 
-<embed src="../pdf/formatting_page_custom.pdf" style="width:100%; height:400px" type="application/pdf">
+<embed src="../pdf/formatting-page-custom.pdf" style="width:100%; height:400px" type="application/pdf">

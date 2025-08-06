@@ -1,11 +1,10 @@
-import pytest
 import polars as pl
+import pytest
 
 import rtflite as rtf
+
 from .utils import ROutputReader
-from .utils_snapshot import (
-    assert_rtf_equals_semantic,
-)
+from .utils_snapshot import assert_rtf_equals_semantic
 
 r_output = ROutputReader("test_pagination")
 

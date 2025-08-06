@@ -1,27 +1,23 @@
 from .convert import LibreOfficeConverter
-from .core import RTFConstants, RTFConfiguration
+from .core import RTFConfiguration, RTFConstants
 from .encode import RTFDocument
+from .figure import rtf_read_figure
 from .input import (
     RTFBody,
     RTFColumnHeader,
     RTFFigure,
-    RTFPage,
-    RTFTitle,
-    RTFPageHeader,
-    RTFPageFooter,
     RTFFootnote,
+    RTFPage,
+    RTFPageFooter,
+    RTFPageHeader,
     RTFSource,
+    RTFTitle,
 )
-from .figure import rtf_read_figure
-from .pagination import (
-    RTFPagination,
-    PageBreakCalculator,
-    ContentDistributor,
-)
+from .pagination import ContentDistributor, PageBreakCalculator, RTFPagination
 
 __all__ = [
     "LibreOfficeConverter",
-    "RTFDocument", 
+    "RTFDocument",
     "RTFBody",
     "RTFColumnHeader",
     "RTFFigure",

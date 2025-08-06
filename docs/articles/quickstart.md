@@ -32,13 +32,15 @@ information from a clinical trial.
 
 Below is the meaning of relevant variables.
 
-- USUBJID: Unique Subject Identifier
-- TRTA: Actual Treatment
-- AEDECOD: Dictionary-Derived Term
+- `USUBJID`: Unique Subject Identifier
+- `TRTA`: Actual Treatment
+- `AEDECOD`: Dictionary-Derived Term
 
 ``` python
 from importlib.resources import files
+
 import polars as pl
+
 import rtflite as rtf
 ```
 
@@ -47,7 +49,7 @@ import rtflite as rtf
 data_path = files("rtflite.data").joinpath("adae.parquet")
 df = pl.read_parquet(data_path)
 
-df.select(['USUBJID', 'TRTA', 'AEDECOD']).head(4)
+df.select(["USUBJID", "TRTA", "AEDECOD"]).head(4)
 ```
 
 ## Table ready data
@@ -62,13 +64,12 @@ by treatment group.
 
 ``` python
 tbl = (
-    df.
-    group_by(['TRTA', 'AEDECOD'])
-    .agg(pl.len().alias('n'))
+    df.group_by(["TRTA", "AEDECOD"])
+    .agg(pl.len().alias("n"))
     .sort("TRTA")
-    .pivot(values='n', index='AEDECOD', on='TRTA')
+    .pivot(values="n", index="AEDECOD", on="TRTA")
     .fill_null(0)
-    .sort('AEDECOD')  # Sort by adverse event name to match R output
+    .sort("AEDECOD")  # Sort by adverse event name to match R output
 )
 print(tbl.head(4))
 ```
@@ -106,7 +107,7 @@ RTF table.
 # Create simple RTF document
 doc = rtf.RTFDocument(
     df=tbl.head(6),
-    rtf_body=rtf.RTFBody()  # Step 1: Add table attributes
+    rtf_body=rtf.RTFBody(),  # Step 1: Add table attributes
 )
 
 # Step 2 & 3: Convert to RTF and write to file
@@ -135,7 +136,7 @@ doc = rtf.RTFDocument(
     df=tbl.head(6),
     rtf_body=rtf.RTFBody(
         col_rel_width=[3, 2, 2, 2]  # define relative width
-    )
+    ),
 )
 
 doc.write_rtf("../rtf/intro-ae2.rtf")
@@ -153,11 +154,14 @@ column header. We used a list to separate the columns.
 doc = rtf.RTFDocument(
     df=tbl.head(6),
     rtf_column_header=rtf.RTFColumnHeader(
-        text=["Adverse Events", "Placebo", "Xanomeline High Dose", "Xanomeline Low Dose"],
+        text=[
+            "Adverse Events",
+            "Placebo",
+            "Xanomeline High Dose",
+            "Xanomeline Low Dose",
+        ],
     ),
-    rtf_body=rtf.RTFBody(
-        col_rel_width=[3, 2, 2, 2]
-    )
+    rtf_body=rtf.RTFBody(col_rel_width=[3, 2, 2, 2]),
 )
 
 doc.write_rtf("../rtf/intro-ae3.rtf")
@@ -180,20 +184,20 @@ will repeat at each page by default.
 # Create RTF document with multi-line column headers
 doc = rtf.RTFDocument(
     df=tbl.head(50),
-    rtf_page=rtf.RTFPage(nrow = 15),
+    rtf_page=rtf.RTFPage(nrow=15),
     rtf_column_header=[
+        rtf.RTFColumnHeader(text=[" ", "Treatment"], col_rel_width=[3, 3]),
         rtf.RTFColumnHeader(
-            text=[" ", "Treatment"],
-            col_rel_width=[3, 3]
+            text=[
+                "Adverse Events",
+                "Placebo",
+                "Xanomeline High Dose",
+                "Xanomeline Low Dose",
+            ],
+            col_rel_width=[3, 1, 1, 1],
         ),
-        rtf.RTFColumnHeader(
-            text=["Adverse Events", "Placebo", "Xanomeline High Dose", "Xanomeline Low Dose"],
-            col_rel_width=[3, 1, 1, 1]
-        )
     ],
-    rtf_body=rtf.RTFBody(
-        col_rel_width=[3, 1, 1, 1]
-    )
+    rtf_body=rtf.RTFBody(col_rel_width=[3, 1, 1, 1]),
 )
 
 doc.write_rtf("../rtf/intro-ae4.rtf")
@@ -215,10 +219,7 @@ documentation:
 doc = rtf.RTFDocument(
     df=tbl.head(15),
     rtf_title=rtf.RTFTitle(
-        text=[
-            "Summary of Adverse Events by Treatment Group",
-            "Safety Analysis Set"
-        ]
+        text=["Summary of Adverse Events by Treatment Group", "Safety Analysis Set"]
     ),
     rtf_column_header=rtf.RTFColumnHeader(
         text=[
@@ -232,12 +233,10 @@ doc = rtf.RTFDocument(
     rtf_footnote=rtf.RTFFootnote(
         text=[
             "Adverse events are coded using MedDRA version 25.0.",
-            "Events are sorted alphabetically by preferred term."
+            "Events are sorted alphabetically by preferred term.",
         ]
     ),
-    rtf_source=rtf.RTFSource(
-        text="Source: ADAE dataset, Data cutoff: 01JAN2023"
-    ),
+    rtf_source=rtf.RTFSource(text="Source: ADAE dataset, Data cutoff: 01JAN2023"),
 )
 
 doc.write_rtf("../rtf/intro-ae5.rtf")
@@ -285,9 +284,9 @@ doc.write_rtf("../rtf/intro-ae6.rtf")
 
 ## Text Conversion Control
 
-`rtflite` supports LaTeX-style text conversion for mathematical symbols
+rtflite supports LaTeX-style text conversion for mathematical symbols
 and formatting. By default, text conversion is enabled for titles and
-data content, but can be controlled with `text_convert` parameter.
+data content, but can be controlled with the `text_convert` parameter.
 
 ### Text Conversion Examples
 
@@ -301,22 +300,20 @@ displays as `a_b`
 
 ``` python
 # Example showing text_convert behavior with subscript patterns
-import polars as pl
-
 # Create example data with underscore patterns
-data_with_underscores = pl.DataFrame({
-    "Parameter": ["x_max", "y_min", "z_avg", "a_b_ratio"],
-    "Value": [15.2, 8.7, 12.1, 0.85],
-    "Unit": ["mg/L", "cm", "C", "ratio"]
-})
+data_with_underscores = pl.DataFrame(
+    {
+        "Parameter": ["x_max", "y_min", "z_avg", "a_b_ratio"],
+        "Value": [15.2, 8.7, 12.1, 0.85],
+        "Unit": ["mg/L", "cm", "C", "ratio"],
+    }
+)
 ```
 
 ``` python
 doc_converted = rtf.RTFDocument(
     df=data_with_underscores,
-    rtf_title=rtf.RTFTitle(
-        text="Study Parameters with Text Conversion Enabled"
-    ),
+    rtf_title=rtf.RTFTitle(text="Study Parameters with Text Conversion Enabled"),
     rtf_column_header=rtf.RTFColumnHeader(
         text=["Parameter", "Value", "Unit"],
     ),
@@ -325,8 +322,8 @@ doc_converted = rtf.RTFDocument(
     ),
     rtf_footnote=rtf.RTFFootnote(
         text="Note: Underscores x_max and y_min in footnote as is",
-        text_convert=False  # Keep footnote text as-is
-    )
+        text_convert=False,  # Keep footnote text as-is
+    ),
 )
 
 doc_converted.write_rtf("../rtf/text-convert.rtf")
@@ -398,13 +395,11 @@ doc = rtf.RTFDocument(
         # Default: "Page \chpgn of {\field{\*\fldinst NUMPAGES }}"
         # Uses r2rtf-compatible RTF field codes
     ),
-    rtf_page_footer=rtf.RTFPageFooter(
-        text="Confidential - Clinical Study Report"
-    ),
+    rtf_page_footer=rtf.RTFPageFooter(text="Confidential - Clinical Study Report"),
     rtf_title=rtf.RTFTitle(
         text=[
             "Summary of Adverse Events by Treatment Group",
-            "With Page Headers and Footers"
+            "With Page Headers and Footers",
         ]
     ),
     rtf_column_header=rtf.RTFColumnHeader(
@@ -436,20 +431,21 @@ doc = rtf.RTFDocument(
         text="Study XYZ-123 | Page \\chpgn",
         text_font_size=10,
         text_justification="c",  # Center aligned
-        text_format="b"         # Bold
+        text_format="b",  # Bold
     ),
     rtf_page_footer=rtf.RTFPageFooter(
-        text=[
-            "Company Confidential"
-        ],
+        text=["Company Confidential"],
         text_font_size=8,
-        text_justification="l"  # Left aligned
+        text_justification="l",  # Left aligned
     ),
-    rtf_title=rtf.RTFTitle(
-        text="Adverse Events with Custom Headers/Footers"
-    ),
+    rtf_title=rtf.RTFTitle(text="Adverse Events with Custom Headers/Footers"),
     rtf_column_header=rtf.RTFColumnHeader(
-        text=["Adverse Events", "Placebo", "Xanomeline High Dose", "Xanomeline Low Dose"],
+        text=[
+            "Adverse Events",
+            "Placebo",
+            "Xanomeline High Dose",
+            "Xanomeline Low Dose",
+        ],
     ),
     rtf_body=rtf.RTFBody(col_rel_width=[3, 2, 2, 2]),
 )
@@ -475,12 +471,10 @@ doc = rtf.RTFDocument(
     rtf_page=rtf.RTFPage(
         orientation="landscape",  # Landscape for wider tables
         nrow=10,
-        border_first="dashed",   # Dash border for first/last pages
-        border_last="dashed"
+        border_first="dashed",  # Dash border for first/last pages
+        border_last="dashed",
     ),
-    rtf_title=rtf.RTFTitle(
-        text="Adverse Events Summary - Landscape Layout"
-    ),
+    rtf_title=rtf.RTFTitle(text="Adverse Events Summary - Landscape Layout"),
     rtf_column_header=rtf.RTFColumnHeader(
         text=[
             "Adverse Events",
@@ -508,19 +502,24 @@ from rtflite.attributes import BroadcastValue
 
 # Create custom border patterns
 border_pattern = [
-    ["single", "", "single", ""],     # Row 1: borders on columns 1 and 3
-    ["", "double", "", "double"],     # Row 2: borders on columns 2 and 4
-    ["single", "single", "single", "single"]  # Row 3: borders on all columns
+    ["single", "", "single", ""],  # Row 1: borders on columns 1 and 3
+    ["", "double", "", "double"],  # Row 2: borders on columns 2 and 4
+    ["single", "single", "single", "single"],  # Row 3: borders on all columns
 ]
 
 doc = rtf.RTFDocument(
     df=tbl.head(3),
     rtf_column_header=rtf.RTFColumnHeader(
-        text=["Adverse Events", "Placebo", "Xanomeline High Dose", "Xanomeline Low Dose"],
+        text=[
+            "Adverse Events",
+            "Placebo",
+            "Xanomeline High Dose",
+            "Xanomeline Low Dose",
+        ],
     ),
     rtf_body=rtf.RTFBody(
         col_rel_width=[3, 2, 2, 2],
-        border_top=border_pattern  # Apply custom border pattern
+        border_top=border_pattern,  # Apply custom border pattern
     ),
 )
 
@@ -548,7 +547,7 @@ doc = rtf.RTFDocument(
     rtf_title=rtf.RTFTitle(
         text=[
             "Complete Adverse Events Summary",
-            "All Treatment Groups - Multi-page Table"
+            "All Treatment Groups - Multi-page Table",
         ]
     ),
     rtf_column_header=rtf.RTFColumnHeader(
@@ -568,12 +567,10 @@ doc = rtf.RTFDocument(
         text=[
             "MedDRA version 25.0 coding applied.",
             "Table includes all reported adverse events regardless of relationship to study drug.",
-            "Events sorted alphabetically by preferred term."
+            "Events sorted alphabetically by preferred term.",
         ]
     ),
-    rtf_source=rtf.RTFSource(
-        text="Dataset: ADAE | Cutoff: 01JAN2023"
-    ),
+    rtf_source=rtf.RTFSource(text="Dataset: ADAE | Cutoff: 01JAN2023"),
 )
 
 doc.write_rtf("../rtf/intro-ae12.rtf")

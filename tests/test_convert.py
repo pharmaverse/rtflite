@@ -61,6 +61,7 @@ pytestmark = pytest.mark.skipif(
     not has_libreoffice(), reason=f"LibreOffice (>= {MIN_VERSION}) not found on system"
 )
 
+
 class TestLibreOfficeConverter:
     def test_init_default(self):
         """Test converter initialization with default executable path."""

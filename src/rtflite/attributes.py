@@ -41,7 +41,9 @@ def _to_nested_list(v):
             raise TypeError("Invalid value type. Must be a list or tuple.")
 
     # Use narwhals to handle any DataFrame type
-    if hasattr(v, '__dataframe__') or hasattr(v, 'columns'):  # Check if it's DataFrame-like
+    if hasattr(v, "__dataframe__") or hasattr(
+        v, "columns"
+    ):  # Check if it's DataFrame-like
         if isinstance(v, pl.DataFrame):
             v = v.rows()
         else:
@@ -54,7 +56,7 @@ def _to_nested_list(v):
                     v = v.rows()
 
     # Convert numpy arrays or array-like objects to lists
-    if hasattr(v, '__array__') and hasattr(v, 'tolist'):
+    if hasattr(v, "__array__") and hasattr(v, "tolist"):
         v = v.tolist()
 
     return v
@@ -135,7 +137,7 @@ class TextAttributes(BaseModel):
     text_color: list[str] | list[list[str]] | None = Field(
         default=None, description="Text color name or RGB value"
     )
-    
+
     @field_validator("text_color", mode="after")
     def validate_text_color(cls, v):
         if v is None:
@@ -148,22 +150,32 @@ class TextAttributes(BaseModel):
                     # Allow empty string for "no color"
                     if color and not color_service.validate_color(color):
                         suggestions = color_service.get_color_suggestions(color, 3)
-                        suggestion_text = f" Did you mean: {', '.join(suggestions)}?" if suggestions else ""
-                        raise ValueError(f"Invalid text color: '{color}'.{suggestion_text}")
+                        suggestion_text = (
+                            f" Did you mean: {', '.join(suggestions)}?"
+                            if suggestions
+                            else ""
+                        )
+                        raise ValueError(
+                            f"Invalid text color: '{color}'.{suggestion_text}"
+                        )
         else:
             # Flat list
             for color in v:
                 # Allow empty string for "no color"
                 if color and not color_service.validate_color(color):
                     suggestions = color_service.get_color_suggestions(color, 3)
-                    suggestion_text = f" Did you mean: {', '.join(suggestions)}?" if suggestions else ""
+                    suggestion_text = (
+                        f" Did you mean: {', '.join(suggestions)}?"
+                        if suggestions
+                        else ""
+                    )
                     raise ValueError(f"Invalid text color: '{color}'.{suggestion_text}")
         return v
-    
+
     text_background_color: list[str] | list[list[str]] | None = Field(
         default=None, description="Background color name or RGB value"
     )
-    
+
     @field_validator("text_background_color", mode="after")
     def validate_text_background_color(cls, v):
         if v is None:
@@ -176,17 +188,30 @@ class TextAttributes(BaseModel):
                     # Allow empty string for "no color"
                     if color and not color_service.validate_color(color):
                         suggestions = color_service.get_color_suggestions(color, 3)
-                        suggestion_text = f" Did you mean: {', '.join(suggestions)}?" if suggestions else ""
-                        raise ValueError(f"Invalid text background color: '{color}'.{suggestion_text}")
+                        suggestion_text = (
+                            f" Did you mean: {', '.join(suggestions)}?"
+                            if suggestions
+                            else ""
+                        )
+                        raise ValueError(
+                            f"Invalid text background color: '{color}'.{suggestion_text}"
+                        )
         else:
             # Flat list
             for color in v:
                 # Allow empty string for "no color"
                 if color and not color_service.validate_color(color):
                     suggestions = color_service.get_color_suggestions(color, 3)
-                    suggestion_text = f" Did you mean: {', '.join(suggestions)}?" if suggestions else ""
-                    raise ValueError(f"Invalid text background color: '{color}'.{suggestion_text}")
+                    suggestion_text = (
+                        f" Did you mean: {', '.join(suggestions)}?"
+                        if suggestions
+                        else ""
+                    )
+                    raise ValueError(
+                        f"Invalid text background color: '{color}'.{suggestion_text}"
+                    )
         return v
+
     text_justification: list[str] | list[list[str]] | None = Field(
         default=None,
         description="Text alignment ('l'=left, 'c'=center, 'r'=right, 'j'=justify)",
@@ -407,15 +432,15 @@ class TableAttributes(TextAttributes):
     border_color_last: list[list[str]] = Field(
         default=[[""]], description="Last row border color"
     )
-    
+
     @field_validator(
         "border_color_left",
-        "border_color_right", 
+        "border_color_right",
         "border_color_top",
         "border_color_bottom",
         "border_color_first",
         "border_color_last",
-        mode="after"
+        mode="after",
     )
     def validate_border_colors(cls, v):
         if v is None:
@@ -426,10 +451,16 @@ class TableAttributes(TextAttributes):
                 # Allow empty string for no color
                 if color and not color_service.validate_color(color):
                     suggestions = color_service.get_color_suggestions(color, 3)
-                    suggestion_text = f" Did you mean: {', '.join(suggestions)}?" if suggestions else ""
-                    raise ValueError(f"Invalid border color: '{color}'.{suggestion_text}")
+                    suggestion_text = (
+                        f" Did you mean: {', '.join(suggestions)}?"
+                        if suggestions
+                        else ""
+                    )
+                    raise ValueError(
+                        f"Invalid border color: '{color}'.{suggestion_text}"
+                    )
         return v
-    
+
     border_width: list[list[int]] = Field(
         default=[[15]], description="Border width in twips"
     )
@@ -515,11 +546,15 @@ class TableAttributes(TextAttributes):
             if isinstance(v[0], (list, tuple)):
                 # 2D array
                 if any(val <= 0 for row in v for val in row):
-                    raise ValueError(f"{cls.__field_name__.capitalize()} must be positive")
+                    raise ValueError(
+                        f"{cls.__field_name__.capitalize()} must be positive"
+                    )
             else:
                 # 1D array
                 if any(val <= 0 for val in v):
-                    raise ValueError(f"{cls.__field_name__.capitalize()} must be positive")
+                    raise ValueError(
+                        f"{cls.__field_name__.capitalize()} must be positive"
+                    )
         return v
 
     @field_validator("cell_justification", mode="after")
@@ -724,7 +759,6 @@ class BroadcastValue(BaseModel):
 
         value = [column * col_repeats for column in self.value] * row_repeats
         return [row[: self.dimension[1]] for row in value[: self.dimension[0]]]
-
 
     def update_row(self, row_index: int, row_value: list):
         if self.value is None:

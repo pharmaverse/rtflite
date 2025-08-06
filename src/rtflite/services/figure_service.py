@@ -4,8 +4,9 @@ This module provides services for encoding images into RTF format.
 """
 
 from typing import Optional
-from ..input import RTFFigure
+
 from ..figure import rtf_read_figure
+from ..input import RTFFigure
 
 
 class RTFFigureService:
@@ -26,7 +27,7 @@ class RTFFigureService:
 
         # Read figure data and formats from file paths
         figure_data_list, figure_formats = rtf_read_figure(rtf_figure.figures)
-        
+
         rtf_output = []
 
         for i, (figure_data, figure_format) in enumerate(

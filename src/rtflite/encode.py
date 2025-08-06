@@ -24,24 +24,24 @@ from .row import Utils
 
 class RTFDocument(BaseModel):
     """Main class for creating RTF documents with tables, text, and figures.
-    
+
     RTFDocument is the central class for generating Rich Text Format (RTF) files
     containing formatted tables, titles, footnotes, and other document elements.
     It provides a comprehensive API for creating professional documents commonly
     used in clinical trials, scientific research, and data reporting.
-    
+
     Examples:
         Simple table with title:
         ```python
         import rtflite as rtf
         import polars as pl
-        
+
         df = pl.DataFrame({
             "Subject": ["001", "002", "003"],
             "Age": [45, 52, 38],
             "Treatment": ["Drug A", "Drug B", "Placebo"]
         })
-        
+
         doc = rtf.RTFDocument(
             df=df,
             rtf_title=rtf.RTFTitle(text="Patient Demographics"),
@@ -49,7 +49,7 @@ class RTFDocument(BaseModel):
         )
         doc.write_rtf("demographics.rtf")
         ```
-        
+
         Multi-page document with headers and footers:
         ```python
         doc = rtf.RTFDocument(
@@ -71,7 +71,7 @@ class RTFDocument(BaseModel):
         )
         doc.write_rtf("results.rtf")
         ```
-        
+
         Document with grouped data and sublines:
         ```python
         doc = rtf.RTFDocument(
@@ -83,38 +83,38 @@ class RTFDocument(BaseModel):
             )
         )
         ```
-    
+
     Attributes:
         df: Data to display in the table. Can be a single DataFrame or list of
             DataFrames for multi-section documents. Accepts pandas or polars
             DataFrames (automatically converted to polars internally).
-        
+
         rtf_page: Page configuration including size, orientation, margins, and
             pagination settings.
-        
+
         rtf_page_header: Optional header appearing at the top of every page.
-        
+
         rtf_page_footer: Optional footer appearing at the bottom of every page.
-        
+
         rtf_title: Document title(s) displayed at the top.
-        
+
         rtf_column_header: Column headers for the table. Can be a single header
             or list of headers for multi-row headers.
-        
+
         rtf_body: Table body configuration including column widths, formatting,
             borders, and special features like group_by and subline_by.
-        
+
         rtf_footnote: Optional footnote text displayed after the table.
-        
+
         rtf_source: Optional source citation displayed at the very bottom.
-        
+
         rtf_figure: Optional figure/image to embed in the document.
-    
+
     Methods:
         rtf_encode(): Generate the complete RTF document as a string.
         write_rtf(file_path): Write the RTF document to a file.
     """
-    
+
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     # Core data
@@ -122,7 +122,7 @@ class RTFDocument(BaseModel):
         default=None,
         description="The DataFrame(s) containing the data for the RTF document. Accepts single DataFrame or list of DataFrames for multi-section documents. Accepts pandas or polars DataFrame, internally converted to polars. Optional when using figure-only documents.",
     )
-    
+
     # Document structure
     rtf_page: RTFPage = Field(
         default_factory=lambda: RTFPage(),
@@ -138,9 +138,11 @@ class RTFDocument(BaseModel):
     rtf_subline: RTFSubline | None = Field(
         default=None, description="Subject line text to appear below the title"
     )
-    rtf_column_header: list[RTFColumnHeader] | list[list[RTFColumnHeader | None]] = Field(
-        default_factory=lambda: [RTFColumnHeader()],
-        description="Column header settings. For multi-section documents, use nested list format: [[header1], [header2], [None]] where None means no header for that section.",
+    rtf_column_header: list[RTFColumnHeader] | list[list[RTFColumnHeader | None]] = (
+        Field(
+            default_factory=lambda: [RTFColumnHeader()],
+            description="Column header settings. For multi-section documents, use nested list format: [[header1], [header2], [None]] where None means no header for that section.",
+        )
     )
     rtf_body: RTFBody | list[RTFBody] | None = Field(
         default_factory=lambda: RTFBody(),
@@ -172,9 +174,8 @@ class RTFDocument(BaseModel):
         """Convert DataFrame(s) to polars for internal processing."""
         if "df" in values and values["df"] is not None:
             df = values["df"]
-            import polars as pl
-
             import narwhals as nw
+            import polars as pl
 
             # Handle single DataFrame
             if not isinstance(df, list):
@@ -186,7 +187,9 @@ class RTFDocument(BaseModel):
                         nw_df = nw.from_native(df)
                         values["df"] = nw_df.to_native(pl.DataFrame)
                     except Exception as e:
-                        raise ValueError(f"DataFrame must be a valid DataFrame: {str(e)}")
+                        raise ValueError(
+                            f"DataFrame must be a valid DataFrame: {str(e)}"
+                        )
             # Handle list of DataFrames
             else:
                 converted_dfs = []
@@ -199,7 +202,9 @@ class RTFDocument(BaseModel):
                             nw_df = nw.from_native(single_df)
                             converted_dfs.append(nw_df.to_native(pl.DataFrame))
                         except Exception as e:
-                            raise ValueError(f"DataFrame at index {i} must be a valid DataFrame: {str(e)}")
+                            raise ValueError(
+                                f"DataFrame at index {i} must be a valid DataFrame: {str(e)}"
+                            )
                 values["df"] = converted_dfs
         return values
 
@@ -209,17 +214,27 @@ class RTFDocument(BaseModel):
         # Validate df and rtf_figure usage
         if self.df is None and self.rtf_figure is None:
             raise ValueError("Either 'df' or 'rtf_figure' must be provided")
-        
+
         if self.df is not None and self.rtf_figure is not None:
-            raise ValueError("Cannot use both 'df' and 'rtf_figure' together. Use either tables or figures in a single document.")
-        
+            raise ValueError(
+                "Cannot use both 'df' and 'rtf_figure' together. Use either tables or figures in a single document."
+            )
+
         # When RTFFigure is used, enforce as_table=False for footnotes and sources
         if self.rtf_figure is not None:
-            if self.rtf_footnote is not None and getattr(self.rtf_footnote, 'as_table', True):
-                raise ValueError("When using RTFFigure, RTFFootnote must have as_table=False")
-            if self.rtf_source is not None and getattr(self.rtf_source, 'as_table', False):
-                raise ValueError("When using RTFFigure, RTFSource must have as_table=False")
-        
+            if self.rtf_footnote is not None and getattr(
+                self.rtf_footnote, "as_table", True
+            ):
+                raise ValueError(
+                    "When using RTFFigure, RTFFootnote must have as_table=False"
+                )
+            if self.rtf_source is not None and getattr(
+                self.rtf_source, "as_table", False
+            ):
+                raise ValueError(
+                    "When using RTFFigure, RTFSource must have as_table=False"
+                )
+
         # Skip column validation if no DataFrame provided (figure-only documents)
         if self.df is None:
             return self
@@ -231,13 +246,17 @@ class RTFDocument(BaseModel):
             if not isinstance(self.rtf_body, list):
                 raise ValueError("When df is a list, rtf_body must also be a list")
             if len(self.df) != len(self.rtf_body):
-                raise ValueError(f"df list length ({len(self.df)}) must match rtf_body list length ({len(self.rtf_body)})")
-            
+                raise ValueError(
+                    f"df list length ({len(self.df)}) must match rtf_body list length ({len(self.rtf_body)})"
+                )
+
             # Validate rtf_column_header if it's nested list format
             if isinstance(self.rtf_column_header[0], list):
                 if len(self.rtf_column_header) != len(self.df):
-                    raise ValueError(f"rtf_column_header nested list length ({len(self.rtf_column_header)}) must match df list length ({len(self.df)})")
-            
+                    raise ValueError(
+                        f"rtf_column_header nested list length ({len(self.rtf_column_header)}) must match df list length ({len(self.df)})"
+                    )
+
             # Per-section column validation
             for i, (section_df, section_body) in enumerate(zip(self.df, self.rtf_body)):
                 self._validate_section_columns(section_df, section_body, i)
@@ -246,7 +265,7 @@ class RTFDocument(BaseModel):
             self._validate_section_columns(self.df, self.rtf_body, 0)
 
         return self
-    
+
     def _validate_section_columns(self, df, body, section_index):
         """Validate column references for a single section."""
         columns = df.columns
@@ -255,39 +274,53 @@ class RTFDocument(BaseModel):
         if body.group_by is not None:
             for column in body.group_by:
                 if column not in columns:
-                    raise ValueError(f"`group_by` column {column} not found in {section_label}")
+                    raise ValueError(
+                        f"`group_by` column {column} not found in {section_label}"
+                    )
 
         if body.page_by is not None:
             for column in body.page_by:
                 if column not in columns:
-                    raise ValueError(f"`page_by` column {column} not found in {section_label}")
+                    raise ValueError(
+                        f"`page_by` column {column} not found in {section_label}"
+                    )
 
         if body.subline_by is not None:
             for column in body.subline_by:
                 if column not in columns:
-                    raise ValueError(f"`subline_by` column {column} not found in {section_label}")
+                    raise ValueError(
+                        f"`subline_by` column {column} not found in {section_label}"
+                    )
 
     def __init__(self, **data):
         super().__init__(**data)
-        
+
         # Set default column widths based on DataFrame dimensions (if DataFrame provided)
         if self.df is not None:
             is_multi_section = isinstance(self.df, list)
-            
+
             if is_multi_section:
-                # Handle multi-section documents  
+                # Handle multi-section documents
                 for section_df, section_body in zip(self.df, self.rtf_body):
                     dim = section_df.shape
-                    section_body.col_rel_width = section_body.col_rel_width or [1] * dim[1]
+                    section_body.col_rel_width = (
+                        section_body.col_rel_width or [1] * dim[1]
+                    )
 
                 # Handle column headers for multi-section
-                if self.rtf_column_header and isinstance(self.rtf_column_header[0], list):
+                if self.rtf_column_header and isinstance(
+                    self.rtf_column_header[0], list
+                ):
                     # Nested list format: [[header1], [header2], [None]]
-                    for section_headers, section_body in zip(self.rtf_column_header, self.rtf_body):
+                    for section_headers, section_body in zip(
+                        self.rtf_column_header, self.rtf_body
+                    ):
                         if section_headers:  # Skip if [None]
                             for header in section_headers:
                                 if header and header.col_rel_width is None:
-                                    header.col_rel_width = section_body.col_rel_width.copy()
+                                    header.col_rel_width = (
+                                        section_body.col_rel_width.copy()
+                                    )
                 elif self.rtf_column_header:
                     # Flat list format - apply to first section only
                     for header in self.rtf_column_header:
@@ -296,7 +329,9 @@ class RTFDocument(BaseModel):
             else:
                 # Handle single section documents (existing logic)
                 dim = self.df.shape
-                self.rtf_body.col_rel_width = self.rtf_body.col_rel_width or [1] * dim[1]
+                self.rtf_body.col_rel_width = (
+                    self.rtf_body.col_rel_width or [1] * dim[1]
+                )
 
                 # Inherit col_rel_width from rtf_body to rtf_column_header if not specified
                 if self.rtf_column_header:
@@ -325,14 +360,14 @@ class RTFDocument(BaseModel):
 
     def rtf_encode(self) -> str:
         """Generate the complete RTF document as a string.
-        
+
         This method processes all document components and generates the final
         RTF code including headers, formatting, tables, and all other elements.
         The resulting string can be written to a file or processed further.
-        
+
         Returns:
             str: Complete RTF document string ready to be saved as an .rtf file.
-        
+
         Examples:
             ```python
             doc = RTFDocument(df=data, rtf_title=RTFTitle(text="Report"))
@@ -343,25 +378,26 @@ class RTFDocument(BaseModel):
             ```
         """
         from .encoding import RTFEncodingEngine
+
         engine = RTFEncodingEngine()
         return engine.encode_document(self)
 
     def write_rtf(self, file_path: str) -> None:
         """Write the RTF document to a file.
-        
+
         Generates the complete RTF document and writes it to the specified file path.
         The file is written in UTF-8 encoding and will have the .rtf extension.
-        
+
         Args:
             file_path: Path where the RTF file should be saved. Can be absolute
                 or relative path. Directory must exist.
-        
+
         Examples:
             ```python
             doc = RTFDocument(df=data, rtf_title=RTFTitle(text="Report"))
             doc.write_rtf("output/report.rtf")
             ```
-        
+
         Note:
             The method prints the file path to stdout for confirmation.
             Ensure the directory exists before calling this method.
@@ -370,4 +406,3 @@ class RTFDocument(BaseModel):
         rtf_code = self.rtf_encode()
         with open(file_path, "w", encoding="utf-8") as f:
             f.write(rtf_code)
-

@@ -1,4 +1,4 @@
-# Efficacy Analysis
+# Efficacy analysis
 
 
 <!-- `.md` and `.py` files are generated from the `.qmd` file. Please edit that file. -->
@@ -12,7 +12,9 @@ treatment comparison, and model diagnostics.
 
 ``` python
 from importlib.resources import files
+
 import polars as pl
+
 import rtflite as rtf
 ```
 
@@ -25,7 +27,7 @@ Load the three efficacy data tables from parquet files:
 data_path1 = files("rtflite.data").joinpath("tbl1.parquet")
 tbl1 = pl.read_parquet(data_path1)
 
-# Load treatment comparison table  
+# Load treatment comparison table
 data_path2 = files("rtflite.data").joinpath("tbl2.parquet")
 tbl2 = pl.read_parquet(data_path2)
 
@@ -49,57 +51,63 @@ header_11 = rtf.RTFColumnHeader(
 )
 
 header_12 = rtf.RTFColumnHeader(
-    text=["Treatment", "N", "Mean (SD)", "N", "Mean (SD)", "N", "Mean (SD)", "LS Mean (95% CI){^a}"],
+    text=[
+        "Treatment",
+        "N",
+        "Mean (SD)",
+        "N",
+        "Mean (SD)",
+        "N",
+        "Mean (SD)",
+        "LS Mean (95% CI){^a}",
+    ],
     col_rel_width=[1.2, 0.5, 1.5, 0.5, 1.5, 0.5, 1.5, 2],
     text_justification=["l"] + ["c"] * 7,
-    border_bottom="single"
+    border_bottom="single",
 )
 
 # Section 2: Model info headers
 header_2 = rtf.RTFColumnHeader(
     text=["Pairwise Comparison", "Difference in LS Mean (95% CI){^a}", "p-Value"],
     col_rel_width=[3.7, 3.5, 2],
-    text_justification=["l", "c", "c"], 
+    text_justification=["l", "c", "c"],
 )
 
 # Define RTFBody sections with different configurations
 tbl1_body = rtf.RTFBody(
     col_rel_width=[1.2, 0.5, 1.5, 0.5, 1.5, 0.5, 1.5, 2],
-    text_justification=["l"] + ["c"] * 7
+    text_justification=["l"] + ["c"] * 7,
 )
 
 tbl2_body = rtf.RTFBody(
     col_rel_width=[3.7, 3.5, 2],
     text_justification=["l"] + ["c"] * 2,
-    border_top="single"
+    border_top="single",
 )
 
-tbl3_body = rtf.RTFBody(
-    text_justification="l",
-    border_top="single"
-)
+tbl3_body = rtf.RTFBody(text_justification="l", border_top="single")
 ```
 
 ``` python
 doc = rtf.RTFDocument(
-    df=[tbl1, tbl2, tbl3],  
+    df=[tbl1, tbl2, tbl3],
     rtf_title=rtf.RTFTitle(
         text=[
-            "ANCOVA of Change from Baseline at Week 20", 
+            "ANCOVA of Change from Baseline at Week 20",
             "Missing Data Approach",
-            "Analysis Population"
+            "Analysis Population",
         ]
     ),
     rtf_column_header=[
-        [header_11, header_12],           # Headers for section 1 (2 header rows)
-        [header_2],                       # Headers for section 2 (1 header row)
-        [None]                            # Headers for section 3 (no headers)
+        [header_11, header_12],  # Headers for section 1 (2 header rows)
+        [header_2],  # Headers for section 2 (1 header row)
+        [None],  # Headers for section 3 (no headers)
     ],
-    rtf_body=[tbl1_body, tbl2_body, tbl3_body],  
+    rtf_body=[tbl1_body, tbl2_body, tbl3_body],
     rtf_footnote=rtf.RTFFootnote(
         text=[
             "{^a} Based on an ANCOVA model.",
-            "ANCOVA = Analysis of Covariance, CI = Confidence Interval, LS = Least Squares, SD = Standard Deviation"
+            "ANCOVA = Analysis of Covariance, CI = Confidence Interval, LS = Least Squares, SD = Standard Deviation",
         ]
     ),
     rtf_source=rtf.RTFSource(text=["Source: [study999: adam-adeff]"]),
@@ -112,7 +120,7 @@ Generate the RTF file:
 
 ``` python
 # Write the multi-section document
-doc.write_rtf("../rtf/example_efficacy.rtf")
+doc.write_rtf("../rtf/example-efficacy.rtf")
 ```
 
-<embed src="../pdf/example_efficacy.pdf" style="width:100%; height:400px" type="application/pdf">
+<embed src="../pdf/example-efficacy.pdf" style="width:100%; height:400px" type="application/pdf">

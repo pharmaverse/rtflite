@@ -1,4 +1,5 @@
 import polars as pl
+
 import rtflite as rtf
 
 format_demo = [
@@ -22,7 +23,7 @@ doc_formats = rtf.RTFDocument(
     ),
 )
 
-doc_formats.write_rtf("../rtf/text_format_styles.rtf")
+doc_formats.write_rtf("../rtf/text-format-styles.rtf")
 
 font_align_demo = [
     ["Left", "12pt", "l"],
@@ -44,7 +45,7 @@ doc_font_align = rtf.RTFDocument(
     ),
 )
 
-doc_font_align.write_rtf("../rtf/text_font_size_alignment.rtf")
+doc_font_align.write_rtf("../rtf/text-font-size-alignment.rtf")
 
 color_demo = [
     ["Normal", "Black text on white"],
@@ -63,7 +64,7 @@ doc_colors = rtf.RTFDocument(
     ),
 )
 
-doc_colors.write_rtf("../rtf/text_color.rtf")
+doc_colors.write_rtf("../rtf/text-color.rtf")
 
 indent_demo = [
     ["Main section", "No indent"],
@@ -83,4 +84,4 @@ doc_indent = rtf.RTFDocument(
     ),
 )
 
-doc_indent.write_rtf("../rtf/text_indentation.rtf")
+doc_indent.write_rtf("../rtf/text-indentation.rtf")
