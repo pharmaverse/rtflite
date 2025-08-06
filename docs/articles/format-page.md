@@ -56,7 +56,7 @@ doc_default = RTFDocument(
 )
 
 # Generate RTF and save to file
-doc_default.write_rtf("../rtf/formatting_page_default.rtf")
+doc_default.write_rtf("../rtf/formatting-page-default.rtf")
 ```
 
 <embed src="../pdf/formatting_page_default.pdf" style="width:100%; height:400px" type="application/pdf">
@@ -81,7 +81,7 @@ doc_title_first = RTFDocument(
 )
 
 # Generate RTF and save to file
-doc_title_first.write_rtf("../rtf/formatting_page_title_first.rtf")
+doc_title_first.write_rtf("../rtf/formatting-page-title-first.rtf")
 ```
 
 <embed src="../pdf/formatting_page_title_first.pdf" style="width:100%; height:400px" type="application/pdf">
@@ -106,7 +106,7 @@ doc_footnote_first = RTFDocument(
 )
 
 # Generate RTF and save to file
-doc_footnote_first.write_rtf("../rtf/formatting_page_footnote_first.rtf")
+doc_footnote_first.write_rtf("../rtf/formatting-page-footnote-first.rtf")
 ```
 
 <embed src="../pdf/formatting_page_footnote_first.pdf" style="width:100%; height:400px" type="application/pdf">
@@ -131,7 +131,7 @@ doc_all_pages = RTFDocument(
 )
 
 # Generate RTF and save to file
-doc_all_pages.write_rtf("../rtf/formatting_page_all_pages.rtf")
+doc_all_pages.write_rtf("../rtf/formatting-page-all-pages.rtf")
 ```
 
 <embed src="../pdf/formatting_page_all_pages.pdf" style="width:100%; height:400px" type="application/pdf">
@@ -156,7 +156,7 @@ doc_custom = RTFDocument(
 )
 
 # Generate RTF and save to file
-doc_custom.write_rtf("../rtf/formatting_page_custom.rtf")
+doc_custom.write_rtf("../rtf/formatting-page-custom.rtf")
 ```
 
 <embed src="../pdf/formatting_page_custom.pdf" style="width:100%; height:400px" type="application/pdf">

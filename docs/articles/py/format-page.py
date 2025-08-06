@@ -19,7 +19,7 @@ doc_default = RTFDocument(
     rtf_source=RTFSource(text="Source: ADAE Dataset from Clinical Trial Database"),
 )
 
-doc_default.write_rtf("../rtf/formatting_page_default.rtf")
+doc_default.write_rtf("../rtf/formatting-page-default.rtf")
 
 doc_title_first = RTFDocument(
     df=df.select(["USUBJID", "TRTA", "AEDECOD", "AESEV", "AESER", "AEREL"]),
@@ -36,7 +36,7 @@ doc_title_first = RTFDocument(
     rtf_source=RTFSource(text="Source: ADAE Dataset from Clinical Trial Database"),
 )
 
-doc_title_first.write_rtf("../rtf/formatting_page_title_first.rtf")
+doc_title_first.write_rtf("../rtf/formatting-page-title-first.rtf")
 
 doc_footnote_first = RTFDocument(
     df=df.select(["USUBJID", "TRTA", "AEDECOD", "AESEV", "AESER", "AEREL"]),
@@ -53,7 +53,7 @@ doc_footnote_first = RTFDocument(
     rtf_source=RTFSource(text="Source: ADAE Dataset from Clinical Trial Database"),
 )
 
-doc_footnote_first.write_rtf("../rtf/formatting_page_footnote_first.rtf")
+doc_footnote_first.write_rtf("../rtf/formatting-page-footnote-first.rtf")
 
 doc_all_pages = RTFDocument(
     df=df.select(["USUBJID", "TRTA", "AEDECOD", "AESEV", "AESER", "AEREL"]),
@@ -70,7 +70,7 @@ doc_all_pages = RTFDocument(
     rtf_source=RTFSource(text="Source: ADAE Dataset from Clinical Trial Database"),
 )
 
-doc_all_pages.write_rtf("../rtf/formatting_page_all_pages.rtf")
+doc_all_pages.write_rtf("../rtf/formatting-page-all-pages.rtf")
 
 doc_custom = RTFDocument(
     df=df.select(["USUBJID", "TRTA", "AEDECOD", "AESEV", "AESER", "AEREL"]),
@@ -87,4 +87,4 @@ doc_custom = RTFDocument(
     rtf_source=RTFSource(text="Source: ADAE Dataset from Clinical Trial Database"),
 )
 
-doc_custom.write_rtf("../rtf/formatting_page_custom.rtf")
+doc_custom.write_rtf("../rtf/formatting-page-custom.rtf")

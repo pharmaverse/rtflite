@@ -1,4 +1,4 @@
-# Efficacy Analysis
+# Efficacy analysis
 
 
 <!-- `.md` and `.py` files are generated from the `.qmd` file. Please edit that file. -->
@@ -120,7 +120,7 @@ Generate the RTF file:
 
 ``` python
 # Write the multi-section document
-doc.write_rtf("../rtf/example_efficacy.rtf")
+doc.write_rtf("../rtf/example-efficacy.rtf")
 ```
 
 <embed src="../pdf/example_efficacy.pdf" style="width:100%; height:400px" type="application/pdf">

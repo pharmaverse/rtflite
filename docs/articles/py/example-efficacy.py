@@ -78,4 +78,4 @@ doc = rtf.RTFDocument(
     rtf_source=rtf.RTFSource(text=["Source: [study999: adam-adeff]"]),
 )
 
-doc.write_rtf("../rtf/example_efficacy.rtf")
+doc.write_rtf("../rtf/example-efficacy.rtf")

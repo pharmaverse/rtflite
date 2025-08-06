@@ -49,7 +49,7 @@ doc_borders = rtf.RTFDocument(
     ),
 )
 
-doc_borders.write_rtf("../rtf/row_border_styles.rtf")
+doc_borders.write_rtf("../rtf/row-border-styles.rtf")
 ```
 
 <embed src="../pdf/row_border_styles.pdf" style="width:100%; height:400px" type="application/pdf">
@@ -76,7 +76,7 @@ doc_widths = rtf.RTFDocument(
     ),
 )
 
-doc_widths.write_rtf("../rtf/row_column_widths.rtf")
+doc_widths.write_rtf("../rtf/row-column-widths.rtf")
 ```
 
 <embed src="../pdf/row_column_widths.pdf" style="width:100%; height:400px" type="application/pdf">

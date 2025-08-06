@@ -1,7 +1,7 @@
 from importlib.resources import files
 
 import polars as pl
-from plotnine import aes, geom_histogram, ggplot, labs, theme, theme_minimal
+from plotnine import ggplot, aes, geom_histogram, labs, theme_minimal, theme
 
 import rtflite as rtf
 
@@ -22,7 +22,7 @@ for i, treatment in enumerate(treatment_groups):
     )
 
     treatment_plot.save(
-        f"../image/age_histogram_treatment_{i}.png",
+        f"../image/age-histogram-treatment-{i}.png",
         dpi=300,
         width=6,
         height=4,
@@ -32,7 +32,7 @@ for i, treatment in enumerate(treatment_groups):
 doc_age = rtf.RTFDocument(
     rtf_title=rtf.RTFTitle(text=["Study Population Demographics", "Age Distribution"]),
     rtf_figure=rtf.RTFFigure(
-        figures="../image/age_histogram_treatment_0.png", fig_width=6, fig_height=4
+        figures="../image/age-histogram-treatment-0.png", fig_width=6, fig_height=4
     ),
     rtf_footnote=rtf.RTFFootnote(
         text=["Analysis population: All randomized subjects (N=254)"],
@@ -41,7 +41,7 @@ doc_age = rtf.RTFDocument(
     rtf_source=rtf.RTFSource(text=["Source: ADSL dataset"]),
 )
 
-doc_age.write_rtf("../rtf/example_figure_age.rtf")
+doc_age.write_rtf("../rtf/example-figure-age.rtf")
 
 doc_multi_page = rtf.RTFDocument(
     rtf_page=rtf.RTFPage(
@@ -54,9 +54,9 @@ doc_multi_page = rtf.RTFDocument(
     ),
     rtf_figure=rtf.RTFFigure(
         figures=[
-            "../image/age_histogram_treatment_0.png",
-            "../image/age_histogram_treatment_1.png",
-            "../image/age_histogram_treatment_2.png",
+            "../image/age-histogram_treatment-0.png",
+            "../image/age-histogram_treatment-1.png",
+            "../image/age-histogram_treatment-2.png",
         ],
         fig_width=6,
         fig_height=4,
@@ -72,4 +72,4 @@ doc_multi_page = rtf.RTFDocument(
     ),
 )
 
-doc_multi_page.write_rtf("../rtf/example_figure_multipage.rtf")
+doc_multi_page.write_rtf("../rtf/example-figure-multipage.rtf")

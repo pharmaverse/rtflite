@@ -62,7 +62,7 @@ doc_formats = rtf.RTFDocument(
     ),
 )
 
-doc_formats.write_rtf("../rtf/text_format_styles.rtf")
+doc_formats.write_rtf("../rtf/text-format-styles.rtf")
 ```
 
 <embed src="../pdf/text_format_styles.pdf" style="width:100%; height:400px" type="application/pdf">
@@ -96,7 +96,7 @@ doc_font_align = rtf.RTFDocument(
     ),
 )
 
-doc_font_align.write_rtf("../rtf/text_font_size_alignment.rtf")
+doc_font_align.write_rtf("../rtf/text-font-size-alignment.rtf")
 ```
 
 <embed src="../pdf/text_font_size_alignment.pdf" style="width:100%; height:400px" type="application/pdf">
@@ -130,7 +130,7 @@ doc_colors = rtf.RTFDocument(
     ),
 )
 
-doc_colors.write_rtf("../rtf/text_color.rtf")
+doc_colors.write_rtf("../rtf/text-color.rtf")
 ```
 
 <embed src="../pdf/text_color.pdf" style="width:100%; height:400px" type="application/pdf">
@@ -162,7 +162,7 @@ doc_indent = rtf.RTFDocument(
     ),
 )
 
-doc_indent.write_rtf("../rtf/text_indentation.rtf")
+doc_indent.write_rtf("../rtf/text-indentation.rtf")
 ```
 
 <embed src="../pdf/text_indentation.pdf" style="width:100%; height:400px" type="application/pdf">

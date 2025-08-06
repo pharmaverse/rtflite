@@ -18,7 +18,7 @@ doc_borders = rtf.RTFDocument(
     ),
 )
 
-doc_borders.write_rtf("../rtf/row_border_styles.rtf")
+doc_borders.write_rtf("../rtf/row-border-styles.rtf")
 
 width_demo = [
     ["Narrow", "Standard Width", "Wide Column"],
@@ -35,4 +35,4 @@ doc_widths = rtf.RTFDocument(
     ),
 )
 
-doc_widths.write_rtf("../rtf/row_column_widths.rtf")
+doc_widths.write_rtf("../rtf/row-column-widths.rtf")

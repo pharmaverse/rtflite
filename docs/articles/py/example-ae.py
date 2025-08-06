@@ -86,5 +86,4 @@ doc = rtf.RTFDocument(
     rtf_source=rtf.RTFSource(text=["Source: xxx"]),
 )
 
-doc.write_rtf("../rtf/example_ae_summary.rtf")
-print("RTF document created: ../rtf/example_ae_summary.rtf")
+doc.write_rtf("../rtf/example-ae-summary.rtf")
