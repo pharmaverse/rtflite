@@ -54,9 +54,9 @@ doc_multi_page = rtf.RTFDocument(
     ),
     rtf_figure=rtf.RTFFigure(
         figures=[
-            "../image/age-histogram_treatment-0.png",
-            "../image/age-histogram_treatment-1.png",
-            "../image/age-histogram_treatment-2.png",
+            "../image/age-histogram-treatment-0.png",
+            "../image/age-histogram-treatment-1.png",
+            "../image/age-histogram-treatment-2.png",
         ],
         fig_width=6,
         fig_height=4,
