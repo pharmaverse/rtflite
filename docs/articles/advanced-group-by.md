@@ -128,7 +128,7 @@ doc_single = rtf.RTFDocument(
 )
 
 # Generate the RTF file
-doc_single.write_rtf("../rtf/example-advanced-single.rtf")
+doc_single.write_rtf("../rtf/advanced-group-by-single.rtf")
 ```
 
 ## Step 3: Multi-page example with group context
@@ -169,7 +169,7 @@ doc_multipage = rtf.RTFDocument(
 )
 
 # Generate the RTF file
-doc_multipage.write_rtf("../rtf/example-advanced-multipage.rtf")
+doc_multipage.write_rtf("../rtf/advanced-group-by-multipage.rtf")
 ```
 
 ## Step 6: Combining group_by with new_page (treatment separation)
@@ -225,7 +225,7 @@ doc_treatment_separated = rtf.RTFDocument(
 )
 
 # Generate the RTF file
-doc_treatment_separated.write_rtf("../rtf/example-advanced-group-newpage.rtf")
+doc_treatment_separated.write_rtf("../rtf/advanced-group-by-group-newpage.rtf")
 ```
 
 ## Step 7: Demonstrating subline_by with subheader generation
@@ -283,7 +283,7 @@ doc_subline = rtf.RTFDocument(
 )
 
 # Generate the RTF file
-doc_subline.write_rtf("../rtf/example-advanced-subline.rtf")
+doc_subline.write_rtf("../rtf/advanced-group-by-subline.rtf")
 ```
 
 ## Step 8: Advanced combination - subline_by with group_by
@@ -351,5 +351,5 @@ doc_comprehensive = rtf.RTFDocument(
 )
 
 # Generate the RTF file
-doc_comprehensive.write_rtf("../rtf/example-advanced-comprehensive.rtf")
+doc_comprehensive.write_rtf("../rtf/advanced-group-by-comprehensive.rtf")
 ```
