@@ -17,6 +17,8 @@ nav:
       - articles/format-row.md
       - articles/format-text.md
       - articles/format-page.md
+    - Advanced:
+      - articles/advanced-group-by.md
     - Developer:
       - articles/pagination.md
       - articles/converter-setup.md
