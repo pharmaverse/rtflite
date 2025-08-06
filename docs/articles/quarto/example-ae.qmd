@@ -135,8 +135,7 @@ Write the RTF file:
 
 ```{python}
 # Output .rtf file
-doc.write_rtf("../rtf/example_ae_summary.rtf")
-print("RTF document created: ../rtf/example_ae_summary.rtf")
+doc.write_rtf("../rtf/example-ae-summary.rtf")
 ```
 
 <embed src="../pdf/example_ae_summary.pdf" style="width:100%; height:400px" type="application/pdf">
