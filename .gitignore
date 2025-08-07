@@ -19,7 +19,3 @@ wheels/
 
 # r2rtf
 Rplots.pdf
-
-# markdown-exec rendered artifacts
-/docs/articles/rtf/
-/docs/articles/pdf/
