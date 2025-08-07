@@ -54,6 +54,7 @@ dev = [
     "mkdocs>=1.6.1",
     "mkdocs-material>=9.5.45",
     "mkdocstrings-python>=1.12.2",
+    "markdown-exec[ansi]>=1.11.0",
     "nbconvert>=7.16.4",
     "jupyter>=1.1.1",
     "ruff>=0.7.4",
