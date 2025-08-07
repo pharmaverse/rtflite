@@ -30,6 +30,9 @@ jobs:
           restore-keys: |
             mkdocs-material-
 
+      - name: Install LibreOffice
+        run: sudo apt-get update && sudo apt-get install libreoffice --no-install-recommends
+
       - name: Install dependencies
         run: |
           pip install mkdocs-material mkdocstrings-python
