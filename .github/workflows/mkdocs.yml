@@ -40,6 +40,10 @@ jobs:
           pip install -e '.[all]'
           pip install --force-reinstall "click<8.2.2" # Workaround for https://github.com/squidfunk/mkdocs-material/issues/8375
 
+      - name: Remove .gitignore entries for markdown-exec artifacts so they are included
+        run: |
+          awk '!/^\/docs\/articles\/(rtf|pdf|images)\/$/' .gitignore > .gitignore.tmp && mv .gitignore.tmp .gitignore
+
       - name: Generate coverage report and deploy mkdocs site
         run: |
           pytest --cov=rtflite --cov-report=html:docs/coverage/
