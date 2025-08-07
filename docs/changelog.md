@@ -1,5 +1,64 @@
 # Changelog
 
+## rtflite 1.0.0
+
+### Overview
+
+This major release marks rtflite as production-ready for table, listing and figure generation in RTF format. 
+It introduces advanced pagination features, enhanced group handling, comprehensive color support, and significant architectural improvements for better maintainability and performance.
+
+### New features
+
+- **Advanced Pagination Features**
+  - Added `subline_by` parameter for creating paragraph headers before each page group
+  - Enhanced `group_by` functionality with hierarchical value suppression within groups
+  - Implemented page context restoration for multi-page tables with group_by
+  
+- **Enhanced Color System**
+  - Comprehensive 657-color support with full r2rtf R package compatibility
+
+- **Text Conversion Improvements**
+  - Text conversion (LaTeX to Unicode) enabled by default for all components
+  - Better handling of special characters and symbols
+  - Enhanced validation for text conversion operations
+
+- **Table Formatting**
+  - Added `as_table` parameter for `RTFFootnote` and `RTFSource` components
+  - Auto-inheritance of `col_rel_width` from `rtf_body` to `rtf_column_header`
+  - Improved handling of table borders and footnote placement
+
+### Architecture improvements
+
+- **Service-Oriented Architecture**
+  - Introduced dedicated service layer for complex operations
+  - Implemented strategy pattern for encoding (SinglePageStrategy, PaginatedStrategy)
+  - Created RTFEncodingEngine for strategy orchestration
+  
+- **Code Organization**
+  - Consolidated constants and eliminated magic numbers throughout codebase
+  - Method decomposition and improved input validation
+  - Cleaner public interfaces with comprehensive error handling
+
+### Dependency changes
+
+- Removed numpy and pandas as hard dependencies
+- Moved pyarrow to development dependencies
+- Now uses narwhals for DataFrame abstraction
+- Polars as the primary DataFrame library
+
+### Documentation
+
+- Reorganized API reference for better user experience
+- Renamed documentation files to use hyphens consistently
+- Updated all examples to use modern best practices
+- Fixed Polars DataOrientationWarning in documentation examples
+- Added comprehensive articles for new features
+
+### Testing
+
+- Added comprehensive single-page RTF tests with R2RTF fixtures
+- Extensive multi-page tests for as_table feature
+
 ## rtflite 0.1.3
 
 ### Documentation
