@@ -1,5 +1,3 @@
-import pytest
-
 from rtflite.row import Border, Cell, Row, TextContent, Utils
 
 from .utils import ROutputReader
@@ -49,9 +47,7 @@ def test_text_initialization():
     # ```
     # Use semantic comparison for RTF content
     assert_rtf_equals_semantic(
-        text._as_rtf(method="cell"),
-        r_output.read("rtf_cell"),
-        "test_text_cell_format"
+        text._as_rtf(method="cell"), r_output.read("rtf_cell"), "test_text_cell_format"
     )
     # ```{r, rtf_paragraph}
     # r2rtf:::rtf_paragraph(
@@ -66,7 +62,7 @@ def test_text_initialization():
     assert_rtf_equals_semantic(
         text._as_rtf(method="paragraph"),
         r_output.read("rtf_paragraph"),
-        "test_text_paragraph_format"
+        "test_text_paragraph_format",
     )
 
 
@@ -115,9 +111,7 @@ def test_row_initialization():
     # ```
     # Use semantic comparison for complex RTF structures
     assert_rtf_equals_semantic(
-        "\n".join(row._as_rtf()),
-        r_output.read("rtf_row"),
-        "test_row_rtf_generation"
+        "\n".join(row._as_rtf()), r_output.read("rtf_row"), "test_row_rtf_generation"
     )
 
 

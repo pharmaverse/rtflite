@@ -179,15 +179,17 @@ def test_text_attributes_encode():
         ("source", False, "Source as plain text", "source_as_table_false"),
     ],
 )
-def test_rtf_footnote_source_as_table(component_type, as_table, text_content, fixture_name):
+def test_rtf_footnote_source_as_table(
+    component_type, as_table, text_content, fixture_name
+):
     """Test RTFFootnote and RTFSource with as_table parameter.
-    
+
     This parameterized test consolidates 4 similar tests into one,
     testing both footnote and source components with as_table True/False.
-    
+
     R code fixtures are generated for each combination:
     - footnote with as_table=TRUE
-    - footnote with as_table=FALSE  
+    - footnote with as_table=FALSE
     - source with as_table=TRUE
     - source with as_table=FALSE
     """
@@ -437,20 +439,22 @@ def test_rtf_as_table_border_inheritance():
 def test_rtf_footnote_pagination():
     """Test that footnotes appear correctly on paginated documents."""
     # Create dataset that will span multiple pages
-    df = pl.DataFrame({
-        "Column1": [f"Row {i + 1}" for i in range(24)],
-        "Column2": [f"Data {i + 1}" for i in range(24)],
-    })
-    
+    df = pl.DataFrame(
+        {
+            "Column1": [f"Row {i + 1}" for i in range(24)],
+            "Column2": [f"Data {i + 1}" for i in range(24)],
+        }
+    )
+
     doc = RTFDocument(
         df=df,
         rtf_page=RTFPage(nrow=10),  # Force pagination
         rtf_body=RTFBody(),
         rtf_footnote=RTFFootnote(text=["Test footnote"]),
     )
-    
+
     rtf_output = doc.rtf_encode()
-    
+
     # Verify pagination occurred
     assert "\\page" in rtf_output
     # Verify footnote text appears
@@ -460,22 +464,22 @@ def test_rtf_footnote_pagination():
 def test_rtf_footnote_as_table_borders():
     """Test that as_table=True adds borders to footnotes."""
     df = pl.DataFrame({"A": [1, 2], "B": [3, 4]})
-    
+
     # Document with table-style footnote
     doc_table = RTFDocument(
         df=df,
         rtf_footnote=RTFFootnote(text=["Table footnote"], as_table=True),
     )
-    
+
     # Document with plain footnote
     doc_plain = RTFDocument(
         df=df,
         rtf_footnote=RTFFootnote(text=["Plain footnote"], as_table=False),
     )
-    
+
     rtf_table = doc_table.rtf_encode()
     rtf_plain = doc_plain.rtf_encode()
-    
+
     # Table footnote should have border commands
     assert "\\brdr" in rtf_table
     # Outputs should differ due to formatting
@@ -485,20 +489,22 @@ def test_rtf_footnote_as_table_borders():
 def test_rtf_source_pagination():
     """Test that sources appear correctly on paginated documents."""
     # Create dataset that will span multiple pages
-    df = pl.DataFrame({
-        "Column1": [f"Item {i + 1}" for i in range(24)],
-        "Column2": [f"Desc {i + 1}" for i in range(24)],
-    })
-    
+    df = pl.DataFrame(
+        {
+            "Column1": [f"Item {i + 1}" for i in range(24)],
+            "Column2": [f"Desc {i + 1}" for i in range(24)],
+        }
+    )
+
     doc = RTFDocument(
         df=df,
         rtf_page=RTFPage(nrow=10),  # Force pagination
         rtf_body=RTFBody(),
         rtf_source=RTFSource(text=["Test source"]),
     )
-    
+
     rtf_output = doc.rtf_encode()
-    
+
     # Verify pagination occurred
     assert "\\page" in rtf_output
     # Verify source text appears
@@ -508,22 +514,22 @@ def test_rtf_source_pagination():
 def test_rtf_source_as_table_borders():
     """Test that as_table=True adds borders to sources."""
     df = pl.DataFrame({"A": [1, 2], "B": [3, 4]})
-    
+
     # Document with table-style source
     doc_table = RTFDocument(
         df=df,
         rtf_source=RTFSource(text=["Table source"], as_table=True),
     )
-    
+
     # Document with plain source
     doc_plain = RTFDocument(
         df=df,
         rtf_source=RTFSource(text=["Plain source"], as_table=False),
     )
-    
+
     rtf_table = doc_table.rtf_encode()
     rtf_plain = doc_plain.rtf_encode()
-    
+
     # Table source should have border commands
     assert "\\brdr" in rtf_table
     # Outputs should differ due to formatting

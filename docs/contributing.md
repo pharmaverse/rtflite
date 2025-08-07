@@ -7,6 +7,14 @@
 First off, [install uv](https://docs.astral.sh/uv/getting-started/installation/).
 rtflite uses uv to manage the Python package development environment.
 
+If you have trouble installing the exact Python version pinned in the project, run
+
+```bash
+uv self update
+```
+
+to update your uv installation.
+
 ### Branching
 
 Clone the repository (if you have no direct access, replace the address with
@@ -63,31 +71,29 @@ source .venv/bin/activate
 
 ### Documentation
 
-If you made changes to the `.md` files in the root directory or the
-`.qmd` vignettes under `docs/articles/`, make sure to synchronize them
-for the mkdocs website:
-
-```bash
-sh docs/scripts/sync.sh
-```
-
-To preview the mkdocs website:
+To preview the mkdocs website locally:
 
 ```bash
 mkdocs serve
 ```
 
-rtflite organizes vignettes using Quarto. To install Quarto on macOS:
+To build the mkdocs website locally into `site/`, run:
 
 ```bash
-brew install --cask quarto
+mkdocs build
 ```
 
-Currently, Quarto is only used to render `.qmd` sources into `.md`
-files for the mkdocs site and `.py` files for `examples/`.
-It does not execute code. Outputs such as text, tables, images, and PDFs
-must be manually included in the `.qmd` files or put in the mkdocs site
-(`docs/articles/`).
+rtflite renders vignette-like articles under `docs/articles `using markdown-exec.
+This allows mkdocs to render Python code chunks and their outputs when building the site.
+Check the [markdown-exec documentation](https://pawamoy.github.io/markdown-exec/usage/)
+for possible code chunk options.
+
+If you made changes to the `.md` files in the root directory,
+make sure to synchronize them to the mkdocs website:
+
+```bash
+sh docs/scripts/sync.sh
+```
 
 ### Formatting
 
