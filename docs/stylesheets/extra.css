@@ -14,24 +14,24 @@
     --md-accent-fg-color--transparent: #E0E1DD;
     --md-accent-bg-color: hsla(0, 0%, 100%, 1);
     --md-accent-bg-color--light: hsla(0, 0%, 100%, 0.7);
-    --md-code-font: "IBM Plex Mono";
+    --md-code-font: "JetBrains Mono";
 }
 
 /* Typography */
 
 @font-face {
     font-display: swap;
-    font-family: "IBM Plex Mono";
-    src: url("../assets/IBMPlexMono-Text.woff2") format("woff2");
-    font-weight: 400;
+    font-family: "JetBrains Mono";
+    src: url("../assets/JetBrainsMono-Variable.woff2") format("woff2");
+    font-weight: 100 800;
     font-style: normal;
 }
 
 @font-face {
     font-display: swap;
-    font-family: "IBM Plex Mono";
-    src: url("../assets/IBMPlexMono-TextItalic.woff2") format("woff2");
-    font-weight: 400;
+    font-family: "JetBrains Mono";
+    src: url("../assets/JetBrainsMono-Italic-Variable.woff2") format("woff2");
+    font-weight: 100 800;
     font-style: italic;
 }
 

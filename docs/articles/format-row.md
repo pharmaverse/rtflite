@@ -25,7 +25,7 @@ import polars as pl
 import rtflite as rtf
 ```
 
-## Border Styles
+## Border styles
 
 > Please refer to the `rtf` output. The converted PDF version has known issues
 > for some border types due to converter (LibreOffice) limitations.
@@ -60,7 +60,7 @@ converter.convert("row-border-styles.rtf", output_dir="../pdf/", format="pdf", o
 
 <embed src="../pdf/row-border-styles.pdf" style="width:100%; height:400px" type="application/pdf">
 
-## Column Widths
+## Column widths
 
 Control relative column widths:
 

@@ -6,23 +6,23 @@ This document summarizes the pagination feature implementation in rtflite, desig
 
 The pagination feature automatically splits large tables across multiple RTF pages when the content exceeds the specified number of rows per page (`nrow`). This ensures tables are properly formatted for regulatory submissions and professional documents.
 
-## Key Features
+## Key features
 
-### Automatic Pagination
+### Automatic pagination
 
 - **Automatic triggering**: Pagination activates when table content exceeds `nrow` limit
-- **Default `nrow` values**: 
+- **Default `nrow` values**:
   - Portrait orientation: 40 rows per page
   - Landscape orientation: 24 rows per page
 - **No manual configuration required**: Users don't need to specify `nrow` explicitly
 
-### Page Break Handling
+### Page break handling
 
 - **Proper RTF encoding**: Uses `{\pard\fs2\par}\page{\pard\fs2\par}` format
 - **Page setup inclusion**: Each new page includes paper size and margin settings
 - **Correct positioning**: Page breaks occur right before column headers of next page
 
-### Border Management
+### Border management
 
 The pagination system implements a three-tier border hierarchy matching r2rtf design:
 
@@ -37,16 +37,18 @@ The pagination system implements a three-tier border hierarchy matching r2rtf de
 3. **`rtf_body.border_top/bottom/left/right`**: Controls borders for individual cells
    - Standard cell borders maintained throughout the table
 
-### Column Header Repetition
+### Column header repetition
+
 - **Automatic repetition**: Column headers repeat on each page by default
 - **Proper border application**: Column headers receive appropriate page-level borders
 - **Multi-level headers**: Supports complex multi-row column header structures
 
-## Implementation Details
+## Implementation details
 
-### Core Components
+### Core components
 
-#### 1. Pagination Detection
+#### 1. Pagination detection
+
 ```python
 def _needs_pagination(self) -> bool:
     """Check if document needs pagination based on content size and page limits"""
@@ -54,26 +56,29 @@ def _needs_pagination(self) -> bool:
     # Returns True if total_rows > nrow
 ```
 
-#### 2. Page Break Generation
+#### 2. Page break generation
+
 ```python
 def _rtf_page_break_encode(self) -> str:
     """Generate proper RTF page break sequence matching r2rtf format"""
     # Returns: {\pard\fs2\par}\page{\pard\fs2\par} + page setup
 ```
 
-#### 3. Border Logic Application
+#### 3. Border logic application
+
 ```python
 def _apply_pagination_borders(self, rtf_attrs, page_info, total_pages) -> TableAttributes:
     """Apply proper borders for paginated context following r2rtf design"""
     # Implements the three-tier border hierarchy
 ```
 
-#### 4. Content Distribution
+#### 4. Content distribution
+
 - Uses `RTFPagination`, `PageBreakCalculator`, and `ContentDistributor` classes
 - Handles page-by grouping and content splitting
 - Maintains data integrity across page boundaries
 
-### RTF Structure
+### RTF structure
 
 Each paginated document follows this structure:
 
@@ -97,9 +102,10 @@ Each paginated document follows this structure:
 ...
 ```
 
-## Usage Examples
+## Usage examples
 
-### Basic Automatic Pagination
+### Basic automatic pagination
+
 ```python
 import rtflite as rtf
 import polars as pl
@@ -119,14 +125,15 @@ doc = rtf.RTFDocument(
 doc.write_rtf("paginated_table.rtf")  # Automatically creates ~3 pages
 ```
 
-### Custom Page Settings
+### Custom page settings
+
 ```python
 doc = rtf.RTFDocument(
     df=df,
     rtf_page=rtf.RTFPage(
         orientation="landscape",  # nrow=24 by default
         border_first="double",    # Entire table start border
-        border_last="double"      # Entire table end border  
+        border_last="double"      # Entire table end border
     ),
     rtf_body=rtf.RTFBody(
         border_first=[["single"]],  # Each page start border
@@ -135,7 +142,8 @@ doc = rtf.RTFDocument(
 )
 ```
 
-### Forced Pagination
+### Forced pagination
+
 ```python
 doc = rtf.RTFDocument(
     df=small_df,  # Even small datasets can be paginated
@@ -144,9 +152,10 @@ doc = rtf.RTFDocument(
 )
 ```
 
-## Technical Architecture
+## Technical architecture
 
-### Class Relationships
+### Class relationships
+
 ```
 RTFDocument
 ├── _needs_pagination() → bool
@@ -157,14 +166,15 @@ RTFDocument
 └── _rtf_body_encode_paginated() → List[str]  # Body-only paginated encoding
 ```
 
-### Border Application Flow
+### Border application flow
+
 1. **Page content distribution**: Content split across pages
 2. **Border calculation**: Determine appropriate borders for each page position
 3. **Column header processing**: Apply page-level borders to headers
 4. **Body content processing**: Apply pagination borders to table body
 5. **RTF generation**: Encode with proper border codes
 
-## RTF Border Codes
+## RTF border codes
 
 | Border Type | RTF Code | Usage |
 |-------------|----------|-------|
@@ -172,9 +182,10 @@ RTFDocument
 | Double | `\brdrdb` | Table start/end boundaries |
 | None | `""` | No border |
 
-## Configuration Options
+## Configuration options
 
-### RTFPage Settings
+### RTFPage settings
+
 - `orientation`: "portrait" or "landscape"
 - `nrow`: Rows per page (auto-calculated if not specified)
 - `border_first`: Border style for entire table start
@@ -183,20 +194,23 @@ RTFDocument
 - `page_footnote_location`: "all", "first", or "last"
 - `page_source_location`: "all", "first", or "last"
 
-### RTFBody Settings
+### RTFBody settings
+
 - `border_first`: Border style for each page start
 - `border_last`: Border style for each page end
 - `border_top/bottom/left/right`: Individual cell borders
 - `pageby_header`: Whether to repeat column headers (default: True)
 
-## Known Limitations and Future Enhancements
+## Known limitations and future enhancements
 
-### Current Limitations
+### Current limitations
+
 1. **Fixed row calculation**: Pagination based on row count, not actual content height
 2. **Simple page breaks**: No widow/orphan control
 3. **Limited page-by support**: Basic grouping functionality
 
-### Potential Enhancements
+### Potential enhancements
+
 1. **Content-aware pagination**: Calculate page breaks based on actual content height
 2. **Advanced page-by features**: More sophisticated grouping and page break controls
 3. **Widow/orphan control**: Prevent isolated rows at page boundaries

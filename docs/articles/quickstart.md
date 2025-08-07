@@ -27,7 +27,7 @@ Before creating an RTF table we need to:
 This document introduces rtflite basic set of tools, and show how to transfer
 data frames into Table, Listing, and Figure (TLFs).
 
-## Data: Adverse Events
+## Data: adverse events
 
 To explore the basic RTF generation verbs in rtflite, we will use the dataset `adae.parquet`.
 This dataset contain adverse events (AE) information from a clinical trial.
@@ -54,7 +54,7 @@ df = pl.read_parquet(data_path)
 df.select(["USUBJID", "TRTA", "AEDECOD"]).head(4)
 ```
 
-## Table ready data
+## Table-ready data
 
 The polars package is used for data manipulation to create a data frame
 that contains all the information we want to add in an RTF table.
@@ -92,7 +92,7 @@ All these verbs are designed to enables usage of method chaining.
 A full list of all functions can be found in the
 [API reference](https://merck.github.io/rtflite/reference/).
 
-## Simple Example
+## Simple example
 
 A minimal example below illustrates how to combine verbs to create an RTF table.
 
@@ -117,7 +117,7 @@ converter.convert("intro-ae1.rtf", output_dir="../pdf/", format="pdf", overwrite
 
 <embed src="../pdf/intro-ae1.pdf" style="width:100%; height:400px" type="application/pdf">
 
-## Column Width
+## Column width
 
 If we want to adjust the width of each column to provide more space to the first column,
 this can be achieved by updating `col_rel_width` in `RTFBody`.
@@ -147,7 +147,7 @@ converter.convert("intro-ae2.rtf", output_dir="../pdf/", format="pdf", overwrite
 
 <embed src="../pdf/intro-ae2.pdf" style="width:100%; height:400px" type="application/pdf">
 
-## Column Headers
+## Column headers
 
 In `RTFColumnHeader`, `text` argument is used to provide content of column header.
 We used a list to separate the columns.
@@ -215,7 +215,7 @@ converter.convert("intro-ae4.rtf", output_dir="../pdf/", format="pdf", overwrite
 
 <embed src="../pdf/intro-ae4.pdf" style="width:100%; height:400px" type="application/pdf">
 
-## Titles, Footnotes, and Data Source
+## Titles, footnotes, and data source
 
 RTF documents can include additional components to provide context and documentation:
 
@@ -259,7 +259,7 @@ converter.convert("intro-ae5.rtf", output_dir="../pdf/", format="pdf", overwrite
 
 Note the use of `\\line` in column headers to create line breaks within cells.
 
-## Text Formatting and Alignment
+## Text formatting and alignment
 
 rtflite supports various text formatting options:
 
@@ -296,12 +296,12 @@ converter.convert("intro-ae6.rtf", output_dir="../pdf/", format="pdf", overwrite
 
 <embed src="../pdf/intro-ae6.pdf" style="width:100%; height:400px" type="application/pdf">
 
-## Text Conversion Control
+## Text conversion control
 
 rtflite supports LaTeX-style text conversion for mathematical symbols and formatting.
 By default, text conversion is enabled for titles and data content, but can be controlled with the `text_convert` parameter.
 
-### Text Conversion Examples
+### Text conversion examples
 
 When `text_convert = True` (default for titles and data):
 - `\\alpha` converts to α
@@ -349,7 +349,7 @@ converter.convert("text-convert.rtf", output_dir="../pdf/", format="pdf", overwr
 
 <embed src="../pdf/text-convert.pdf" style="width:100%; height:400px" type="application/pdf">
 
-### Key Points About Text Conversion
+### Key points about text conversion
 
 - **Default behavior**: `text_convert = True` for all components (titles, data, footnotes, and sources)
 - **Underscore patterns**: `a_b` becomes subscript when conversion is enabled
@@ -357,7 +357,7 @@ converter.convert("text-convert.rtf", output_dir="../pdf/", format="pdf", overwr
 - **Control per component**: Each RTF component can have independent conversion settings
 - **Performance**: Disabling conversion can improve performance for large tables with no LaTeX content
 
-## Border Customization
+## Border customization
 
 Table borders can be customized extensively:
 
@@ -393,7 +393,7 @@ converter.convert("intro-ae7.rtf", output_dir="../pdf/", format="pdf", overwrite
 
 <embed src="../pdf/intro-ae7.pdf" style="width:100%; height:400px" type="application/pdf">
 
-## Page Headers and Footers
+## Page headers and footers
 
 RTF documents can include page headers and footers that appear on every page, positioned outside the main content area (compatible with r2rtf):
 
@@ -435,7 +435,7 @@ converter.convert("intro-ae8.rtf", output_dir="../pdf/", format="pdf", overwrite
 
 <embed src="../pdf/intro-ae8.pdf" style="width:100%; height:400px" type="application/pdf">
 
-### Custom Header and Footer Formatting
+### Custom header and footer formatting
 
 Headers and footers support full text formatting including custom alignment, font sizes, and styling:
 
@@ -475,7 +475,7 @@ converter.convert("intro-ae8b.rtf", output_dir="../pdf/", format="pdf", overwrit
 
 <embed src="../pdf/intro-ae8b.pdf" style="width:100%; height:400px" type="application/pdf">
 
-## Page Layout and Orientation
+## Page layout and orientation
 
 `RTFPage` provides control over page layout:
 
@@ -515,7 +515,7 @@ converter.convert("intro-ae10.rtf", output_dir="../pdf/", format="pdf", overwrit
 
 <embed src="../pdf/intro-ae10.pdf" style="width:100%; height:400px" type="application/pdf">
 
-## Cell-level Formatting
+## Cell-level formatting
 
 Using the BroadcastValue pattern, you can apply formatting to individual cells:
 
@@ -555,7 +555,7 @@ converter.convert("intro-ae11.rtf", output_dir="../pdf/", format="pdf", overwrit
 
 <embed src="../pdf/intro-ae11.pdf" style="width:100%; height:400px" type="application/pdf">
 
-### Multi-page Considerations
+### Multi-page considerations
 
 For large tables spanning multiple pages, rtflite handles:
 

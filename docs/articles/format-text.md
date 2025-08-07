@@ -32,7 +32,7 @@ import polars as pl
 import rtflite as rtf
 ```
 
-## Text Style
+## Text style
 
 Demonstrate core text formatting options:
 
@@ -75,7 +75,7 @@ converter.convert("text-format-styles.rtf", output_dir="../pdf/", format="pdf", 
 
 <embed src="../pdf/text-format-styles.pdf" style="width:100%; height:400px" type="application/pdf">
 
-## Font Size and Alignment
+## Font size and alignment
 
 Demonstrate font size variations and text alignment:
 
@@ -113,7 +113,7 @@ converter.convert("text-font-size-alignment.rtf", output_dir="../pdf/", format="
 
 <embed src="../pdf/text-font-size-alignment.pdf" style="width:100%; height:400px" type="application/pdf">
 
-## Text Color
+## Text color
 
 Demonstrate text and background color applications:
 
