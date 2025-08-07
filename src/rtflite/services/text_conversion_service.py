@@ -45,10 +45,10 @@ class TextConversionService:
         Examples:
             >>> service = TextConversionService()
             >>> service.convert_text_content("\\alpha test", True)
-            "α test"
+            "\\u03b1 test"
 
             >>> service.convert_text_content(["\\alpha", "\\beta"], True)
-            ["α", "β"]
+            ["\\u03b1", "\\u03b2"]
         """
         if not enable_conversion or text is None:
             return text

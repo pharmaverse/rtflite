@@ -164,7 +164,7 @@ The project follows a **modern service-oriented architecture** with clean separa
 **Always use the service layer for complex operations**:
 
 ```python
-# ✅ Correct: Use service layer
+# CORRECT: Use service layer
 from rtflite.services import RTFEncodingService, TextConversionService
 
 encoding_service = RTFEncodingService()
@@ -180,7 +180,7 @@ converted = encoding_service.convert_text_for_encoding("\\beta", True)
 **Create components directly using Pydantic models**:
 
 ```python
-# ✅ Correct: Direct component creation
+# CORRECT: Direct component creation
 from rtflite import RTFTitle, RTFFootnote, RTFBody
 
 title = RTFTitle(text="Clinical Study Report", text_font_size=[14])
@@ -193,7 +193,7 @@ body = RTFBody(col_rel_width=[2, 1, 1], text_justification=[["l", "c", "c"]])
 **Use the new text conversion interface**:
 
 ```python
-# ✅ Correct: Use new interface
+# CORRECT: Use new interface
 from rtflite.text_conversion import convert_text
 
 result = convert_text("\\alpha + \\beta", enable_conversion=True)
@@ -209,7 +209,7 @@ stats = converter.get_conversion_statistics("\\alpha \\unknown")
 **The encoding engine automatically selects the optimal strategy**:
 
 ```python
-# ✅ The RTFDocument automatically uses the right strategy
+# CORRECT: The RTFDocument automatically uses the right strategy
 doc = RTFDocument(df=data)
 rtf_output = doc.rtf_encode()  # Uses SinglePageStrategy or PaginatedStrategy
 ```
@@ -247,15 +247,15 @@ The project includes Liberation and CrOS fonts for consistent string width calcu
 **Test Architecture Components Independently**:
 
 ```python
-# ✅ Test services independently
+# CORRECT: Test services independently
 from rtflite.services import TextConversionService
 
 def test_text_conversion():
     service = TextConversionService()
     result = service.convert_text_content("\\alpha", True)
-    assert result == "α"
+    assert result == "\u03b1"
 
-# ✅ Test with comprehensive validation
+# CORRECT: Test with comprehensive validation
 def test_conversion_validation():
     service = TextConversionService()
     validation = service.validate_latex_commands("\\alpha \\unknown")
@@ -266,13 +266,13 @@ def test_conversion_validation():
 **Test Integration with Full Documents**:
 
 ```python
-# ✅ Test full RTF pipeline with text conversion
+# CORRECT: Test full RTF pipeline with text conversion
 def test_rtf_integration():
     doc = RTFDocument(df=data, rtf_title=RTFTitle(text="Study: \\alpha"))
     # Enable conversion for footnotes/sources (disabled by default)
     doc.rtf_footnote = RTFFootnote(text="Level: \\alpha = 0.05", text_convert=[[True]])
     rtf_output = doc.rtf_encode()
-    assert "α" in rtf_output
+    assert "\u03b1" in rtf_output
 ```
 
 **Legacy Testing Patterns** (still supported):
@@ -299,7 +299,7 @@ def test_example():
 
 **Key utilities in `tests/utils_snapshot.py`**:
 - `remove_font_table()`: Removes font table sections for comparison
-- `normalize_rtf_borders()`: Handles semantic border equivalence (e.g., `\brdrw15` ≡ `\brdrs\brdrw15`)
+- `normalize_rtf_borders()`: Handles semantic border equivalence (e.g., `\brdrw15` == `\brdrs\brdrw15`)
 - `normalize_rtf_structure()`: Handles page break ordering and whitespace
 - `assert_rtf_equals_semantic()`: Complete semantic RTF comparison
 
@@ -338,26 +338,26 @@ The project includes VSCode workspace settings in `.vscode/`:
 - **Custom Tasks**: `Cmd+Shift+W` keybinding to open RTF files in Word
 - **Recommended Extensions**: Python development tools, formatters, and spell checker
 
-**RTF File Preview**: Click any `.rtf` file in VSCode Explorer → Opens in Microsoft Word for formatted preview
+**RTF File Preview**: Click any `.rtf` file in VSCode Explorer -> Opens in Microsoft Word for formatted preview
 
 .vscode/                           # VSCode workspace settings
-├── settings.json                  # RTF file associations
-├── tasks.json                     # Microsoft Word integration
-└── keybindings.json              # Custom shortcuts
+|-- settings.json                  # RTF file associations
+|-- tasks.json                     # Microsoft Word integration
++-- keybindings.json              # Custom shortcuts
 ```
 
 ### Troubleshooting
 
 **RTF Comparison Failures**: Use semantic comparison instead of exact string matching:
 ```python
-# ❌ This may fail due to whitespace/font differences
+# WRONG: This may fail due to whitespace/font differences
 assert rtf_output == expected
 
-# ✅ Use this for robust RTF comparison
+# CORRECT: Use this for robust RTF comparison
 assert_rtf_equals_semantic(rtf_output, expected, "test_name")
 ```
 
-**R Script Errors**: Ensure R code uses proper `write_rtf()` → `readLines()` → `cat()` chain in test comments
+**R Script Errors**: Ensure R code uses proper `write_rtf()` -> `readLines()` -> `cat()` chain in test comments
 
 **LibreOffice Tests**: Skip with `@pytest.mark.skip` decorator if LibreOffice not available
 
@@ -464,6 +464,43 @@ When updating documentation:
 3. **Focus on rtflite behavior** - Avoid comparing to other tools
 4. **Test examples** - Ensure all code examples work
 5. **Follow Google style** - For docstring formatting
+
+### ASCII-Only Code Policy
+
+**IMPORTANT**: All source code files must contain only ASCII characters to ensure maximum compatibility and portability.
+
+#### Required Practices:
+1. **Use Unicode escape sequences** in strings:
+   - CORRECT: `"\u03b1"` for Greek alpha
+   - WRONG: `"alpha"` (direct Unicode character)
+
+2. **Use ASCII alternatives** for symbols:
+   - CORRECT: `# CORRECT:` or `# [OK]`
+   - WRONG: `# [checkmark]` (emoji/symbols)
+   
+3. **In test assertions**, always use escape sequences:
+   ```python
+   # CORRECT:
+   assert result == "\u03b1 test"
+   
+   # WRONG:
+   assert result == "alpha test"
+   ```
+
+4. **In documentation strings**:
+   - Use descriptive text: "Greek letter alpha"
+   - Or use escape sequences: "\u03b1"
+   - Never use literal Unicode characters
+
+5. **Run verification** before committing:
+   ```bash
+   uv run python scripts/verify_ascii.py
+   ```
+
+#### Exceptions:
+- Auto-generated files (coverage reports, CSS)
+- External data files (if necessary)
+- Files explicitly marked for exclusion
 
 See `DOCUMENTATION_GUIDE.md` for detailed documentation practices.
 

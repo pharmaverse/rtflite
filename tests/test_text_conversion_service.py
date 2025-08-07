@@ -20,11 +20,11 @@ class TestTextConversionService:
         """Test conversion with string input."""
         # Basic LaTeX conversion
         result = self.service.convert_text_content("\\alpha test", True)
-        assert result == "α test"
+        assert result == "\u03b1 test"
         
         # Multiple symbols
         result = self.service.convert_text_content("\\alpha + \\beta = \\gamma", True)
-        assert result == "α + β = γ"
+        assert result == "\u03b1 + \u03b2 = \u03b3"
         
         # No LaTeX symbols
         result = self.service.convert_text_content("plain text", True)
@@ -36,7 +36,7 @@ class TestTextConversionService:
         result = self.service.convert_text_content(
             ["\\alpha", "\\beta", "plain"], True
         )
-        assert result == ["α", "β", "plain"]
+        assert result == ["\u03b1", "\u03b2", "plain"]
         
         # Empty list
         result = self.service.convert_text_content([], True)
@@ -46,7 +46,7 @@ class TestTextConversionService:
         result = self.service.convert_text_content(
             ["\\alpha test", "no latex", "\\beta end"], True
         )
-        assert result == ["α test", "no latex", "β end"]
+        assert result == ["\u03b1 test", "no latex", "\u03b2 end"]
 
     def test_convert_text_content_disabled(self):
         """Test that conversion is skipped when disabled."""
@@ -84,7 +84,7 @@ class TestTextConversionService:
         """Test _convert_single_text method directly."""
         # Normal conversion
         result = self.service._convert_single_text("\\alpha")
-        assert result == "α"
+        assert result == "\u03b1"
         
         # Empty string
         result = self.service._convert_single_text("")
@@ -116,15 +116,15 @@ class TestTextConversionService:
         """Test _convert_text_list method directly."""
         # Normal list
         result = self.service._convert_text_list(["\\alpha", "\\beta", "text"])
-        assert result == ["α", "β", "text"]
+        assert result == ["\u03b1", "\u03b2", "text"]
         
         # List with None values
         result = self.service._convert_text_list(["\\alpha", None, "\\beta"])
-        assert result == ["α", None, "β"]
+        assert result == ["\u03b1", None, "\u03b2"]
         
         # Empty strings in list
         result = self.service._convert_text_list(["", "\\alpha", ""])
-        assert result == ["", "α", ""]
+        assert result == ["", "\u03b1", ""]
 
     def test_convert_text_list_nested(self):
         """Test _convert_text_list with nested lists."""
@@ -135,19 +135,19 @@ class TestTextConversionService:
             "\\beta",
             "plain"
         ])
-        assert result == ["α", "β", "plain"]
+        assert result == ["\u03b1", "\u03b2", "plain"]
         
         # For non-string items, they're passed through unchanged
         # unless they're None
         result = self.service._convert_text_list(["\\alpha", None, "\\beta"])
-        assert result == ["α", None, "β"]
+        assert result == ["\u03b1", None, "\u03b2"]
 
     def test_convert_with_validation(self):
         """Test convert_with_validation method."""
         # Valid LaTeX commands
         result = self.service.convert_with_validation("\\alpha \\beta", True)
         assert "converted_text" in result
-        assert result["converted_text"] == "α β"
+        assert result["converted_text"] == "\u03b1 \u03b2"
         assert "validation" in result
         
         # Invalid LaTeX commands
@@ -199,27 +199,27 @@ class TestTextConversionService:
             "\\int_{\\alpha}^{\\beta} f(x) dx = \\sum_{i=1}^{n} x_i",
             True
         )
-        assert "∫" in result
-        assert "α" in result
-        assert "β" in result
-        assert "∑" in result
+        assert "\u222b" in result
+        assert "\u03b1" in result
+        assert "\u03b2" in result
+        assert "\u2211" in result
         
         # Mixed text and symbols
         result = self.service.convert_text_content(
             "The Greek letter \\alpha (alpha) and \\Omega (omega)",
             True
         )
-        assert result == "The Greek letter α (alpha) and Ω (omega)"
+        assert result == "The Greek letter \u03b1 (alpha) and \u03a9 (omega)"
 
     def test_special_characters_preservation(self):
         """Test that non-LaTeX special characters are preserved."""
         # Unicode characters should be preserved
-        result = self.service.convert_text_content("© ® ™ €", True)
-        assert result == "© ® ™ €"
+        result = self.service.convert_text_content("\u00a9 \u00ae \u2122 \u20ac", True)
+        assert result == "\u00a9 \u00ae \u2122 \u20ac"
         
         # Mixed with LaTeX
-        result = self.service.convert_text_content("\\alpha © \\beta ®", True)
-        assert result == "α © β ®"
+        result = self.service.convert_text_content("\\alpha \u00a9 \\beta \u00ae", True)
+        assert result == "\u03b1 \u00a9 \u03b2 \u00ae"
 
     def test_empty_and_whitespace_handling(self):
         """Test handling of empty strings and whitespace."""
@@ -231,7 +231,7 @@ class TestTextConversionService:
         
         # LaTeX with extra whitespace
         result = self.service.convert_text_content("  \\alpha  \\beta  ", True)
-        assert result == "  α  β  "
+        assert result == "  \u03b1  \u03b2  "  # Unicode escapes are interpreted here
 
     def test_conversion_statistics(self):
         """Test getting conversion statistics."""

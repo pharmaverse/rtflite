@@ -304,8 +304,8 @@ By default, text conversion is enabled for titles and data content, but can be c
 ### Text conversion examples
 
 When `text_convert = True` (default for titles and data):
-- `\\alpha` converts to α
-- `\\beta` converts to β
+- `\\alpha` converts to \u03b1 (Greek alpha)
+- `\\beta` converts to \u03b2 (Greek beta)
 - `a_b` converts to subscript format (a subscript b)
 
 When `text_convert = False`:

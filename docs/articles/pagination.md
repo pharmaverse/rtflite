@@ -158,12 +158,12 @@ doc = rtf.RTFDocument(
 
 ```
 RTFDocument
-├── _needs_pagination() → bool
-├── _create_pagination_instance() → (RTFPagination, ContentDistributor)
-├── _rtf_page_break_encode() → str
-├── _apply_pagination_borders() → TableAttributes
-├── _rtf_encode_paginated() → str  # Main paginated encoding
-└── _rtf_body_encode_paginated() → List[str]  # Body-only paginated encoding
+|-- _needs_pagination() -> bool
+|-- _create_pagination_instance() -> (RTFPagination, ContentDistributor)
+|-- _rtf_page_break_encode() -> str
+|-- _apply_pagination_borders() -> TableAttributes
+|-- _rtf_encode_paginated() -> str  # Main paginated encoding
++-- _rtf_body_encode_paginated() -> List[str]  # Body-only paginated encoding
 ```
 
 ### Border application flow
