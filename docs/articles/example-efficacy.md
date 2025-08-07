@@ -1,16 +1,19 @@
 # Efficacy analysis
 
+```python exec="on" session="default"
+from rtflite import LibreOfficeConverter
 
-<!-- `.md` and `.py` files are generated from the `.qmd` file. Please edit that file. -->
+converter = LibreOfficeConverter()
+```
 
 This example demonstrates how to create a multi-section efficacy table
-using rtflite’s Phase 1 multi-section functionality. The table shows
-ANCOVA analysis results with multiple sections: summary statistics,
-treatment comparison, and model diagnostics.
+using rtflite's multi-section functionality.
+The table shows ANCOVA analysis results with multiple sections:
+summary statistics, treatment comparison, and model diagnostics.
 
 ## Imports
 
-``` python
+```python exec="on" source="above" session="default"
 from importlib.resources import files
 
 import polars as pl
@@ -18,11 +21,11 @@ import polars as pl
 import rtflite as rtf
 ```
 
-## Step 1: Load efficacy data
+## Load efficacy data
 
 Load the three efficacy data tables from parquet files:
 
-``` python
+```python exec="on" source="above" session="default"
 # Load summary statistics table
 data_path1 = files("rtflite.data").joinpath("tbl1.parquet")
 tbl1 = pl.read_parquet(data_path1)
@@ -36,12 +39,11 @@ data_path3 = files("rtflite.data").joinpath("tbl3.parquet")
 tbl3 = pl.read_parquet(data_path3)
 ```
 
-## Step 2: Define multi-section RTF table
+## Define multi-section RTF table
 
-Create RTF document with multiple sections using the new multi-section
-API:
+Create RTF document with multiple sections using the new multi-section API:
 
-``` python
+```python exec="on" source="above" session="default"
 # Define headers for each section
 # Section 1: Main efficacy table headers (8 columns)
 header_11 = rtf.RTFColumnHeader(
@@ -88,7 +90,9 @@ tbl2_body = rtf.RTFBody(
 tbl3_body = rtf.RTFBody(text_justification="l", border_top="single")
 ```
 
-``` python
+Compose and write the multi-section RTF document:
+
+```python exec="on" source="above" session="default" workdir="docs/articles/rtf/"
 doc = rtf.RTFDocument(
     df=[tbl1, tbl2, tbl3],
     rtf_title=rtf.RTFTitle(
@@ -112,15 +116,12 @@ doc = rtf.RTFDocument(
     ),
     rtf_source=rtf.RTFSource(text=["Source: [study999: adam-adeff]"]),
 )
+
+doc.write_rtf("example-efficacy.rtf")
 ```
 
-## Step 4: Output
-
-Generate the RTF file:
-
-``` python
-# Write the multi-section document
-doc.write_rtf("../rtf/example-efficacy.rtf")
+```python exec="on" session="default" workdir="docs/articles/rtf/"
+converter.convert("example-efficacy.rtf", output_dir="../pdf/", format="pdf", overwrite=True)
 ```
 
 <embed src="../pdf/example-efficacy.pdf" style="width:100%; height:400px" type="application/pdf">

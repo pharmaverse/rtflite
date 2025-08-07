@@ -1,7 +1,10 @@
 # Row format
 
+```python exec="on" session="default"
+from rtflite import LibreOfficeConverter
 
-<!-- `.md` and `.py` files are generated from the `.qmd` file. Please edit that file. -->
+converter = LibreOfficeConverter()
+```
 
 This article demonstrates row-level formatting capabilities in rtflite.
 It covers borders, cell alignment, column widths, and text formatting
@@ -16,7 +19,7 @@ Row-level formatting provides granular control over table appearance:
 
 ## Imports
 
-``` python
+```python exec="on" source="above" session="default"
 import polars as pl
 
 import rtflite as rtf
@@ -24,13 +27,12 @@ import rtflite as rtf
 
 ## Border Styles
 
-> Please refer to the `rtf` output. The converted PDF version has known
-> issues for some border types due to converter (LibreOffice)
-> limitations.
+> Please refer to the `rtf` output. The converted PDF version has known issues
+> for some border types due to converter (LibreOffice) limitations.
 
 Demonstrate different border types:
 
-``` python
+```python exec="on" source="above" session="default" workdir="docs/articles/rtf/"
 # Create border demonstration data from BORDER_CODES
 border_data = [
     [border_type, f"Example of {border_type or 'no'} border"]
@@ -49,7 +51,11 @@ doc_borders = rtf.RTFDocument(
     ),
 )
 
-doc_borders.write_rtf("../rtf/row-border-styles.rtf")
+doc_borders.write_rtf("row-border-styles.rtf")
+```
+
+```python exec="on" session="default" workdir="docs/articles/rtf/"
+converter.convert("row-border-styles.rtf", output_dir="../pdf/", format="pdf", overwrite=True)
 ```
 
 <embed src="../pdf/row-border-styles.pdf" style="width:100%; height:400px" type="application/pdf">
@@ -58,7 +64,7 @@ doc_borders.write_rtf("../rtf/row-border-styles.rtf")
 
 Control relative column widths:
 
-``` python
+```python exec="on" source="above" session="default" workdir="docs/articles/rtf/"
 # Create width demonstration data
 width_demo = [
     ["Narrow", "Standard Width", "Wide Column"],
@@ -76,7 +82,11 @@ doc_widths = rtf.RTFDocument(
     ),
 )
 
-doc_widths.write_rtf("../rtf/row-column-widths.rtf")
+doc_widths.write_rtf("row-column-widths.rtf")
+```
+
+```python exec="on" session="default" workdir="docs/articles/rtf/"
+converter.convert("row-column-widths.rtf", output_dir="../pdf/", format="pdf", overwrite=True)
 ```
 
 <embed src="../pdf/row-column-widths.pdf" style="width:100%; height:400px" type="application/pdf">

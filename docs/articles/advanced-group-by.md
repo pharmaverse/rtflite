@@ -1,29 +1,32 @@
 # Advanced features: group_by
 
+```python exec="on" session="default"
+from rtflite import LibreOfficeConverter
 
-<!-- `.md` and `.py` files are generated from the `.qmd` file. Please edit that file. -->
+converter = LibreOfficeConverter()
+```
 
 This example demonstrates advanced table formatting features in rtflite,
-focusing on the `group_by` functionality that provides enhanced
-readability by suppressing duplicate values within groups.
+focusing on the `group_by` functionality that provides enhanced readability
+by suppressing duplicate values within groups.
 
 ## Overview
 
-The `group_by` feature is particularly useful for clinical trial
-listings where multiple rows belong to the same subject or treatment
-group. Instead of repeating identical values in every row, `group_by`
-displays the value only once per group, leaving subsequent rows blank
-for better visual organization.
+The `group_by` feature is particularly useful for clinical trial listings
+where multiple rows belong to the same subject or treatment group.
+Instead of repeating identical values in every row, `group_by` displays
+the value only once per group, leaving subsequent rows blank for better
+visual organization.
 
-Key benefits: - **Improved readability**: Reduces visual clutter by
-eliminating redundant information - **Clinical standards compliance**:
-Follows pharmaceutical industry conventions for listing formats -
-**Hierarchical grouping**: Supports multiple columns with nested group
-relationships
+Key benefits:
+
+- **Improved readability**: Reduces visual clutter by eliminating redundant information
+- **Clinical standards compliance**: Follows pharmaceutical industry conventions for listing formats
+- **Hierarchical grouping**: Supports multiple columns with nested group relationships
 
 ## Imports
 
-``` python
+```python exec="on" source="above" session="default"
 from importlib.resources import files
 
 import polars as pl
@@ -31,11 +34,11 @@ import polars as pl
 import rtflite as rtf
 ```
 
-## Step 1: Load and prepare adverse events data
+## Load and prepare adverse events data
 
 Load the adverse events dataset and create a subset for demonstration:
 
-``` python
+```python exec="on" source="above" session="default"
 # Load adverse events data from parquet file
 data_path = files("rtflite.data").joinpath("adae.parquet")
 df = pl.read_parquet(data_path)
@@ -46,7 +49,7 @@ ae_subset = df.slice(200, 60)
 
 Create additional columns for a more comprehensive listing format:
 
-``` python
+```python exec="on" source="above" session="default"
 # Create formatted columns for the listing
 ae_t1 = ae_subset.with_columns(
     [
@@ -97,11 +100,11 @@ ae_t1 = ae_subset.with_columns(
 ae_t1 = ae_t1.sort(["SUBLINEBY", "TRTA", "SUBJLINE", "USUBJID", "ASTDY"])
 ```
 
-## Step 2: Demonstrate single column group_by
+## Demonstrate single column group_by
 
 Start with a simple example using a single column for grouping:
 
-``` python
+```python exec="on" source="above" session="default" workdir="docs/articles/rtf/"
 # Create RTF document with single column group_by
 doc_single = rtf.RTFDocument(
     df=ae_t1.select(["USUBJID", "AEDECD1", "AESEV", "AESER"])
@@ -128,17 +131,20 @@ doc_single = rtf.RTFDocument(
 )
 
 # Generate the RTF file
-doc_single.write_rtf("../rtf/advanced-group-by-single.rtf")
+doc_single.write_rtf("advanced-group-by-single.rtf")
+```
+
+```python exec="on" session="default" workdir="docs/articles/rtf/"
+converter.convert("advanced-group-by-single.rtf", output_dir="../pdf/", format="pdf", overwrite=True)
 ```
 
 <embed src="../pdf/advanced-group-by-single.pdf" style="width:100%; height:400px" type="application/pdf">
 
-## Step 3: Multi-page example with group context
+## Multi-page example with group context
 
-Demonstrate how group_by works with pagination, including context
-restoration:
+Demonstrate how group_by works with pagination, including context restoration:
 
-``` python
+```python exec="on" source="above" session="default" workdir="docs/articles/rtf/"
 # Create larger dataset for multi-page demonstration
 ae_large = ae_t1.head(100)  # Use more rows to trigger pagination
 
@@ -171,17 +177,20 @@ doc_multipage = rtf.RTFDocument(
 )
 
 # Generate the RTF file
-doc_multipage.write_rtf("../rtf/advanced-group-by-multipage.rtf")
+doc_multipage.write_rtf("advanced-group-by-multipage.rtf")
+```
+
+```python exec="on" session="default" workdir="docs/articles/rtf/"
+converter.convert("advanced-group-by-multipage.rtf", output_dir="../pdf/", format="pdf", overwrite=True)
 ```
 
 <embed src="../pdf/advanced-group-by-multipage.pdf" style="width:100%; height:400px" type="application/pdf">
 
-## Step 6: Combining group_by with new_page (treatment separation)
+## Combining group_by with new_page (treatment separation)
 
-Demonstrate the powerful combination of `group_by` and `new_page` for
-clinical trial reporting:
+Demonstrate the powerful combination of `group_by` and `new_page` for clinical trial reporting:
 
-``` python
+```python exec="on" source="above" session="default" workdir="docs/articles/rtf/"
 # Create treatment-separated document with group_by within each page
 # Filter data to have multiple treatment groups
 ae_with_treatments = (
@@ -229,17 +238,21 @@ doc_treatment_separated = rtf.RTFDocument(
 )
 
 # Generate the RTF file
-doc_treatment_separated.write_rtf("../rtf/advanced-group-by-group-newpage.rtf")
+doc_treatment_separated.write_rtf("advanced-group-by-group-newpage.rtf")
+```
+
+```python exec="on" session="default" workdir="docs/articles/rtf/"
+converter.convert("advanced-group-by-group-newpage.rtf", output_dir="../pdf/", format="pdf", overwrite=True)
 ```
 
 <embed src="../pdf/advanced-group-by-group-newpage.pdf" style="width:100%; height:400px" type="application/pdf">
 
-## Step 7: Demonstrating subline_by with subheader generation
+## Demonstrating subline_by with subheader generation
 
 The `subline_by` feature creates visually distinct subheader rows that
 group related data, making listings easier to read and follow:
 
-``` python
+```python exec="on" source="above" session="default" workdir="docs/articles/rtf/"
 # Create data with clear grouping structure for subline demonstration
 ae_subline_data = (
     ae_t1.filter(pl.col("TRTA").is_in(["Placebo", "Xanomeline High Dose"]))
@@ -289,17 +302,21 @@ doc_subline = rtf.RTFDocument(
 )
 
 # Generate the RTF file
-doc_subline.write_rtf("../rtf/advanced-group-by-subline.rtf")
+doc_subline.write_rtf("advanced-group-by-subline.rtf")
+```
+
+```python exec="on" session="default" workdir="docs/articles/rtf/"
+converter.convert("advanced-group-by-subline.rtf", output_dir="../pdf/", format="pdf", overwrite=True)
 ```
 
 <embed src="../pdf/advanced-group-by-subline.pdf" style="width:100%; height:400px" type="application/pdf">
 
-## Step 8: Advanced combination - subline_by with group_by
+## Advanced combination - subline_by with group_by
 
 Demonstrate the powerful combination of `subline_by` and `group_by` for
 comprehensive clinical listings:
 
-``` python
+```python exec="on" source="above" session="default" workdir="docs/articles/rtf/"
 # Create data with multiple visits per subject for comprehensive demonstration
 ae_comprehensive = (
     ae_t1.head(40)
@@ -359,7 +376,11 @@ doc_comprehensive = rtf.RTFDocument(
 )
 
 # Generate the RTF file
-doc_comprehensive.write_rtf("../rtf/advanced-group-by-comprehensive.rtf")
+doc_comprehensive.write_rtf("advanced-group-by-comprehensive.rtf")
+```
+
+```python exec="on" session="default" workdir="docs/articles/rtf/"
+converter.convert("advanced-group-by-comprehensive.rtf", output_dir="../pdf/", format="pdf", overwrite=True)
 ```
 
 <embed src="../pdf/advanced-group-by-comprehensive.pdf" style="width:100%; height:400px" type="application/pdf">

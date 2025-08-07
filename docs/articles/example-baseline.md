@@ -1,11 +1,14 @@
 # Baseline characteristics
 
+```python exec="on" session="default"
+from rtflite import LibreOfficeConverter
 
-<!-- `.md` and `.py` files are generated from the `.qmd` file. Please edit that file. -->
+converter = LibreOfficeConverter()
+```
 
 ## Imports
 
-``` python
+```python exec="on" source="above" session="default"
 from importlib.resources import files
 
 import polars as pl
@@ -17,31 +20,15 @@ import rtflite as rtf
 
 Load data from parquet file:
 
-``` python
+```python exec="on" source="above" session="default" result="text"
 data_path = files("rtflite.data").joinpath("baseline.parquet")
 df = pl.read_parquet(data_path)
 print(df)
 ```
 
-                       var         1 1_pct         2 2_pct         3 3_pct      9999 9999_pct    var_label
-    0               Female        53  10.4        50   9.8        40   7.9       143     28.1       Gender
-    1                 Male        33   6.5        34   6.7        44   8.7       111     21.9       Gender
-    2                  <65        14   2.8         8   1.6        11   2.2        33      6.5  Age (Years)
-    3                65-80        42   8.3        47   9.3        55  10.8       144     28.3  Age (Years)
-    4                  >80        30   5.9        29   5.7        18   3.5        77     15.2  Age (Years)
-    5                                                                                          Age (Years)
-    6   Subjects with data        86              84              84             254           Age (Years)
-    7                 Mean      75.2            75.7            74.4            75.1           Age (Years)
-    8                   SD       8.6             8.3             7.9             8.2           Age (Years)
-    9               Median      76.0            77.5            76.0            77.0           Age (Years)
-    10               Range  52 to 89        51 to 88        56 to 88        51 to 89           Age (Years)
-    11               White        78  15.4        78  15.4        74  14.6       230     45.3         Race
-    12               Black         8   1.6         6   1.2         9   1.8        23      4.5         Race
-    13               Other         0   0.0         0   0.0         1   0.2         1      0.2         Race
-
 Create header data frames:
 
-``` python
+```python exec="on" source="above" session="default"
 header1 = ["", "Placebo", "Drug Low Dose", "Drug High Dose", "Total"]
 header2 = ["", "n", "(%)", "n", "(%)", "n", "(%)", "n", "(%)"]
 ```
@@ -50,7 +37,7 @@ header2 = ["", "n", "(%)", "n", "(%)", "n", "(%)", "n", "(%)"]
 
 Create RTF document:
 
-``` python
+```python exec="on" source="above" session="default" workdir="docs/articles/rtf/"
 doc = rtf.RTFDocument(
     df=df,
     rtf_title=rtf.RTFTitle(
@@ -76,7 +63,11 @@ doc = rtf.RTFDocument(
     ),
 )
 
-doc.write_rtf("../rtf/example-baseline-char.rtf")
+doc.write_rtf("example-baseline-char.rtf")
+```
+
+```python exec="on" session="default" workdir="docs/articles/rtf/"
+converter.convert("example-baseline-char.rtf", output_dir="../pdf/", format="pdf", overwrite=True)
 ```
 
 <embed src="../pdf/example-baseline-char.pdf" style="width:100%; height:400px" type="application/pdf">
