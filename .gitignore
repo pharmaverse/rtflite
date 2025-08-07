@@ -24,3 +24,10 @@ Rplots.pdf
 /docs/articles/rtf/
 /docs/articles/pdf/
 /docs/articles/images/
+
+# Coverage reports
+htmlcov/
+docs/coverage/
+
+# Local Claude settings
+.claude/settings.local.json
