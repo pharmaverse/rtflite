@@ -24,7 +24,7 @@ import polars as pl
 import rtflite as rtf
 ```
 
-## Create Age Histogram by Treatment
+## Create age histogram by treatment
 
 ```python exec="on" source="above" session="default"
 # Load ADSL data
@@ -65,7 +65,7 @@ for i, treatment in enumerate(treatment_groups):
     plt.close()
 ```
 
-## Single Figure
+## Single figure
 
 ```python exec="on" source="above" session="default" workdir="docs/articles/rtf/"
 doc_age = rtf.RTFDocument(
@@ -90,7 +90,7 @@ converter.convert("example-figure-age.rtf", output_dir="../pdf/", format="pdf", 
 
 <embed src="../pdf/example-figure-age.pdf" style="width:100%; height:400px" type="application/pdf">
 
-## Multiple Figures with Elements on Every Page
+## Multiple figures with elements on every page
 
 ```python exec="on" source="above" session="default" workdir="docs/articles/rtf/"
 # Create RTF document with multiple figures and elements on every page

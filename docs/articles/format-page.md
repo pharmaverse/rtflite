@@ -17,7 +17,7 @@ to control this behavior:
 - `page_footnote`: Controls where footnotes appear ("first", "last", "all")
 - `page_source`: Controls where sources appear ("first", "last", "all")
 
-## Default Behavior
+## Default behavior
 
 By default:
 
@@ -27,7 +27,7 @@ By default:
 
 ## Examples
 
-### Basic Setup
+### Basic setup
 
 ```python exec="on" source="above" session="default"
 from importlib.resources import files
@@ -43,7 +43,7 @@ data_path = files("rtflite.data").joinpath("adae.parquet")
 df = pl.read_parquet(data_path).head(30)
 ```
 
-### Example 1: Default Behavior
+### Example 1: default behavior
 
 ```python exec="on" source="above" session="default" workdir="docs/articles/rtf/"
 # Default: title on all pages, footnote and source on last page
@@ -69,7 +69,7 @@ converter.convert("format-page-default.rtf", output_dir="../pdf/", format="pdf",
 
 <embed src="../pdf/format-page-default.pdf" style="width:100%; height:400px" type="application/pdf">
 
-### Example 2: Title on First Page Only
+### Example 2: title on first page only
 
 ```python exec="on" source="above" session="default" workdir="docs/articles/rtf/"
 # Title on first page only, footnote and source on last page
@@ -98,7 +98,7 @@ converter.convert("format-page-title-first.rtf", output_dir="../pdf/", format="p
 
 <embed src="../pdf/format-page-title-first.pdf" style="width:100%; height:400px" type="application/pdf">
 
-### Example 3: Footnote on First Page
+### Example 3: footnote on first page
 
 ```python exec="on" source="above" session="default" workdir="docs/articles/rtf/"
 # Title on first page (default), footnote on first page, source on last page
@@ -127,7 +127,7 @@ converter.convert("format-page-footnote-first.rtf", output_dir="../pdf/", format
 
 <embed src="../pdf/format-page-footnote-first.pdf" style="width:100%; height:400px" type="application/pdf">
 
-### Example 4: All Components on All Pages
+### Example 4: all components on all pages
 
 ```python exec="on" source="above" session="default" workdir="docs/articles/rtf/"
 # All components on all pages
@@ -156,7 +156,7 @@ converter.convert("format-page-all-pages.rtf", output_dir="../pdf/", format="pdf
 
 <embed src="../pdf/format-page-all-pages.pdf" style="width:100%; height:400px" type="application/pdf">
 
-### Example 5: Custom Combination
+### Example 5: custom combination
 
 ```python exec="on" source="above" session="default" workdir="docs/articles/rtf/"
 # Custom combination: title everywhere, footnote on first page, source on last page

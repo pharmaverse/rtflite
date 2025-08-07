@@ -23,16 +23,16 @@ nav:
     - Developer:
       - articles/pagination.md
       - articles/converter-setup.md
-  - API Reference:
+  - API reference:
     - Core:
       - RTFDocument: reference/rtf-document.md
     - Components:
-      - Page Layout: reference/page-layout.md
+      - Page layout: reference/page-layout.md
       - Tables: reference/tables.md
-      - Text & Formatting: reference/text-formatting.md
+      - Text & formatting: reference/text-formatting.md
     - Utilities:
-      - File Conversion: reference/convert.md
-      - String Width: reference/strwidth.md
+      - Format conversion: reference/convert.md
+      - String width: reference/strwidth.md
     - Advanced:
       - Pagination: reference/pagination.md
       - Low-level API: reference/low-level.md
