@@ -3,6 +3,8 @@
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
+from ..services.grouping_service import grouping_service
+
 if TYPE_CHECKING:
     from ..encode import RTFDocument
 
@@ -534,8 +536,6 @@ class PaginatedStrategy(EncodingStrategy):
         if document.rtf_body.subline_by is not None:
             import warnings
 
-            from ..services.grouping_service import grouping_service
-
             formatting_warnings = (
                 grouping_service.validate_subline_formatting_consistency(
                     original_df, document.rtf_body.subline_by, document.rtf_body
@@ -577,8 +577,6 @@ class PaginatedStrategy(EncodingStrategy):
 
         # Apply group_by processing to each page if needed
         if document.rtf_body.group_by:
-            from ..services.grouping_service import grouping_service
-
             # Calculate global page start indices for context restoration
             page_start_indices = []
             cumulative_rows = 0
