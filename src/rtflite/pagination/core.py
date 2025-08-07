@@ -1,9 +1,10 @@
 from collections.abc import Sequence
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import polars as pl
 from pydantic import BaseModel, ConfigDict, Field
 
+from ..attributes import TableAttributes
 from ..strwidth import get_string_width
 
 
@@ -50,7 +51,7 @@ class PageBreakCalculator(BaseModel):
         self,
         df: pl.DataFrame,
         col_widths: List[float],
-        table_attrs=None,
+        table_attrs: Optional[TableAttributes] = None,
         font_size: int = 9,
     ) -> List[int]:
         """Calculate how many rows each content row will occupy when rendered
@@ -115,7 +116,7 @@ class PageBreakCalculator(BaseModel):
         col_widths: List[float],
         page_by: List[str] = None,
         new_page: bool = False,
-        table_attrs=None,
+        table_attrs: Optional[TableAttributes] = None,
         additional_rows_per_page: int = 0,
     ) -> List[Tuple[int, int]]:
         """Find optimal page break positions (r2rtf compatible)
@@ -189,7 +190,7 @@ class ContentDistributor(BaseModel):
         page_by: List[str] = None,
         new_page: bool = False,
         pageby_header: bool = True,
-        table_attrs=None,
+        table_attrs: Optional[TableAttributes] = None,
         additional_rows_per_page: int = 0,
         subline_by: List[str] = None,
     ) -> List[Dict[str, Any]]:
