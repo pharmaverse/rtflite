@@ -2,6 +2,8 @@
 
 from typing import List, Optional
 
+from .grouping_service import grouping_service
+
 
 class RTFEncodingService:
     """Service class that handles RTF component encoding operations.
@@ -297,8 +299,6 @@ class RTFEncodingService:
 
         # Validate data sorting for all grouping parameters
         if any([rtf_attrs.group_by, rtf_attrs.page_by, rtf_attrs.subline_by]):
-            from .grouping_service import grouping_service
-
             grouping_service.validate_data_sorting(
                 df,
                 group_by=rtf_attrs.group_by,
@@ -309,8 +309,6 @@ class RTFEncodingService:
         # Validate subline_by formatting consistency and issue warnings
         if rtf_attrs.subline_by is not None:
             import warnings
-
-            from .grouping_service import grouping_service
 
             formatting_warnings = (
                 grouping_service.validate_subline_formatting_consistency(
@@ -339,8 +337,6 @@ class RTFEncodingService:
             # Note: subline_by documents should use pagination, so this path should not be reached for them
             # Apply group_by processing for non-paginated documents
             if rtf_attrs.group_by is not None:
-                from .grouping_service import grouping_service
-
                 processed_df = grouping_service.enhance_group_by(
                     processed_df, rtf_attrs.group_by
                 )
