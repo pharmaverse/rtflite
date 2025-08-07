@@ -24,11 +24,3 @@ Utilities for reading and processing figures.
     options:
       show_root_heading: false
       show_source: false
-
-## Original Reference Files
-
-For backward compatibility and detailed component documentation:
-
-- [Input Components](input.md)
-- [Encoding Details](encode.md)
-- [Row Components](row.md)
