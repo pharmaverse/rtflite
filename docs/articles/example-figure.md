@@ -14,12 +14,12 @@ This example shows how to create RTF documents with embedded figures using rtfli
 from importlib.resources import files
 
 # Set matplotlib backend for headless environments (GitHub Actions)
+import matplotlib
+
+matplotlib.use("Agg")
+
 import matplotlib.pyplot as plt
-
-plt.switch_backend("Agg")
-
 import polars as pl
-from plotnine import aes, geom_histogram, ggplot, labs, theme, theme_minimal
 
 import rtflite as rtf
 ```
@@ -39,21 +39,30 @@ treatment_groups = df["TRT01A"].unique().sort()
 for i, treatment in enumerate(treatment_groups):
     treatment_df = df.filter(pl.col("TRT01A") == treatment)
 
-    treatment_plot = (
-        ggplot(treatment_df, aes(x="AGE"))
-        + geom_histogram(bins=15, fill="#70AD47", color="black", alpha=0.7)
-        + labs(x="Age (years)", y="Number of Subjects")
-        + theme_minimal()
-        + theme(figure_size=(6, 4))
-    )
+    # Create figure and axis
+    fig, ax = plt.subplots(figsize=(6, 4))
 
-    treatment_plot.save(
+    # Plot histogram
+    ages = treatment_df["AGE"].to_list()
+    ax.hist(ages, bins=15, color="#70AD47", edgecolor="black", alpha=0.7)
+
+    # Set labels
+    ax.set_xlabel("Age (years)")
+    ax.set_ylabel("Number of Subjects")
+
+    # Apply minimal theme styling
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.grid(True, alpha=0.3, linestyle="-", linewidth=0.5)
+    ax.set_axisbelow(True)
+
+    # Save figure
+    plt.savefig(
         f"../images/age-histogram-treatment-{i}.png",
         dpi=300,
-        width=6,
-        height=4,
-        verbose=False,
+        bbox_inches="tight"
     )
+    plt.close()
 ```
 
 ## Single Figure
