@@ -13,8 +13,13 @@ This example shows how to create RTF documents with embedded figures using rtfli
 ```python exec="on" source="above" session="default"
 from importlib.resources import files
 
+# Set matplotlib backend for headless environments (GitHub Actions)
+import matplotlib
+
+matplotlib.use("Agg")
+
 import polars as pl
-from plotnine import ggplot, aes, geom_histogram, labs, theme_minimal, theme
+from plotnine import aes, geom_histogram, ggplot, labs, theme, theme_minimal
 
 import rtflite as rtf
 ```
