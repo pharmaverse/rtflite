@@ -5,7 +5,6 @@ subline_by, page context restoration, and boundary conditions.
 """
 
 import polars as pl
-import pytest
 
 from rtflite.encode import RTFDocument
 from rtflite.input import RTFBody, RTFColumnHeader, RTFFootnote, RTFPage, RTFTitle
