@@ -91,11 +91,13 @@ class TestRTFEncodingEngine:
         df = pl.DataFrame({"A": [1, 2], "B": [3, 4]})
         document = RTFDocument(df=df)
 
-        # Should not raise and should return a string
+        # Test that encoding produces a non-empty RTF document
         result = engine.encode_document(document)
         assert isinstance(result, str)
-        assert len(result) > 0
-        assert result.startswith("{\\rtf1")  # RTF documents start with this
+        assert len(result) > 100  # RTF documents should have substantial content
+        # Verify it contains table data
+        assert "\\cell" in result  # RTF table cells
+        assert "\\row" in result  # RTF table rows
 
     def test_encode_document_paginated(self):
         """Test encoding a paginated document."""
@@ -105,43 +107,46 @@ class TestRTFEncodingEngine:
         rtf_body = RTFBody(page_by=["A"], new_page=True)
         document = RTFDocument(df=df, rtf_body=rtf_body)
 
-        # Should not raise and should return a string
+        # Test that encoding produces a valid paginated document
         result = engine.encode_document(document)
         assert isinstance(result, str)
-        assert len(result) > 0
-        assert result.startswith("{\\rtf1")  # RTF documents start with this
+        assert len(result) > 100  # RTF documents should have substantial content
+        # Verify pagination occurred
+        assert "\\page" in result  # Page breaks for pagination
 
 
 class TestSinglePageStrategy:
     """Test the SinglePageStrategy class."""
 
     def test_strategy_encode(self):
-        """Test that single page strategy delegates to original method."""
+        """Test that single page strategy encodes correctly."""
         strategy = SinglePageStrategy()
 
         df = pl.DataFrame({"A": [1, 2], "B": [3, 4]})
         document = RTFDocument(df=df)
 
-        # Should not raise and should return a string
+        # Test successful encoding without implementation details
         result = strategy.encode(document)
         assert isinstance(result, str)
-        assert len(result) > 0
-        assert result.startswith("{\\rtf1")
+        assert len(result) > 100  # Meaningful content
+        # Verify table structure is present
+        assert "\\trowd" in result  # Table row definition
 
 
 class TestPaginatedStrategy:
     """Test the PaginatedStrategy class."""
 
     def test_strategy_encode(self):
-        """Test that paginated strategy delegates to original method."""
+        """Test that paginated strategy encodes with pagination."""
         strategy = PaginatedStrategy()
 
         df = pl.DataFrame({"A": [1, 2], "B": [3, 4]})
         rtf_body = RTFBody(page_by=["A"], new_page=True)
         document = RTFDocument(df=df, rtf_body=rtf_body)
 
-        # Should not raise and should return a string
+        # Test successful paginated encoding
         result = strategy.encode(document)
         assert isinstance(result, str)
-        assert len(result) > 0
-        assert result.startswith("{\\rtf1")
+        assert len(result) > 100  # Meaningful content
+        # Verify pagination markers are present
+        assert "\\page" in result or "\\pagebb" in result  # Page breaks

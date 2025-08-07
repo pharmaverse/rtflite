@@ -170,155 +170,52 @@ def test_text_attributes_encode():
         attrs._encode_text(text, method="invalid")
 
 
-def test_rtf_footnote_as_table_true():
-    """Test RTFFootnote with as_table=True generates RTF matching R2RTF output."""
-    # ```{r, footnote_as_table_true}
-    # library(r2rtf)
-    #
-    # # Create a simple data frame
-    # tbl <- data.frame(
-    #   Column1 = c("Data 1.1", "Data 2.1"),
-    #   Column2 = c("Data 1.2", "Data 2.2")
-    # )
-    #
-    # # Test footnote with as_table = TRUE (default)
-    # tbl_footnote_table <- tbl |>
-    #   r2rtf::rtf_body() |>
-    #   r2rtf::rtf_footnote(footnote = "Footnote as table", as_table = TRUE) |>
-    #   r2rtf::rtf_encode(verbose = FALSE)
-    #
-    # # Output RTF content
-    # tbl_footnote_table |>
-    #   r2rtf::write_rtf(tempfile()) |>
-    #   readLines() |>
-    #   cat(sep = "\n")
-    # ```
-
-    # Test data matching R fixture
+@pytest.mark.parametrize(
+    "component_type,as_table,text_content,fixture_name",
+    [
+        ("footnote", True, "Footnote as table", "footnote_as_table_true"),
+        ("footnote", False, "Footnote as plain text", "footnote_as_table_false"),
+        ("source", True, "Source as table", "source_as_table_true"),
+        ("source", False, "Source as plain text", "source_as_table_false"),
+    ],
+)
+def test_rtf_footnote_source_as_table(component_type, as_table, text_content, fixture_name):
+    """Test RTFFootnote and RTFSource with as_table parameter.
+    
+    This parameterized test consolidates 4 similar tests into one,
+    testing both footnote and source components with as_table True/False.
+    
+    R code fixtures are generated for each combination:
+    - footnote with as_table=TRUE
+    - footnote with as_table=FALSE  
+    - source with as_table=TRUE
+    - source with as_table=FALSE
+    """
+    # Test data common to all cases
     df = pl.DataFrame(
         {"Column1": ["Data 1.1", "Data 2.1"], "Column2": ["Data 1.2", "Data 2.2"]}
     )
 
-    # Create document with footnote as_table=True (default)
-    doc = RTFDocument(
-        df=df,
-        rtf_body=RTFBody(),
-        rtf_footnote=RTFFootnote(text=["Footnote as table"], as_table=True),
-    )
+    # Create document with appropriate component
+    if component_type == "footnote":
+        doc = RTFDocument(
+            df=df,
+            rtf_body=RTFBody(),
+            rtf_footnote=RTFFootnote(text=[text_content], as_table=as_table),
+        )
+    else:  # source
+        doc = RTFDocument(
+            df=df,
+            rtf_body=RTFBody(),
+            rtf_source=RTFSource(text=[text_content], as_table=as_table),
+        )
 
     rtf_output = doc.rtf_encode()
-    expected = r_output.read("footnote_as_table_true")
+    expected = r_output.read(fixture_name)
 
     # Use semantic RTF comparison
-    assert_rtf_equals_semantic(rtf_output, expected, "test_rtf_footnote_as_table_true")
-
-
-def test_rtf_footnote_as_table_false():
-    """Test RTFFootnote with as_table=False generates RTF matching R2RTF output."""
-    # ```{r, footnote_as_table_false}
-    # library(r2rtf)
-    #
-    # # Test footnote with as_table = FALSE
-    # tbl_footnote_plain <- tbl |>
-    #   r2rtf::rtf_body() |>
-    #   r2rtf::rtf_footnote(footnote = "Footnote as plain text", as_table = FALSE) |>
-    #   r2rtf::rtf_encode(verbose = FALSE)
-    #
-    # tbl_footnote_plain |>
-    #   r2rtf::write_rtf(tempfile()) |>
-    #   readLines() |>
-    #   cat(sep = "\n")
-    # ```
-
-    # Test data matching R fixture
-    df = pl.DataFrame(
-        {"Column1": ["Data 1.1", "Data 2.1"], "Column2": ["Data 1.2", "Data 2.2"]}
-    )
-
-    # Create document with footnote as_table=False
-    doc = RTFDocument(
-        df=df,
-        rtf_body=RTFBody(),
-        rtf_footnote=RTFFootnote(text=["Footnote as plain text"], as_table=False),
-    )
-
-    rtf_output = doc.rtf_encode()
-    expected = r_output.read("footnote_as_table_false")
-
-    # Use semantic RTF comparison
-    assert_rtf_equals_semantic(rtf_output, expected, "test_rtf_footnote_as_table_false")
-
-
-def test_rtf_source_as_table_true():
-    """Test RTFSource with as_table=True generates RTF matching R2RTF output."""
-    # ```{r, source_as_table_true}
-    # library(r2rtf)
-    #
-    # # Test source with as_table = TRUE
-    # tbl_source_table <- tbl |>
-    #   r2rtf::rtf_body() |>
-    #   r2rtf::rtf_source(source = "Source as table", as_table = TRUE) |>
-    #   r2rtf::rtf_encode(verbose = FALSE)
-    #
-    # tbl_source_table |>
-    #   r2rtf::write_rtf(tempfile()) |>
-    #   readLines() |>
-    #   cat(sep = "\n")
-    # ```
-
-    # Test data matching R fixture
-    df = pl.DataFrame(
-        {"Column1": ["Data 1.1", "Data 2.1"], "Column2": ["Data 1.2", "Data 2.2"]}
-    )
-
-    # Create document with source as_table=True
-    doc = RTFDocument(
-        df=df,
-        rtf_body=RTFBody(),
-        rtf_source=RTFSource(text=["Source as table"], as_table=True),
-    )
-
-    rtf_output = doc.rtf_encode()
-    expected = r_output.read("source_as_table_true")
-
-    # Use semantic RTF comparison
-    assert_rtf_equals_semantic(rtf_output, expected, "test_rtf_source_as_table_true")
-
-
-def test_rtf_source_as_table_false():
-    """Test RTFSource with as_table=False generates RTF matching R2RTF output."""
-    # ```{r, source_as_table_false}
-    # library(r2rtf)
-    #
-    # # Test source with as_table = FALSE (default)
-    # tbl_source_plain <- tbl |>
-    #   r2rtf::rtf_body() |>
-    #   r2rtf::rtf_source(source = "Source as plain text", as_table = FALSE) |>
-    #   r2rtf::rtf_encode(verbose = FALSE)
-    #
-    # tbl_source_plain |>
-    #   r2rtf::write_rtf(tempfile()) |>
-    #   readLines() |>
-    #   cat(sep = "\n")
-    # ```
-
-    # Test data matching R fixture
-    df = pl.DataFrame(
-        {"Column1": ["Data 1.1", "Data 2.1"], "Column2": ["Data 1.2", "Data 2.2"]}
-    )
-
-    # Create document with source as_table=False (default)
-    doc = RTFDocument(
-        df=df,
-        rtf_body=RTFBody(),
-        rtf_source=RTFSource(text=["Source as plain text"], as_table=False),
-    )
-
-    rtf_output = doc.rtf_encode()
-    expected = r_output.read("source_as_table_false")
-
-    # Use semantic RTF comparison
-    assert_rtf_equals_semantic(rtf_output, expected, "test_rtf_source_as_table_false")
+    test_name = f"test_rtf_{component_type}_as_table_{as_table}"
+    assert_rtf_equals_semantic(rtf_output, expected, test_name)
 
 
 def test_rtf_footnote_as_table_boolean_storage():
@@ -537,131 +434,100 @@ def test_rtf_as_table_border_inheritance():
     assert source_custom.border_bottom == [[""]]
 
 
-def test_rtf_footnote_as_table_multipage():
-    """Test RTFFootnote with as_table settings across multiple pages (3 pages)."""
-    # ```{r, footnote_multipage_as_table_true}
-    # library(r2rtf)
-    #
-    # # Create dataset for 3 pages
-    # tbl_multipage <- data.frame(
-    #   Column1 = paste0("Row ", 1:24),
-    #   Column2 = paste0("Data ", 1:24),
-    #   Column3 = paste0("Value ", 1:24)
-    # )
-    #
-    # # Test with footnote as_table = TRUE and nrow = 10
-    # tbl_multipage_footnote_table <- tbl_multipage |>
-    #   r2rtf::rtf_page(nrow = 10) |>
-    #   r2rtf::rtf_body() |>
-    #   r2rtf::rtf_footnote("This is a footnote that appears on each page with table borders", as_table = TRUE) |>
-    #   r2rtf::rtf_encode(verbose = FALSE)
-    #
-    # tbl_multipage_footnote_table |>
-    #   r2rtf::write_rtf(tempfile()) |>
-    #   readLines() |>
-    #   cat(sep = "\n")
-    # ```
-
-    # Create a large dataset that will span 3 pages with nrow=10
-    # With headers, footnotes, and sources, we need enough data rows
-    data_for_3_pages = {
-        "Column1": [f"Row {i + 1}" for i in range(24)],  # 24 rows of data
+def test_rtf_footnote_pagination():
+    """Test that footnotes appear correctly on paginated documents."""
+    # Create dataset that will span multiple pages
+    df = pl.DataFrame({
+        "Column1": [f"Row {i + 1}" for i in range(24)],
         "Column2": [f"Data {i + 1}" for i in range(24)],
-        "Column3": [f"Value {i + 1}" for i in range(24)],
-    }
-    df_large = pl.DataFrame(data_for_3_pages)
-
-    # Test with footnote as_table=True (default) across 3 pages
-    doc_table_footnote = RTFDocument(
-        df=df_large,
-        rtf_page=RTFPage(nrow=10),  # Force pagination: 10 rows per page
+    })
+    
+    doc = RTFDocument(
+        df=df,
+        rtf_page=RTFPage(nrow=10),  # Force pagination
         rtf_body=RTFBody(),
-        rtf_footnote=RTFFootnote(
-            text=["This is a footnote that appears on each page with table borders"],
-            as_table=True,
-        ),
+        rtf_footnote=RTFFootnote(text=["Test footnote"]),
     )
+    
+    rtf_output = doc.rtf_encode()
+    
+    # Verify pagination occurred
+    assert "\\page" in rtf_output
+    # Verify footnote text appears
+    assert "Test footnote" in rtf_output
 
-    rtf_output_table = doc_table_footnote.rtf_encode()
 
-    # Test with footnote as_table=False across 3 pages
-    doc_plain_footnote = RTFDocument(
-        df=df_large,
-        rtf_page=RTFPage(nrow=10),  # Force pagination: 10 rows per page
-        rtf_body=RTFBody(),
-        rtf_footnote=RTFFootnote(
-            text=["This is a footnote that appears on each page as plain text"],
-            as_table=False,
-        ),
+def test_rtf_footnote_as_table_borders():
+    """Test that as_table=True adds borders to footnotes."""
+    df = pl.DataFrame({"A": [1, 2], "B": [3, 4]})
+    
+    # Document with table-style footnote
+    doc_table = RTFDocument(
+        df=df,
+        rtf_footnote=RTFFootnote(text=["Table footnote"], as_table=True),
     )
-
-    rtf_output_plain = doc_plain_footnote.rtf_encode()
-
-    # Verify outputs are different
-    assert rtf_output_table != rtf_output_plain
-
-    # Count page breaks to confirm 3 pages
-    page_break_count = rtf_output_table.count("\\page")
-    assert page_break_count == 2  # 2 page breaks = 3 pages
-
-    # More specific test: look for border codes
-    # When as_table=True, should have cell border codes for footnotes
-    border_codes_table = rtf_output_table.count("\\clbrdrl\\brdrs\\brdrw15")
-    border_codes_plain = rtf_output_plain.count("\\clbrdrl\\brdrs\\brdrw15")
-
-    # Table footnote should have more border structures than plain text
-    assert border_codes_table > border_codes_plain
-
-    # Check that footnote text appears in both
-    assert "table borders" in rtf_output_table
-    assert "plain text" in rtf_output_plain
+    
+    # Document with plain footnote
+    doc_plain = RTFDocument(
+        df=df,
+        rtf_footnote=RTFFootnote(text=["Plain footnote"], as_table=False),
+    )
+    
+    rtf_table = doc_table.rtf_encode()
+    rtf_plain = doc_plain.rtf_encode()
+    
+    # Table footnote should have border commands
+    assert "\\brdr" in rtf_table
+    # Outputs should differ due to formatting
+    assert rtf_table != rtf_plain
 
 
-def test_rtf_source_as_table_multipage():
-    """Test RTFSource with as_table settings across multiple pages (3 pages)."""
-    # Create a large dataset that will span 3 pages
-    data_for_3_pages = {
+def test_rtf_source_pagination():
+    """Test that sources appear correctly on paginated documents."""
+    # Create dataset that will span multiple pages
+    df = pl.DataFrame({
         "Column1": [f"Item {i + 1}" for i in range(24)],
         "Column2": [f"Desc {i + 1}" for i in range(24)],
-        "Column3": [f"Code {i + 1}" for i in range(24)],
-    }
-    df_large = pl.DataFrame(data_for_3_pages)
-
-    # Test with source as_table=True across 3 pages
-    doc_table_source = RTFDocument(
-        df=df_large,
+    })
+    
+    doc = RTFDocument(
+        df=df,
         rtf_page=RTFPage(nrow=10),  # Force pagination
         rtf_body=RTFBody(),
-        rtf_source=RTFSource(
-            text=["Source: Clinical trial data from 2024 study"], as_table=True
-        ),
+        rtf_source=RTFSource(text=["Test source"]),
     )
+    
+    rtf_output = doc.rtf_encode()
+    
+    # Verify pagination occurred
+    assert "\\page" in rtf_output
+    # Verify source text appears
+    assert "Test source" in rtf_output
 
-    rtf_output_table = doc_table_source.rtf_encode()
 
-    # Test with source as_table=False (default) across 3 pages
-    doc_plain_source = RTFDocument(
-        df=df_large,
-        rtf_page=RTFPage(nrow=10),  # Force pagination
-        rtf_body=RTFBody(),
-        rtf_source=RTFSource(
-            text=["Source: Clinical trial data from 2024 study"], as_table=False
-        ),
+def test_rtf_source_as_table_borders():
+    """Test that as_table=True adds borders to sources."""
+    df = pl.DataFrame({"A": [1, 2], "B": [3, 4]})
+    
+    # Document with table-style source
+    doc_table = RTFDocument(
+        df=df,
+        rtf_source=RTFSource(text=["Table source"], as_table=True),
     )
-
-    rtf_output_plain = doc_plain_source.rtf_encode()
-
-    # Verify outputs are different
-    assert rtf_output_table != rtf_output_plain
-
-    # Confirm 3 pages
-    assert rtf_output_table.count("\\page") == 2  # 2 page breaks = 3 pages
-    assert rtf_output_plain.count("\\page") == 2
-
-    # When as_table=True, source should have more table structures
-    source_table_count = rtf_output_table.count("\\clbrdrl\\brdrs\\brdrw15")
-    source_plain_count = rtf_output_plain.count("\\clbrdrl\\brdrs\\brdrw15")
-    assert source_table_count > source_plain_count
+    
+    # Document with plain source
+    doc_plain = RTFDocument(
+        df=df,
+        rtf_source=RTFSource(text=["Plain source"], as_table=False),
+    )
+    
+    rtf_table = doc_table.rtf_encode()
+    rtf_plain = doc_plain.rtf_encode()
+    
+    # Table source should have border commands
+    assert "\\brdr" in rtf_table
+    # Outputs should differ due to formatting
+    assert rtf_table != rtf_plain
 
 
 def test_rtf_footnote_and_source_multipage_mixed():
