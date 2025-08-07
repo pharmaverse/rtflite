@@ -48,6 +48,7 @@ extra_javascript:
 
 plugins:
   - search
+  - markdown-exec
   - mkdocstrings:
       default_handler: python
       handlers:

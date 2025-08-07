@@ -1,14 +1,16 @@
 # Figures
 
+```python exec="on" session="default"
+from rtflite import LibreOfficeConverter
 
-<!-- `.md` and `.py` files are generated from the `.qmd` file. Please edit that file. -->
+converter = LibreOfficeConverter()
+```
 
-This example shows how to create RTF documents with embedded figures
-using rtflite.
+This example shows how to create RTF documents with embedded figures using rtflite.
 
 ## Imports
 
-``` python
+```python exec="on" source="above" session="default"
 from importlib.resources import files
 
 import polars as pl
@@ -19,13 +21,13 @@ import rtflite as rtf
 
 ## Create Age Histogram by Treatment
 
-``` python
+```python exec="on" source="above" session="default"
 # Load ADSL data
 data_path = files("rtflite.data").joinpath("adsl.parquet")
 df = pl.read_parquet(data_path)
 ```
 
-``` python
+```python exec="on" source="above" session="default" workdir="docs/articles/images/"
 # Create multiple age group histograms for different treatments
 treatment_groups = df["TRT01A"].unique().sort()
 
@@ -41,7 +43,7 @@ for i, treatment in enumerate(treatment_groups):
     )
 
     treatment_plot.save(
-        f"../image/age-histogram-treatment-{i}.png",
+        f"../images/age-histogram-treatment-{i}.png",
         dpi=300,
         width=6,
         height=4,
@@ -51,11 +53,11 @@ for i, treatment in enumerate(treatment_groups):
 
 ## Single Figure
 
-``` python
+```python exec="on" source="above" session="default" workdir="docs/articles/rtf/"
 doc_age = rtf.RTFDocument(
     rtf_title=rtf.RTFTitle(text=["Study Population Demographics", "Age Distribution"]),
     rtf_figure=rtf.RTFFigure(
-        figures="../image/age-histogram-treatment-0.png", fig_width=6, fig_height=4
+        figures="../images/age-histogram-treatment-0.png", fig_width=6, fig_height=4
     ),
     rtf_footnote=rtf.RTFFootnote(
         text=["Analysis population: All randomized subjects (N=254)"],
@@ -65,14 +67,18 @@ doc_age = rtf.RTFDocument(
 )
 
 # Write RTF
-doc_age.write_rtf("../rtf/example-figure-age.rtf")
+doc_age.write_rtf("example-figure-age.rtf")
+```
+
+```python exec="on" session="default" workdir="docs/articles/rtf/"
+converter.convert("example-figure-age.rtf", output_dir="../pdf/", format="pdf", overwrite=True)
 ```
 
 <embed src="../pdf/example-figure-age.pdf" style="width:100%; height:400px" type="application/pdf">
 
 ## Multiple Figures with Elements on Every Page
 
-``` python
+```python exec="on" source="above" session="default" workdir="docs/articles/rtf/"
 # Create RTF document with multiple figures and elements on every page
 doc_multi_page = rtf.RTFDocument(
     rtf_page=rtf.RTFPage(
@@ -85,9 +91,9 @@ doc_multi_page = rtf.RTFDocument(
     ),
     rtf_figure=rtf.RTFFigure(
         figures=[
-            "../image/age-histogram-treatment-0.png",
-            "../image/age-histogram-treatment-1.png",
-            "../image/age-histogram-treatment-2.png",
+            "../images/age-histogram-treatment-0.png",
+            "../images/age-histogram-treatment-1.png",
+            "../images/age-histogram-treatment-2.png",
         ],
         fig_width=6,
         fig_height=4,
@@ -104,7 +110,11 @@ doc_multi_page = rtf.RTFDocument(
 )
 
 # Write RTF
-doc_multi_page.write_rtf("../rtf/example-figure-multipage.rtf")
+doc_multi_page.write_rtf("example-figure-multipage.rtf")
+```
+
+```python exec="on" session="default" workdir="docs/articles/rtf/"
+converter.convert("example-figure-multipage.rtf", output_dir="../pdf/", format="pdf", overwrite=True)
 ```
 
 <embed src="../pdf/example-figure-multipage.pdf" style="width:100%; height:400px" type="application/pdf">

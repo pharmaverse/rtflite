@@ -1,31 +1,35 @@
 # Page format
 
+```python exec="on" session="default"
+from rtflite import LibreOfficeConverter
 
-<!-- `.md` and `.py` files are generated from the `.qmd` file. Please edit that file. -->
+converter = LibreOfficeConverter()
+```
 
-This article demonstrates how to control component placement in
-multi-page documents using rtflite.
+This article demonstrates how to control component placement in multi-page
+documents using rtflite.
 
-When generating multi-page RTF documents, you may want to control where
-titles, footnotes, and sources appear. The `RTFPage` class provides
-three parameters to control this behavior:
+When generating multi-page RTF documents, you may want to control where titles,
+footnotes, and sources appear. The `RTFPage` class provides three parameters
+to control this behavior:
 
-- `page_title`: Controls where titles appear (“first”, “last”, “all”)
-- `page_footnote`: Controls where footnotes appear (“first”, “last”,
-  “all”)
-- `page_source`: Controls where sources appear (“first”, “last”, “all”)
+- `page_title`: Controls where titles appear ("first", "last", "all")
+- `page_footnote`: Controls where footnotes appear ("first", "last", "all")
+- `page_source`: Controls where sources appear ("first", "last", "all")
 
 ## Default Behavior
 
-By default: - Titles appear on **all pages** (`page_title="all"`) -
-Footnotes appear on the **last page only** (`page_footnote="last"`) -
-Sources appear on the **last page only** (`page_source="last"`)
+By default:
+
+- Titles appear on **all pages** (`page_title="all"`)
+- Footnotes appear on the **last page only** (`page_footnote="last"`)
+- Sources appear on the **last page only** (`page_source="last"`)
 
 ## Examples
 
 ### Basic Setup
 
-``` python
+```python exec="on" source="above" session="default"
 from importlib.resources import files
 
 import polars as pl
@@ -33,7 +37,7 @@ import polars as pl
 from rtflite import RTFDocument, RTFFootnote, RTFPage, RTFSource, RTFTitle
 ```
 
-``` python
+```python exec="on" source="above" session="default"
 # Load the adverse events dataset
 data_path = files("rtflite.data").joinpath("adae.parquet")
 df = pl.read_parquet(data_path).head(30)
@@ -41,7 +45,7 @@ df = pl.read_parquet(data_path).head(30)
 
 ### Example 1: Default Behavior
 
-``` python
+```python exec="on" source="above" session="default" workdir="docs/articles/rtf/"
 # Default: title on all pages, footnote and source on last page
 doc_default = RTFDocument(
     df=df.select(
@@ -56,14 +60,18 @@ doc_default = RTFDocument(
 )
 
 # Generate RTF and save to file
-doc_default.write_rtf("../rtf/formatting-page-default.rtf")
+doc_default.write_rtf("format-page-default.rtf")
 ```
 
-<embed src="../pdf/formatting-page-default.pdf" style="width:100%; height:400px" type="application/pdf">
+```python exec="on" session="default" workdir="docs/articles/rtf/"
+converter.convert("format-page-default.rtf", output_dir="../pdf/", format="pdf", overwrite=True)
+```
+
+<embed src="../pdf/format-page-default.pdf" style="width:100%; height:400px" type="application/pdf">
 
 ### Example 2: Title on First Page Only
 
-``` python
+```python exec="on" source="above" session="default" workdir="docs/articles/rtf/"
 # Title on first page only, footnote and source on last page
 doc_title_first = RTFDocument(
     df=df.select(["USUBJID", "TRTA", "AEDECOD", "AESEV", "AESER", "AEREL"]),
@@ -80,15 +88,19 @@ doc_title_first = RTFDocument(
     rtf_source=RTFSource(text="Source: ADAE Dataset from Clinical Trial Database"),
 )
 
-# Generate RTF and save to file
-doc_title_first.write_rtf("../rtf/formatting-page-title-first.rtf")
+# Save to RTF file
+doc_title_first.write_rtf("format-page-title-first.rtf")
 ```
 
-<embed src="../pdf/formatting-page-title-first.pdf" style="width:100%; height:400px" type="application/pdf">
+```python exec="on" session="default" workdir="docs/articles/rtf/"
+converter.convert("format-page-title-first.rtf", output_dir="../pdf/", format="pdf", overwrite=True)
+```
+
+<embed src="../pdf/format-page-title-first.pdf" style="width:100%; height:400px" type="application/pdf">
 
 ### Example 3: Footnote on First Page
 
-``` python
+```python exec="on" source="above" session="default" workdir="docs/articles/rtf/"
 # Title on first page (default), footnote on first page, source on last page
 doc_footnote_first = RTFDocument(
     df=df.select(["USUBJID", "TRTA", "AEDECOD", "AESEV", "AESER", "AEREL"]),
@@ -105,15 +117,19 @@ doc_footnote_first = RTFDocument(
     rtf_source=RTFSource(text="Source: ADAE Dataset from Clinical Trial Database"),
 )
 
-# Generate RTF and save to file
-doc_footnote_first.write_rtf("../rtf/formatting-page-footnote-first.rtf")
+# Save to RTF file
+doc_footnote_first.write_rtf("format-page-footnote-first.rtf")
 ```
 
-<embed src="../pdf/formatting-page-footnote-first.pdf" style="width:100%; height:400px" type="application/pdf">
+```python exec="on" session="default" workdir="docs/articles/rtf/"
+converter.convert("format-page-footnote-first.rtf", output_dir="../pdf/", format="pdf", overwrite=True)
+```
+
+<embed src="../pdf/format-page-footnote-first.pdf" style="width:100%; height:400px" type="application/pdf">
 
 ### Example 4: All Components on All Pages
 
-``` python
+```python exec="on" source="above" session="default" workdir="docs/articles/rtf/"
 # All components on all pages
 doc_all_pages = RTFDocument(
     df=df.select(["USUBJID", "TRTA", "AEDECOD", "AESEV", "AESER", "AEREL"]),
@@ -130,15 +146,19 @@ doc_all_pages = RTFDocument(
     rtf_source=RTFSource(text="Source: ADAE Dataset from Clinical Trial Database"),
 )
 
-# Generate RTF and save to file
-doc_all_pages.write_rtf("../rtf/formatting-page-all-pages.rtf")
+# Save to RTF file
+doc_all_pages.write_rtf("format-page-all-pages.rtf")
 ```
 
-<embed src="../pdf/formatting-page-all-pages.pdf" style="width:100%; height:400px" type="application/pdf">
+```python exec="on" session="default" workdir="docs/articles/rtf/"
+converter.convert("format-page-all-pages.rtf", output_dir="../pdf/", format="pdf", overwrite=True)
+```
+
+<embed src="../pdf/format-page-all-pages.pdf" style="width:100%; height:400px" type="application/pdf">
 
 ### Example 5: Custom Combination
 
-``` python
+```python exec="on" source="above" session="default" workdir="docs/articles/rtf/"
 # Custom combination: title everywhere, footnote on first page, source on last page
 doc_custom = RTFDocument(
     df=df.select(["USUBJID", "TRTA", "AEDECOD", "AESEV", "AESER", "AEREL"]),
@@ -155,8 +175,12 @@ doc_custom = RTFDocument(
     rtf_source=RTFSource(text="Source: ADAE Dataset from Clinical Trial Database"),
 )
 
-# Generate RTF and save to file
-doc_custom.write_rtf("../rtf/formatting-page-custom.rtf")
+# Save to RTF file
+doc_custom.write_rtf("format-page-custom.rtf")
 ```
 
-<embed src="../pdf/formatting-page-custom.pdf" style="width:100%; height:400px" type="application/pdf">
+```python exec="on" session="default" workdir="docs/articles/rtf/"
+converter.convert("format-page-custom.rtf", output_dir="../pdf/", format="pdf", overwrite=True)
+```
+
+<embed src="../pdf/format-page-custom.pdf" style="width:100%; height:400px" type="application/pdf">

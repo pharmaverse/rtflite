@@ -1,17 +1,21 @@
 # Text format
 
+```python exec="on" session="default"
+from rtflite import LibreOfficeConverter
 
-<!-- `.md` and `.py` files are generated from the `.qmd` file. Please edit that file. -->
+converter = LibreOfficeConverter()
+```
 
-This article demonstrates advanced text formatting capabilities in
-rtflite. It covers fonts, colors, alignment, indentation, special
-characters, and comprehensive formatting for clinical documentation.
+This article demonstrates advanced text formatting capabilities in rtflite.
+It covers fonts, colors, alignment, indentation, special characters,
+and comprehensive formatting for clinical documentation.
 
 ## Overview
 
-Advanced text formatting is essential for creating production ready
-clinical documents that meet regulatory standards. Key formatting
-features include:
+Advanced text formatting is essential for creating production-ready
+clinical documents that meet regulatory standards.
+
+Key formatting features include:
 
 - Text format styles (bold, italic, underline, superscript, subscript)
 - Font sizes and alignment options (left, center, right, justified)
@@ -22,7 +26,7 @@ features include:
 
 ## Imports
 
-``` python
+```python exec="on" source="above" session="default"
 import polars as pl
 
 import rtflite as rtf
@@ -32,7 +36,7 @@ import rtflite as rtf
 
 Demonstrate core text formatting options:
 
-``` python
+```python exec="on" source="above" session="default" result="text"
 # Create formatting demonstration data
 format_demo = [
     ["Normal", "", "Regular text", "Default body text"],
@@ -53,7 +57,7 @@ Apply text formatting using column-based approach:
 
 > Using tuples `()` allows user to define parameters by row.
 
-``` python
+```python exec="on" source="above" session="default" workdir="docs/articles/rtf/"
 # Apply text formatting by row
 doc_formats = rtf.RTFDocument(
     df=df_formats,
@@ -62,7 +66,11 @@ doc_formats = rtf.RTFDocument(
     ),
 )
 
-doc_formats.write_rtf("../rtf/text-format-styles.rtf")
+doc_formats.write_rtf("text-format-styles.rtf")
+```
+
+```python exec="on" session="default" workdir="docs/articles/rtf/"
+converter.convert("text-format-styles.rtf", output_dir="../pdf/", format="pdf", overwrite=True)
 ```
 
 <embed src="../pdf/text-format-styles.pdf" style="width:100%; height:400px" type="application/pdf">
@@ -71,7 +79,7 @@ doc_formats.write_rtf("../rtf/text-format-styles.rtf")
 
 Demonstrate font size variations and text alignment:
 
-``` python
+```python exec="on" source="above" session="default" result="text"
 # Create font size and alignment data
 font_align_demo = [
     ["Left", "12pt", "l"],
@@ -86,7 +94,7 @@ df_font_align = pl.DataFrame(
 print(df_font_align)
 ```
 
-``` python
+```python exec="on" source="above" session="default" workdir="docs/articles/rtf/"
 # Apply font sizes and alignment
 doc_font_align = rtf.RTFDocument(
     df=df_font_align,
@@ -96,19 +104,20 @@ doc_font_align = rtf.RTFDocument(
     ),
 )
 
-doc_font_align.write_rtf("../rtf/text-font-size-alignment.rtf")
+doc_font_align.write_rtf("text-font-size-alignment.rtf")
+```
+
+```python exec="on" session="default" workdir="docs/articles/rtf/"
+converter.convert("text-font-size-alignment.rtf", output_dir="../pdf/", format="pdf", overwrite=True)
 ```
 
 <embed src="../pdf/text-font-size-alignment.pdf" style="width:100%; height:400px" type="application/pdf">
 
 ## Text Color
 
-> The feature is under development
-> (https://github.com/pharmaverse/rtflite/issues/2).
-
 Demonstrate text and background color applications:
 
-``` python
+```python exec="on" source="above" session="default" result="text"
 # Create color demonstration data
 color_demo = [
     ["Normal", "Black text on white"],
@@ -121,7 +130,7 @@ df_colors = pl.DataFrame(color_demo, schema=["status", "description"], orient="r
 print(df_colors)
 ```
 
-``` python
+```python exec="on" source="above" session="default" workdir="docs/articles/rtf/"
 # Apply text colors
 doc_colors = rtf.RTFDocument(
     df=df_colors,
@@ -130,7 +139,11 @@ doc_colors = rtf.RTFDocument(
     ),
 )
 
-doc_colors.write_rtf("../rtf/text-color.rtf")
+doc_colors.write_rtf("text-color.rtf")
+```
+
+```python exec="on" session="default" workdir="docs/articles/rtf/"
+converter.convert("text-color.rtf", output_dir="../pdf/", format="pdf", overwrite=True)
 ```
 
 <embed src="../pdf/text-color.pdf" style="width:100%; height:400px" type="application/pdf">
@@ -139,7 +152,7 @@ doc_colors.write_rtf("../rtf/text-color.rtf")
 
 Show indentation options for hierarchical content:
 
-``` python
+```python exec="on" source="above" session="default" result="text"
 # Create indentation demonstration data
 indent_demo = [
     ["Main section", "No indent"],
@@ -152,7 +165,7 @@ df_indent = pl.DataFrame(indent_demo, schema=["level", "description"], orient="r
 print(df_indent)
 ```
 
-``` python
+```python exec="on" source="above" session="default" workdir="docs/articles/rtf/"
 # Apply indentation levels
 doc_indent = rtf.RTFDocument(
     df=df_indent,
@@ -162,7 +175,11 @@ doc_indent = rtf.RTFDocument(
     ),
 )
 
-doc_indent.write_rtf("../rtf/text-indentation.rtf")
+doc_indent.write_rtf("text-indentation.rtf")
+```
+
+```python exec="on" session="default" workdir="docs/articles/rtf/"
+converter.convert("text-indentation.rtf", output_dir="../pdf/", format="pdf", overwrite=True)
 ```
 
 <embed src="../pdf/text-indentation.pdf" style="width:100%; height:400px" type="application/pdf">

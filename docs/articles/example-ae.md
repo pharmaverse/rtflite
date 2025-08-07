@@ -1,14 +1,16 @@
 # AE summary
 
+```python exec="on" session="default"
+from rtflite import LibreOfficeConverter
 
-<!-- `.md` and `.py` files are generated from the `.qmd` file. Please edit that file. -->
+converter = LibreOfficeConverter()
+```
 
-This example shows how to create a simplified adverse events summary
-table.
+This example shows how to create a simplified adverse events summary table.
 
 ## Imports
 
-``` python
+```python exec="on" source="above" session="default"
 from importlib.resources import files
 
 import polars as pl
@@ -16,18 +18,18 @@ import polars as pl
 import rtflite as rtf
 ```
 
-## Step 1: Create data for RTF table
+## Create data for RTF table
 
 Load adverse events data from parquet file:
 
-``` python
+```python exec="on" source="above" session="default"
 data_path = files("rtflite.data").joinpath("adae.parquet")
 df = pl.read_parquet(data_path)
 ```
 
 Process the data to create summary statistics:
 
-``` python
+```python exec="on" source="above" session="default" result="text"
 # First, get the total number of subjects per treatment group
 subjects_per_trt = df.group_by("TRTA").agg(pl.col("USUBJID").n_unique().alias("n_subj"))
 
@@ -76,13 +78,11 @@ ae_t1_final = (
 print(ae_t1_final.head(10))
 ```
 
-## Step 2: Define table format
+## Define table format
 
 Prepare the data for RTF output:
 
-Create the RTF document with formatting:
-
-``` python
+```python exec="on" source="above" session="default"
 # Define column headers
 header1 = [" ", "Placebo", "Drug High Dose", "Drug Low Dose"]
 header2 = [" ", "n", "(%)", "n", "(%)", "n", "(%)"]
@@ -106,7 +106,11 @@ tbl_body = rtf.RTFBody(
     text_justification=["l"] + ["c"] * 6,
     border_left=["single"] + ["single", ""] * 3,
 )
+```
 
+Create the RTF document with formatting:
+
+```python exec="on" source="above" session="default" workdir="docs/articles/rtf/"
 # Create RTF document
 doc = rtf.RTFDocument(
     df=ae_t1_final,
@@ -125,15 +129,13 @@ doc = rtf.RTFDocument(
     ),
     rtf_source=rtf.RTFSource(text=["Source: xxx"]),
 )
+
+# Output .rtf file
+doc.write_rtf("example-ae-summary.rtf")
 ```
 
-## Step 3: Output
-
-Write the RTF file:
-
-``` python
-# Output .rtf file
-doc.write_rtf("../rtf/example-ae-summary.rtf")
+```python exec="on" session="default" workdir="docs/articles/rtf/"
+converter.convert("example-ae-summary.rtf", output_dir="../pdf/", format="pdf", overwrite=True)
 ```
 
 <embed src="../pdf/example-ae-summary.pdf" style="width:100%; height:400px" type="application/pdf">
