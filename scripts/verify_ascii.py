@@ -108,6 +108,15 @@ def scan_directory(root_dir: str) -> None:
         ".venv",
         ".pytest_cache",
         ".egg-info",
+        "htmlcov",  # Coverage reports
+        ".claude",  # Claude settings
+    }
+    
+    # File patterns to skip
+    skip_extensions = {
+        ".css",  # Generated CSS files
+        ".js",   # JavaScript files
+        ".map",  # Source maps
     }
 
     files_with_non_ascii = []
@@ -120,6 +129,14 @@ def scan_directory(root_dir: str) -> None:
         ]
 
         for filename in filenames:
+            # Skip files with certain extensions
+            if any(filename.endswith(ext) for ext in skip_extensions):
+                continue
+            
+            # Skip coverage directories
+            if "coverage" in dirpath or "htmlcov" in dirpath:
+                continue
+            
             filepath = os.path.join(dirpath, filename)
 
             # Check if it's a text file
