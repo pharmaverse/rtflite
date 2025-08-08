@@ -8,11 +8,11 @@ converter = LibreOfficeConverter()
 
 ## Overview
 
-rtflite is a Python package to create production-ready tables and figures in RTF format.
-The package is designed to:
+rtflite is a Python package for creating production-ready tables and figures
+in RTF format. The package is designed to:
 
-- Provide simple component classes that correspond to each element of a table,
-  such as title, headers, body, footnotes, for intuitive table construction.
+- Provide simple Python classes that map to table elements
+  (title, headers, body, footnotes) for intuitive table construction.
 - Offer a canonical Python API with a clear, composable interface.
 - Focus exclusively on **table formatting and layout**,
   leaving data manipulation to dataframe libraries like polars or pandas.
@@ -24,9 +24,8 @@ Creating an RTF table involves three steps:
 - Configure the appropriate rtflite components.
 - Generate and save the RTF document.
 
-This document introduces rtflite's core components and demonstrates how to
-transform dataframes into Tables, Listings, and Figures (TLFs) for
-clinical reporting.
+This guide introduces rtflite's core components and demonstrates how to turn
+dataframes into Tables, Listings, and Figures (TLFs) for clinical reporting.
 
 ## Data: adverse events
 
@@ -58,8 +57,8 @@ df.select(["USUBJID", "TRTA", "AEDECOD"]).head(4)
 
 ## Table-ready data
 
-The polars package is used for data manipulation to create a dataframe
-that contains all the information we want to add in an RTF table.
+We use polars for data manipulation to create a dataframe with the information
+we want to render in an RTF table.
 
 !!! note
     Other dataframe packages can also be used for the same purpose.
@@ -152,8 +151,8 @@ converter.convert("intro-ae2.rtf", output_dir="../pdf/", format="pdf", overwrite
 
 ## Column headers
 
-In `RTFColumnHeader`, `text` argument is used to provide content of column header.
-We used a list to separate the columns.
+In `RTFColumnHeader`, the `text` argument provides the column header content
+as a list of strings.
 
 ```python exec="on" source="above" session="default" workdir="docs/articles/rtf/"
 # Create RTF document with column headers
@@ -181,7 +180,7 @@ converter.convert("intro-ae3.rtf", output_dir="../pdf/", format="pdf", overwrite
 
 We also allow column headers be displayed in multiple lines.
 If an empty column name is needed for a column,
-you can insert an empty string; e.g., `["name 1", "", "name 3"]`.
+you can insert an empty string. For example, `["name 1", "", "name 3"]`.
 
 In `RTFColumnHeader`, the `col_rel_width` can be used to align column header
 with different number of columns.
@@ -353,11 +352,14 @@ converter.convert("text-convert.rtf", output_dir="../pdf/", format="pdf", overwr
 <embed src="../pdf/text-convert.pdf" style="width:100%; height:400px" type="application/pdf">
 
 !!! info "Key points about text conversion"
-    - **Default behavior**: `text_convert = True` for all components (titles, data, footnotes, and sources)
-    - **Underscore patterns**: `a_b` becomes subscript when conversion is enabled
-    - **LaTeX symbols**: `\\alpha`, `\\beta`, etc. convert to Unicode symbols
-    - **Control per component**: Each RTF component can have independent conversion settings
-    - **Performance**: Disabling conversion can improve performance for large tables with no LaTeX content
+    - **Default behavior**: `text_convert = True` for all components
+      (titles, data, footnotes, sources).
+    - **Underscore patterns**: `a_b` becomes subscript when conversion is enabled.
+    - **LaTeX symbols**: `\\alpha`, `\\beta`, etc. convert to Unicode symbols.
+    - **Control per component**: Each RTF component can have independent
+      conversion settings.
+    - **Performance**: Disabling conversion can improve performance for large
+      tables with no LaTeX content.
 
 ## Border customization
 

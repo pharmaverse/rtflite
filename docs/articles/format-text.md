@@ -6,9 +6,9 @@ from rtflite import LibreOfficeConverter
 converter = LibreOfficeConverter()
 ```
 
-This article demonstrates advanced text formatting capabilities in rtflite.
-It covers fonts, colors, alignment, indentation, special characters,
-and comprehensive formatting for clinical documentation.
+This article demonstrates advanced text formatting capabilities in rtflite:
+fonts, colors, alignment, indentation, special characters, and
+common patterns for clinical documentation.
 
 ## Overview
 
@@ -53,10 +53,10 @@ df_formats = pl.DataFrame(
 print(df_formats)
 ```
 
-Apply text formatting using column-based approach:
+Apply text formatting using a column-based approach:
 
 !!! tip
-    Using tuples `()` allows user to define parameters by row.
+    Use tuples `()` to specify per-row attributes.
 
 ```python exec="on" source="above" session="default" workdir="docs/articles/rtf/"
 # Apply text formatting by row
@@ -151,7 +151,7 @@ converter.convert("text-color.rtf", output_dir="../pdf/", format="pdf", overwrit
 
 ## Indentation
 
-Show indentation options for hierarchical content:
+Show indentation options for hierarchical content (values are in twips):
 
 ```python exec="on" source="above" session="default" result="text"
 # Create indentation demonstration data
