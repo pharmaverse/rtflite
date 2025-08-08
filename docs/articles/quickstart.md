@@ -8,29 +8,31 @@ converter = LibreOfficeConverter()
 
 ## Overview
 
-rtflite is a Python package to create production ready tables and figures in RTF format.
-The Python package is designed to
+rtflite is a Python package to create production-ready tables and figures in RTF format.
+The package is designed to:
 
-- provide simple "verb" functions that correspond to each component of a table,
-  to help you translate data frame to table in RTF file.
-- enable method chaining.
-- only focus on **table format**.
-  Data manipulation and analysis should be handled by other Python packages. (e.g., polars, pandas)
-- rtflite minimizes package dependency
+- Provide simple component classes that correspond to each element of a table,
+  such as title, headers, body, footnotes, for intuitive table construction.
+- Offer a canonical Python API with a clear, composable interface.
+- Focus exclusively on **table formatting and layout**,
+  leaving data manipulation to dataframe libraries like polars or pandas.
+- Minimize external dependencies for maximum portability and reliability.
 
-Before creating an RTF table we need to:
+Creating an RTF table involves three steps:
 
-- Figure out table layout.
-- Split the layout into small tasks in the form of a computer program.
-- Execute the program.
+- Design the desired table layout and structure.
+- Configure the appropriate rtflite components.
+- Generate and save the RTF document.
 
-This document introduces rtflite basic set of tools, and show how to transfer
-data frames into Table, Listing, and Figure (TLFs).
+This document introduces rtflite's core components and demonstrates how to
+transform dataframes into Tables, Listings, and Figures (TLFs) for
+clinical reporting.
 
 ## Data: adverse events
 
-To explore the basic RTF generation verbs in rtflite, we will use the dataset `adae.parquet`.
-This dataset contain adverse events (AE) information from a clinical trial.
+To explore the RTF generation capabilities in rtflite, we will use the
+dataset `adae.parquet`. This dataset contains adverse events (AE) information
+from a clinical trial.
 
 Below is the meaning of relevant variables.
 
@@ -56,13 +58,13 @@ df.select(["USUBJID", "TRTA", "AEDECOD"]).head(4)
 
 ## Table-ready data
 
-The polars package is used for data manipulation to create a data frame
+The polars package is used for data manipulation to create a dataframe
 that contains all the information we want to add in an RTF table.
 
 !!! note
     Other dataframe packages can also be used for the same purpose.
 
-In this AE example, we provide number of subjects with each type of AE by treatment group.
+In this AE example, we provide the number of subjects with each type of AE by treatment group.
 
 ```python exec="on" source="above" session="default" result="text"
 tbl = (
@@ -76,30 +78,30 @@ tbl = (
 print(tbl.head(4))
 ```
 
-## Single table verbs
+## Table component classes
 
-rtflite aims to provide one function for each type of table layout. Commonly used verbs includes:
+rtflite provides dedicated classes for each table component. Commonly used classes include:
 
-- `RTFPage`: RTF page information (orientation, margins, pagination)
-- `RTFPageHeader`: Page headers with page numbering (compatible with r2rtf)
-- `RTFPageFooter`: Page footers for attribution and notices
-- `RTFTitle`: RTF title information
-- `RTFColumnHeader`: RTF column header information
-- `RTFBody`: RTF table body information
-- `RTFFootnote`: RTF footnote information
-- `RTFSource`: RTF data source information
+- `RTFPage`: RTF page information (orientation, margins, pagination).
+- `RTFPageHeader`: Page headers with page numbering (compatible with r2rtf).
+- `RTFPageFooter`: Page footers for attribution and notices.
+- `RTFTitle`: RTF title information.
+- `RTFColumnHeader`: RTF column header information.
+- `RTFBody`: RTF table body information.
+- `RTFFootnote`: RTF footnote information.
+- `RTFSource`: RTF data source information.
 
-All these verbs are designed to enables usage of method chaining.
-A full list of all functions can be found in the
+These component classes work together to build complete RTF documents.
+A full list of all classes and their parameters can be found in the
 [API reference](https://merck.github.io/rtflite/reference/).
 
 ## Simple example
 
-A minimal example below illustrates how to combine verbs to create an RTF table.
+A minimal example below illustrates how to combine components to create an RTF table.
 
 - `RTFBody()` defines table body layout.
 - `RTFDocument()` transfers table layout information into RTF syntax.
-- `write_rtf()` saves RTF encoding into a file with file extension `.rtf`.
+- `write_rtf()` saves encoded RTF into a `.rtf` file.
 
 ```python exec="on" source="above" session="default" workdir="docs/articles/rtf/"
 # Create simple RTF document
@@ -135,7 +137,7 @@ Therefore it is equivalent to use `col_rel_width = [6,4,4,4]` or `col_rel_width 
 doc = rtf.RTFDocument(
     df=tbl.head(6),
     rtf_body=rtf.RTFBody(
-        col_rel_width=[3, 2, 2, 2]  # define relative width
+        col_rel_width=[3, 2, 2, 2]  # Define relative width
     ),
 )
 
