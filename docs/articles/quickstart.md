@@ -59,7 +59,8 @@ df.select(["USUBJID", "TRTA", "AEDECOD"]).head(4)
 The polars package is used for data manipulation to create a data frame
 that contains all the information we want to add in an RTF table.
 
-> Please note other packages can also be used for the same purpose.
+!!! note
+    Other dataframe packages can also be used for the same purpose.
 
 In this AE example, we provide number of subjects with each type of AE by treatment group.
 
@@ -349,13 +350,12 @@ converter.convert("text-convert.rtf", output_dir="../pdf/", format="pdf", overwr
 
 <embed src="../pdf/text-convert.pdf" style="width:100%; height:400px" type="application/pdf">
 
-### Key points about text conversion
-
-- **Default behavior**: `text_convert = True` for all components (titles, data, footnotes, and sources)
-- **Underscore patterns**: `a_b` becomes subscript when conversion is enabled
-- **LaTeX symbols**: `\\alpha`, `\\beta`, etc. convert to Unicode symbols
-- **Control per component**: Each RTF component can have independent conversion settings
-- **Performance**: Disabling conversion can improve performance for large tables with no LaTeX content
+!!! info "Key points about text conversion"
+    - **Default behavior**: `text_convert = True` for all components (titles, data, footnotes, and sources)
+    - **Underscore patterns**: `a_b` becomes subscript when conversion is enabled
+    - **LaTeX symbols**: `\\alpha`, `\\beta`, etc. convert to Unicode symbols
+    - **Control per component**: Each RTF component can have independent conversion settings
+    - **Performance**: Disabling conversion can improve performance for large tables with no LaTeX content
 
 ## Border customization
 
@@ -555,14 +555,13 @@ converter.convert("intro-ae11.rtf", output_dir="../pdf/", format="pdf", overwrit
 
 <embed src="../pdf/intro-ae11.pdf" style="width:100%; height:400px" type="application/pdf">
 
-### Multi-page considerations
+!!! info "Multi-page considerations"
+    For large tables spanning multiple pages, rtflite handles:
 
-For large tables spanning multiple pages, rtflite handles:
-
-- Automatic page breaks based on `nrow` setting
-- Column header repetition on each page
-- Consistent border styling across page boundaries
-- Proper footnote and source placement
+    - Automatic page breaks based on `nrow` setting
+    - Column header repetition on each page
+    - Consistent border styling across page boundaries
+    - Proper footnote and source placement
 
 ```python exec="on" source="above" session="default" workdir="docs/articles/rtf/"
 # Large table with consistent formatting across pages

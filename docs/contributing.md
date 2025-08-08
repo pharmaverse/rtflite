@@ -62,12 +62,13 @@ pytest tests/specific_test.py
 pytest --cov=rtflite --cov-report=html:docs/coverage/
 ```
 
-If your terminal did not activate the virtual environment for some reason
-(with symptoms like not finding pytest commands), activate it manually:
+!!! tip "Virtual environment activation"
+    If your terminal did not activate the virtual environment for some reason
+    (with symptoms like not finding pytest commands), activate it manually:
 
-```bash
-source .venv/bin/activate
-```
+    ```bash
+    source .venv/bin/activate
+    ```
 
 ### Documentation
 

@@ -24,18 +24,19 @@ The pagination feature automatically splits large tables across multiple RTF pag
 
 ### Border management
 
-The pagination system implements a three-tier border hierarchy matching r2rtf design:
+!!! info "Three-tier border hierarchy"
+    The pagination system implements a three-tier border hierarchy matching r2rtf design:
 
-1. **`rtf_page.border_first/border_last`**: Controls borders for the entire table
-   - `border_first`: Applied to first row of first page (default: "double")
-   - `border_last`: Applied to last row of last page (default: "double")
+    1. **`rtf_page.border_first/border_last`**: Controls borders for the entire table
+       - `border_first`: Applied to first row of first page (default: "double")
+       - `border_last`: Applied to last row of last page (default: "double")
 
-2. **`rtf_body.border_first/border_last`**: Controls borders for each page
-   - `border_first`: Applied to first row of each non-first page (default: "single")
-   - `border_last`: Applied to last row of each non-last page (default: "single")
+    2. **`rtf_body.border_first/border_last`**: Controls borders for each page
+       - `border_first`: Applied to first row of each non-first page (default: "single")
+       - `border_last`: Applied to last row of each non-last page (default: "single")
 
-3. **`rtf_body.border_top/bottom/left/right`**: Controls borders for individual cells
-   - Standard cell borders maintained throughout the table
+    3. **`rtf_body.border_top/bottom/left/right`**: Controls borders for individual cells
+       - Standard cell borders maintained throughout the table
 
 ### Column header repetition
 

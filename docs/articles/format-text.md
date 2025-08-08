@@ -55,7 +55,8 @@ print(df_formats)
 
 Apply text formatting using column-based approach:
 
-> Using tuples `()` allows user to define parameters by row.
+!!! tip
+    Using tuples `()` allows user to define parameters by row.
 
 ```python exec="on" source="above" session="default" workdir="docs/articles/rtf/"
 # Apply text formatting by row

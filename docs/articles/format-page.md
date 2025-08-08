@@ -19,11 +19,10 @@ to control this behavior:
 
 ## Default behavior
 
-By default:
-
-- Titles appear on **all pages** (`page_title="all"`)
-- Footnotes appear on the **last page only** (`page_footnote="last"`)
-- Sources appear on the **last page only** (`page_source="last"`)
+!!! info "Default settings"
+    - Titles appear on **all pages** (`page_title="all"`)
+    - Footnotes appear on the **last page only** (`page_footnote="last"`)
+    - Sources appear on the **last page only** (`page_source="last"`)
 
 ## Examples
 
