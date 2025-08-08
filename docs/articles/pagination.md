@@ -97,7 +97,7 @@ Each paginated document follows this structure:
 {\pard\fs2\par}\page{\pard\fs2\par}  # Page break
 \paperw...\paperh...      # Page setup (repeated)
 \margl...\margr...        # Margins (repeated)
-[Title content]           # Optional (based on page_title_location)
+[Title content]           # Optional (based on page_title setting)
 [Column headers]          # Repeated with appropriate borders
 [Table rows nrow+1-2*nrow] # Continued data content
 ...
@@ -191,9 +191,9 @@ RTFDocument
 - `nrow`: Rows per page (auto-calculated if not specified)
 - `border_first`: Border style for entire table start
 - `border_last`: Border style for entire table end
-- `page_title_location`: "all", "first", or "last"
-- `page_footnote_location`: "all", "first", or "last"
-- `page_source_location`: "all", "first", or "last"
+- `page_title`: "all", "first", or "last"
+- `page_footnote`: "all", "first", or "last"
+- `page_source`: "all", "first", or "last"
 
 ### RTFBody settings
 

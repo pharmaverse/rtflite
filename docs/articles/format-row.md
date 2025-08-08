@@ -6,9 +6,8 @@ from rtflite import LibreOfficeConverter
 converter = LibreOfficeConverter()
 ```
 
-This article demonstrates row-level formatting capabilities in rtflite.
-It covers borders, cell alignment, column widths, and text formatting
-for creating professional tables.
+This article demonstrates row-level formatting in rtflite: borders,
+cell alignment, column widths, and text formatting to create professional tables.
 
 ## Overview
 
@@ -28,8 +27,8 @@ import rtflite as rtf
 ## Border styles
 
 !!! warning "PDF conversion limitation"
-    Please refer to the `.rtf` output. The converted PDF version has known issues
-    for some border types due to converter (LibreOffice) limitations.
+    Prefer reviewing the `.rtf` output. Some border styles may not render
+    perfectly in PDF due to LibreOffice conversion quirks.
 
 Demonstrate different border types:
 
@@ -63,7 +62,7 @@ converter.convert("row-border-styles.rtf", output_dir="../pdf/", format="pdf", o
 
 ## Column widths
 
-Control relative column widths:
+Control relative column widths using `col_rel_width`:
 
 ```python exec="on" source="above" session="default" workdir="docs/articles/rtf/"
 # Create width demonstration data

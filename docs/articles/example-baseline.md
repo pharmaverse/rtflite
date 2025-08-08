@@ -26,7 +26,7 @@ df = pl.read_parquet(data_path)
 print(df)
 ```
 
-Create header data frames:
+Create header rows:
 
 ```python exec="on" source="above" session="default"
 header1 = ["", "Placebo", "Drug Low Dose", "Drug High Dose", "Total"]

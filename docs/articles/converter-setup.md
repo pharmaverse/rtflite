@@ -1,7 +1,7 @@
 # Converter setup
 
 rtflite can convert RTF documents to PDF using LibreOffice.
-This guide helps you set up LibreOffice for PDF conversion functionality.
+This guide shows how to install and use LibreOffice for PDF conversion.
 
 ## Install LibreOffice
 
@@ -29,7 +29,7 @@ choco install libreoffice
 
 ## Using the converter
 
-Once LibreOffice is installed, you can convert RTF files to PDF in your code:
+Once LibreOffice is installed, convert RTF files to PDF in your code:
 
 ```python
 import rtflite as rtf

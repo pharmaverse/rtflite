@@ -8,8 +8,8 @@ converter = LibreOfficeConverter()
 
 This example demonstrates how to create a multi-section efficacy table
 using rtflite's multi-section functionality.
-The table shows ANCOVA analysis results with multiple sections:
-summary statistics, treatment comparison, and model diagnostics.
+The table shows ANCOVA results with separate sections for summary statistics,
+treatment comparisons, and model diagnostics.
 
 ## Imports
 
@@ -41,7 +41,7 @@ tbl3 = pl.read_parquet(data_path3)
 
 ## Define multi-section RTF table
 
-Create RTF document with multiple sections using the new multi-section API:
+Create an RTF document with multiple sections:
 
 ```python exec="on" source="above" session="default"
 # Define headers for each section
