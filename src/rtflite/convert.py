@@ -13,49 +13,13 @@ from .dictionary.libreoffice import DEFAULT_PATHS, MIN_VERSION
 class LibreOfficeConverter:
     """Convert RTF documents to other formats using LibreOffice.
 
-    The LibreOfficeConverter enables conversion of RTF files to various formats
-    including PDF, DOCX, HTML, and others using LibreOffice in headless mode.
-    It automatically detects LibreOffice installation on Windows, macOS, and Linux.
-
-    Examples:
-        Basic PDF conversion:
-        ```python
-        from rtflite import LibreOfficeConverter
-
-        converter = LibreOfficeConverter()
-        converter.convert("report.rtf", format="pdf")
-        # Creates report.pdf in the same directory
-        ```
-
-        Convert multiple files to specific directory:
-        ```python
-        converter = LibreOfficeConverter()
-        converter.convert(
-            input_files=["report1.rtf", "report2.rtf"],
-            output_dir="pdf_output/",
-            format="pdf",
-            overwrite=True
-        )
-        ```
-
-        Convert to Word format:
-        ```python
-        converter.convert("report.rtf", format="docx")
-        # Creates report.docx
-        ```
-
-    Supported Formats:
-        - pdf: Portable Document Format
-        - docx: Microsoft Word (Office Open XML)
-        - doc: Microsoft Word 97-2003
-        - html: HTML Document
-        - odt: OpenDocument Text
-        - txt: Plain Text
+    Convert RTF files to various formats including PDF, DOCX, HTML, and others
+    using LibreOffice in headless mode.
 
     Requirements:
-        - LibreOffice 7.3 or later must be installed
-        - Automatically finds LibreOffice in standard installation paths
-        - For custom installations, provide executable_path parameter
+        - LibreOffice 7.3 or later must be installed.
+        - Automatically finds LibreOffice in standard installation paths.
+        - For custom installations, provide `executable_path` parameter.
 
     Note:
         The converter runs LibreOffice in headless mode, so no GUI is required.
