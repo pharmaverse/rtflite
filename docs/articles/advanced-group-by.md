@@ -18,11 +18,10 @@ Instead of repeating identical values in every row, `group_by` displays
 the value only once per group, leaving subsequent rows blank for better
 visual organization.
 
-Key benefits:
-
-- **Improved readability**: Reduces visual clutter by eliminating redundant information
-- **Clinical standards compliance**: Follows pharmaceutical industry conventions for listing formats
-- **Hierarchical grouping**: Supports multiple columns with nested group relationships
+!!! info "Key benefits"
+    - **Improved readability**: Reduces visual clutter by eliminating redundant information
+    - **Clinical standards compliance**: Follows pharmaceutical industry conventions for listing formats
+    - **Hierarchical grouping**: Supports multiple columns with nested group relationships
 
 ## Imports
 

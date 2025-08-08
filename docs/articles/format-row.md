@@ -27,8 +27,9 @@ import rtflite as rtf
 
 ## Border styles
 
-> Please refer to the `rtf` output. The converted PDF version has known issues
-> for some border types due to converter (LibreOffice) limitations.
+!!! warning "PDF conversion limitation"
+    Please refer to the `.rtf` output. The converted PDF version has known issues
+    for some border types due to converter (LibreOffice) limitations.
 
 Demonstrate different border types:
 

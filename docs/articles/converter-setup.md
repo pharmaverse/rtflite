@@ -23,8 +23,9 @@ On Windows (using Chocolatey):
 choco install libreoffice
 ```
 
-After installation, restart your shell to ensure `PATH` updates are loaded
-so that rtflite can find LibreOffice.
+!!! tip
+    After installation, restart your shell to ensure `PATH` updates are loaded
+    so that rtflite can find LibreOffice.
 
 ## Using the converter
 
@@ -122,15 +123,17 @@ RUN apt-get update && apt-get install -y libreoffice
 
 ### Version requirements
 
-rtflite requires LibreOffice version 7.1 or higher. Check your version:
+!!! warning "Minimum version requirement"
+    rtflite requires LibreOffice version 7.1 or higher. Check your version:
 
-```bash
-soffice --version
-```
+    ```bash
+    soffice --version
+    ```
 
 ## Performance tips
 
-1. LibreOffice starts a background process for conversions.
-2. For batch conversions, reuse the same converter instance.
-3. The first conversion may be slower as LibreOffice initializes.
-4. Consider using thread-based parallel processing for large batches.
+!!! tip "Optimization suggestions"
+    1. LibreOffice starts a background process for conversions.
+    2. For batch conversions, reuse the same converter instance.
+    3. The first conversion may be slower as LibreOffice initializes.
+    4. Consider using thread-based parallel processing for large batches.
