@@ -107,16 +107,13 @@ rtf_encode() |> cat()
 
 ### Render Documentation
 
-mkdocs is used for building the documentation website (via a GitHub Actions workflow).
+mkdocs is used for building the documentation website (via a GitHub Actions workflow). To build the mkdocs website locally into `site/`:
 
-To improve documentation automation, we embedded Python code chunks in Markdown. This is similar to the principles used by R package vignettes (single source of truth and literate programming).
+```bash
+mkdocs build
+```
 
-Specifically, we write articles in Quarto (`.qmd`) format, which are then converted to `.md` files (for mkdocs) and `.py` files (for generating the RTF outputs). Note that the Quarto toolchain and its code chunk evaluation feature is **not** used directly to render outputs.
-
-- The articles are written as `.qmd` files in: `docs/scripts/quarto/*.qmd`
-- The outputs are in: `docs/scripts/*.md`; `docs/scripts/py/*.py`
-
-To render the documentation and asset outputs, run this custom shell script: `sh docs/scripts/sync.sh`. This script will convert the `.qmd` files to `.md` and `.py` files, and then run the `.py` files to generate the RTF outputs and convert them to PDF files.
+To improve documentation automation (especially the long-form vignettes under `docs/articles/`), we embedded Python code chunks in Markdown. These code chunks are executed by the markdown-exec plugin with the specific chunk options.
 
 ## Architecture Overview
 
@@ -292,7 +289,7 @@ from tests.utils_snapshot import assert_rtf_equals_semantic
 def test_example():
     rtf_output = doc.rtf_encode()
     expected = r_output.read("fixture_name")
-    
+
     # This handles font tables, borders, whitespace, and structural differences
     assert_rtf_equals_semantic(rtf_output, expected, "test_name")
 ```
@@ -315,7 +312,7 @@ def test_example():
 
 2. **LibreOffice Dependency**: PDF conversion requires LibreOffice installation. The converter automatically finds LibreOffice across different platforms.
 
-3. **Enhanced LaTeX Support**: 
+3. **Enhanced LaTeX Support**:
    - **682 LaTeX symbols** organized into categories (Greek, Math Operators, Blackboard Bold, etc.)
    - **Validation tools** for debugging conversion issues
    - **Text conversion service** with comprehensive error handling
@@ -403,7 +400,7 @@ python3 tests/fixtures/run_r_tests.py
 # Test text conversion features
 pytest tests/test_text_conversion.py -v
 
-# Test service layer independently  
+# Test service layer independently
 pytest tests/test_factory.py -v
 ```
 
@@ -477,12 +474,12 @@ When updating documentation:
 2. **Use ASCII alternatives** for symbols:
    - CORRECT: `# CORRECT:` or `# [OK]`
    - WRONG: `# [checkmark]` (emoji/symbols)
-   
+
 3. **In test assertions**, always use escape sequences:
    ```python
    # CORRECT:
    assert result == "\u03b1 test"
-   
+
    # WRONG:
    assert result == "alpha test"
    ```
