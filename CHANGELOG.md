@@ -1,5 +1,21 @@
 # Changelog
 
+## rtflite 1.0.1
+
+### Bug fixes
+
+- Fixed hard-coded font in pagination calculations to properly use
+  user-selected fonts (#91).
+
+### Dependencies
+
+- Lowered minimum Pillow version to 8.0.0 with automatic font size type
+  coercion to `int` for Pillow < 10.0.0 compatibility (#89).
+
+### Documentation
+
+- Improved readability and technical accuracy of documentation (#85, #86, #87).
+
 ## rtflite 1.0.0
 
 This major release marks rtflite as production-ready for table, listing,
