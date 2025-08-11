@@ -2,6 +2,7 @@ import importlib.resources as pkg_resources
 from typing import Literal, overload
 
 from PIL import ImageFont
+from PIL import __version__ as PILLOW_VERSION
 
 import rtflite.fonts
 
@@ -13,6 +14,10 @@ _FONT_PATHS = FontMapping.get_font_paths()
 
 RTF_FONT_NUMBERS = FontMapping.get_font_name_to_number_mapping()
 RTF_FONT_NAMES: dict[int, FontName] = FontMapping.get_font_number_to_name_mapping()
+
+# Check Pillow version to determine if size parameter should be int or float
+_PILLOW_VERSION = tuple(map(int, PILLOW_VERSION.split(".")[:2]))
+_PILLOW_REQUIRES_INT_SIZE = _PILLOW_VERSION < (10, 0)
 
 
 @overload
@@ -71,7 +76,9 @@ def get_string_width(
         raise ValueError(f"Unsupported font name: {font_name}")
 
     font_path = pkg_resources.files(rtflite.fonts) / _FONT_PATHS[font_name]
-    font = ImageFont.truetype(str(font_path), size=font_size)
+    # Convert size to int for Pillow < 10.0.0 compatibility
+    size_param = int(font_size) if _PILLOW_REQUIRES_INT_SIZE else font_size
+    font = ImageFont.truetype(str(font_path), size=size_param)
     width_px = font.getlength(text)
 
     conversions = {
