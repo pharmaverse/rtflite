@@ -86,10 +86,19 @@ class PageBreakCalculator(BaseModel):
                             value=table_attrs.text_font_size, dimension=dim
                         ).iloc(row_idx, col_idx)
 
+                    # Get actual font from table attributes if available
+                    actual_font = 1  # Default to font number 1 (Times New Roman)
+                    if table_attrs and hasattr(table_attrs, "text_font"):
+                        from ..attributes import BroadcastValue
+
+                        actual_font = BroadcastValue(
+                            value=table_attrs.text_font, dimension=dim
+                        ).iloc(row_idx, col_idx)
+
                     # Calculate how many lines this text will need
-                    # Use default font (Times New Roman) with actual font size
+                    # Use the actual font from table attributes with actual font size
                     text_width = get_string_width(
-                        cell_value, "Times New Roman", actual_font_size
+                        cell_value, font=actual_font, font_size=actual_font_size
                     )
                     lines_needed = max(1, int(text_width / col_width) + 1)
                     max_lines_in_row = max(max_lines_in_row, lines_needed)
