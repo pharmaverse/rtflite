@@ -57,6 +57,7 @@ dev = [
     "markdown-exec[ansi]>=1.11.0",
     "ruff>=0.7.4",
     "isort>=5.13.2",
+    "mypy>=1.17.1",
     "matplotlib>=3.10.5",
     "pandas>=2.2.3",
     "pyarrow>=21.0.0",
