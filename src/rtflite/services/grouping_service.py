@@ -436,6 +436,10 @@ class GroupingService:
                     # If broadcasting fails, skip this attribute
                     continue
 
+                # Skip if broadcasted is None
+                if broadcasted is None:
+                    continue
+
                 # Check each column for consistency
                 for col_idx in range(num_cols):
                     # Get all values for this column

@@ -2,9 +2,12 @@
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import polars as pl
+
+if TYPE_CHECKING:
+    from ..attributes import TableAttributes, TextAttributes
 
 
 class RTFElement(ABC):

@@ -35,7 +35,7 @@ class Utils:
     ) -> MutableSequence[float]:
         """Convert relative widths to absolute widths. Returns mutable list since we're building it."""
         total_width = sum(rel_widths)
-        cumulative_sum = 0
+        cumulative_sum = 0.0
         return [
             cumulative_sum := cumulative_sum + (width * col_width / total_width)
             for width in rel_widths
@@ -160,6 +160,9 @@ class TextContent(BaseModel):
         """Convert special characters to RTF codes."""
         # First apply LaTeX to Unicode conversion if enabled
         text = text_convert(self.text, self.convert)
+        
+        if text is None:
+            return ""
 
         converted_text = ""
         for char in text:
