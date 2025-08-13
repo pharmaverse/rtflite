@@ -4,7 +4,7 @@ This service provides enhanced pagination capabilities using the PageDict system
 enabling page_index-like functionality while maintaining backward compatibility.
 """
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import polars as pl
 
@@ -17,12 +17,10 @@ class AdvancedPaginationService:
 
     def __init__(self):
         self.document_service = RTFDocumentService()
-        self.page_dict: Optional[PageDict] = None
-        self.page_index_manager: Optional[PageIndexManager] = None
+        self.page_dict: PageDict | None = None
+        self.page_index_manager: PageIndexManager | None = None
 
-    def create_page_dict(
-        self, document, nrow_per_page: Optional[int] = None
-    ) -> PageDict:
+    def create_page_dict(self, document, nrow_per_page: int | None = None) -> PageDict:
         """Create a PageDict for the given document
 
         Args:
@@ -146,7 +144,7 @@ class AdvancedPaginationService:
 
         return 1  # Default to first page
 
-    def get_rows_for_page(self, page_num: int) -> Tuple[int, int]:
+    def get_rows_for_page(self, page_num: int) -> tuple[int, int]:
         """Get the row range for a specific page"""
         if self.page_dict is None:
             return (0, 0)
@@ -162,7 +160,7 @@ class AdvancedPaginationService:
         manager = self.get_page_index_manager()
         manager.assign_content_to_page(content_id, page_num)
 
-    def get_pagination_summary(self) -> Dict[str, Any]:
+    def get_pagination_summary(self) -> dict[str, Any]:
         """Get a summary of the pagination configuration"""
         if self.page_dict is None:
             return {"error": "No PageDict available"}
@@ -187,7 +185,7 @@ class AdvancedPaginationService:
 
         return summary
 
-    def convert_to_legacy_format(self) -> List[Dict[str, Any]]:
+    def convert_to_legacy_format(self) -> list[dict[str, Any]]:
         """Convert PageDict to legacy page info format for backward compatibility"""
         if self.page_dict is None:
             return []
@@ -199,7 +197,7 @@ class AdvancedPaginationService:
         if self.page_index_manager:
             self.page_index_manager.optimize_page_distribution()
 
-    def validate_pagination(self) -> List[str]:
+    def validate_pagination(self) -> list[str]:
         """Validate the pagination configuration and return any issues"""
         issues = []
 

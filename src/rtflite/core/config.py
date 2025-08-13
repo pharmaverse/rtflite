@@ -5,7 +5,6 @@ settings throughout the codebase with a hierarchical, type-safe approach.
 """
 
 from dataclasses import dataclass
-from typing import Dict, Optional, Tuple
 
 from .constants import RTFConstants, RTFDefaults
 
@@ -15,9 +14,9 @@ class PageConfiguration:
     """Configuration for page layout and dimensions."""
 
     orientation: str = RTFDefaults.ORIENTATION
-    width: Optional[float] = None  # inches
-    height: Optional[float] = None  # inches
-    margins: Optional[Tuple[float, float, float, float, float, float]] = (
+    width: float | None = None  # inches
+    height: float | None = None  # inches
+    margins: tuple[float, float, float, float, float, float] | None = (
         None  # left, right, top, bottom, header, footer
     )
 
@@ -51,7 +50,7 @@ class ColorConfiguration:
     """Configuration for color settings."""
 
     use_color: bool = RTFDefaults.USE_COLOR
-    color_table: Dict[str, str] = None
+    color_table: dict[str, str] | None = None
 
     def __post_init__(self):
         if self.color_table is None:

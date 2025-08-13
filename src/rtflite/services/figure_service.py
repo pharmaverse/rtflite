@@ -3,8 +3,6 @@
 This module provides services for encoding images into RTF format.
 """
 
-from typing import Optional
-
 from ..figure import rtf_read_figure
 from ..input import RTFFigure
 
@@ -13,7 +11,7 @@ class RTFFigureService:
     """Service for encoding figures/images in RTF format."""
 
     @staticmethod
-    def encode_figure(rtf_figure: Optional[RTFFigure]) -> str:
+    def encode_figure(rtf_figure: RTFFigure | None) -> str:
         """Encode figure component to RTF.
 
         Args:
