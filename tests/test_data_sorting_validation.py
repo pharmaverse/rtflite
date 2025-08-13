@@ -9,8 +9,8 @@ following r2rtf compatibility requirements.
 import polars as pl
 import pytest
 
-from src.rtflite.encode import RTFDocument
-from src.rtflite.services.grouping_service import grouping_service
+from rtflite.encode import RTFDocument
+from rtflite.services.grouping_service import grouping_service
 
 
 class TestDataSortingValidation:

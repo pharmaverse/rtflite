@@ -3,7 +3,7 @@
 import polars as pl
 import pytest
 
-from src.rtflite import RTFDocument, RTFFootnote, RTFPage, RTFSource, RTFTitle
+from rtflite import RTFDocument, RTFFootnote, RTFPage, RTFSource, RTFTitle
 
 
 class TestRTFPageComponentPlacement:
