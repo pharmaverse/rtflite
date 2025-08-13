@@ -137,7 +137,7 @@ class PageDict(BaseModel):
 
     def get_page_break_summary(self) -> dict[str, int]:
         """Get summary of page break types"""
-        summary = {}
+        summary: dict[str, int] = {}
         for config in self.page_configs.values():
             break_type = config.break_type.value
             summary[break_type] = summary.get(break_type, 0) + 1

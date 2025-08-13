@@ -280,7 +280,7 @@ class SinglePageStrategy(EncodingStrategy):
             dim = section_df.shape
 
             # Handle column headers for this section
-            section_headers = []
+            section_headers: list[str] = []
             if is_nested_headers:
                 # Nested format: [[header1], [None], [header3]]
                 if (

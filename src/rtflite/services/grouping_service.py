@@ -225,7 +225,7 @@ class GroupingService:
         Returns:
             List of validation issues (empty if all valid)
         """
-        issues = []
+        issues: list[str] = []
 
         if not group_by:
             return issues
@@ -389,7 +389,7 @@ class GroupingService:
         Returns:
             List of warning messages
         """
-        warnings = []
+        warnings: list[str] = []
 
         if not subline_by or df.is_empty():
             return warnings

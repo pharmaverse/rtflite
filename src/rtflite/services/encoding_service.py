@@ -340,7 +340,7 @@ class RTFEncodingService:
                 )
             return rtf_attrs._encode(processed_df, col_widths)
 
-        rows = []
+        rows: list[str] = []
         for section in page_by:
             # Skip empty sections
             indices = [(row, col) for row, col, level in section]
