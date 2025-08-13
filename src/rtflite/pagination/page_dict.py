@@ -7,7 +7,7 @@ providing page_index-like functionality while maintaining rtflite's existing arc
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any
 
 import polars as pl
 from pydantic import BaseModel, ConfigDict, Field
@@ -30,10 +30,10 @@ class PageConfig:
     start_row: int
     end_row: int
     break_type: PageBreakType
-    section_headers: List[str] = field(default_factory=list)
-    subline_header: Optional[str] = None
-    group_context: Dict[str, Any] = field(default_factory=dict)
-    forced_content: Set[str] = field(
+    section_headers: list[str] = field(default_factory=list)
+    subline_header: str | None = None
+    group_context: dict[str, Any] = field(default_factory=dict)
+    forced_content: set[str] = field(
         default_factory=set
     )  # Content IDs forced to this page
 
@@ -58,7 +58,7 @@ class PageBreakRule:
     priority: int = 0  # Higher priority rules are processed first
 
     def applies_to_row(
-        self, df: pl.DataFrame, row_idx: int, prev_row_idx: Optional[int] = None
+        self, df: pl.DataFrame, row_idx: int, prev_row_idx: int | None = None
     ) -> bool:
         """Check if this rule should trigger a page break for the given row"""
         if prev_row_idx is None:
@@ -83,13 +83,13 @@ class PageDict(BaseModel):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    page_configs: Dict[int, PageConfig] = Field(
+    page_configs: dict[int, PageConfig] = Field(
         default_factory=dict, description="Configuration for each page"
     )
-    break_rules: List[PageBreakRule] = Field(
+    break_rules: list[PageBreakRule] = Field(
         default_factory=list, description="Rules determining where page breaks occur"
     )
-    content_index: Dict[str, List[int]] = Field(
+    content_index: dict[str, list[int]] = Field(
         default_factory=dict, description="Maps content identifiers to page numbers"
     )
     total_pages: int = Field(default=0, description="Total number of pages")
@@ -100,7 +100,7 @@ class PageDict(BaseModel):
         self.page_configs[config.page_number] = config
         self.total_pages = max(self.total_pages, config.page_number)
 
-    def get_page_config(self, page_num: int) -> Optional[PageConfig]:
+    def get_page_config(self, page_num: int) -> PageConfig | None:
         """Get configuration for a specific page"""
         return self.page_configs.get(page_num)
 
@@ -115,7 +115,7 @@ class PageDict(BaseModel):
         pages = self.content_index.get(content_id, [])
         return pages[0] if pages else 1  # Default to page 1
 
-    def get_pages_for_content(self, content_id: str) -> List[int]:
+    def get_pages_for_content(self, content_id: str) -> list[int]:
         """Get all page numbers where specific content appears"""
         return self.content_index.get(content_id, [])
 
@@ -127,7 +127,7 @@ class PageDict(BaseModel):
             self.content_index[content_id].append(page_num)
             self.content_index[content_id].sort()
 
-    def get_section_pages(self, section_header: str) -> List[int]:
+    def get_section_pages(self, section_header: str) -> list[int]:
         """Get all pages that belong to a specific section"""
         section_pages = []
         for page_num, config in self.page_configs.items():
@@ -135,7 +135,7 @@ class PageDict(BaseModel):
                 section_pages.append(page_num)
         return sorted(section_pages)
 
-    def get_page_break_summary(self) -> Dict[str, int]:
+    def get_page_break_summary(self) -> dict[str, int]:
         """Get summary of page break types"""
         summary = {}
         for config in self.page_configs.values():
@@ -146,8 +146,8 @@ class PageDict(BaseModel):
     def calculate_pages_from_dataframe(
         self,
         df: pl.DataFrame,
-        page_by: Optional[List[str]] = None,
-        subline_by: Optional[str] = None,
+        page_by: list[str] | None = None,
+        subline_by: str | None = None,
         new_page: bool = False,
         additional_rows_per_page: int = 0,
     ) -> None:
@@ -217,7 +217,7 @@ class PageDict(BaseModel):
 
     def _calculate_page_boundaries(
         self, df: pl.DataFrame, effective_nrow: int
-    ) -> List[Tuple[int, int, PageBreakType]]:
+    ) -> list[tuple[int, int, PageBreakType]]:
         """Calculate where page boundaries should occur"""
         boundaries = []
         current_start = 0
@@ -250,7 +250,7 @@ class PageDict(BaseModel):
 
         return boundaries
 
-    def to_legacy_page_info(self) -> List[Dict[str, Any]]:
+    def to_legacy_page_info(self) -> list[dict[str, Any]]:
         """Convert to legacy page info format for backward compatibility"""
         page_info_list = []
 
@@ -281,8 +281,8 @@ class PageIndexManager:
 
     def __init__(self, page_dict: PageDict):
         self.page_dict = page_dict
-        self._content_assignments: Dict[str, int] = {}
-        self._page_content_map: Dict[int, Set[str]] = {}
+        self._content_assignments: dict[str, int] = {}
+        self._page_content_map: dict[int, set[str]] = {}
 
     def assign_content_to_page(self, content_id: str, page_num: int) -> None:
         """Assign specific content to a specific page (explicit page_index control)"""
@@ -299,11 +299,11 @@ class PageIndexManager:
         if page_num in self.page_dict.page_configs:
             self.page_dict.page_configs[page_num].forced_content.add(content_id)
 
-    def get_content_page(self, content_id: str) -> Optional[int]:
+    def get_content_page(self, content_id: str) -> int | None:
         """Get the assigned page for specific content"""
         return self._content_assignments.get(content_id)
 
-    def get_page_content(self, page_num: int) -> Set[str]:
+    def get_page_content(self, page_num: int) -> set[str]:
         """Get all content assigned to a specific page"""
         return self._page_content_map.get(page_num, set())
 
@@ -313,7 +313,7 @@ class PageIndexManager:
         # to identify where the content appears and insert a break rule
         pass
 
-    def get_content_summary(self) -> Dict[str, Dict[str, Any]]:
+    def get_content_summary(self) -> dict[str, dict[str, Any]]:
         """Get summary of all content assignments"""
         summary = {}
         for content_id, page_num in self._content_assignments.items():

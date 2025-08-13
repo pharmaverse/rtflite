@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import polars as pl
 from pydantic import BaseModel, ConfigDict, Field
@@ -21,7 +21,7 @@ class RTFPagination(BaseModel):
     nrow: int = Field(..., description="Maximum rows per page")
     orientation: str = Field(..., description="Page orientation")
 
-    def calculate_available_space(self) -> Dict[str, float]:
+    def calculate_available_space(self) -> dict[str, float]:
         """Calculate available space for content on each page"""
         content_width = (
             self.page_width - self.margin[0] - self.margin[1]
@@ -50,10 +50,10 @@ class PageBreakCalculator(BaseModel):
     def calculate_content_rows(
         self,
         df: pl.DataFrame,
-        col_widths: List[float],
-        table_attrs: Optional[TableAttributes] = None,
+        col_widths: list[float],
+        table_attrs: TableAttributes | None = None,
         font_size: int = 9,
-    ) -> List[int]:
+    ) -> list[int]:
         """Calculate how many rows each content row will occupy when rendered
 
         Args:
@@ -122,12 +122,12 @@ class PageBreakCalculator(BaseModel):
     def find_page_breaks(
         self,
         df: pl.DataFrame,
-        col_widths: List[float],
-        page_by: List[str] = None,
+        col_widths: list[float],
+        page_by: list[str] | None = None,
         new_page: bool = False,
-        table_attrs: Optional[TableAttributes] = None,
+        table_attrs: TableAttributes | None = None,
         additional_rows_per_page: int = 0,
-    ) -> List[Tuple[int, int]]:
+    ) -> list[tuple[int, int]]:
         """Find optimal page break positions (r2rtf compatible)
 
         Args:
@@ -195,14 +195,14 @@ class ContentDistributor(BaseModel):
     def distribute_content(
         self,
         df: pl.DataFrame,
-        col_widths: List[float],
-        page_by: List[str] = None,
+        col_widths: list[float],
+        page_by: list[str] | None = None,
         new_page: bool = False,
         pageby_header: bool = True,
-        table_attrs: Optional[TableAttributes] = None,
+        table_attrs: TableAttributes | None = None,
         additional_rows_per_page: int = 0,
-        subline_by: List[str] = None,
-    ) -> List[Dict[str, Any]]:
+        subline_by: list[str] | None = None,
+    ) -> list[dict[str, Any]]:
         """Distribute content across multiple pages (r2rtf compatible)
 
         Args:
@@ -254,8 +254,8 @@ class ContentDistributor(BaseModel):
         return pages
 
     def get_group_headers(
-        self, df: pl.DataFrame, page_by: List[str], start_row: int
-    ) -> Dict[str, Any]:
+        self, df: pl.DataFrame, page_by: list[str], start_row: int
+    ) -> dict[str, Any]:
         """Get group header information for a page
 
         Args:

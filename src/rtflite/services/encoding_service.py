@@ -1,7 +1,5 @@
 """RTF encoding service that handles document component encoding."""
 
-from typing import List, Optional
-
 from .grouping_service import grouping_service
 
 
@@ -26,7 +24,7 @@ class RTFEncodingService:
         return self.syntax.generate_font_table()
 
     def encode_color_table(
-        self, document=None, used_colors: Optional[List[str]] = None
+        self, document=None, used_colors: list[str] | None = None
     ) -> str:
         """Encode RTF color table with comprehensive 657-color support.
 
@@ -130,7 +128,7 @@ class RTFEncodingService:
 
     def encode_footnote(
         self, footnote_config, page_number: int = None, page_col_width: float = None
-    ) -> List[str]:
+    ) -> list[str]:
         """Encode footnote component with advanced formatting.
 
         Args:
@@ -189,7 +187,7 @@ class RTFEncodingService:
 
     def encode_source(
         self, source_config, page_number: int = None, page_col_width: float = None
-    ) -> List[str]:
+    ) -> list[str]:
         """Encode source component with advanced formatting.
 
         Args:
@@ -275,7 +273,7 @@ class RTFEncodingService:
 
     def encode_body(
         self, document, df, rtf_attrs, force_single_page=False
-    ) -> List[str]:
+    ) -> list[str]:
         """Encode table body component with full pagination support.
 
         Args:
@@ -375,7 +373,7 @@ class RTFEncodingService:
 
         return rows
 
-    def _encode_body_paginated(self, document, df, rtf_attrs, col_widths) -> List[str]:
+    def _encode_body_paginated(self, document, df, rtf_attrs, col_widths) -> list[str]:
         """Encode body content with pagination support."""
         from .document_service import RTFDocumentService
 
@@ -431,7 +429,7 @@ class RTFEncodingService:
 
         return all_rows
 
-    def encode_column_header(self, df, rtf_attrs, page_col_width: float) -> List[str]:
+    def encode_column_header(self, df, rtf_attrs, page_col_width: float) -> list[str]:
         """Encode column header component with column width support.
 
         Args:

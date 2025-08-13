@@ -6,11 +6,10 @@ for embedding in RTF documents.
 
 import mimetypes
 from pathlib import Path
-from typing import Union
 
 
 def rtf_read_figure(
-    file_paths: Union[str, Path, list[Union[str, Path]]],
+    file_paths: str | Path | list[str | Path],
 ) -> tuple[list[bytes], list[str]]:
     """Read image files and return their binary data with format information.
 

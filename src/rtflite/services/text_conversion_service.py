@@ -6,8 +6,6 @@ within the RTF document generation process. It integrates the text
 conversion functionality with the broader service architecture.
 """
 
-from typing import List, Union
-
 from ..text_conversion import LaTeXSymbolMapper, TextConverter
 
 
@@ -27,8 +25,8 @@ class TextConversionService:
         self.symbol_mapper = LaTeXSymbolMapper()
 
     def convert_text_content(
-        self, text: Union[str, List[str], None], enable_conversion: bool = True
-    ) -> Union[str, List[str], None]:
+        self, text: str | list[str] | None, enable_conversion: bool = True
+    ) -> str | list[str] | None:
         """
         Convert text content with LaTeX commands to Unicode.
 
@@ -82,7 +80,7 @@ class TextConversionService:
             print(f"Warning: Text conversion failed for '{text}': {e}")
             return text
 
-    def _convert_text_list(self, text_list: List[str]) -> List[str]:
+    def _convert_text_list(self, text_list: list[str]) -> list[str]:
         """
         Convert a list of text strings.
 
@@ -94,7 +92,7 @@ class TextConversionService:
         """
         return [self._convert_single_text(item) for item in text_list]
 
-    def get_supported_symbols(self) -> List[str]:
+    def get_supported_symbols(self) -> list[str]:
         """
         Get a list of all supported LaTeX symbols.
 

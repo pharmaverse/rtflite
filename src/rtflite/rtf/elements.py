@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 import polars as pl
 
@@ -43,7 +43,7 @@ class RTFTable(RTFElement):
 class RTFText(RTFElement):
     """RTF text element containing formatted text content."""
 
-    text: Optional[Union[str, List[str]]]
+    text: str | list[str] | None
     attributes: "TextAttributes"
     element_type: str = "text"  # 'title', 'subline', 'header', 'footer'
 
@@ -89,8 +89,8 @@ class RTFPage(RTFElement):
 class RTFList(RTFElement):
     """RTF list element for future list support."""
 
-    items: List[Any]
-    attributes: Dict[str, Any]
+    items: list[Any]
+    attributes: dict[str, Any]
     element_type: str = "list"
 
     def to_rtf(self) -> str:
@@ -110,7 +110,7 @@ class RTFFigure(RTFElement):
     """RTF figure element for future figure support."""
 
     content: Any
-    attributes: Dict[str, Any]
+    attributes: dict[str, Any]
     element_type: str = "figure"
 
     def to_rtf(self) -> str:

@@ -6,7 +6,7 @@ group_by columns are displayed only once per group, with subsequent rows
 showing blank/suppressed values for better readability.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
 import polars as pl
 
@@ -18,7 +18,7 @@ class GroupingService:
         pass
 
     def enhance_group_by(
-        self, df: pl.DataFrame, group_by: Optional[List[str]] = None
+        self, df: pl.DataFrame, group_by: list[str] | None = None
     ) -> pl.DataFrame:
         """Apply group_by value suppression to a DataFrame
 
@@ -82,7 +82,7 @@ class GroupingService:
         return result_df
 
     def _suppress_hierarchical_columns(
-        self, df: pl.DataFrame, group_by: List[str]
+        self, df: pl.DataFrame, group_by: list[str]
     ) -> pl.DataFrame:
         """Suppress duplicate values in hierarchical group columns
 
@@ -133,8 +133,8 @@ class GroupingService:
         self,
         suppressed_df: pl.DataFrame,
         original_df: pl.DataFrame,
-        group_by: List[str],
-        page_start_indices: List[int],
+        group_by: list[str],
+        page_start_indices: list[int],
     ) -> pl.DataFrame:
         """Restore group context at the beginning of new pages
 
@@ -179,7 +179,7 @@ class GroupingService:
         return result_df
 
     def get_group_structure(
-        self, df: pl.DataFrame, group_by: List[str]
+        self, df: pl.DataFrame, group_by: list[str]
     ) -> Dict[str, Any]:
         """Analyze the group structure of a DataFrame
 
@@ -214,8 +214,8 @@ class GroupingService:
         }
 
     def validate_group_by_columns(
-        self, df: pl.DataFrame, group_by: List[str]
-    ) -> List[str]:
+        self, df: pl.DataFrame, group_by: list[str]
+    ) -> list[str]:
         """Validate group_by columns and return any issues
 
         Args:
@@ -251,9 +251,9 @@ class GroupingService:
     def validate_data_sorting(
         self,
         df: pl.DataFrame,
-        group_by: Optional[List[str]] = None,
-        page_by: Optional[List[str]] = None,
-        subline_by: Optional[List[str]] = None,
+        group_by: list[str] | None = None,
+        page_by: list[str] | None = None,
+        subline_by: list[str] | None = None,
     ) -> None:
         """Validate that data is properly sorted for grouping operations
 
@@ -372,8 +372,8 @@ class GroupingService:
                         seen_keys.add(current_key)
 
     def validate_subline_formatting_consistency(
-        self, df: pl.DataFrame, subline_by: List[str], rtf_body
-    ) -> List[str]:
+        self, df: pl.DataFrame, subline_by: list[str], rtf_body
+    ) -> list[str]:
         """Validate that formatting is consistent within each column after broadcasting
 
         When using subline_by, we need to ensure that after broadcasting formatting
@@ -462,9 +462,9 @@ class GroupingService:
 
     def _validate_no_overlapping_grouping_vars(
         self,
-        group_by: Optional[List[str]] = None,
-        page_by: Optional[List[str]] = None,
-        subline_by: Optional[List[str]] = None,
+        group_by: list[str] | None = None,
+        page_by: list[str] | None = None,
+        subline_by: list[str] | None = None,
     ) -> None:
         """Validate that grouping variables don't overlap between different types
 
