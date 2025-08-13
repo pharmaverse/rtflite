@@ -1,6 +1,6 @@
 import importlib.resources as pkg_resources
 import math
-from typing import Literal, overload
+from typing import Literal
 
 from PIL import ImageFont
 from PIL import __version__ as PILLOW_VERSION
@@ -19,26 +19,6 @@ RTF_FONT_NAMES: dict[int, FontName] = FontMapping.get_font_number_to_name_mappin
 # Check Pillow version to determine if size parameter should be int or float
 _PILLOW_VERSION = tuple(map(int, PILLOW_VERSION.split(".")[:2]))
 _PILLOW_REQUIRES_INT_SIZE = _PILLOW_VERSION < (10, 0)
-
-
-@overload
-def get_string_width(
-    text: str,
-    font_name: FontName = "Times New Roman",
-    font_size: int = 12,
-    unit: Unit = "in",
-    dpi: float = 72.0,
-) -> float: ...
-
-
-@overload
-def get_string_width(
-    text: str,
-    font_type: FontNumber,
-    font_size: int = 12,
-    unit: Unit = "in",
-    dpi: float = 72.0,
-) -> float: ...
 
 
 def get_string_width(
@@ -79,8 +59,8 @@ def get_string_width(
     font_path = pkg_resources.files(rtflite.fonts) / _FONT_PATHS[font_name]
     # Convert size to int for Pillow < 10.0.0 compatibility (use ceiling for conservative pagination)
     size_param = int(math.ceil(font_size)) if _PILLOW_REQUIRES_INT_SIZE else font_size
-    font = ImageFont.truetype(str(font_path), size=size_param)
-    width_px = font.getlength(text)
+    font_obj = ImageFont.truetype(str(font_path), size=size_param)
+    width_px = font_obj.getlength(text)
 
     conversions = {
         "px": lambda x: x,
