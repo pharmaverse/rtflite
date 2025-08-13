@@ -172,7 +172,7 @@ class LaTeXSymbolMapper:
             "\\underline",
         }
 
-        categories = {
+        categories: Dict[str, list[str]] = {
             "Greek Letters": [],
             "Mathematical Operators": [],
             "Blackboard Bold": [],

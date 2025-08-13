@@ -169,7 +169,7 @@ class RTFDocumentService:
         else:
             return False
 
-    def process_page_by(self, document) -> List[List[Tuple[int, int, int]]]:
+    def process_page_by(self, document) -> List[List[Tuple[int, int, int]]] | None:
         """Create components for page_by format."""
         # Obtain input data
         data = document.df.to_dicts()
