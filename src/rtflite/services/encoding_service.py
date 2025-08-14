@@ -273,7 +273,7 @@ class RTFEncodingService:
 
     def encode_body(
         self, document, df, rtf_attrs, force_single_page=False
-    ) -> list[str]:
+    ) -> list[str] | None:
         """Encode table body component with full pagination support.
 
         Args:
@@ -429,7 +429,7 @@ class RTFEncodingService:
 
         return all_rows
 
-    def encode_column_header(self, df, rtf_attrs, page_col_width: float) -> list[str]:
+    def encode_column_header(self, df, rtf_attrs, page_col_width: float) -> list[str] | None:
         """Encode column header component with column width support.
 
         Args:
