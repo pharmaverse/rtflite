@@ -1,5 +1,24 @@
 # Changelog
 
+## rtflite 1.0.2
+
+### Typing
+
+- Adopted modern typing best practices: use `|` unions instead of
+  `Union`/`Optional`, and built-in generics instead of `typing` aliases (#95).
+- Resolved all mypy issues; type checks now pass cleanly (#97, #99, #101).
+- Added a mypy GitHub Actions workflow for continuous type checking (#100).
+
+### Testing
+
+- Added a developer script to compare current RTF outputs with snapshots
+  generated from mkdocs site articles (#102).
+
+### Documentation
+
+- Updated `CLAUDE.md` to replace outdated `.qmd`-based rendering instructions
+  with the markdown-exec approach (#93).
+
 ## rtflite 1.0.1
 
 ### Bug fixes
