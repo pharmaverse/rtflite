@@ -34,7 +34,7 @@ class RTFConstants:
     """Default space after paragraph in points."""
 
     # === Font Sizes ===
-    DEFAULT_FONT_SIZE: Final[int] = 9
+    DEFAULT_FONT_SIZE: Final[float] = 9
     """Default font size in points."""
 
     # === RTF Control Codes ===

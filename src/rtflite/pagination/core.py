@@ -52,7 +52,7 @@ class PageBreakCalculator(BaseModel):
         df: pl.DataFrame,
         col_widths: list[float],
         table_attrs: TableAttributes | None = None,
-        font_size: int = 9,
+        font_size: float = 9,
     ) -> list[int]:
         """Calculate how many rows each content row will occupy when rendered
 

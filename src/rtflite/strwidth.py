@@ -24,7 +24,7 @@ _PILLOW_REQUIRES_INT_SIZE = _PILLOW_VERSION < (10, 0)
 def get_string_width(
     text: str,
     font: FontName | FontNumber = "Times New Roman",
-    font_size: int = 12,
+    font_size: float = 12,
     unit: Unit = "in",
     dpi: float = 72.0,
 ) -> float:
