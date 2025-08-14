@@ -32,7 +32,7 @@ class Utils:
     @staticmethod
     def _col_widths(
         rel_widths: Sequence[float], col_width: float
-    ) -> MutableSequence[float]:
+    ) -> list[float]:
         """Convert relative widths to absolute widths. Returns mutable list since we're building it."""
         total_width = sum(rel_widths)
         cumulative_sum = 0.0

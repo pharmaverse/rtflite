@@ -127,7 +127,7 @@ class RTFEncodingService:
         return subline_config._encode_text(text=subline_config.text, method=method)
 
     def encode_footnote(
-        self, footnote_config, page_number: int = None, page_col_width: float = None
+        self, footnote_config, page_number: int | None = None, page_col_width: float | None = None
     ) -> list[str]:
         """Encode footnote component with advanced formatting.
 
@@ -186,7 +186,7 @@ class RTFEncodingService:
                 return rtf_attrs._encode(df)
 
     def encode_source(
-        self, source_config, page_number: int = None, page_col_width: float = None
+        self, source_config, page_number: int | None = None, page_col_width: float | None = None
     ) -> list[str]:
         """Encode source component with advanced formatting.
 
@@ -273,7 +273,7 @@ class RTFEncodingService:
 
     def encode_body(
         self, document, df, rtf_attrs, force_single_page=False
-    ) -> list[str]:
+    ) -> list[str] | None:
         """Encode table body component with full pagination support.
 
         Args:
@@ -354,7 +354,7 @@ class RTFEncodingService:
 
             section_df = pl.DataFrame(
                 {
-                    str(i): [BroadcastValue(value=processed_df).iloc(row, col)]
+                    str(i): [BroadcastValue(value=processed_df, dimension=None).iloc(row, col)]
                     for i, (row, col) in enumerate(indices)
                 }
             )
@@ -366,6 +366,9 @@ class RTFEncodingService:
             section_attrs = TableAttributes(**section_attrs_dict)
 
             # Calculate column widths and encode section
+            if section_attrs.col_rel_width is None:
+                # Default to equal widths if not specified
+                section_attrs.col_rel_width = [1.0] * len(indices)
             section_col_widths = Utils._col_widths(
                 section_attrs.col_rel_width, col_total_width
             )
@@ -429,7 +432,7 @@ class RTFEncodingService:
 
         return all_rows
 
-    def encode_column_header(self, df, rtf_attrs, page_col_width: float) -> list[str]:
+    def encode_column_header(self, df, rtf_attrs, page_col_width: float) -> list[str] | None:
         """Encode column header component with column width support.
 
         Args:
