@@ -45,15 +45,15 @@ def _to_nested_list(v):
         v, "columns"
     ):  # Check if it's DataFrame-like
         if isinstance(v, pl.DataFrame):
-            v = v.rows()
+            v = [list(row) for row in v.rows()]  # Convert tuples to lists
         else:
             try:
                 nw_df = nw.from_native(v)
-                v = nw_df.to_native(pl.DataFrame).rows()
+                v = [list(row) for row in nw_df.to_native(pl.DataFrame).rows()]  # Convert tuples to lists
             except Exception:
                 # If narwhals can't handle it, try direct conversion
                 if isinstance(v, pl.DataFrame):
-                    v = v.rows()
+                    v = [list(row) for row in v.rows()]  # Convert tuples to lists
 
     # Convert numpy arrays or array-like objects to lists
     if hasattr(v, "__array__") and hasattr(v, "tolist"):
