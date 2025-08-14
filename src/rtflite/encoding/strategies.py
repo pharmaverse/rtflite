@@ -283,8 +283,12 @@ class SinglePageStrategy(EncodingStrategy):
         from ..attributes import BroadcastValue
 
         # Calculate total rows across all sections for border management
-        total_rows = sum(df.shape[0] for df in document.df)
-        first_section_cols = document.df[0].shape[1]
+        if isinstance(document.df, list):
+            total_rows = sum(df.shape[0] for df in document.df)
+            first_section_cols = document.df[0].shape[1] if document.df else 0
+        else:
+            total_rows = document.df.shape[0] if document.df is not None else 0
+            first_section_cols = document.df.shape[1] if document.df is not None else 0
 
         # Document structure components
         rtf_title = self.encoding_service.encode_title(
@@ -292,19 +296,24 @@ class SinglePageStrategy(EncodingStrategy):
         )
 
         # Handle page borders (use first section for dimensions)
-        doc_border_top = BroadcastValue(
+        doc_border_top_list = BroadcastValue(
             value=document.rtf_page.border_first, dimension=(1, first_section_cols)
-        ).to_list()[0]
-        doc_border_bottom = BroadcastValue(
+        ).to_list()
+        doc_border_top = doc_border_top_list[0] if doc_border_top_list else None
+        doc_border_bottom_list = BroadcastValue(
             value=document.rtf_page.border_last, dimension=(1, first_section_cols)
-        ).to_list()[0]
+        ).to_list()
+        doc_border_bottom = doc_border_bottom_list[0] if doc_border_bottom_list else None
 
         # Encode sections
         all_section_content = []
         is_nested_headers = isinstance(document.rtf_column_header[0], list)
 
+        df_list = document.df if isinstance(document.df, list) else [document.df] if document.df is not None else []
+        body_list = document.rtf_body if isinstance(document.rtf_body, list) else [document.rtf_body] if document.rtf_body is not None else []
+        
         for i, (section_df, section_body) in enumerate(
-            zip(document.df, document.rtf_body)
+            zip(df_list, body_list)
         ):
             dim = section_df.shape
 
@@ -332,8 +341,14 @@ class SinglePageStrategy(EncodingStrategy):
             else:
                 # Flat format - only apply to first section
                 if i == 0:
-                    for header in document.rtf_column_header:
-                        if header.text is None and section_body.as_colheader:
+                    headers_to_check = []
+                    if is_list_header(document.rtf_column_header):
+                        headers_to_check = document.rtf_column_header
+                    elif is_single_header(document.rtf_column_header):
+                        headers_to_check = [document.rtf_column_header]
+                    
+                    for header in headers_to_check:
+                        if header is not None and header.text is None and section_body.as_colheader:
                             # Auto-generate headers from column names
                             columns = [
                                 col
@@ -349,7 +364,7 @@ class SinglePageStrategy(EncodingStrategy):
                             )
 
                         # Apply top border to first header
-                        if not section_headers:
+                        if not section_headers and doc_border_top is not None:
                             header.border_top = BroadcastValue(
                                 value=header.border_top, dimension=dim
                             ).update_row(0, doc_border_top)
@@ -391,18 +406,19 @@ class SinglePageStrategy(EncodingStrategy):
             all_section_content.extend(section_body_content)
 
         # Handle bottom borders on last section
-        if document.rtf_footnote is not None:
+        if document.rtf_footnote is not None and doc_border_bottom is not None:
             document.rtf_footnote.border_bottom = BroadcastValue(
                 value=document.rtf_footnote.border_bottom, dimension=(1, 1)
-            ).update_row(0, doc_border_bottom[0])
+            ).update_row(0, [doc_border_bottom[0]])
         else:
             # Apply bottom border to last section's last row
-            last_section_body = document.rtf_body[-1]
-            last_section_dim = document.df[-1].shape
-            if last_section_dim[0] > 0:
-                last_section_body.border_bottom = BroadcastValue(
-                    value=last_section_body.border_bottom, dimension=last_section_dim
-                ).update_row(last_section_dim[0] - 1, doc_border_bottom)
+            if isinstance(document.rtf_body, list) and isinstance(document.df, list):
+                last_section_body = document.rtf_body[-1]
+                last_section_dim = document.df[-1].shape
+                if last_section_dim[0] > 0 and doc_border_bottom is not None:
+                    last_section_body.border_bottom = BroadcastValue(
+                        value=last_section_body.border_bottom, dimension=last_section_dim
+                    ).update_row(last_section_dim[0] - 1, doc_border_bottom)
 
         return "\n".join(
             [

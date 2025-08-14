@@ -12,7 +12,7 @@ from rtflite.row import BORDER_CODES
 class AttributeDefaultsMixin:
     """Mixin class for common attribute default setting patterns."""
 
-    def _set_attribute_defaults(self, exclude_attrs: set = None) -> None:
+    def _set_attribute_defaults(self, exclude_attrs: set[Any] | None = None) -> None:
         """Set default values for text attributes by converting scalars to lists/tuples."""
         exclude_attrs = exclude_attrs or set()
         for attr, value in self.__dict__.items():
@@ -357,7 +357,7 @@ class RTFPage(BaseModel):
 
     def _validate_margin_length(self) -> None:
         """Validate that margin has exactly 6 values."""
-        if len(self.margin) != 6:
+        if self.margin is not None and len(self.margin) != 6:
             raise ValueError("Margin length must be 6.")
 
 
@@ -948,16 +948,16 @@ class RTFBody(TableAttributes):
 
     def _set_border_defaults(self) -> None:
         """Set default values for border and justification attributes."""
-        self.border_top = self.border_top or [""]
-        self.border_bottom = self.border_bottom or [""]
-        self.border_left = self.border_left or ["single"]
-        self.border_right = self.border_right or ["single"]
-        self.border_first = self.border_first or ["single"]
-        self.border_last = self.border_last or ["single"]
+        self.border_top = self.border_top or [[""]]
+        self.border_bottom = self.border_bottom or [[""]]
+        self.border_left = self.border_left or [["single"]]
+        self.border_right = self.border_right or [["single"]]
+        self.border_first = self.border_first or [["single"]]
+        self.border_last = self.border_last or [["single"]]
         self.cell_vertical_justification = self.cell_vertical_justification or [
-            "center"
+            ["center"]
         ]
-        self.text_justification = self.text_justification or ["c"]
+        self.text_justification = self.text_justification or [["c"]]
 
     def _validate_page_by_logic(self) -> None:
         """Validate that page_by and new_page settings are consistent."""

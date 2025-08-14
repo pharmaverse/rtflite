@@ -15,7 +15,7 @@ from .document_service import RTFDocumentService
 class AdvancedPaginationService:
     """Service for advanced pagination features using PageDict system"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.document_service = RTFDocumentService()
         self.page_dict: PageDict | None = None
         self.page_index_manager: PageIndexManager | None = None
