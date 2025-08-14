@@ -113,10 +113,10 @@ class GroupingService:
 
             # Higher-level columns changed condition
             for higher_col in group_by[:i]:
-                conditions.append(df[higher_col] != df[higher_col].shift(1))
+                conditions.append(pl.col(higher_col) != pl.col(higher_col).shift(1))
 
             # This column changed condition
-            conditions.append(df[column] != df[column].shift(1))
+            conditions.append(pl.col(column) != pl.col(column).shift(1))
 
             # Combine all conditions with OR
             should_show = conditions[0]
@@ -124,7 +124,7 @@ class GroupingService:
                 should_show = should_show | condition
 
             # Apply suppression
-            suppressed_values = pl.when(should_show).then(df[column]).otherwise(None)
+            suppressed_values = pl.when(should_show).then(pl.col(column)).otherwise(None)
             result_df = result_df.with_columns(suppressed_values.alias(column))
 
         return result_df
