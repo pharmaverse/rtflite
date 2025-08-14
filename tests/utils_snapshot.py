@@ -80,7 +80,7 @@ def normalize_rtf_structure(rtf_text: str) -> str:
     page_setups = []
     content_blocks = []
 
-    current_block = []
+    current_block: list[str] = []
 
     for line in lines:
         line = line.strip()
