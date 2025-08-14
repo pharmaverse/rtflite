@@ -73,12 +73,15 @@ class SinglePageStrategy(EncodingStrategy):
         doc_border_bottom = BroadcastValue(
             value=document.rtf_page.border_last, dimension=(1, dim[1])
         ).to_list()[0]
-        page_border_top = BroadcastValue(
-            value=document.rtf_body.border_first, dimension=(1, dim[1])
-        ).to_list()[0]
-        page_border_bottom = BroadcastValue(
-            value=document.rtf_body.border_last, dimension=(1, dim[1])
-        ).to_list()[0]
+        page_border_top = None
+        page_border_bottom = None
+        if document.rtf_body is not None and not isinstance(document.rtf_body, list):
+            page_border_top = BroadcastValue(
+                value=document.rtf_body.border_first, dimension=(1, dim[1])
+            ).to_list()[0]
+            page_border_bottom = BroadcastValue(
+                value=document.rtf_body.border_last, dimension=(1, dim[1])
+            ).to_list()[0]
 
         # Column header
         if document.rtf_column_header is None:
@@ -89,8 +92,16 @@ class SinglePageStrategy(EncodingStrategy):
                     value=document.rtf_body.border_top, dimension=dim
                 ).update_row(0, doc_border_top)
         else:
+            # Check if rtf_column_header is a list
+            header_to_check = (
+                document.rtf_column_header[0]
+                if isinstance(document.rtf_column_header, list)
+                else document.rtf_column_header
+            )
             if (
-                document.rtf_column_header[0].text is None
+                header_to_check.text is None
+                and document.rtf_body is not None
+                and not isinstance(document.rtf_body, list)
                 and document.rtf_body.as_colheader
             ):
                 # Determine which columns to exclude from headers
