@@ -5,6 +5,7 @@ import polars as pl
 from pydantic import BaseModel, ConfigDict, Field
 
 from ..attributes import TableAttributes
+from ..fonts_mapping import FontName, FontNumber
 from ..strwidth import get_string_width
 
 
@@ -87,13 +88,21 @@ class PageBreakCalculator(BaseModel):
                         ).iloc(row_idx, col_idx)
 
                     # Get actual font from table attributes if available
-                    actual_font = 1  # Default to font number 1 (Times New Roman)
+                    actual_font: FontName | FontNumber = (
+                        1  # Default to font number 1 (Times New Roman)
+                    )
                     if table_attrs and hasattr(table_attrs, "text_font"):
                         from ..attributes import BroadcastValue
 
-                        actual_font = BroadcastValue(
+                        font_value = BroadcastValue(
                             value=table_attrs.text_font, dimension=dim
                         ).iloc(row_idx, col_idx)
+                        # Handle both FontNumber (int) and FontName (str)
+                        if isinstance(font_value, int) and 1 <= font_value <= 10:
+                            actual_font = font_value  # type: ignore[assignment]
+                        elif isinstance(font_value, str):
+                            # If it's a string, use it directly
+                            actual_font = font_value  # type: ignore[assignment]
 
                     # Calculate how many lines this text will need
                     # Use the actual font from table attributes with actual font size
