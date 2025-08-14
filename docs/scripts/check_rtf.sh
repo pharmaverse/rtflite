@@ -259,6 +259,27 @@ for match in re.finditer(r'\`\`\`python.*?exec=\"on\".*?\n(.*?)\`\`\`', content,
             # Resolve workdir relative to project root
             target_dir = os.path.join('$PROJECT_ROOT', workdir)
             os.makedirs(target_dir, exist_ok=True)
+            
+            # For figure examples, ensure the images directory exists
+            # where the code expects it relative to the working directory
+            if 'rtf/' in workdir:
+                # When in rtf/ directory, ../images/ should exist
+                images_relative_dir = os.path.join(target_dir, '..', 'images')
+                os.makedirs(images_relative_dir, exist_ok=True)
+                
+                # Copy required images from main project to temp structure
+                import shutil
+                source_images_dir = os.path.join('$PROJECT_ROOT', 'docs', 'articles', 'images')
+                if os.path.exists(source_images_dir):
+                    for img_file in ['age-histogram-treatment-0.png', 'age-histogram-treatment-1.png', 'age-histogram-treatment-2.png']:
+                        source_img = os.path.join(source_images_dir, img_file)
+                        target_img = os.path.join(images_relative_dir, img_file)
+                        if os.path.exists(source_img) and not os.path.exists(target_img):
+                            shutil.copy2(source_img, target_img)
+            elif 'images/' in workdir:
+                # When in images/ directory, make sure it exists
+                os.makedirs(target_dir, exist_ok=True)
+            
             os.chdir(target_dir)
         
         try:
