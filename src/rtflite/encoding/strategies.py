@@ -155,29 +155,34 @@ class SinglePageStrategy(EncodingStrategy):
 
         # Only update borders if DataFrame has rows
         if dim[0] > 0:
-            document.rtf_body.border_top = BroadcastValue(
-                value=document.rtf_body.border_top, dimension=dim
-            ).update_row(0, page_border_top)
+            if page_border_top is not None:
+                document.rtf_body.border_top = BroadcastValue(
+                    value=document.rtf_body.border_top, dimension=dim
+                ).update_row(0, page_border_top)
 
         # Bottom border last line update
         if document.rtf_footnote is not None:
-            document.rtf_footnote.border_bottom = BroadcastValue(
-                value=document.rtf_footnote.border_bottom, dimension=(1, 1)
-            ).update_row(0, page_border_bottom[0])
+            if page_border_bottom is not None:
+                document.rtf_footnote.border_bottom = BroadcastValue(
+                    value=document.rtf_footnote.border_bottom, dimension=(1, 1)
+                ).update_row(0, [page_border_bottom[0]])
 
-            document.rtf_footnote.border_bottom = BroadcastValue(
-                value=document.rtf_footnote.border_bottom, dimension=(1, 1)
-            ).update_row(0, doc_border_bottom[0])
+            if doc_border_bottom is not None:
+                document.rtf_footnote.border_bottom = BroadcastValue(
+                    value=document.rtf_footnote.border_bottom, dimension=(1, 1)
+                ).update_row(0, [doc_border_bottom[0]])
         else:
             # Only update borders if DataFrame has rows
             if dim[0] > 0:
-                document.rtf_body.border_bottom = BroadcastValue(
-                    value=document.rtf_body.border_bottom, dimension=dim
-                ).update_row(dim[0] - 1, page_border_bottom)
+                if page_border_bottom is not None:
+                    document.rtf_body.border_bottom = BroadcastValue(
+                        value=document.rtf_body.border_bottom, dimension=dim
+                    ).update_row(dim[0] - 1, page_border_bottom)
 
-                document.rtf_body.border_bottom = BroadcastValue(
-                    value=document.rtf_body.border_bottom, dimension=dim
-                ).update_row(dim[0] - 1, doc_border_bottom)
+                if doc_border_bottom is not None:
+                    document.rtf_body.border_bottom = BroadcastValue(
+                        value=document.rtf_body.border_bottom, dimension=dim
+                    ).update_row(dim[0] - 1, doc_border_bottom)
 
         # Set document color context for accurate color index resolution
         from ..services.color_service import color_service
@@ -624,12 +629,14 @@ class PaginatedStrategy(EncodingStrategy):
                 start_idx += page_rows
 
         # Prepare border settings
-        BroadcastValue(
+        border_first_list = BroadcastValue(
             value=document.rtf_page.border_first, dimension=(1, dim[1])
-        ).to_list()[0]
-        BroadcastValue(
+        ).to_list()
+        _ = border_first_list[0] if border_first_list else None  # May be used for validation
+        border_last_list = BroadcastValue(
             value=document.rtf_page.border_last, dimension=(1, dim[1])
-        ).to_list()[0]
+        ).to_list()
+        _ = border_last_list[0] if border_last_list else None  # May be used for validation
 
         # Generate RTF for each page
         page_contents = []
