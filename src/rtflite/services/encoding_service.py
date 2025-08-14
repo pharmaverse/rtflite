@@ -354,7 +354,7 @@ class RTFEncodingService:
 
             section_df = pl.DataFrame(
                 {
-                    str(i): [BroadcastValue(value=processed_df).iloc(row, col)]
+                    str(i): [BroadcastValue(value=processed_df, dimension=None).iloc(row, col)]
                     for i, (row, col) in enumerate(indices)
                 }
             )
