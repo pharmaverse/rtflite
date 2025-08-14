@@ -36,7 +36,7 @@ class FontConfiguration:
     """Configuration for font settings."""
 
     default_font: int = RTFDefaults.TEXT_FONT
-    default_size: int = RTFConstants.DEFAULT_FONT_SIZE
+    default_size: float = RTFConstants.DEFAULT_FONT_SIZE
     charset: int = 1  # Default charset for r2rtf compatibility
 
     @classmethod

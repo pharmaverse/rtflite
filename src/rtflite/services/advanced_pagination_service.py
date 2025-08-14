@@ -15,7 +15,7 @@ from .document_service import RTFDocumentService
 class AdvancedPaginationService:
     """Service for advanced pagination features using PageDict system"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.document_service = RTFDocumentService()
         self.page_dict: PageDict | None = None
         self.page_index_manager: PageIndexManager | None = None
@@ -165,15 +165,10 @@ class AdvancedPaginationService:
         if self.page_dict is None:
             return {"error": "No PageDict available"}
 
-        summary = {
-            "total_pages": self.page_dict.total_pages,
-            "nrow_per_page": self.page_dict.nrow_per_page,
-            "break_types": self.page_dict.get_page_break_summary(),
-            "page_configs": {},
-        }
-
+        page_configs: dict[int, dict[str, Any]] = {}
+        
         for page_num, config in self.page_dict.page_configs.items():
-            summary["page_configs"][page_num] = {
+            page_configs[page_num] = {
                 "rows": f"{config.start_row}-{config.end_row}",
                 "row_count": config.row_count,
                 "break_type": config.break_type.value,
@@ -182,6 +177,13 @@ class AdvancedPaginationService:
                 "subline_header": config.subline_header,
                 "forced_content_count": len(config.forced_content),
             }
+        
+        summary = {
+            "total_pages": self.page_dict.total_pages,
+            "nrow_per_page": self.page_dict.nrow_per_page,
+            "break_types": self.page_dict.get_page_break_summary(),
+            "page_configs": page_configs,
+        }
 
         return summary
 

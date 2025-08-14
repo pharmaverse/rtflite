@@ -286,9 +286,9 @@ class TestRTFBodyHelpers:
 
         body._set_border_defaults()
 
-        assert body.border_top == [""]
-        assert body.border_left == ["single"]
-        assert body.cell_vertical_justification == ["center"]
+        assert body.border_top == [[""]]
+        assert body.border_left == [["single"]]
+        assert body.cell_vertical_justification == [["center"]]
 
     def test_validate_page_by_logic_valid(self):
         """Test valid page_by logic."""

@@ -4,6 +4,14 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
 from ..services.grouping_service import grouping_service
+from ..type_guards import (
+    is_single_header, 
+    is_single_body, 
+    is_list_header, 
+    is_list_body,
+    is_nested_header_list,
+    is_flat_header_list,
+)
 
 if TYPE_CHECKING:
     from ..encode import RTFDocument
@@ -67,21 +75,26 @@ class SinglePageStrategy(EncodingStrategy):
         )
 
         # Page Border
-        doc_border_top = BroadcastValue(
+        doc_border_top_list = BroadcastValue(
             value=document.rtf_page.border_first, dimension=(1, dim[1])
-        ).to_list()[0]
-        doc_border_bottom = BroadcastValue(
+        ).to_list()
+        doc_border_top = doc_border_top_list[0] if doc_border_top_list else None
+        doc_border_bottom_list = BroadcastValue(
             value=document.rtf_page.border_last, dimension=(1, dim[1])
-        ).to_list()[0]
+        ).to_list()
+        doc_border_bottom = doc_border_bottom_list[0] if doc_border_bottom_list else None
         page_border_top = None
         page_border_bottom = None
         if document.rtf_body is not None and not isinstance(document.rtf_body, list):
-            page_border_top = BroadcastValue(
+            page_border_top_list = BroadcastValue(
                 value=document.rtf_body.border_first, dimension=(1, dim[1])
-            ).to_list()[0]
-            page_border_bottom = BroadcastValue(
+            ).to_list()
+            page_border_top = page_border_top_list[0] if page_border_top_list else None
+            page_border_bottom_list = BroadcastValue(
                 value=document.rtf_body.border_last, dimension=(1, dim[1])
-            ).to_list()[0]
+            ).to_list()
+            page_border_bottom = page_border_bottom_list[0] if page_border_bottom_list else None
+
 
         # Column header
         if document.rtf_column_header is None:
@@ -93,30 +106,40 @@ class SinglePageStrategy(EncodingStrategy):
                 ).update_row(0, doc_border_top)
         else:
             # Check if rtf_column_header is a list
-            header_to_check = (
-                document.rtf_column_header[0]
-                if isinstance(document.rtf_column_header, list)
-                else document.rtf_column_header
-            )
+            header_to_check = None
+            if is_nested_header_list(document.rtf_column_header):
+                # Nested list case - get first section's first header
+                if document.rtf_column_header[0] and len(document.rtf_column_header[0]) > 0:
+                    header_to_check = document.rtf_column_header[0][0]
+            elif is_flat_header_list(document.rtf_column_header):
+                # Flat list case - get first header
+                if len(document.rtf_column_header) > 0:
+                    header_to_check = document.rtf_column_header[0]
+            elif is_single_header(document.rtf_column_header):  # type: ignore[arg-type]
+                header_to_check = document.rtf_column_header
+            
             if (
-                header_to_check.text is None
-                and document.rtf_body is not None
-                and not isinstance(document.rtf_body, list)
+                header_to_check is not None
+                and header_to_check.text is None
+                and is_single_body(document.rtf_body)
                 and document.rtf_body.as_colheader
             ):
                 # Determine which columns to exclude from headers
-                excluded_columns = (document.rtf_body.page_by or []) + (
+                excluded_columns = list(document.rtf_body.page_by or []) + list(
                     document.rtf_body.subline_by or []
                 )
                 columns = [
                     col for col in document.df.columns if col not in excluded_columns
                 ]
                 # Create DataFrame with explicit column names to ensure single row
-                document.rtf_column_header[0].text = pl.DataFrame(
+                header_df = pl.DataFrame(
                     [columns],
                     schema=[f"col_{i}" for i in range(len(columns))],
                     orient="row",
                 )
+                # Only assign if we have a valid flat header list
+                if is_flat_header_list(document.rtf_column_header) and len(document.rtf_column_header) > 0 and document.rtf_column_header[0] is not None:
+                    document.rtf_column_header[0].text = header_df  # type: ignore[assignment]
 
                 # Adjust col_rel_width to match the processed columns
                 if excluded_columns:
@@ -129,55 +152,85 @@ class SinglePageStrategy(EncodingStrategy):
                     ]
 
                     # Ensure we have enough col_rel_width values for all original columns
-                    if len(document.rtf_body.col_rel_width) >= len(original_cols):
-                        document.rtf_column_header[0].col_rel_width = [
-                            document.rtf_body.col_rel_width[i]
-                            for i in processed_col_indices
-                        ]
+                    if document.rtf_body.col_rel_width is not None and len(document.rtf_body.col_rel_width) >= len(original_cols):
+                        if is_flat_header_list(document.rtf_column_header) and len(document.rtf_column_header) > 0 and document.rtf_column_header[0] is not None:
+                            document.rtf_column_header[0].col_rel_width = [
+                                document.rtf_body.col_rel_width[i]
+                                for i in processed_col_indices
+                            ]
                     else:
-                        # Fallback: use equal widths if col_rel_width doesn't match
-                        document.rtf_column_header[0].col_rel_width = [1] * len(columns)
+                        # Fallback: use equal widths if col_rel_width doesn't match or is None
+                        if is_flat_header_list(document.rtf_column_header) and len(document.rtf_column_header) > 0 and document.rtf_column_header[0] is not None:
+                            document.rtf_column_header[0].col_rel_width = [1] * len(columns)
 
                 document.rtf_column_header = document.rtf_column_header[:1]
 
             # Only update borders if DataFrame has rows
-            if dim[0] > 0:
+            if dim[0] > 0 and is_flat_header_list(document.rtf_column_header) and len(document.rtf_column_header) > 0 and document.rtf_column_header[0] is not None:
                 document.rtf_column_header[0].border_top = BroadcastValue(
                     value=document.rtf_column_header[0].border_top, dimension=dim
-                ).update_row(0, doc_border_top)
+                ).update_row(0, doc_border_top if doc_border_top is not None else [])
 
-            rtf_column_header = [
-                self.encoding_service.encode_column_header(
-                    header.text, header, document.rtf_page.col_width
-                )
-                for header in document.rtf_column_header
-            ]
+            if is_nested_header_list(document.rtf_column_header):
+                # Handle nested list of headers
+                rtf_column_header = []
+                for section_headers in document.rtf_column_header:
+                    if section_headers:
+                        for header in section_headers:
+                            if header:
+                                rtf_column_header.append(
+                                    self.encoding_service.encode_column_header(
+                                        header.text, header, document.rtf_page.col_width
+                                    )
+                                )
+            elif is_flat_header_list(document.rtf_column_header):
+                rtf_column_header = [
+                    self.encoding_service.encode_column_header(
+                        header.text if header else None, header, document.rtf_page.col_width
+                    )
+                    for header in document.rtf_column_header
+                ]
+            elif is_single_header(document.rtf_column_header):  # type: ignore[arg-type]
+                rtf_column_header = [
+                    self.encoding_service.encode_column_header(
+                        document.rtf_column_header.text, 
+                        document.rtf_column_header, 
+                        document.rtf_page.col_width
+                    )
+                ]
+            else:
+                rtf_column_header = []
 
         # Only update borders if DataFrame has rows
-        if dim[0] > 0:
-            document.rtf_body.border_top = BroadcastValue(
-                value=document.rtf_body.border_top, dimension=dim
-            ).update_row(0, page_border_top)
+        if dim[0] > 0 and is_single_body(document.rtf_body):
+            if page_border_top is not None:
+                document.rtf_body.border_top = BroadcastValue(
+                    value=document.rtf_body.border_top, dimension=dim
+                ).update_row(0, page_border_top)
 
         # Bottom border last line update
         if document.rtf_footnote is not None:
-            document.rtf_footnote.border_bottom = BroadcastValue(
-                value=document.rtf_footnote.border_bottom, dimension=(1, 1)
-            ).update_row(0, page_border_bottom[0])
+            if page_border_bottom is not None:
+                document.rtf_footnote.border_bottom = BroadcastValue(
+                    value=document.rtf_footnote.border_bottom, dimension=(1, 1)
+                ).update_row(0, [page_border_bottom[0]])
 
-            document.rtf_footnote.border_bottom = BroadcastValue(
-                value=document.rtf_footnote.border_bottom, dimension=(1, 1)
-            ).update_row(0, doc_border_bottom[0])
+            if doc_border_bottom is not None:
+                document.rtf_footnote.border_bottom = BroadcastValue(
+                    value=document.rtf_footnote.border_bottom, dimension=(1, 1)
+                ).update_row(0, [doc_border_bottom[0]])
         else:
             # Only update borders if DataFrame has rows
             if dim[0] > 0:
-                document.rtf_body.border_bottom = BroadcastValue(
-                    value=document.rtf_body.border_bottom, dimension=dim
-                ).update_row(dim[0] - 1, page_border_bottom)
+                if page_border_bottom is not None and is_single_body(document.rtf_body):
+                    document.rtf_body.border_bottom = BroadcastValue(
+                        value=document.rtf_body.border_bottom, dimension=dim
+                    ).update_row(dim[0] - 1, page_border_bottom)
 
-                document.rtf_body.border_bottom = BroadcastValue(
-                    value=document.rtf_body.border_bottom, dimension=dim
-                ).update_row(dim[0] - 1, doc_border_bottom)
+                if doc_border_bottom is not None and is_single_body(document.rtf_body):
+                    document.rtf_body.border_bottom = BroadcastValue(
+                        value=document.rtf_body.border_bottom, dimension=dim
+                    ).update_row(dim[0] - 1, doc_border_bottom)
 
         # Set document color context for accurate color index resolution
         from ..services.color_service import color_service
@@ -265,8 +318,12 @@ class SinglePageStrategy(EncodingStrategy):
         from ..attributes import BroadcastValue
 
         # Calculate total rows across all sections for border management
-        total_rows = sum(df.shape[0] for df in document.df)
-        first_section_cols = document.df[0].shape[1]
+        if isinstance(document.df, list):
+            total_rows = sum(df.shape[0] for df in document.df)
+            first_section_cols = document.df[0].shape[1] if document.df else 0
+        else:
+            total_rows = document.df.shape[0] if document.df is not None else 0
+            first_section_cols = document.df.shape[1] if document.df is not None else 0
 
         # Document structure components
         rtf_title = self.encoding_service.encode_title(
@@ -274,19 +331,24 @@ class SinglePageStrategy(EncodingStrategy):
         )
 
         # Handle page borders (use first section for dimensions)
-        doc_border_top = BroadcastValue(
+        doc_border_top_list = BroadcastValue(
             value=document.rtf_page.border_first, dimension=(1, first_section_cols)
-        ).to_list()[0]
-        doc_border_bottom = BroadcastValue(
+        ).to_list()
+        doc_border_top = doc_border_top_list[0] if doc_border_top_list else None
+        doc_border_bottom_list = BroadcastValue(
             value=document.rtf_page.border_last, dimension=(1, first_section_cols)
-        ).to_list()[0]
+        ).to_list()
+        doc_border_bottom = doc_border_bottom_list[0] if doc_border_bottom_list else None
 
         # Encode sections
         all_section_content = []
-        is_nested_headers = isinstance(document.rtf_column_header[0], list)
+        is_nested_headers = is_nested_header_list(document.rtf_column_header)
 
+        df_list = document.df if isinstance(document.df, list) else [document.df] if document.df is not None else []
+        body_list = document.rtf_body if isinstance(document.rtf_body, list) else [document.rtf_body] if document.rtf_body is not None else []
+        
         for i, (section_df, section_body) in enumerate(
-            zip(document.df, document.rtf_body)
+            zip(df_list, body_list)
         ):
             dim = section_df.shape
 
@@ -300,8 +362,12 @@ class SinglePageStrategy(EncodingStrategy):
                 ):
                     for header in document.rtf_column_header[i]:
                         if header is not None:
+                            from ..input import RTFColumnHeader
+                            # Ensure header is RTFColumnHeader, not tuple
+                            if not isinstance(header, RTFColumnHeader):
+                                continue
                             # Apply top border to first section's first header
-                            if i == 0 and not section_headers:
+                            if i == 0 and not section_headers and doc_border_top is not None:
                                 header.border_top = BroadcastValue(
                                     value=header.border_top, dimension=dim
                                 ).update_row(0, doc_border_top)
@@ -314,8 +380,14 @@ class SinglePageStrategy(EncodingStrategy):
             else:
                 # Flat format - only apply to first section
                 if i == 0:
-                    for header in document.rtf_column_header:
-                        if header.text is None and section_body.as_colheader:
+                    headers_to_check = []
+                    if is_flat_header_list(document.rtf_column_header):
+                        headers_to_check = document.rtf_column_header
+                    elif is_single_header(document.rtf_column_header):  # type: ignore[arg-type]
+                        headers_to_check = [document.rtf_column_header]
+                    
+                    for header in headers_to_check:
+                        if header is not None and header.text is None and section_body.as_colheader:
                             # Auto-generate headers from column names
                             columns = [
                                 col
@@ -324,30 +396,32 @@ class SinglePageStrategy(EncodingStrategy):
                             ]
                             import polars as pl
 
-                            header.text = pl.DataFrame(
+                            header_df = pl.DataFrame(
                                 [columns],
                                 schema=[f"col_{j}" for j in range(len(columns))],
                                 orient="row",
                             )
+                            header.text = header_df  # type: ignore[assignment]
 
                         # Apply top border to first header
-                        if not section_headers:
+                        if not section_headers and doc_border_top is not None and header is not None:
                             header.border_top = BroadcastValue(
                                 value=header.border_top, dimension=dim
-                            ).update_row(0, doc_border_top)
+                            ).update_row(0, doc_border_top if doc_border_top is not None else [])
 
-                        section_headers.append(
-                            self.encoding_service.encode_column_header(
-                                header.text, header, document.rtf_page.col_width
+                        if header is not None:
+                            section_headers.append(
+                                self.encoding_service.encode_column_header(
+                                    header.text, header, document.rtf_page.col_width
+                                )
                             )
-                        )
 
             # Handle borders for section body
             if i == 0 and not section_headers:  # First section, no headers
                 # Apply top border to first row of first section
                 section_body.border_top = BroadcastValue(
                     value=section_body.border_top, dimension=dim
-                ).update_row(0, doc_border_top)
+                ).update_row(0, doc_border_top if doc_border_top is not None else [])
 
             # Create a temporary document for this section to maintain compatibility
             from copy import deepcopy
@@ -373,18 +447,19 @@ class SinglePageStrategy(EncodingStrategy):
             all_section_content.extend(section_body_content)
 
         # Handle bottom borders on last section
-        if document.rtf_footnote is not None:
+        if document.rtf_footnote is not None and doc_border_bottom is not None:
             document.rtf_footnote.border_bottom = BroadcastValue(
                 value=document.rtf_footnote.border_bottom, dimension=(1, 1)
-            ).update_row(0, doc_border_bottom[0])
+            ).update_row(0, [doc_border_bottom[0]])
         else:
             # Apply bottom border to last section's last row
-            last_section_body = document.rtf_body[-1]
-            last_section_dim = document.df[-1].shape
-            if last_section_dim[0] > 0:
-                last_section_body.border_bottom = BroadcastValue(
-                    value=last_section_body.border_bottom, dimension=last_section_dim
-                ).update_row(last_section_dim[0] - 1, doc_border_bottom)
+            if isinstance(document.rtf_body, list) and isinstance(document.df, list):
+                last_section_body = document.rtf_body[-1]
+                last_section_dim = document.df[-1].shape
+                if last_section_dim[0] > 0 and doc_border_bottom is not None:
+                    last_section_body.border_bottom = BroadcastValue(
+                        value=last_section_body.border_bottom, dimension=last_section_dim
+                    ).update_row(last_section_dim[0] - 1, doc_border_bottom)
 
         return "\n".join(
             [
@@ -529,7 +604,12 @@ class PaginatedStrategy(EncodingStrategy):
         if document.df is None:
             return self._encode_figure_only_document_with_pagination(document)
 
-        dim = document.df.shape
+        # Get dimensions based on DataFrame type
+        if isinstance(document.df, list):
+            # For list of DataFrames, use first one's columns
+            dim = (sum(df.shape[0] for df in document.df), document.df[0].shape[1] if document.df else 0)
+        else:
+            dim = document.df.shape
 
         # Set document color context for accurate color index resolution
         from ..services.color_service import color_service
@@ -544,12 +624,14 @@ class PaginatedStrategy(EncodingStrategy):
         )
 
         # Validate subline_by formatting consistency before processing
-        if document.rtf_body.subline_by is not None:
+        if is_single_body(document.rtf_body) and document.rtf_body.subline_by is not None:
             import warnings
 
+            from typing import cast
+            subline_by_list = cast(list[str], document.rtf_body.subline_by)
             formatting_warnings = (
                 grouping_service.validate_subline_formatting_consistency(
-                    original_df, document.rtf_body.subline_by, document.rtf_body
+                    original_df, subline_by_list, document.rtf_body
                 )
             )
             for warning_msg in formatting_warnings:
@@ -560,7 +642,11 @@ class PaginatedStrategy(EncodingStrategy):
         # Get pagination instance and distribute content (use processed data for distribution)
         _, distributor = self.document_service.create_pagination_instance(document)
         col_total_width = document.rtf_page.col_width
-        col_widths = Utils._col_widths(document.rtf_body.col_rel_width, col_total_width)
+        if is_single_body(document.rtf_body) and document.rtf_body.col_rel_width is not None:
+            col_widths = Utils._col_widths(document.rtf_body.col_rel_width, col_total_width if col_total_width is not None else 8.5)
+        else:
+            # Default to equal widths if body is not single
+            col_widths = Utils._col_widths([1] * dim[1], col_total_width if col_total_width is not None else 8.5)
 
         # Calculate additional rows per page for r2rtf compatibility
         additional_rows = self.document_service.calculate_additional_rows_per_page(
@@ -569,16 +655,29 @@ class PaginatedStrategy(EncodingStrategy):
 
         # Use original DataFrame for pagination logic (to identify subline_by breaks)
         # but processed DataFrame for the actual content
-        pages = distributor.distribute_content(
-            df=original_df,  # Use original DataFrame for proper pagination distribution logic
-            col_widths=col_widths,
-            page_by=document.rtf_body.page_by,
-            new_page=document.rtf_body.new_page,
-            pageby_header=document.rtf_body.pageby_header,
-            table_attrs=document.rtf_body,
-            additional_rows_per_page=additional_rows,
-            subline_by=document.rtf_body.subline_by,
-        )
+        if is_single_body(document.rtf_body):
+            pages = distributor.distribute_content(
+                df=original_df,  # Use original DataFrame for proper pagination distribution logic
+                col_widths=col_widths,
+                page_by=document.rtf_body.page_by,
+                new_page=document.rtf_body.new_page,
+                pageby_header=document.rtf_body.pageby_header,
+                table_attrs=document.rtf_body,
+                additional_rows_per_page=additional_rows,
+                subline_by=document.rtf_body.subline_by,
+            )
+        else:
+            # Default pagination if body is not single
+            pages = distributor.distribute_content(
+                df=original_df,
+                col_widths=col_widths,
+                page_by=None,
+                new_page=None,
+                pageby_header=None,
+                table_attrs=None,
+                additional_rows_per_page=additional_rows,
+                subline_by=None,
+            )
 
         # Replace page data with processed data (without subline_by columns)
         for i, page_info in enumerate(pages):
@@ -587,7 +686,7 @@ class PaginatedStrategy(EncodingStrategy):
             page_info["data"] = processed_df.slice(start_row, end_row - start_row + 1)
 
         # Apply group_by processing to each page if needed
-        if document.rtf_body.group_by:
+        if is_single_body(document.rtf_body) and document.rtf_body.group_by:
             # Calculate global page start indices for context restoration
             page_start_indices = []
             cumulative_rows = 0
@@ -607,13 +706,17 @@ class PaginatedStrategy(EncodingStrategy):
                 full_df = full_df.vstack(page_df)
 
             # Apply group_by suppression to the full dataset
+            from typing import cast
+            group_by_param = cast(list[str] | None, document.rtf_body.group_by)
             suppressed_df = grouping_service.enhance_group_by(
-                full_df, document.rtf_body.group_by
+                full_df, group_by_param
             )
 
             # Apply page context restoration
+            from typing import cast
+            group_by_list2 = cast(list[str], document.rtf_body.group_by)
             restored_df = grouping_service.restore_page_context(
-                suppressed_df, full_df, document.rtf_body.group_by, page_start_indices
+                suppressed_df, full_df, group_by_list2, page_start_indices
             )
 
             # Split the processed data back to pages
@@ -624,12 +727,14 @@ class PaginatedStrategy(EncodingStrategy):
                 start_idx += page_rows
 
         # Prepare border settings
-        BroadcastValue(
+        border_first_list = BroadcastValue(
             value=document.rtf_page.border_first, dimension=(1, dim[1])
-        ).to_list()[0]
-        BroadcastValue(
+        ).to_list()
+        _ = border_first_list[0] if border_first_list else None  # May be used for validation
+        border_last_list = BroadcastValue(
             value=document.rtf_page.border_last, dimension=(1, dim[1])
-        ).to_list()[0]
+        ).to_list()
+        _ = border_last_list[0] if border_last_list else None  # May be used for validation
 
         # Generate RTF for each page
         page_contents = []
@@ -695,21 +800,28 @@ class PaginatedStrategy(EncodingStrategy):
             # Add column headers if needed
             if page_info["needs_header"] and document.rtf_column_header:
                 if (
-                    document.rtf_column_header[0].text is None
+                    is_flat_header_list(document.rtf_column_header)
+                    and len(document.rtf_column_header) > 0
+                    and document.rtf_column_header[0] is not None
+                    and document.rtf_column_header[0].text is None
+                    and is_single_body(document.rtf_body)
                     and document.rtf_body.as_colheader
                 ):
                     # Use the processed page data columns (which already have subline_by columns removed)
                     page_df = page_info["data"]
                     columns = list(page_df.columns)
-                    document.rtf_column_header[0].text = pl.DataFrame(
+                    # Create DataFrame for text field (not assign list to text)
+                    import polars as pl
+                    header_df = pl.DataFrame(
                         [columns],
                         schema=[f"col_{i}" for i in range(len(columns))],
                         orient="row",
                     )
+                    document.rtf_column_header[0].text = header_df  # type: ignore[assignment]
 
                     # Adjust col_rel_width to match the processed columns (without subline_by)
-                    if document.rtf_body.subline_by:
-                        original_cols = list(document.df.columns)
+                    if is_single_body(document.rtf_body) and document.rtf_body.subline_by:
+                        original_cols = list(document.df.columns) if isinstance(document.df, pl.DataFrame) else []
                         subline_cols = set(document.rtf_body.subline_by)
                         processed_col_indices = [
                             i
@@ -718,12 +830,19 @@ class PaginatedStrategy(EncodingStrategy):
                         ]
 
                         # Ensure we have enough col_rel_width values for all original columns
-                        if len(document.rtf_body.col_rel_width) >= len(original_cols):
+                        if (
+                            is_single_body(document.rtf_body)
+                            and document.rtf_body.col_rel_width is not None
+                            and len(document.rtf_body.col_rel_width) >= len(original_cols)
+                            and is_flat_header_list(document.rtf_column_header)
+                            and len(document.rtf_column_header) > 0
+                            and document.rtf_column_header[0] is not None
+                        ):
                             document.rtf_column_header[0].col_rel_width = [
                                 document.rtf_body.col_rel_width[i]
                                 for i in processed_col_indices
                             ]
-                        else:
+                        elif is_flat_header_list(document.rtf_column_header) and len(document.rtf_column_header) > 0 and document.rtf_column_header[0] is not None:
                             # Fallback: use equal widths if col_rel_width doesn't match
                             document.rtf_column_header[0].col_rel_width = [1] * len(
                                 columns
@@ -732,7 +851,18 @@ class PaginatedStrategy(EncodingStrategy):
                 # Apply pagination borders to column headers
                 # Process each column header with proper borders
                 header_elements = []
-                for i, header in enumerate(document.rtf_column_header):
+                headers_to_process = []
+                if is_nested_header_list(document.rtf_column_header):
+                    # For nested headers, flatten them
+                    for section_headers in document.rtf_column_header:
+                        if section_headers:
+                            headers_to_process.extend(section_headers)
+                elif is_flat_header_list(document.rtf_column_header):
+                    headers_to_process = document.rtf_column_header
+                
+                for i, header in enumerate(headers_to_process):
+                    if header is None:
+                        continue
                     header_copy = deepcopy(header)
 
                     # Apply page-level borders to column headers (matching non-paginated behavior)
@@ -743,7 +873,13 @@ class PaginatedStrategy(EncodingStrategy):
                             document.rtf_page.border_first
                             and header_copy.text is not None
                         ):
-                            header_dims = header_copy.text.shape
+                            # Get dimensions based on text type
+                            import polars as pl
+                            if isinstance(header_copy.text, pl.DataFrame):
+                                header_dims = header_copy.text.shape
+                            else:
+                                # For Sequence[str], assume single row
+                                header_dims = (1, len(header_copy.text) if header_copy.text else 0)
                             # Apply page border_first to top of first column header
                             header_copy.border_top = BroadcastValue(
                                 value=header_copy.border_top, dimension=header_dims

@@ -107,7 +107,7 @@ class PageBreakCalculator(BaseModel):
                     # Calculate how many lines this text will need
                     # Use the actual font from table attributes with actual font size
                     text_width = get_string_width(
-                        cell_value, font=actual_font, font_size=actual_font_size
+                        cell_value, font=actual_font, font_size=actual_font_size  # type: ignore[arg-type]
                     )
                     lines_needed = max(1, int(text_width / col_width) + 1)
                     max_lines_in_row = max(max_lines_in_row, lines_needed)
