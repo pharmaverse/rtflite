@@ -1,8 +1,10 @@
 #!/bin/bash
 
-echo "=== RTF Example Checker with Quarto Support ==="
-echo "This script uses Quarto to render markdown examples and generate RTF files"
-echo ""
+# Simplified RTF Checker Script
+# Uses markdown-exec to run Python code directly from markdown files
+# Dynamically fetches RTF file list from gh-pages branch
+
+set -e  # Exit on error
 
 # Colors for output
 RED='\033[0;31m'
@@ -15,398 +17,239 @@ NC='\033[0m' # No Color
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
-# All temporary files will be stored in docs_temp
-TEMP_BASE="$PROJECT_ROOT/docs_temp"
-
-# Directories
+# Configuration
+TEMP_DIR="$PROJECT_ROOT/docs_temp"
 MD_DIR="$PROJECT_ROOT/docs/articles"
-QMD_DIR="$TEMP_BASE/qmd"
-OUTPUT_DIR="$TEMP_BASE/html"
-PY_DIR="$TEMP_BASE/py"
-RTF_DIR="$TEMP_BASE/rtf_generated"
-BASELINE_DIR="$TEMP_BASE/rtf_baseline"
-DIFF_DIR="$TEMP_BASE/rtf_differences"
+RTF_DIR="$TEMP_DIR/rtf_generated"
+BASELINE_DIR="$TEMP_DIR/rtf_baseline"
+DIFF_DIR="$TEMP_DIR/rtf_differences"
 
-# Check if Quarto is installed
-check_quarto() {
-    if ! command -v quarto &> /dev/null; then
-        echo -e "${RED}Error: Quarto is not installed${NC}"
-        echo "Please install Quarto from https://quarto.org"
-        exit 1
+# GitHub configuration
+GH_REPO="pharmaverse/rtflite"
+GH_BRANCH="gh-pages"
+GH_PATH="articles/rtf"
+
+# Clean up function
+cleanup() {
+    if [[ "$KEEP_TEMP" != "true" ]]; then
+        echo "Cleaning up temporary files..."
+        rm -rf "$TEMP_DIR"
     fi
-    
-    QUARTO_VERSION=$(quarto --version)
-    echo -e "${BLUE}Using Quarto version: $QUARTO_VERSION${NC}"
-    echo ""
 }
 
-# Function to prepare Quarto documents from markdown files
-prepare_quarto_documents() {
-    echo "=== Step 1: Preparing Quarto documents from markdown ==="
-    echo ""
-    
-    # Create temp directories
-    mkdir -p "$QMD_DIR"
-    mkdir -p "$OUTPUT_DIR"
+# Set up trap for cleanup on exit
+trap cleanup EXIT
+
+# Initialize directories
+init_directories() {
+    echo "Initializing directories..."
+    rm -rf "$TEMP_DIR"
     mkdir -p "$RTF_DIR"
-    
-    local count=0
-    
-    # Process markdown files that contain executable Python code
-    for md_file in "$MD_DIR"/*.md; do
-        if [[ -f "$md_file" ]] && grep -q 'exec="on"' "$md_file"; then
-            md_name=$(basename "$md_file" .md)
-            qmd_output="$QMD_DIR/$md_name.qmd"
-            
-            echo "  Preparing: $md_name.qmd"
-            
-            # Create a Quarto document with proper YAML header
-            {
-                # Add Quarto YAML header
-                cat <<EOF
----
-title: "$md_name RTF Generation"
-format:
-  html:
-    embed-resources: true
-execute:
-  echo: false
-  warning: false
-  error: false
-jupyter: python3
----
-
-EOF
-                
-                # Copy the markdown content
-                cat "$md_file"
-                
-                # Add RTF generation code at the end to save in docs_temp
-                cat <<EOF
-
-\`\`\`{python}
-#| echo: false
-#| include: false
-
-# Generate RTF file if doc object exists
-import os
-
-# Find all RTFDocument objects that might have been created
-rtf_docs = []
-for name, obj in list(locals().items()):
-    if hasattr(obj, 'write_rtf') and hasattr(obj, 'rtf_encode'):
-        rtf_docs.append((name, obj))
-
-if rtf_docs:
-    for doc_name, doc in rtf_docs:
-        # Generate a unique name based on the document variable
-        if doc_name == 'doc':
-            rtf_path = f'$RTF_DIR/$md_name.rtf'
-        else:
-            # Handle multiple documents with unique names
-            rtf_path = f'$RTF_DIR/${md_name}_{doc_name}.rtf'
-        
-        doc.write_rtf(rtf_path)
-        print(f'Generated RTF: {rtf_path}')
-else:
-    print('No RTF document object found to save')
-\`\`\`
-EOF
-            } > "$qmd_output"
-            
-            if [[ -f "$qmd_output" ]]; then
-                echo -e "    ${GREEN}✓${NC} Prepared Quarto document"
-                ((count++))
-            else
-                echo -e "    ${RED}✗${NC} Failed to prepare Quarto document"
-            fi
-        fi
-    done
-    
-    echo ""
-    echo "Prepared $count Quarto documents"
-    echo ""
-}
-
-# Function to extract Python code from markdown (alternative to Quarto)
-extract_python_from_markdown() {
-    echo "=== Step 1 (Alternative): Extracting Python code from markdown ==="
-    echo ""
-    
-    # Create temp directories
-    mkdir -p "$PY_DIR"
-    mkdir -p "$RTF_DIR"
-    
-    local count=0
-    
-    # Process markdown files with executable Python code
-    for md_file in "$MD_DIR"/*.md; do
-        if [[ -f "$md_file" ]] && grep -q 'exec="on"' "$md_file"; then
-            md_name=$(basename "$md_file" .md)
-            py_output="$PY_DIR/$md_name.py"
-            
-            echo "  Processing: $md_name.md"
-            
-            # Extract Python code blocks and create executable script
-            {
-                echo "#!/usr/bin/env python"
-                echo "# Auto-generated from $md_name.md"
-                echo ""
-                
-                # Extract Python code blocks with exec="on"
-                # Comment out problematic lines using sed after extraction
-                awk '/^```python.*exec="on"/ { in_block = 1; next }
-                     /^```$/ && in_block { in_block = 0; print ""; next }
-                     in_block { print }' "$md_file" | \
-                sed 's/^\(.*\.write_rtf([^/].*\)$/# \1  # Commented out - will be handled at end/' | \
-                sed 's/^\(.*converter\.convert(.*\)$/# \1  # Commented out - LibreOffice not required/'
-                
-                # Add RTF generation code
-                cat <<EOF
-
-# Generate RTF files
-import os
-os.makedirs('$RTF_DIR', exist_ok=True)
-
-# Find all RTFDocument objects
-rtf_docs = []
-for name, obj in list(locals().items()):
-    if hasattr(obj, 'write_rtf') and hasattr(obj, 'rtf_encode'):
-        rtf_docs.append((name, obj))
-
-if rtf_docs:
-    for doc_name, doc in rtf_docs:
-        if doc_name == 'doc':
-            rtf_path = f'$RTF_DIR/$md_name.rtf'
-        else:
-            rtf_path = f'$RTF_DIR/$md_name' + '_' + doc_name + '.rtf'
-        try:
-            doc.write_rtf(rtf_path)
-            print(f'Generated: ' + rtf_path)
-        except Exception as e:
-            print(f'Error generating ' + rtf_path + ': ' + str(e))
-else:
-    print('No RTF document found in $md_name.py')
-EOF
-            } > "$py_output"
-            
-            chmod +x "$py_output"
-            
-            if [[ -s "$py_output" ]]; then
-                echo -e "    ${GREEN}✓${NC} Extracted Python code"
-                ((count++))
-            else
-                echo -e "    ${YELLOW}⚠${NC} No executable Python code found"
-                rm -f "$py_output"
-            fi
-        fi
-    done
-    
-    echo ""
-    echo "Extracted Python from $count markdown files"
-    echo ""
-}
-
-# Function to render Quarto documents
-render_quarto_documents() {
-    echo "=== Step 2: Rendering Quarto documents ==="
-    echo ""
-    
-    # Activate virtual environment
-    source "$PROJECT_ROOT/.venv/bin/activate"
-    
-    local count=0
-    local failed=0
-    
-    for qmd_file in "$QMD_DIR"/*.qmd; do
-        if [[ -f "$qmd_file" ]]; then
-            qmd_name=$(basename "$qmd_file" .qmd)
-            echo "  Rendering: $qmd_name.qmd"
-            
-            cd "$QMD_DIR" || exit 1
-            
-            # Run quarto render
-            output=$(quarto render "$qmd_name.qmd" --output-dir "$OUTPUT_DIR" 2>&1)
-            exit_code=$?
-            
-            if [[ $exit_code -eq 0 ]]; then
-                # Check if RTF was generated
-                if ls "$RTF_DIR"/"$qmd_name"*.rtf 1> /dev/null 2>&1; then
-                    echo -e "    ${GREEN}✓${NC} Rendered successfully with RTF output"
-                    ((count++))
-                else
-                    echo -e "    ${YELLOW}⚠${NC} Rendered but no RTF generated"
-                fi
-            else
-                echo -e "    ${RED}✗${NC} Failed to render (exit code: $exit_code)"
-                ((failed++))
-            fi
-            
-            cd - > /dev/null || exit 1
-        fi
-    done
-    
-    echo ""
-    echo "Successfully rendered $count documents"
-    if [[ $failed -gt 0 ]]; then
-        echo -e "${YELLOW}Failed to render $failed documents${NC}"
-    fi
-    echo ""
-}
-
-# Function to generate RTF files from Python scripts
-generate_rtf_files() {
-    echo "=== Step 2 (Alternative): Generating RTF files from Python scripts ==="
-    echo ""
-    
-    # Activate virtual environment
-    source "$PROJECT_ROOT/.venv/bin/activate"
-    
-    local count=0
-    local failed=0
-    
-    for py_file in "$PY_DIR"/*.py; do
-        if [[ -f "$py_file" ]]; then
-            py_name=$(basename "$py_file" .py)
-            echo "  Running: $py_name.py"
-            
-            # Run Python script
-            cd "$PROJECT_ROOT" || exit 1
-            output=$(python "$py_file" 2>&1)
-            exit_code=$?
-            
-            if [[ $exit_code -eq 0 ]]; then
-                # Check if RTF was created
-                if ls "$RTF_DIR"/"$py_name"*.rtf 1> /dev/null 2>&1; then
-                    echo -e "    ${GREEN}✓${NC} Generated successfully"
-                    ((count++))
-                else
-                    echo -e "    ${YELLOW}⚠${NC} Script ran but no RTF created"
-                fi
-            else
-                echo -e "    ${RED}✗${NC} Failed to generate (exit code: $exit_code)"
-                echo "    First error lines:"
-                echo "$output" | head -5
-                ((failed++))
-            fi
-            
-            cd - > /dev/null || exit 1
-        fi
-    done
-    
-    echo ""
-    echo "Generated $count RTF files"
-    if [[ $failed -gt 0 ]]; then
-        echo -e "${YELLOW}Failed to generate $failed files${NC}"
-    fi
-    echo ""
-}
-
-# Function to download baseline RTF files
-download_baseline() {
-    echo "=== Step 3: Downloading baseline RTF files from gh-pages ==="
-    echo ""
-    
     mkdir -p "$BASELINE_DIR"
+    mkdir -p "$DIFF_DIR"
+}
+
+# Dynamically get list of RTF files from gh-pages branch
+get_baseline_rtf_list() {
+    echo "Fetching RTF file list from gh-pages branch..." >&2
     
-    # GitHub raw URL base
-    GH_BASE="https://raw.githubusercontent.com/pharmaverse/rtflite/gh-pages/articles/rtf"
+    # Use GitHub API to get file list
+    local api_url="https://api.github.com/repos/$GH_REPO/contents/$GH_PATH?ref=$GH_BRANCH"
     
-    # Get list of expected RTF files from generated files
+    # Fetch and parse JSON response for .rtf files
+    local rtf_files=$(curl -s "$api_url" | \
+        python3 -c "
+import sys, json
+try:
+    data = json.load(sys.stdin)
+    if isinstance(data, list):
+        for item in data:
+            if isinstance(item, dict) and item.get('name', '').endswith('.rtf'):
+                print(item['name'])
+except Exception as e:
+    print(f'Error: {e}', file=sys.stderr)
+")
+    
+    if [[ -z "$rtf_files" ]]; then
+        echo -e "${RED}Error: No RTF files found via GitHub API${NC}" >&2
+        return 1
+    fi
+    
+    echo "$rtf_files"
+}
+
+# Download baseline RTF files
+download_baseline() {
+    echo -e "\n${BLUE}=== Downloading Baseline RTF Files ===${NC}"
+    
+    local rtf_list=$(get_baseline_rtf_list)
+    if [[ -z "$rtf_list" ]]; then
+        return 1
+    fi
+    
     local count=0
+    local base_url="https://raw.githubusercontent.com/$GH_REPO/$GH_BRANCH/$GH_PATH"
     
-    # First, get a list of all known RTF files from gh-pages
-    # This list should include all possible RTF outputs
-    local known_rtf_files=(
-        "advanced-group-by-comprehensive.rtf"
-        "advanced-group-by-group-newpage.rtf"
-        "advanced-group-by-multipage.rtf"
-        "advanced-group-by-single.rtf"
-        "advanced-group-by-subline.rtf"
-        "example-ae-summary.rtf"
-        "example-baseline-char.rtf"
-        "example-efficacy.rtf"
-        "example-figure-age.rtf"
-        "example-figure-multipage.rtf"
-        "format-page-all-pages.rtf"
-        "format-page-custom.rtf"
-        "format-page-default.rtf"
-        "format-page-footnote-first.rtf"
-        "format-page-title-first.rtf"
-        "intro-ae1.rtf"
-        "intro-ae10.rtf"
-        "intro-ae11.rtf"
-        "intro-ae12.rtf"
-        "intro-ae2.rtf"
-        "intro-ae3.rtf"
-        "intro-ae4.rtf"
-        "intro-ae5.rtf"
-        "intro-ae6.rtf"
-        "intro-ae7.rtf"
-        "intro-ae8.rtf"
-        "intro-ae8b.rtf"
-        "row-border-styles.rtf"
-        "row-column-widths.rtf"
-        "text-color.rtf"
-        "text-convert.rtf"
-        "text-font-size-alignment.rtf"
-        "text-format-styles.rtf"
-        "text-indentation.rtf"
-    )
-    
-    for rtf_name in "${known_rtf_files[@]}"; do
-        echo "  Downloading: $rtf_name"
-        curl -s -o "$BASELINE_DIR/$rtf_name" "$GH_BASE/$rtf_name"
-        
-        if [[ -f "$BASELINE_DIR/$rtf_name" ]] && [[ -s "$BASELINE_DIR/$rtf_name" ]]; then
-            # Check if it's actually an RTF file
-            if head -1 "$BASELINE_DIR/$rtf_name" | grep -q '^{\\rtf'; then
-                echo -e "    ${GREEN}✓${NC} Downloaded successfully"
+    while IFS= read -r rtf_file; do
+        echo -n "  Downloading $rtf_file..."
+        if curl -s -o "$BASELINE_DIR/$rtf_file" "$base_url/$rtf_file"; then
+            # Verify it's a valid RTF file
+            if head -1 "$BASELINE_DIR/$rtf_file" | grep -q '^{\\rtf'; then
+                echo -e " ${GREEN}[OK]${NC}"
                 ((count++))
             else
-                echo -e "    ${YELLOW}⚠${NC} File exists but may not be valid RTF"
-                rm "$BASELINE_DIR/$rtf_name"
+                echo -e " ${YELLOW}[INVALID]${NC}"
+                rm -f "$BASELINE_DIR/$rtf_file"
             fi
         else
-            echo -e "    ${YELLOW}⚠${NC} Not found in baseline"
-            rm -f "$BASELINE_DIR/$rtf_name"
+            echo -e " ${RED}[FAILED]${NC}"
+        fi
+    done <<< "$rtf_list"
+    
+    echo -e "Downloaded $count baseline RTF files\n"
+}
+
+# Generate RTF files using markdown-exec
+generate_rtf_files() {
+    echo -e "${BLUE}=== Generating RTF Files from Markdown ===${NC}"
+    
+    local count=0
+    local failed=0
+    
+    # Process each markdown file
+    for md_file in "$MD_DIR"/*.md; do
+        if [[ ! -f "$md_file" ]]; then
+            continue
+        fi
+        
+        # Check if file contains executable Python code
+        if ! grep -q 'exec="on"' "$md_file"; then
+            continue
+        fi
+        
+        local md_name=$(basename "$md_file" .md)
+        echo "  Processing: $md_name.md"
+        
+        # Create a temporary Python script that will be executed by markdown-exec
+        # This script will capture RTF documents and save them
+        cat > "$TEMP_DIR/rtf_generator.py" << 'EOF'
+import sys
+import os
+from pathlib import Path
+
+# Set up paths
+rtf_dir = sys.argv[1]
+md_name = sys.argv[2]
+
+# Capture globals after markdown execution
+def save_rtf_documents(globals_dict):
+    """Find and save all RTFDocument objects"""
+    rtf_docs = []
+    for name, obj in globals_dict.items():
+        if hasattr(obj, 'write_rtf') and hasattr(obj, 'rtf_encode'):
+            rtf_docs.append((name, obj))
+    
+    if rtf_docs:
+        for doc_name, doc in rtf_docs:
+            if doc_name == 'doc':
+                rtf_path = os.path.join(rtf_dir, f'{md_name}.rtf')
+            else:
+                rtf_path = os.path.join(rtf_dir, f'{md_name}_{doc_name}.rtf')
+            
+            try:
+                doc.write_rtf(rtf_path)
+                print(f'    Generated: {os.path.basename(rtf_path)}')
+            except Exception as e:
+                print(f'    Error: {e}')
+    else:
+        print(f'    No RTF documents found in {md_name}.md')
+
+EOF
+        
+        # Use markdown-exec to execute the Python code blocks
+        # and then save the RTF documents
+        python3 -c "
+import sys
+import os
+import re
+from pathlib import Path
+from markdown_exec import formatter, validator
+
+# Read the markdown file
+md_path = '$md_file'
+with open(md_path, 'r') as f:
+    content = f.read()
+
+# Extract and execute Python code blocks with exec='on'
+code_blocks = []
+for match in re.finditer(r'\`\`\`python.*?exec=\"on\".*?\n(.*?)\`\`\`', content, re.DOTALL):
+    code = match.group(1)
+    # Skip write_rtf and converter.convert calls
+    lines = []
+    for line in code.split('\n'):
+        if '.write_rtf(' in line and not line.strip().startswith('#'):
+            lines.append('# ' + line + '  # Skipped')
+        elif 'converter.convert(' in line and not line.strip().startswith('#'):
+            lines.append('# ' + line + '  # Skipped')
+        else:
+            lines.append(line)
+    code_blocks.append('\n'.join(lines))
+
+# Execute all code blocks in sequence
+if code_blocks:
+    full_code = '\n\n'.join(code_blocks)
+    globals_dict = {}
+    try:
+        exec(full_code, globals_dict)
+        
+        # Save RTF documents
+        rtf_dir = '$RTF_DIR'
+        md_name = '$md_name'
+        
+        rtf_docs = []
+        for name, obj in globals_dict.items():
+            if hasattr(obj, 'write_rtf') and hasattr(obj, 'rtf_encode'):
+                rtf_docs.append((name, obj))
+        
+        if rtf_docs:
+            for doc_name, doc in rtf_docs:
+                if doc_name == 'doc':
+                    rtf_path = os.path.join(rtf_dir, f'{md_name}.rtf')
+                else:
+                    rtf_path = os.path.join(rtf_dir, f'{md_name}_{doc_name}.rtf')
+                
+                try:
+                    doc.write_rtf(rtf_path)
+                    print(f'    Generated: {os.path.basename(rtf_path)}')
+                except Exception as e:
+                    print(f'    Error: {e}')
+        
+    except Exception as e:
+        print(f'    Execution error: {e}')
+"
+        
+        if [[ $? -eq 0 ]]; then
+            ((count++))
+        else
+            ((failed++))
         fi
     done
     
-    echo ""
-    echo "Downloaded $count baseline RTF files"
-    echo ""
+    echo -e "\nGenerated RTF files from $count markdown files"
+    if [[ $failed -gt 0 ]]; then
+        echo -e "${YELLOW}Failed to process $failed files${NC}"
+    fi
 }
 
-# Function to compare RTF files
+# Compare RTF files
 compare_rtf_files() {
-    echo "=== Step 4: Comparing generated RTF with baseline ==="
-    echo ""
+    echo -e "\n${BLUE}=== Comparing RTF Files ===${NC}"
     
     local identical=0
     local different=0
-    local missing_baseline=0
-    local missing_generated=0
+    local missing=0
     
-    # Create directory for differences
-    mkdir -p "$DIFF_DIR/baseline"
-    mkdir -p "$DIFF_DIR/generated"
-    
-    # Create a detailed differences log
-    DIFF_LOG="$DIFF_DIR/differences.log"
-    > "$DIFF_LOG"
-    
-    echo "Detailed Differences Report" >> "$DIFF_LOG"
-    echo "===========================" >> "$DIFF_LOG"
-    echo "Generated: $(date)" >> "$DIFF_LOG"
-    echo "" >> "$DIFF_LOG"
-    
-    # List to track files with differences
-    local different_files=()
-    local identical_files=()
-    local missing_in_generated=()
-    
-    # Function to map generated file names to baseline names
+    # Create mapping function for generated to baseline names
     get_baseline_name() {
         local gen_name="$1"
         case "$gen_name" in
@@ -418,233 +261,74 @@ compare_rtf_files() {
             "example-ae.rtf") echo "example-ae-summary.rtf" ;;
             "example-baseline.rtf") echo "example-baseline-char.rtf" ;;
             "example-efficacy.rtf") echo "example-efficacy.rtf" ;;
-            "example-figure_doc_age.rtf") echo "example-figure-age.rtf" ;;
-            "example-figure_doc_multipage.rtf") echo "example-figure-multipage.rtf" ;;
-            "format-page_doc_default.rtf") echo "format-page-default.rtf" ;;
-            "format-page_doc_title_first.rtf") echo "format-page-title-first.rtf" ;;
-            "format-page_doc_footnote_first.rtf") echo "format-page-footnote-first.rtf" ;;
             "format-page_doc_all_pages.rtf") echo "format-page-all-pages.rtf" ;;
             "format-page_doc_custom.rtf") echo "format-page-custom.rtf" ;;
+            "format-page_doc_default.rtf") echo "format-page-default.rtf" ;;
+            "format-page_doc_footnote_first.rtf") echo "format-page-footnote-first.rtf" ;;
+            "format-page_doc_title_first.rtf") echo "format-page-title-first.rtf" ;;
             "format-row_doc_borders.rtf") echo "row-border-styles.rtf" ;;
             "format-row_doc_widths.rtf") echo "row-column-widths.rtf" ;;
             "format-text_doc_colors.rtf") echo "text-color.rtf" ;;
-            "format-text_doc_converted.rtf") echo "text-convert.rtf" ;;
             "format-text_doc_font_align.rtf") echo "text-font-size-alignment.rtf" ;;
             "format-text_doc_formats.rtf") echo "text-format-styles.rtf" ;;
             "format-text_doc_indent.rtf") echo "text-indentation.rtf" ;;
             "quickstart.rtf") echo "intro-ae1.rtf" ;;
             "quickstart_doc_converted.rtf") echo "intro-ae8.rtf" ;;
-            *) echo "$gen_name" ;;  # Return original name if no mapping
+            *) echo "$gen_name" ;;
         esac
     }
     
-    # Compare each generated RTF file with its baseline
-    for rtf_file in "$RTF_DIR"/*.rtf; do
-        if [[ -f "$rtf_file" ]]; then
-            rtf_name=$(basename "$rtf_file")
-            
-            # Get the baseline name from mapping
-            baseline_name=$(get_baseline_name "$rtf_name")
-            baseline_file="$BASELINE_DIR/$baseline_name"
-            
-            echo "  Comparing: $rtf_name -> $baseline_name"
-            
-            if [[ ! -f "$baseline_file" ]]; then
-                echo -e "    ${YELLOW}[!]${NC} No baseline to compare"
-                ((missing_baseline++))
-                echo "File: $rtf_name - NO BASELINE" >> "$DIFF_LOG"
-                # Keep the generated file if no baseline exists
-                cp "$rtf_file" "$DIFF_DIR/generated/$rtf_name"
-                different_files+=("$rtf_name (no baseline)")
-            else
-                # Use diff to compare
-                if diff -q "$rtf_file" "$baseline_file" > /dev/null 2>&1; then
-                    echo -e "    ${GREEN}[OK]${NC} Identical to baseline"
-                    ((identical++))
-                    identical_files+=("$rtf_name -> $baseline_name")
-                    # Remove identical baseline file
-                    rm -f "$baseline_file"
-                else
-                    echo -e "    ${RED}[X]${NC} Different from baseline"
-                    ((different++))
-                    different_files+=("$rtf_name -> $baseline_name")
-                    
-                    # Copy both versions for comparison
-                    cp "$baseline_file" "$DIFF_DIR/baseline/$baseline_name"
-                    cp "$rtf_file" "$DIFF_DIR/generated/$rtf_name"
-                    
-                    # Get file sizes
-                    size_gen=$(wc -c < "$rtf_file")
-                    size_base=$(wc -c < "$baseline_file")
-                    size_diff=$((size_gen - size_base))
-                    
-                    # Show difference details in terminal
-                    echo -e "      ${BLUE}Size:${NC} Generated: $size_gen bytes | Baseline: $size_base bytes | Diff: $size_diff bytes"
-                    
-                    # Log detailed differences
-                    echo "File: $rtf_name → $baseline_name" >> "$DIFF_LOG"
-                    echo "----------------------------------------" >> "$DIFF_LOG"
-                    echo "  Generated size: $size_gen bytes" >> "$DIFF_LOG"
-                    echo "  Baseline size: $size_base bytes" >> "$DIFF_LOG"
-                    echo "  Size difference: $size_diff bytes" >> "$DIFF_LOG"
-                    
-                    # Show first lines of differences in terminal
-                    echo "  First differences:" >> "$DIFF_LOG"
-                    diff_output=$(diff -u "$baseline_file" "$rtf_file" 2>&1 | head -20)
-                    echo "$diff_output" >> "$DIFF_LOG"
-                    echo "" >> "$DIFF_LOG"
-                fi
-            fi
+    # Compare each generated file
+    for gen_file in "$RTF_DIR"/*.rtf; do
+        if [[ ! -f "$gen_file" ]]; then
+            continue
         fi
-    done
-    
-    # Check for baseline files that weren't compared (missing in generated)
-    for baseline_file in "$BASELINE_DIR"/*.rtf; do
-        if [[ -f "$baseline_file" ]]; then
-            baseline_name=$(basename "$baseline_file")
-            # If baseline file still exists, it wasn't matched/compared
-            if [[ ! " ${identical_files[@]} " =~ " ${baseline_name} " ]]; then
-                echo -e "  ${YELLOW}[!]${NC} Missing in generated: $baseline_name"
-                ((missing_generated++))
-                missing_in_generated+=("$baseline_name")
-            fi
-        fi
-    done
-    
-    echo ""
-    echo "======================================================================"
-    echo "                        RTF COMPARISON SUMMARY                       "
-    echo "======================================================================"
-    echo ""
-    echo -e "  ${GREEN}[OK] Identical files:${NC} $identical"
-    echo -e "  ${RED}[X] Different files:${NC} $different"
-    echo -e "  ${YELLOW}[!] Missing baseline:${NC} $missing_baseline"
-    echo -e "  ${YELLOW}[!] Missing generated:${NC} $missing_generated"
-    echo ""
-    
-    # Show detailed lists
-    if [[ ${#identical_files[@]} -gt 0 ]]; then
-        echo "----------------------------------------------------------------------"
-        echo -e "${GREEN}IDENTICAL FILES (removed from baseline):${NC}"
-        for file in "${identical_files[@]}"; do
-            echo "  [OK] $file"
-        done
-        echo ""
-    fi
-    
-    if [[ ${#different_files[@]} -gt 0 ]]; then
-        echo "----------------------------------------------------------------------"
-        echo -e "${RED}FILES WITH DIFFERENCES:${NC}"
-        for file in "${different_files[@]}"; do
-            echo "  [X] $file"
-        done
-        echo ""
-    fi
-    
-    if [[ ${#missing_in_generated[@]} -gt 0 ]]; then
-        echo "----------------------------------------------------------------------"
-        echo -e "${YELLOW}MISSING IN GENERATED OUTPUT:${NC}"
-        for file in "${missing_in_generated[@]}"; do
-            echo "  [!] $file"
-        done
-        echo ""
-    fi
-    
-    if [[ $different -gt 0 ]] || [[ $missing_baseline -gt 0 ]] || [[ $missing_generated -gt 0 ]]; then
-        echo "----------------------------------------------------------------------"
-        echo "DIFFERENCE FILES SAVED TO:"
-        echo "  $DIFF_DIR"
-        echo "     |-- baseline/     (original RTF files)"
-        echo "     |-- generated/    (new RTF files)"
-        echo "     +-- differences.log (detailed diff output)"
-        echo ""
-        echo "TO COMPARE FILES:"
-        echo "  diff -u $DIFF_DIR/baseline/<file>.rtf $DIFF_DIR/generated/<file>.rtf"
-        echo ""
-        echo "TO VIEW IN WORD:"
-        echo "  open $DIFF_DIR/baseline/<file>.rtf"
-        echo "  open $DIFF_DIR/generated/<file>.rtf"
-        echo ""
-    else
-        # No differences, remove empty diff directories
-        rmdir "$DIFF_DIR/baseline" "$DIFF_DIR/generated" 2>/dev/null
-        rm -f "$DIFF_LOG"
-        echo "----------------------------------------------------------------------"
-        echo -e "${GREEN}[SUCCESS] ALL FILES MATCH BASELINE - NO DIFFERENCES FOUND${NC}"
-        echo ""
-    fi
-    
-    # Return appropriate exit code
-    if [[ $different -eq 0 ]] && [[ $missing_generated -eq 0 ]]; then
-        echo -e "${GREEN}[OK] All checks passed!${NC}"
-        return 0
-    else
-        echo -e "${RED}[FAIL] Some differences detected${NC}"
-        return 1
-    fi
-}
-
-# Function to clean up temporary files
-cleanup() {
-    echo ""
-    echo "=== Cleanup ==="
-    
-    local response
-    
-    if [[ -d "$TEMP_BASE" ]]; then
-        # Check if there are differences to preserve
-        if [[ -d "$DIFF_DIR" ]] && [[ -n "$(ls -A "$DIFF_DIR")" ]]; then
-            echo -e "${YELLOW}Note:${NC} Differences found and preserved in: $DIFF_DIR"
-            read -p "Remove all other temporary files? (y/n) " -n 1 -r response
-            echo ""
-            if [[ $response =~ ^[Yy]$ ]]; then
-                # Remove everything except differences
-                rm -rf "$QMD_DIR" "$OUTPUT_DIR" "$PY_DIR" "$RTF_DIR" "$BASELINE_DIR"
-                echo "Temporary files removed (differences preserved)"
-            fi
+        
+        gen_name=$(basename "$gen_file")
+        baseline_name=$(get_baseline_name "$gen_name")
+        baseline_file="$BASELINE_DIR/$baseline_name"
+        
+        echo -n "  $gen_name -> $baseline_name: "
+        
+        if [[ ! -f "$baseline_file" ]]; then
+            echo -e "${YELLOW}[NO BASELINE]${NC}"
+            ((missing++))
+            cp "$gen_file" "$DIFF_DIR/$gen_name"
+        elif diff -q "$gen_file" "$baseline_file" > /dev/null 2>&1; then
+            echo -e "${GREEN}[IDENTICAL]${NC}"
+            ((identical++))
         else
-            read -p "Remove all temporary files? (y/n) " -n 1 -r response
-            echo ""
-            if [[ $response =~ ^[Yy]$ ]]; then
-                rm -rf "$TEMP_BASE"
-                echo "All temporary files removed"
-            fi
+            echo -e "${RED}[DIFFERENT]${NC}"
+            ((different++))
+            cp "$gen_file" "$DIFF_DIR/$gen_name"
+            cp "$baseline_file" "$DIFF_DIR/${baseline_name}.baseline"
         fi
+    done
+    
+    # Summary
+    echo -e "\n${BLUE}=== Summary ===${NC}"
+    echo "  Identical: $identical"
+    echo "  Different: $different"
+    echo "  Missing baseline: $missing"
+    
+    if [[ $different -gt 0 ]] || [[ $missing -gt 0 ]]; then
+        echo -e "\n${YELLOW}Differences saved to: $DIFF_DIR${NC}"
+        return 1
+    else
+        echo -e "\n${GREEN}All files match baseline!${NC}"
+        return 0
     fi
 }
 
 # Main execution
 main() {
-    # Parse command line arguments
-    USE_PYTHON=false
-    SKIP_PREPARE=false
-    SKIP_RENDER=false
-    SKIP_DOWNLOAD=false
-    CLEANUP_AUTO=false
-    KEEP_TEMP=false
+    echo -e "${BLUE}RTF Document Comparison Tool (Simplified)${NC}"
+    echo "=========================================="
     
+    # Parse arguments
+    KEEP_TEMP=false
     while [[ $# -gt 0 ]]; do
         case $1 in
-            --use-python)
-                USE_PYTHON=true
-                shift
-                ;;
-            --skip-prepare)
-                SKIP_PREPARE=true
-                shift
-                ;;
-            --skip-render|--skip-generation)
-                SKIP_RENDER=true
-                shift
-                ;;
-            --skip-download)
-                SKIP_DOWNLOAD=true
-                shift
-                ;;
-            --cleanup)
-                CLEANUP_AUTO=true
-                shift
-                ;;
             --keep-temp)
                 KEEP_TEMP=true
                 shift
@@ -652,91 +336,36 @@ main() {
             --help)
                 echo "Usage: $0 [OPTIONS]"
                 echo ""
-                echo "This script processes markdown files from docs/articles to generate and compare RTF outputs."
-                echo "All temporary files are stored in docs_temp/ folder."
-                echo ""
                 echo "Options:"
-                echo "  --use-python       Use Python extraction instead of Quarto rendering"
-                echo "  --skip-prepare     Skip document preparation step"
-                echo "  --skip-render      Skip rendering/generation step"
-                echo "  --skip-download    Skip baseline download step"
-                echo "  --cleanup          Automatically cleanup after comparison"
-                echo "  --keep-temp        Keep all temporary files"
-                echo "  --help             Show this help message"
-                echo ""
-                echo "Requirements:"
-                echo "  - Quarto (optional, can use --use-python instead)"
-                echo "  - Python virtual environment at .venv/"
-                echo "  - rtflite package installed in the virtual environment"
-                echo ""
-                echo "Source: Markdown files in docs/articles/"
-                echo "Output: All files in docs_temp/"
+                echo "  --keep-temp    Keep temporary files after execution"
+                echo "  --help         Show this help message"
                 exit 0
                 ;;
             *)
                 echo "Unknown option: $1"
-                echo "Use --help for usage information"
                 exit 1
                 ;;
         esac
     done
     
-    # Create temp base directory
-    mkdir -p "$TEMP_BASE"
-    echo "All temporary files will be stored in: $TEMP_BASE"
-    echo ""
+    # Initialize
+    init_directories
     
-    # Check for Quarto if not using Python
-    if [[ "$USE_PYTHON" != true ]]; then
-        check_quarto
-    fi
+    # Download baseline
+    download_baseline || exit 1
     
-    # Run steps based on mode
-    if [[ "$USE_PYTHON" == true ]]; then
-        # Python mode
-        if [[ "$SKIP_PREPARE" != true ]]; then
-            extract_python_from_markdown
-        fi
-        
-        if [[ "$SKIP_RENDER" != true ]]; then
-            generate_rtf_files
-        fi
-    else
-        # Quarto mode
-        if [[ "$SKIP_PREPARE" != true ]]; then
-            prepare_quarto_documents
-        fi
-        
-        if [[ "$SKIP_RENDER" != true ]]; then
-            render_quarto_documents
-        fi
-    fi
-    
-    if [[ "$SKIP_DOWNLOAD" != true ]]; then
-        download_baseline
-    fi
+    # Generate RTF files
+    generate_rtf_files
     
     # Compare files
     compare_rtf_files
-    RESULT=$?
+    exit_code=$?
     
-    # Cleanup
-    if [[ "$CLEANUP_AUTO" == true ]]; then
-        if [[ -d "$DIFF_DIR" ]] && [[ -n "$(ls -A "$DIFF_DIR")" ]]; then
-            rm -rf "$QMD_DIR" "$OUTPUT_DIR" "$PY_DIR" "$RTF_DIR" "$BASELINE_DIR"
-            echo "Automatic cleanup completed (differences preserved in $DIFF_DIR)"
-        else
-            rm -rf "$TEMP_BASE"
-            echo "Automatic cleanup completed (all temp files removed)"
-        fi
-    elif [[ "$KEEP_TEMP" != true ]]; then
-        cleanup
-    else
-        echo ""
-        echo "Temporary files kept in: $TEMP_BASE"
+    if [[ "$KEEP_TEMP" == "true" ]]; then
+        echo -e "\nTemporary files kept in: $TEMP_DIR"
     fi
     
-    exit $RESULT
+    exit $exit_code
 }
 
 # Run main function
