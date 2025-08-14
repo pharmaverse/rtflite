@@ -124,7 +124,9 @@ class GroupingService:
                 should_show = should_show | condition
 
             # Apply suppression
-            suppressed_values = pl.when(should_show).then(pl.col(column)).otherwise(None)
+            suppressed_values = (
+                pl.when(should_show).then(pl.col(column)).otherwise(None)
+            )
             result_df = result_df.with_columns(suppressed_values.alias(column))
 
         return result_df
