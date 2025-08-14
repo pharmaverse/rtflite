@@ -160,7 +160,7 @@ class TextContent(BaseModel):
         """Convert special characters to RTF codes."""
         # First apply LaTeX to Unicode conversion if enabled
         text = text_convert(self.text, self.convert)
-        
+
         if text is None:
             return ""
 
