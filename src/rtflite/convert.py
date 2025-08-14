@@ -174,6 +174,8 @@ class LibreOfficeConverter:
                 f"Output file already exists: {output_file}. Use overwrite=True to force."
             )
 
+        # executable_path is guaranteed to be non-None after __init__
+        assert self.executable_path is not None
         cmd = [
             self.executable_path,
             "--invisible",
