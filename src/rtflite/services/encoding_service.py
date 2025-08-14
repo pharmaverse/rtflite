@@ -127,7 +127,10 @@ class RTFEncodingService:
         return subline_config._encode_text(text=subline_config.text, method=method)
 
     def encode_footnote(
-        self, footnote_config, page_number: int | None = None, page_col_width: float | None = None
+        self,
+        footnote_config,
+        page_number: int | None = None,
+        page_col_width: float | None = None,
     ) -> list[str]:
         """Encode footnote component with advanced formatting.
 
@@ -186,7 +189,10 @@ class RTFEncodingService:
                 return rtf_attrs._encode(df)
 
     def encode_source(
-        self, source_config, page_number: int | None = None, page_col_width: float | None = None
+        self,
+        source_config,
+        page_number: int | None = None,
+        page_col_width: float | None = None,
     ) -> list[str]:
         """Encode source component with advanced formatting.
 
@@ -354,7 +360,11 @@ class RTFEncodingService:
 
             section_df = pl.DataFrame(
                 {
-                    str(i): [BroadcastValue(value=processed_df, dimension=None).iloc(row, col)]
+                    str(i): [
+                        BroadcastValue(value=processed_df, dimension=None).iloc(
+                            row, col
+                        )
+                    ]
                     for i, (row, col) in enumerate(indices)
                 }
             )
@@ -432,7 +442,9 @@ class RTFEncodingService:
 
         return all_rows
 
-    def encode_column_header(self, df, rtf_attrs, page_col_width: float) -> list[str] | None:
+    def encode_column_header(
+        self, df, rtf_attrs, page_col_width: float
+    ) -> list[str] | None:
         """Encode column header component with column width support.
 
         Args:

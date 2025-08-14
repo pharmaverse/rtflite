@@ -1,6 +1,8 @@
 """Type guards for RTF components to handle Union types safely."""
-from typing import TypeGuard, Any
-from .input import RTFColumnHeader, RTFBody
+
+from typing import Any, TypeGuard
+
+from .input import RTFBody, RTFColumnHeader
 
 
 def is_single_header(
@@ -31,18 +33,13 @@ def is_nested_header_list(
     header: Any,
 ) -> TypeGuard[list[list[RTFColumnHeader | None]]]:
     """Check if header is a nested list of RTFColumnHeader instances."""
-    return (
-        isinstance(header, list)
-        and len(header) > 0
-        and isinstance(header[0], list)
-    )
+    return isinstance(header, list) and len(header) > 0 and isinstance(header[0], list)
 
 
 def is_flat_header_list(
     header: Any,
 ) -> TypeGuard[list[RTFColumnHeader | None]]:
     """Check if header is a flat list of RTFColumnHeader instances."""
-    return (
-        isinstance(header, list)
-        and (len(header) == 0 or not isinstance(header[0], list))
+    return isinstance(header, list) and (
+        len(header) == 0 or not isinstance(header[0], list)
     )

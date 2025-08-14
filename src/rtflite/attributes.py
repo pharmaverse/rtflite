@@ -49,7 +49,9 @@ def _to_nested_list(v):
         else:
             try:
                 nw_df = nw.from_native(v)
-                v = [list(row) for row in nw_df.to_native(pl.DataFrame).rows()]  # Convert tuples to lists
+                v = [
+                    list(row) for row in nw_df.to_native(pl.DataFrame).rows()
+                ]  # Convert tuples to lists
             except Exception:
                 # If narwhals can't handle it, try direct conversion
                 if isinstance(v, pl.DataFrame):
@@ -608,7 +610,10 @@ class TableAttributes(TextAttributes):
 
         # Broadcast attributes to section indices, excluding None values
         return {
-            attr: [BroadcastValue(value=val, dimension=None).iloc(row, col) for row, col in indices]
+            attr: [
+                BroadcastValue(value=val, dimension=None).iloc(row, col)
+                for row, col in indices
+            ]
             for attr, val in attrs.items()
             if val is not None
         }
