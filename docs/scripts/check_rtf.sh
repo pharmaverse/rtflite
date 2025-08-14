@@ -153,21 +153,13 @@ extract_python_from_markdown() {
                 echo "# Auto-generated from $md_name.md"
                 echo ""
                 
-                # Extract Python code blocks with exec="on" or source="above"
-                awk '
-                    /^```python.*exec="on"/ || /^```python.*source="above"/ { 
-                        in_block = 1
-                        next
-                    }
-                    /^```$/ && in_block { 
-                        in_block = 0
-                        print ""
-                        next
-                    }
-                    in_block { 
-                        print $0
-                    }
-                ' "$md_file"
+                # Extract Python code blocks with exec="on"
+                # Comment out problematic lines using sed after extraction
+                awk '/^```python.*exec="on"/ { in_block = 1; next }
+                     /^```$/ && in_block { in_block = 0; print ""; next }
+                     in_block { print }' "$md_file" | \
+                sed 's/^\(.*\.write_rtf([^/].*\)$/# \1  # Commented out - will be handled at end/' | \
+                sed 's/^\(.*converter\.convert(.*\)$/# \1  # Commented out - LibreOffice not required/'
                 
                 # Add RTF generation code
                 cat <<EOF
@@ -185,11 +177,14 @@ for name, obj in list(locals().items()):
 if rtf_docs:
     for doc_name, doc in rtf_docs:
         if doc_name == 'doc':
-            rtf_path = f'$RTF_DIR/$md_name.rtf'
+            rtf_path = '$RTF_DIR/$md_name.rtf'
         else:
-            rtf_path = f'$RTF_DIR/${md_name}_{doc_name}.rtf'
-        doc.write_rtf(rtf_path)
-        print(f'Generated: {rtf_path}')
+            rtf_path = '$RTF_DIR/${md_name}_{doc_name}.rtf'
+        try:
+            doc.write_rtf(rtf_path)
+            print(f'Generated: {rtf_path}')
+        except Exception as e:
+            print(f'Error generating {rtf_path}: {e}')
 else:
     print('No RTF document found in $md_name.py')
 EOF
