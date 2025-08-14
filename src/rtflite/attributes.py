@@ -283,7 +283,7 @@ class TextAttributes(BaseModel):
             return [v]
         return v
 
-    def _encode_text(self, text: Sequence[str], method: str) -> str:
+    def _encode_text(self, text: Sequence[str], method: str) -> str | list[str]:
         """Convert the RTF title into RTF syntax using the Text class."""
 
         dim = [len(text), 1]
@@ -608,7 +608,7 @@ class TableAttributes(TextAttributes):
 
         # Broadcast attributes to section indices, excluding None values
         return {
-            attr: [BroadcastValue(value=val).iloc(row, col) for row, col in indices]
+            attr: [BroadcastValue(value=val, dimension=None).iloc(row, col) for row, col in indices]
             for attr, val in attrs.items()
             if val is not None
         }
@@ -707,7 +707,7 @@ class TableAttributes(TextAttributes):
 class BroadcastValue(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    value: list[list[Any]] | None = Field(
+    value: Any = Field(
         ...,
         description="The value of the table, can be various types including DataFrame.",
     )
@@ -748,9 +748,12 @@ class BroadcastValue(BaseModel):
         except IndexError as e:
             raise ValueError(f"Invalid DataFrame index or slice: {e}")
 
-    def to_list(self) -> list:
+    def to_list(self) -> list | None:
         if self.value is None:
             return None
+
+        if self.dimension is None:
+            return self.value
 
         row_count, col_count = len(self.value), len(self.value[0])
 
