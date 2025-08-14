@@ -366,6 +366,9 @@ class RTFEncodingService:
             section_attrs = TableAttributes(**section_attrs_dict)
 
             # Calculate column widths and encode section
+            if section_attrs.col_rel_width is None:
+                # Default to equal widths if not specified
+                section_attrs.col_rel_width = [1.0] * len(indices)
             section_col_widths = Utils._col_widths(
                 section_attrs.col_rel_width, col_total_width
             )
