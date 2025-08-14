@@ -19,6 +19,7 @@ class ROutputReader:
 class TestData:
     """Data for testing."""
 
+    @staticmethod
     def df1():
         data = {
             "Column1": ["Data 1.1", "Data 2.1"],
