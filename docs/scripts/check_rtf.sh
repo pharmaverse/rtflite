@@ -92,18 +92,17 @@ download_baseline() {
     local base_url="https://raw.githubusercontent.com/$GH_REPO/$GH_BRANCH/$GH_PATH"
     
     while IFS= read -r rtf_file; do
-        echo -n "  Downloading $rtf_file..."
         if curl -s -o "$BASELINE_DIR/$rtf_file" "$base_url/$rtf_file"; then
             # Verify it's a valid RTF file
             if head -1 "$BASELINE_DIR/$rtf_file" | grep -q '^{\\rtf'; then
-                echo -e " ${GREEN}[OK]${NC}"
+                echo -e "  Downloading $rtf_file: ${GREEN}[OK]${NC}"
                 ((count++))
             else
-                echo -e " ${YELLOW}[INVALID]${NC}"
+                echo -e "  Downloading $rtf_file: ${YELLOW}[INVALID]${NC}"
                 rm -f "$BASELINE_DIR/$rtf_file"
             fi
         else
-            echo -e " ${RED}[FAILED]${NC}"
+            echo -e "  Downloading $rtf_file: ${RED}[FAILED]${NC}"
         fi
     done <<< "$rtf_list"
     
@@ -181,54 +180,126 @@ md_path = '$md_file'
 with open(md_path, 'r') as f:
     content = f.read()
 
-# Extract and execute Python code blocks with exec='on'
-code_blocks = []
+# Extract intended file names from write_rtf calls
+write_rtf_files = []
+for match in re.finditer(r'(\w+)\.write_rtf\([\"\'](.*?)[\"\']', content):
+    var_name = match.group(1)
+    filename = match.group(2)
+    write_rtf_files.append((var_name, filename))
+
+# Process each code block individually to handle variable reuse
+rtf_dir = '$RTF_DIR'
+md_name = '$md_name'
+generated_files = []
+
+# Track which RTF files we've generated from each code block
+rtf_file_index = 0
+
+# Extract and execute Python code blocks with exec='on' individually
 for match in re.finditer(r'\`\`\`python.*?exec=\"on\".*?\n(.*?)\`\`\`', content, re.DOTALL):
+    code_block_header = match.group(0).split('\n')[0]  # Get the first line with parameters
     code = match.group(1)
-    # Skip write_rtf and converter.convert calls
+    
+    # Extract workdir if specified
+    workdir = None
+    if 'workdir=' in code_block_header:
+        workdir_match = re.search(r'workdir=\"([^\"]+)\"', code_block_header)
+        if workdir_match:
+            workdir = workdir_match.group(1)
+    
+    # Check if this code block has a write_rtf call or creates images
+    has_write_rtf = '.write_rtf(' in code and not all(line.strip().startswith('#') for line in code.split('\n') if '.write_rtf(' in line)
+    creates_images = 'plt.savefig(' in code or 'matplotlib' in code
+    
+    if not has_write_rtf and not creates_images:
+        continue
+        
+    # Skip write_rtf and converter.convert calls in execution
     lines = []
     for line in code.split('\n'):
         if '.write_rtf(' in line and not line.strip().startswith('#'):
-            lines.append('# ' + line + '  # Skipped')
+            lines.append('# ' + line + '  # Skipped for separate execution')
         elif 'converter.convert(' in line and not line.strip().startswith('#'):
             lines.append('# ' + line + '  # Skipped')
         else:
             lines.append(line)
-    code_blocks.append('\n'.join(lines))
-
-# Execute all code blocks in sequence
-if code_blocks:
-    full_code = '\n\n'.join(code_blocks)
+    modified_code = '\n'.join(lines)
+    
+    # Execute this code block
     globals_dict = {}
     try:
-        exec(full_code, globals_dict)
+        # Create image directories and set up working directory for figure examples
+        import os
+        # Ensure images directory exists where the code expects it
+        images_dir = os.path.join('$PROJECT_ROOT', 'docs', 'articles', 'images')
+        os.makedirs(images_dir, exist_ok=True)
         
-        # Save RTF documents - simple unique naming
-        rtf_dir = '$RTF_DIR'
-        md_name = '$md_name'
+        # First execute all previous code blocks for context
+        prev_blocks = []
+        for prev_match in re.finditer(r'\`\`\`python.*?exec=\"on\".*?\n(.*?)\`\`\`', content[:match.start()], re.DOTALL):
+            prev_code = prev_match.group(1)
+            prev_lines = []
+            for line in prev_code.split('\n'):
+                if '.write_rtf(' in line and not line.strip().startswith('#'):
+                    prev_lines.append('# ' + line + '  # Skipped')
+                elif 'converter.convert(' in line and not line.strip().startswith('#'):
+                    prev_lines.append('# ' + line + '  # Skipped') 
+                else:
+                    prev_lines.append(line)
+            prev_blocks.append('\n'.join(prev_lines))
         
+        # Execute previous blocks for context
+        if prev_blocks:
+            context_code = '\n\n'.join(prev_blocks)
+            exec(context_code, globals_dict)
+        
+        # Change to working directory if specified
+        original_cwd = os.getcwd()
+        if workdir:
+            # Resolve workdir relative to project root
+            target_dir = os.path.join('$PROJECT_ROOT', workdir)
+            os.makedirs(target_dir, exist_ok=True)
+            os.chdir(target_dir)
+        
+        try:
+            # Execute current block
+            exec(modified_code, globals_dict)
+        finally:
+            # Always restore original working directory
+            os.chdir(original_cwd)
+        
+        # Find RTF documents and save them
         rtf_docs = []
         for name, obj in globals_dict.items():
             if hasattr(obj, 'write_rtf') and hasattr(obj, 'rtf_encode'):
                 rtf_docs.append((name, obj))
         
-        if rtf_docs:
-            for doc_name, doc in rtf_docs:
-                # Generate unique filename based on markdown and doc name
-                if len(rtf_docs) == 1 and doc_name == 'doc':
-                    rtf_filename = f'{md_name}.rtf'
-                else:
-                    rtf_filename = f'{md_name}-{doc_name}.rtf'
-                
+        # Save each RTF document with the correct filename
+        for doc_name, doc in rtf_docs:
+            # Find the corresponding write_rtf filename for this document
+            rtf_filename = None
+            
+            # Look for matching write_rtf call in original code
+            for write_match in re.finditer(r'(\w+)\.write_rtf\([\"\'](.*?)[\"\']', code):
+                if write_match.group(1) == doc_name:
+                    rtf_filename = write_match.group(2)
+                    break
+            
+            # Only generate RTF if we found an explicit write_rtf call
+            # This avoids duplicate generation with fallback names
+            if rtf_filename:
                 rtf_path = os.path.join(rtf_dir, rtf_filename)
                 try:
                     doc.write_rtf(rtf_path)
                     print(f'    Generated: {rtf_filename}')
+                    generated_files.append(rtf_filename)
                 except Exception as e:
-                    print(f'    Error: {e}')
+                    print(f'    Error generating {rtf_filename}: {e}')
+            else:
+                print(f'    Skipping {doc_name}: no explicit write_rtf call found')
         
     except Exception as e:
-        print(f'    Execution error: {e}')
+        print(f'    Execution error in code block: {e}')
 "
         
         if [[ $? -eq 0 ]]; then
@@ -250,9 +321,11 @@ compare_rtf_files() {
     
     local identical=0
     local different=0
-    local missing=0
+    local missing_baseline=0
+    local missing_generated=0
     
-    # Compare each generated file with same-named baseline
+    
+    # Compare each generated file with corresponding baseline
     for gen_file in "$RTF_DIR"/*.rtf; do
         if [[ ! -f "$gen_file" ]]; then
             continue
@@ -261,20 +334,34 @@ compare_rtf_files() {
         gen_name=$(basename "$gen_file")
         baseline_file="$BASELINE_DIR/$gen_name"
         
-        echo -n "  $gen_name: "
-        
         if [[ ! -f "$baseline_file" ]]; then
-            echo -e "${YELLOW}[NO BASELINE]${NC}"
-            ((missing++))
+            echo -e "  $gen_name: ${YELLOW}[NO BASELINE]${NC}"
+            ((missing_baseline++))
             cp "$gen_file" "$DIFF_DIR/$gen_name"
         elif diff -q "$gen_file" "$baseline_file" > /dev/null 2>&1; then
-            echo -e "${GREEN}[IDENTICAL]${NC}"
+            echo -e "  $gen_name: ${GREEN}[IDENTICAL]${NC}"
             ((identical++))
         else
-            echo -e "${RED}[DIFFERENT]${NC}"
+            echo -e "  $gen_name: ${RED}[DIFFERENT]${NC}"
             ((different++))
             cp "$gen_file" "$DIFF_DIR/generated/$gen_name"
             cp "$baseline_file" "$DIFF_DIR/baseline/$gen_name"
+        fi
+    done
+    
+    # Check for baseline files that don't have corresponding generated files
+    for baseline_file in "$BASELINE_DIR"/*.rtf; do
+        if [[ ! -f "$baseline_file" ]]; then
+            continue
+        fi
+        
+        baseline_name=$(basename "$baseline_file")
+        gen_file="$RTF_DIR/$baseline_name"
+        
+        if [[ ! -f "$gen_file" ]]; then
+            echo -e "  $baseline_name: ${RED}[MISSING GENERATED]${NC}"
+            ((missing_generated++))
+            cp "$baseline_file" "$DIFF_DIR/baseline/$baseline_name"
         fi
     done
     
@@ -282,9 +369,10 @@ compare_rtf_files() {
     echo -e "\n${BLUE}=== Summary ===${NC}"
     echo "  Identical: $identical"
     echo "  Different: $different"
-    echo "  Missing baseline: $missing"
+    echo "  Missing baseline: $missing_baseline"
+    echo "  Missing generated: $missing_generated"
     
-    if [[ $different -gt 0 ]] || [[ $missing -gt 0 ]]; then
+    if [[ $different -gt 0 ]] || [[ $missing_baseline -gt 0 ]] || [[ $missing_generated -gt 0 ]]; then
         echo -e "\n${YELLOW}Differences saved to: $DIFF_DIR${NC}"
         return 1
     else
