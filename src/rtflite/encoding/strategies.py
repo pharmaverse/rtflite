@@ -114,7 +114,7 @@ class SinglePageStrategy(EncodingStrategy):
                 # Flat list case - get first header
                 if len(document.rtf_column_header) > 0:
                     header_to_check = document.rtf_column_header[0]
-            elif is_single_header(document.rtf_column_header):
+            elif is_single_header(document.rtf_column_header):  # type: ignore[arg-type]
                 header_to_check = document.rtf_column_header
             
             if (
@@ -124,18 +124,21 @@ class SinglePageStrategy(EncodingStrategy):
                 and document.rtf_body.as_colheader
             ):
                 # Determine which columns to exclude from headers
-                excluded_columns = (document.rtf_body.page_by or []) + (
+                excluded_columns = list(document.rtf_body.page_by or []) + list(
                     document.rtf_body.subline_by or []
                 )
                 columns = [
                     col for col in document.df.columns if col not in excluded_columns
                 ]
                 # Create DataFrame with explicit column names to ensure single row
-                document.rtf_column_header[0].text = pl.DataFrame(
+                header_df = pl.DataFrame(
                     [columns],
                     schema=[f"col_{i}" for i in range(len(columns))],
                     orient="row",
                 )
+                # Only assign if we have a valid flat header list
+                if is_flat_header_list(document.rtf_column_header) and len(document.rtf_column_header) > 0 and document.rtf_column_header[0] is not None:
+                    document.rtf_column_header[0].text = header_df  # type: ignore[assignment]
 
                 # Adjust col_rel_width to match the processed columns
                 if excluded_columns:
@@ -149,22 +152,23 @@ class SinglePageStrategy(EncodingStrategy):
 
                     # Ensure we have enough col_rel_width values for all original columns
                     if document.rtf_body.col_rel_width is not None and len(document.rtf_body.col_rel_width) >= len(original_cols):
-                        document.rtf_column_header[0].col_rel_width = [
-                            document.rtf_body.col_rel_width[i]
-                            for i in processed_col_indices
-                        ]
+                        if is_flat_header_list(document.rtf_column_header) and len(document.rtf_column_header) > 0 and document.rtf_column_header[0] is not None:
+                            document.rtf_column_header[0].col_rel_width = [
+                                document.rtf_body.col_rel_width[i]
+                                for i in processed_col_indices
+                            ]
                     else:
                         # Fallback: use equal widths if col_rel_width doesn't match or is None
-                        if document.rtf_column_header and len(document.rtf_column_header) > 0 and document.rtf_column_header[0] is not None:
+                        if is_flat_header_list(document.rtf_column_header) and len(document.rtf_column_header) > 0 and document.rtf_column_header[0] is not None:
                             document.rtf_column_header[0].col_rel_width = [1] * len(columns)
 
                 document.rtf_column_header = document.rtf_column_header[:1]
 
             # Only update borders if DataFrame has rows
-            if dim[0] > 0:
+            if dim[0] > 0 and is_flat_header_list(document.rtf_column_header) and len(document.rtf_column_header) > 0 and document.rtf_column_header[0] is not None:
                 document.rtf_column_header[0].border_top = BroadcastValue(
                     value=document.rtf_column_header[0].border_top, dimension=dim
-                ).update_row(0, doc_border_top)
+                ).update_row(0, doc_border_top if doc_border_top is not None else [])
 
             if is_nested_header_list(document.rtf_column_header):
                 # Handle nested list of headers
@@ -185,7 +189,7 @@ class SinglePageStrategy(EncodingStrategy):
                     )
                     for header in document.rtf_column_header
                 ]
-            elif is_single_header(document.rtf_column_header):
+            elif is_single_header(document.rtf_column_header):  # type: ignore[arg-type]
                 rtf_column_header = [
                     self.encoding_service.encode_column_header(
                         document.rtf_column_header.text, 
@@ -357,6 +361,10 @@ class SinglePageStrategy(EncodingStrategy):
                 ):
                     for header in document.rtf_column_header[i]:
                         if header is not None:
+                            from ..input import RTFColumnHeader
+                            # Ensure header is RTFColumnHeader, not tuple
+                            if not isinstance(header, RTFColumnHeader):
+                                continue
                             # Apply top border to first section's first header
                             if i == 0 and not section_headers and doc_border_top is not None:
                                 header.border_top = BroadcastValue(
@@ -374,7 +382,7 @@ class SinglePageStrategy(EncodingStrategy):
                     headers_to_check = []
                     if is_flat_header_list(document.rtf_column_header):
                         headers_to_check = document.rtf_column_header
-                    elif is_single_header(document.rtf_column_header):
+                    elif is_single_header(document.rtf_column_header):  # type: ignore[arg-type]
                         headers_to_check = [document.rtf_column_header]
                     
                     for header in headers_to_check:
@@ -387,30 +395,32 @@ class SinglePageStrategy(EncodingStrategy):
                             ]
                             import polars as pl
 
-                            header.text = pl.DataFrame(
+                            header_df = pl.DataFrame(
                                 [columns],
                                 schema=[f"col_{j}" for j in range(len(columns))],
                                 orient="row",
                             )
+                            header.text = header_df  # type: ignore[assignment]
 
                         # Apply top border to first header
-                        if not section_headers and doc_border_top is not None:
+                        if not section_headers and doc_border_top is not None and header is not None:
                             header.border_top = BroadcastValue(
                                 value=header.border_top, dimension=dim
-                            ).update_row(0, doc_border_top)
+                            ).update_row(0, doc_border_top if doc_border_top is not None else [])
 
-                        section_headers.append(
-                            self.encoding_service.encode_column_header(
-                                header.text, header, document.rtf_page.col_width
+                        if header is not None:
+                            section_headers.append(
+                                self.encoding_service.encode_column_header(
+                                    header.text, header, document.rtf_page.col_width
+                                )
                             )
-                        )
 
             # Handle borders for section body
             if i == 0 and not section_headers:  # First section, no headers
                 # Apply top border to first row of first section
                 section_body.border_top = BroadcastValue(
                     value=section_body.border_top, dimension=dim
-                ).update_row(0, doc_border_top)
+                ).update_row(0, doc_border_top if doc_border_top is not None else [])
 
             # Create a temporary document for this section to maintain compatibility
             from copy import deepcopy
@@ -632,10 +642,10 @@ class PaginatedStrategy(EncodingStrategy):
         _, distributor = self.document_service.create_pagination_instance(document)
         col_total_width = document.rtf_page.col_width
         if is_single_body(document.rtf_body) and document.rtf_body.col_rel_width is not None:
-            col_widths = Utils._col_widths(document.rtf_body.col_rel_width, col_total_width)
+            col_widths = Utils._col_widths(document.rtf_body.col_rel_width, col_total_width if col_total_width is not None else 8.5)
         else:
             # Default to equal widths if body is not single
-            col_widths = Utils._col_widths([1] * dim[1], col_total_width or 8.5)
+            col_widths = Utils._col_widths([1] * dim[1], col_total_width if col_total_width is not None else 8.5)
 
         # Calculate additional rows per page for r2rtf compatibility
         additional_rows = self.document_service.calculate_additional_rows_per_page(
@@ -806,7 +816,7 @@ class PaginatedStrategy(EncodingStrategy):
                         schema=[f"col_{i}" for i in range(len(columns))],
                         orient="row",
                     )
-                    document.rtf_column_header[0].text = header_df
+                    document.rtf_column_header[0].text = header_df  # type: ignore[assignment]
 
                     # Adjust col_rel_width to match the processed columns (without subline_by)
                     if is_single_body(document.rtf_body) and document.rtf_body.subline_by:
