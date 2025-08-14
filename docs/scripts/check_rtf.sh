@@ -46,7 +46,8 @@ init_directories() {
     rm -rf "$TEMP_DIR"
     mkdir -p "$RTF_DIR"
     mkdir -p "$BASELINE_DIR"
-    mkdir -p "$DIFF_DIR"
+    mkdir -p "$DIFF_DIR/baseline"
+    mkdir -p "$DIFF_DIR/generated"
 }
 
 # Dynamically get list of RTF files from gh-pages branch
@@ -202,7 +203,7 @@ if code_blocks:
     try:
         exec(full_code, globals_dict)
         
-        # Save RTF documents
+        # Save RTF documents - simple unique naming
         rtf_dir = '$RTF_DIR'
         md_name = '$md_name'
         
@@ -213,14 +214,16 @@ if code_blocks:
         
         if rtf_docs:
             for doc_name, doc in rtf_docs:
-                if doc_name == 'doc':
-                    rtf_path = os.path.join(rtf_dir, f'{md_name}.rtf')
+                # Generate unique filename based on markdown and doc name
+                if len(rtf_docs) == 1 and doc_name == 'doc':
+                    rtf_filename = f'{md_name}.rtf'
                 else:
-                    rtf_path = os.path.join(rtf_dir, f'{md_name}_{doc_name}.rtf')
+                    rtf_filename = f'{md_name}-{doc_name}.rtf'
                 
+                rtf_path = os.path.join(rtf_dir, rtf_filename)
                 try:
                     doc.write_rtf(rtf_path)
-                    print(f'    Generated: {os.path.basename(rtf_path)}')
+                    print(f'    Generated: {rtf_filename}')
                 except Exception as e:
                     print(f'    Error: {e}')
         
@@ -249,46 +252,16 @@ compare_rtf_files() {
     local different=0
     local missing=0
     
-    # Create mapping function for generated to baseline names
-    get_baseline_name() {
-        local gen_name="$1"
-        case "$gen_name" in
-            "advanced-group-by_doc_comprehensive.rtf") echo "advanced-group-by-comprehensive.rtf" ;;
-            "advanced-group-by_doc_multipage.rtf") echo "advanced-group-by-multipage.rtf" ;;
-            "advanced-group-by_doc_single.rtf") echo "advanced-group-by-single.rtf" ;;
-            "advanced-group-by_doc_subline.rtf") echo "advanced-group-by-subline.rtf" ;;
-            "advanced-group-by_doc_treatment_separated.rtf") echo "advanced-group-by-group-newpage.rtf" ;;
-            "example-ae.rtf") echo "example-ae-summary.rtf" ;;
-            "example-baseline.rtf") echo "example-baseline-char.rtf" ;;
-            "example-efficacy.rtf") echo "example-efficacy.rtf" ;;
-            "format-page_doc_all_pages.rtf") echo "format-page-all-pages.rtf" ;;
-            "format-page_doc_custom.rtf") echo "format-page-custom.rtf" ;;
-            "format-page_doc_default.rtf") echo "format-page-default.rtf" ;;
-            "format-page_doc_footnote_first.rtf") echo "format-page-footnote-first.rtf" ;;
-            "format-page_doc_title_first.rtf") echo "format-page-title-first.rtf" ;;
-            "format-row_doc_borders.rtf") echo "row-border-styles.rtf" ;;
-            "format-row_doc_widths.rtf") echo "row-column-widths.rtf" ;;
-            "format-text_doc_colors.rtf") echo "text-color.rtf" ;;
-            "format-text_doc_font_align.rtf") echo "text-font-size-alignment.rtf" ;;
-            "format-text_doc_formats.rtf") echo "text-format-styles.rtf" ;;
-            "format-text_doc_indent.rtf") echo "text-indentation.rtf" ;;
-            "quickstart.rtf") echo "intro-ae1.rtf" ;;
-            "quickstart_doc_converted.rtf") echo "intro-ae8.rtf" ;;
-            *) echo "$gen_name" ;;
-        esac
-    }
-    
-    # Compare each generated file
+    # Compare each generated file with same-named baseline
     for gen_file in "$RTF_DIR"/*.rtf; do
         if [[ ! -f "$gen_file" ]]; then
             continue
         fi
         
         gen_name=$(basename "$gen_file")
-        baseline_name=$(get_baseline_name "$gen_name")
-        baseline_file="$BASELINE_DIR/$baseline_name"
+        baseline_file="$BASELINE_DIR/$gen_name"
         
-        echo -n "  $gen_name -> $baseline_name: "
+        echo -n "  $gen_name: "
         
         if [[ ! -f "$baseline_file" ]]; then
             echo -e "${YELLOW}[NO BASELINE]${NC}"
@@ -300,8 +273,8 @@ compare_rtf_files() {
         else
             echo -e "${RED}[DIFFERENT]${NC}"
             ((different++))
-            cp "$gen_file" "$DIFF_DIR/$gen_name"
-            cp "$baseline_file" "$DIFF_DIR/${baseline_name}.baseline"
+            cp "$gen_file" "$DIFF_DIR/generated/$gen_name"
+            cp "$baseline_file" "$DIFF_DIR/baseline/$gen_name"
         fi
     done
     
