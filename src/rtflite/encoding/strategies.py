@@ -95,6 +95,7 @@ class SinglePageStrategy(EncodingStrategy):
             ).to_list()
             page_border_bottom = page_border_bottom_list[0] if page_border_bottom_list else None
 
+
         # Column header
         if document.rtf_column_header is None:
             rtf_column_header = ""
