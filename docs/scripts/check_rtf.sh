@@ -177,14 +177,14 @@ for name, obj in list(locals().items()):
 if rtf_docs:
     for doc_name, doc in rtf_docs:
         if doc_name == 'doc':
-            rtf_path = '$RTF_DIR/$md_name.rtf'
+            rtf_path = f'$RTF_DIR/$md_name.rtf'
         else:
-            rtf_path = '$RTF_DIR/${md_name}_{doc_name}.rtf'
+            rtf_path = f'$RTF_DIR/$md_name' + '_' + doc_name + '.rtf'
         try:
             doc.write_rtf(rtf_path)
-            print(f'Generated: {rtf_path}')
+            print(f'Generated: ' + rtf_path)
         except Exception as e:
-            print(f'Error generating {rtf_path}: {e}')
+            print(f'Error generating ' + rtf_path + ': ' + str(e))
 else:
     print('No RTF document found in $md_name.py')
 EOF
