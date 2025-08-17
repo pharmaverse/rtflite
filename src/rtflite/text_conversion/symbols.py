@@ -6,7 +6,7 @@ characters. It organizes the symbols into logical categories for better
 maintainability and readability.
 """
 
-from typing import Dict
+from collections.abc import Mapping, Sequence
 
 from ..dictionary.unicode_latex import latex_to_char, latex_to_unicode, unicode_to_int
 
@@ -61,7 +61,7 @@ class LaTeXSymbolMapper:
         # Optimized: use the single-lookup dictionary for consistency
         return latex_command in self.latex_to_char
 
-    def get_all_supported_commands(self) -> list[str]:
+    def get_all_supported_commands(self) -> Sequence[str]:
         """
         Get a list of all supported LaTeX commands.
 
@@ -71,7 +71,7 @@ class LaTeXSymbolMapper:
         # Optimized: use the single-lookup dictionary
         return list(self.latex_to_char.keys())
 
-    def get_commands_by_category(self) -> Dict[str, list[str]]:
+    def get_commands_by_category(self) -> Mapping[str, Sequence[str]]:
         """
         Organize LaTeX commands by category for better understanding.
 

@@ -1,5 +1,7 @@
 """RTF encoding service that handles document component encoding."""
 
+from collections.abc import Sequence
+
 from .grouping_service import grouping_service
 
 
@@ -24,7 +26,7 @@ class RTFEncodingService:
         return self.syntax.generate_font_table()
 
     def encode_color_table(
-        self, document=None, used_colors: list[str] | None = None
+        self, document=None, used_colors: Sequence[str] | None = None
     ) -> str:
         """Encode RTF color table with comprehensive 657-color support.
 
@@ -131,7 +133,7 @@ class RTFEncodingService:
         footnote_config,
         page_number: int | None = None,
         page_col_width: float | None = None,
-    ) -> list[str]:
+    ) -> Sequence[str]:
         """Encode footnote component with advanced formatting.
 
         Args:
@@ -193,7 +195,7 @@ class RTFEncodingService:
         source_config,
         page_number: int | None = None,
         page_col_width: float | None = None,
-    ) -> list[str]:
+    ) -> Sequence[str]:
         """Encode source component with advanced formatting.
 
         Args:
@@ -279,7 +281,7 @@ class RTFEncodingService:
 
     def encode_body(
         self, document, df, rtf_attrs, force_single_page=False
-    ) -> list[str] | None:
+    ) -> Sequence[str] | None:
         """Encode table body component with full pagination support.
 
         Args:
@@ -386,7 +388,9 @@ class RTFEncodingService:
 
         return rows
 
-    def _encode_body_paginated(self, document, df, rtf_attrs, col_widths) -> list[str]:
+    def _encode_body_paginated(
+        self, document, df, rtf_attrs, col_widths
+    ) -> Sequence[str]:
         """Encode body content with pagination support."""
         from .document_service import RTFDocumentService
 
@@ -444,7 +448,7 @@ class RTFEncodingService:
 
     def encode_column_header(
         self, df, rtf_attrs, page_col_width: float
-    ) -> list[str] | None:
+    ) -> Sequence[str] | None:
         """Encode column header component with column width support.
 
         Args:

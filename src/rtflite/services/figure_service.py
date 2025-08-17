@@ -3,6 +3,8 @@
 This module provides services for encoding images into RTF format.
 """
 
+from collections.abc import Sequence
+
 from ..figure import rtf_read_figure
 from ..input import RTFFigure
 
@@ -51,9 +53,9 @@ class RTFFigureService:
         return "".join(rtf_output)
 
     @staticmethod
-    def _get_dimension(dimension: float | list[float], index: int) -> float:
+    def _get_dimension(dimension: float | Sequence[float], index: int) -> float:
         """Get dimension for specific figure index."""
-        if isinstance(dimension, list):
+        if not isinstance(dimension, (int, float)):
             return dimension[index] if index < len(dimension) else dimension[-1]
         return dimension
 

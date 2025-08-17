@@ -5,12 +5,13 @@ for embedding in RTF documents.
 """
 
 import mimetypes
+from collections.abc import Sequence
 from pathlib import Path
 
 
 def rtf_read_figure(
-    file_paths: str | Path | list[str | Path],
-) -> tuple[list[bytes], list[str]]:
+    file_paths: str | Path | Sequence[str | Path],
+) -> tuple[Sequence[bytes], Sequence[str]]:
     """Read image files and return their binary data with format information.
 
     This function reads image files from disk and prepares them for embedding

@@ -6,6 +6,8 @@ within the RTF document generation process. It integrates the text
 conversion functionality with the broader service architecture.
 """
 
+from collections.abc import Mapping, Sequence
+
 from ..text_conversion import LaTeXSymbolMapper, TextConverter
 
 
@@ -25,8 +27,8 @@ class TextConversionService:
         self.symbol_mapper = LaTeXSymbolMapper()
 
     def convert_text_content(
-        self, text: str | list[str] | None, enable_conversion: bool = True
-    ) -> str | list[str] | None:
+        self, text: str | Sequence[str] | None, enable_conversion: bool = True
+    ) -> str | Sequence[str] | None:
         """
         Convert text content with LaTeX commands to Unicode.
 
@@ -80,7 +82,7 @@ class TextConversionService:
             print(f"Warning: Text conversion failed for '{text}': {e}")
             return text
 
-    def _convert_text_list(self, text_list: list[str]) -> list[str]:
+    def _convert_text_list(self, text_list: Sequence[str]) -> list[str]:
         """
         Convert a list of text strings.
 
@@ -92,7 +94,7 @@ class TextConversionService:
         """
         return [self._convert_single_text(item) for item in text_list]
 
-    def get_supported_symbols(self) -> list[str]:
+    def get_supported_symbols(self) -> Sequence[str]:
         """
         Get a list of all supported LaTeX symbols.
 
@@ -101,7 +103,7 @@ class TextConversionService:
         """
         return self.symbol_mapper.get_all_supported_commands()
 
-    def get_symbol_categories(self) -> dict:
+    def get_symbol_categories(self) -> Mapping[str, Sequence[str]]:
         """
         Get LaTeX symbols organized by category.
 
@@ -110,7 +112,7 @@ class TextConversionService:
         """
         return self.symbol_mapper.get_commands_by_category()
 
-    def validate_latex_commands(self, text: str) -> dict:
+    def validate_latex_commands(self, text: str) -> Mapping[str, object]:
         """
         Validate LaTeX commands in text and provide feedback.
 
@@ -153,7 +155,7 @@ class TextConversionService:
 
     def convert_with_validation(
         self, text: str, enable_conversion: bool = True
-    ) -> dict:
+    ) -> Mapping[str, object]:
         """
         Convert text and return both result and validation information.
 

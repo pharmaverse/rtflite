@@ -1,5 +1,6 @@
 """RTF syntax generation utilities."""
 
+from collections.abc import Mapping, Sequence
 from typing import Any
 
 from ..core.constants import RTFConstants
@@ -44,7 +45,7 @@ class RTFSyntaxGenerator:
         return font_table
 
     @staticmethod
-    def generate_color_table(used_colors: list[str] | None = None) -> str:
+    def generate_color_table(used_colors: Sequence[str] | None = None) -> str:
         """Generate RTF color table using comprehensive 657-color support.
 
         Args:
@@ -59,7 +60,10 @@ class RTFSyntaxGenerator:
 
     @staticmethod
     def generate_page_settings(
-        width: float, height: float, margins: list[float], orientation: str = "portrait"
+        width: float,
+        height: float,
+        margins: Sequence[float],
+        orientation: str = "portrait",
     ) -> str:
         """Generate RTF page settings.
 
@@ -112,7 +116,7 @@ class RTFDocumentAssembler:
     def __init__(self):
         self.syntax = RTFSyntaxGenerator()
 
-    def assemble_document(self, components: dict[str, Any]) -> str:
+    def assemble_document(self, components: Mapping[str, Any]) -> str:
         """Assemble a complete RTF document from components.
 
         Args:

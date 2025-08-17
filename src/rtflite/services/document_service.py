@@ -1,6 +1,7 @@
 """RTF Document Service - handles all document-level operations."""
 
-from typing import List, Tuple
+from collections.abc import Mapping, Sequence
+from typing import Any, Tuple
 
 
 class RTFDocumentService:
@@ -97,7 +98,7 @@ class RTFDocumentService:
                 document.rtf_body[0].col_rel_width, col_total_width
             )
             # Calculate rows needed for all sections combined
-            total_content_rows = []
+            total_content_rows: list[Any] = []
             for df, body in zip(document.df, document.rtf_body):
                 section_col_widths = Utils._col_widths(
                     body.col_rel_width, col_total_width
@@ -112,8 +113,10 @@ class RTFDocumentService:
                 document.rtf_body.col_rel_width, col_total_width
             )
             # Calculate rows needed for data content only
-            content_rows = calculator.calculate_content_rows(
-                document.df, col_widths, document.rtf_body
+            content_rows = list(
+                calculator.calculate_content_rows(
+                    document.df, col_widths, document.rtf_body
+                )
             )
 
         # Calculate additional rows per page
@@ -169,7 +172,9 @@ class RTFDocumentService:
         else:
             return False
 
-    def process_page_by(self, document) -> List[List[Tuple[int, int, int]]] | None:
+    def process_page_by(
+        self, document
+    ) -> Sequence[Sequence[Tuple[int, int, int]]] | None:
         """Create components for page_by format."""
         # Obtain input data
         data = document.df.to_dicts()
@@ -189,7 +194,7 @@ class RTFDocumentService:
             """Get the index of a column in the column list."""
             return columns.index(column_name)
 
-        def get_matching_rows(group_values: dict) -> List[int]:
+        def get_matching_rows(group_values: Mapping) -> Sequence[int]:
             """Get row indices that match the group values."""
             return [
                 i
@@ -197,7 +202,7 @@ class RTFDocumentService:
                 if all(row[k] == v for k, v in group_values.items())
             ]
 
-        def get_unique_combinations(variables: List[str]) -> List[dict]:
+        def get_unique_combinations(variables: Sequence[str]) -> Sequence[Mapping]:
             """Get unique combinations of values for the specified variables."""
             seen = set()
             unique = []
