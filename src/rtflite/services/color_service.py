@@ -4,6 +4,7 @@ This service provides comprehensive color validation, lookup, and RTF generation
 capabilities using the full 657-color table from r2rtf.
 """
 
+from collections.abc import Mapping, Sequence
 from typing import Any
 
 from rtflite.dictionary.color_table import (
@@ -103,7 +104,7 @@ class ColorService:
 
     def get_color_suggestions(
         self, partial_color: str, max_suggestions: int = 5
-    ) -> list[str]:
+    ) -> Sequence[str]:
         """Get color name suggestions for partial matches.
 
         Args:
@@ -138,9 +139,7 @@ class ColorService:
 
         return suggestions
 
-    def validate_color_list(
-        self, colors: str | list[str] | tuple[str, ...]
-    ) -> list[str]:
+    def validate_color_list(self, colors: str | Sequence[str]) -> Sequence[str]:
         """Validate a list of colors, converting single color to list.
 
         Args:
@@ -183,7 +182,7 @@ class ColorService:
 
         return validated_colors
 
-    def needs_color_table(self, used_colors: list[str] | None = None) -> bool:
+    def needs_color_table(self, used_colors: Sequence[str] | None = None) -> bool:
         """Check if a color table is needed based on used colors.
 
         Args:
@@ -201,7 +200,7 @@ class ColorService:
         ]
         return len(significant_colors) > 0
 
-    def generate_rtf_color_table(self, used_colors: list[str] | None = None) -> str:
+    def generate_rtf_color_table(self, used_colors: Sequence[str] | None = None) -> str:
         """Generate RTF color table definition for used colors.
 
         Args:
@@ -256,7 +255,7 @@ class ColorService:
             return "".join(rtf_parts)
 
     def get_rtf_color_index(
-        self, color: str, used_colors: list[str] | None = None
+        self, color: str, used_colors: Sequence[str] | None = None
     ) -> int:
         """Get the RTF color table index for a color in the context of a specific document.
 
@@ -292,7 +291,7 @@ class ColorService:
         except ValueError:
             return 0
 
-    def get_all_color_names(self) -> list[str]:
+    def get_all_color_names(self) -> Sequence[str]:
         """Get list of all available color names.
 
         Returns:
@@ -308,7 +307,7 @@ class ColorService:
         """
         return len(self._name_to_type)
 
-    def collect_document_colors(self, document) -> list[str]:
+    def collect_document_colors(self, document) -> Sequence[str]:
         """Collect all colors used in a document.
 
         Args:
@@ -391,7 +390,9 @@ class ColorService:
 
         return list(used_colors)
 
-    def set_document_context(self, document=None, used_colors: list[str] | None = None):
+    def set_document_context(
+        self, document=None, used_colors: Sequence[str] | None = None
+    ):
         """Set the document context for color index resolution.
 
         Args:
@@ -406,7 +407,7 @@ class ColorService:
         """Clear the document context."""
         self._current_document_colors = None
 
-    def get_color_info(self, color: str) -> dict[str, Any]:
+    def get_color_info(self, color: str) -> Mapping[str, Any]:
         """Get comprehensive information about a color.
 
         Args:
@@ -444,6 +445,8 @@ def get_color_index(color: str) -> int:
     return color_service.get_color_index(color)
 
 
-def get_color_suggestions(partial_color: str, max_suggestions: int = 5) -> list[str]:
+def get_color_suggestions(
+    partial_color: str, max_suggestions: int = 5
+) -> Sequence[str]:
     """Get color name suggestions for partial matches."""
     return color_service.get_color_suggestions(partial_color, max_suggestions)

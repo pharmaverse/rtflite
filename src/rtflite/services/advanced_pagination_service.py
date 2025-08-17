@@ -125,10 +125,11 @@ class AdvancedPaginationService:
                 start_row=config.start_row + row_offset,
                 end_row=config.end_row + row_offset,
                 break_type=config.break_type,
-                section_headers=config.section_headers + [f"Section {section_idx + 1}"],
+                section_headers=list(config.section_headers)
+                + [f"Section {section_idx + 1}"],
                 subline_header=config.subline_header,
-                group_context=config.group_context.copy(),
-                forced_content=config.forced_content.copy(),
+                group_context=dict(config.group_context),
+                forced_content=set(config.forced_content),
             )
 
             main_page_dict.add_page_config(new_config)
@@ -192,7 +193,7 @@ class AdvancedPaginationService:
         if self.page_dict is None:
             return []
 
-        return self.page_dict.to_legacy_page_info()
+        return [dict(page_info) for page_info in self.page_dict.to_legacy_page_info()]
 
     def optimize_pagination(self) -> None:
         """Optimize pagination for better balance and readability"""

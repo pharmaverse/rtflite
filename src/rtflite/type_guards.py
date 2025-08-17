@@ -1,32 +1,35 @@
 """Type guards for RTF components to handle Union types safely."""
 
+from collections.abc import Sequence
 from typing import Any, TypeGuard
 
 from .input import RTFBody, RTFColumnHeader
 
 
 def is_single_header(
-    header: RTFColumnHeader | list[RTFColumnHeader | None] | None,
+    header: RTFColumnHeader | Sequence[RTFColumnHeader | None] | None,
 ) -> TypeGuard[RTFColumnHeader]:
     """Check if header is a single RTFColumnHeader instance."""
-    return header is not None and not isinstance(header, list)
+    return header is not None and not isinstance(header, (list, tuple))
 
 
-def is_single_body(body: RTFBody | list[RTFBody] | None) -> TypeGuard[RTFBody]:
+def is_single_body(body: RTFBody | Sequence[RTFBody] | None) -> TypeGuard[RTFBody]:
     """Check if body is a single RTFBody instance."""
-    return body is not None and not isinstance(body, list)
+    return body is not None and not isinstance(body, (list, tuple))
 
 
 def is_list_header(
-    header: RTFColumnHeader | list[RTFColumnHeader | None] | None,
-) -> TypeGuard[list[RTFColumnHeader | None]]:
-    """Check if header is a list of RTFColumnHeader instances."""
-    return isinstance(header, list)
+    header: RTFColumnHeader | Sequence[RTFColumnHeader | None] | None,
+) -> TypeGuard[Sequence[RTFColumnHeader | None]]:
+    """Check if header is a sequence of RTFColumnHeader instances."""
+    return isinstance(header, (list, tuple))
 
 
-def is_list_body(body: RTFBody | list[RTFBody] | None) -> TypeGuard[list[RTFBody]]:
-    """Check if body is a list of RTFBody instances."""
-    return isinstance(body, list)
+def is_list_body(
+    body: RTFBody | Sequence[RTFBody] | None,
+) -> TypeGuard[Sequence[RTFBody]]:
+    """Check if body is a sequence of RTFBody instances."""
+    return isinstance(body, (list, tuple))
 
 
 def is_nested_header_list(

@@ -4,7 +4,8 @@ This module eliminates magic numbers scattered throughout the codebase and provi
 clear documentation for all RTF-related constants used in the library.
 """
 
-from typing import Dict, Final
+from collections.abc import Mapping
+from typing import Final
 
 
 class RTFConstants:
@@ -63,7 +64,7 @@ class RTFConstants:
         ROW_END: Final[str] = "\\row"
 
     # === Format Codes ===
-    FORMAT_CODES: Final[Dict[str, str]] = {
+    FORMAT_CODES: Final[Mapping[str, str]] = {
         "": "",
         "b": "\\b",  # Bold
         "i": "\\i",  # Italic
@@ -74,7 +75,7 @@ class RTFConstants:
     }
 
     # === Text Justification Codes ===
-    TEXT_JUSTIFICATION_CODES: Final[Dict[str, str]] = {
+    TEXT_JUSTIFICATION_CODES: Final[Mapping[str, str]] = {
         "": "",
         "l": "\\ql",  # Left
         "c": "\\qc",  # Center
@@ -84,7 +85,7 @@ class RTFConstants:
     }
 
     # === Row Justification Codes ===
-    ROW_JUSTIFICATION_CODES: Final[Dict[str, str]] = {
+    ROW_JUSTIFICATION_CODES: Final[Mapping[str, str]] = {
         "": "",
         "l": "\\trql",  # Left
         "c": "\\trqc",  # Center
@@ -92,7 +93,7 @@ class RTFConstants:
     }
 
     # === Border Style Codes ===
-    BORDER_CODES: Final[Dict[str, str]] = {
+    BORDER_CODES: Final[Mapping[str, str]] = {
         "single": "\\brdrs",
         "double": "\\brdrdb",
         "thick": "\\brdrth",
@@ -112,7 +113,7 @@ class RTFConstants:
     }
 
     # === Vertical Alignment Codes ===
-    VERTICAL_ALIGNMENT_CODES: Final[Dict[str, str]] = {
+    VERTICAL_ALIGNMENT_CODES: Final[Mapping[str, str]] = {
         "top": "\\clvertalt",
         "center": "\\clvertalc",
         "bottom": "\\clvertalb",
@@ -122,7 +123,7 @@ class RTFConstants:
     }
 
     # === Character Conversion Mapping ===
-    RTF_CHAR_MAPPING: Final[Dict[str, str]] = {
+    RTF_CHAR_MAPPING: Final[Mapping[str, str]] = {
         "^": "\\super ",
         "_": "\\sub ",
         ">=": "\\geq ",
@@ -154,7 +155,7 @@ class RTFDefaults:
 
     # === Color Defaults ===
     @classmethod
-    def get_default_colors(cls) -> Dict[str, str]:
+    def get_default_colors(cls) -> Mapping[str, str]:
         """Get all colors from the comprehensive color table."""
         from rtflite.dictionary.color_table import name_to_rtf
 
@@ -164,7 +165,7 @@ class RTFDefaults:
     _default_colors_cache = None
 
     @classmethod
-    def DEFAULT_COLORS(cls) -> Dict[str, str]:
+    def DEFAULT_COLORS(cls) -> Mapping[str, str]:
         """Get all colors from the comprehensive color table (cached)."""
         if cls._default_colors_cache is None:
             cls._default_colors_cache = cls.get_default_colors()

@@ -1,5 +1,6 @@
 import importlib.resources as pkg_resources
 import math
+from collections.abc import Mapping
 from typing import Literal
 
 from PIL import ImageFont
@@ -14,7 +15,7 @@ Unit = Literal["in", "mm", "px"]
 _FONT_PATHS = FontMapping.get_font_paths()
 
 RTF_FONT_NUMBERS = FontMapping.get_font_name_to_number_mapping()
-RTF_FONT_NAMES: dict[int, FontName] = FontMapping.get_font_number_to_name_mapping()
+RTF_FONT_NAMES: Mapping[int, FontName] = FontMapping.get_font_number_to_name_mapping()
 
 # Check Pillow version to determine if size parameter should be int or float
 _PILLOW_VERSION = tuple(map(int, PILLOW_VERSION.split(".")[:2]))

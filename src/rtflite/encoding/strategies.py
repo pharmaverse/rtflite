@@ -87,7 +87,7 @@ class SinglePageStrategy(EncodingStrategy):
         )
         page_border_top = None
         page_border_bottom = None
-        if document.rtf_body is not None and not isinstance(document.rtf_body, list):
+        if document.rtf_body is not None and is_single_body(document.rtf_body):
             page_border_top_list = BroadcastValue(
                 value=document.rtf_body.border_first, dimension=(1, dim[1])
             ).to_list()

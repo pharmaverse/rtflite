@@ -5,6 +5,7 @@ This module implements a PageDict equivalent to r2rtf's advanced pagination feat
 providing page_index-like functionality while maintaining rtflite's existing architecture.
 """
 
+from collections.abc import Mapping, MutableMapping, MutableSet, Sequence
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
@@ -83,13 +84,13 @@ class PageDict(BaseModel):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    page_configs: dict[int, PageConfig] = Field(
+    page_configs: MutableMapping[int, PageConfig] = Field(
         default_factory=dict, description="Configuration for each page"
     )
     break_rules: list[PageBreakRule] = Field(
         default_factory=list, description="Rules determining where page breaks occur"
     )
-    content_index: dict[str, list[int]] = Field(
+    content_index: MutableMapping[str, list[int]] = Field(
         default_factory=dict, description="Maps content identifiers to page numbers"
     )
     total_pages: int = Field(default=0, description="Total number of pages")
@@ -127,7 +128,7 @@ class PageDict(BaseModel):
             self.content_index[content_id].append(page_num)
             self.content_index[content_id].sort()
 
-    def get_section_pages(self, section_header: str) -> list[int]:
+    def get_section_pages(self, section_header: str) -> Sequence[int]:
         """Get all pages that belong to a specific section"""
         section_pages = []
         for page_num, config in self.page_configs.items():
@@ -135,9 +136,9 @@ class PageDict(BaseModel):
                 section_pages.append(page_num)
         return sorted(section_pages)
 
-    def get_page_break_summary(self) -> dict[str, int]:
+    def get_page_break_summary(self) -> Mapping[str, int]:
         """Get summary of page break types"""
-        summary: dict[str, int] = {}
+        summary: MutableMapping[str, int] = {}
         for config in self.page_configs.values():
             break_type = config.break_type.value
             summary[break_type] = summary.get(break_type, 0) + 1
@@ -146,7 +147,7 @@ class PageDict(BaseModel):
     def calculate_pages_from_dataframe(
         self,
         df: pl.DataFrame,
-        page_by: list[str] | None = None,
+        page_by: Sequence[str] | None = None,
         subline_by: str | None = None,
         new_page: bool = False,
         additional_rows_per_page: int = 0,
@@ -217,7 +218,7 @@ class PageDict(BaseModel):
 
     def _calculate_page_boundaries(
         self, df: pl.DataFrame, effective_nrow: int
-    ) -> list[tuple[int, int, PageBreakType]]:
+    ) -> Sequence[tuple[int, int, PageBreakType]]:
         """Calculate where page boundaries should occur"""
         boundaries = []
         current_start = 0
@@ -250,7 +251,7 @@ class PageDict(BaseModel):
 
         return boundaries
 
-    def to_legacy_page_info(self) -> list[dict[str, Any]]:
+    def to_legacy_page_info(self) -> Sequence[Mapping[str, Any]]:
         """Convert to legacy page info format for backward compatibility"""
         page_info_list = []
 
@@ -281,8 +282,8 @@ class PageIndexManager:
 
     def __init__(self, page_dict: PageDict):
         self.page_dict = page_dict
-        self._content_assignments: dict[str, int] = {}
-        self._page_content_map: dict[int, set[str]] = {}
+        self._content_assignments: MutableMapping[str, int] = {}
+        self._page_content_map: MutableMapping[int, MutableSet[str]] = {}
 
     def assign_content_to_page(self, content_id: str, page_num: int) -> None:
         """Assign specific content to a specific page (explicit page_index control)"""
@@ -303,7 +304,7 @@ class PageIndexManager:
         """Get the assigned page for specific content"""
         return self._content_assignments.get(content_id)
 
-    def get_page_content(self, page_num: int) -> set[str]:
+    def get_page_content(self, page_num: int) -> MutableSet[str]:
         """Get all content assigned to a specific page"""
         return self._page_content_map.get(page_num, set())
 
@@ -313,7 +314,7 @@ class PageIndexManager:
         # to identify where the content appears and insert a break rule
         pass
 
-    def get_content_summary(self) -> dict[str, dict[str, Any]]:
+    def get_content_summary(self) -> Mapping[str, Mapping[str, Any]]:
         """Get summary of all content assignments"""
         summary = {}
         for content_id, page_num in self._content_assignments.items():

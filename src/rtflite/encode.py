@@ -4,6 +4,8 @@ This module provides the RTFDocument class with a clean, service-oriented archit
 All complex logic has been delegated to specialized services and strategies.
 """
 
+from collections.abc import Sequence
+
 import polars as pl
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -138,13 +140,13 @@ class RTFDocument(BaseModel):
     rtf_subline: RTFSubline | None = Field(
         default=None, description="Subject line text to appear below the title"
     )
-    rtf_column_header: list[RTFColumnHeader] | list[list[RTFColumnHeader | None]] = (
-        Field(
-            default_factory=lambda: [RTFColumnHeader()],
-            description="Column header settings. For multi-section documents, use nested list format: [[header1], [header2], [None]] where None means no header for that section.",
-        )
+    rtf_column_header: (
+        Sequence[RTFColumnHeader] | Sequence[Sequence[RTFColumnHeader | None]]
+    ) = Field(
+        default_factory=lambda: [RTFColumnHeader()],
+        description="Column header settings. For multi-section documents, use nested list format: [[header1], [header2], [None]] where None means no header for that section.",
     )
-    rtf_body: RTFBody | list[RTFBody] | None = Field(
+    rtf_body: RTFBody | Sequence[RTFBody] | None = Field(
         default_factory=lambda: RTFBody(),
         description="Table body section settings including column widths and formatting. For multi-section documents, provide a list of RTFBody objects.",
     )
