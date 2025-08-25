@@ -2,6 +2,7 @@
 
 [![PyPI version](https://img.shields.io/pypi/v/rtflite)](https://pypi.org/project/rtflite/)
 ![Python versions](https://img.shields.io/pypi/pyversions/rtflite)
+[![pharmaverse rtflite badge](http://pharmaverse.org/shields/rtflite.svg)](https://pharmaverse.org)
 [![Checked with mypy](https://www.mypy-lang.org/static/mypy_badge.svg)](https://mypy-lang.org/)
 [![CI Tests](https://github.com/pharmaverse/rtflite/actions/workflows/ci-tests.yml/badge.svg)](https://github.com/pharmaverse/rtflite/actions/workflows/ci-tests.yml)
 [![mkdocs](https://github.com/pharmaverse/rtflite/actions/workflows/mkdocs.yml/badge.svg)](https://pharmaverse.github.io/rtflite/)
