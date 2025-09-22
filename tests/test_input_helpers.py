@@ -3,52 +3,78 @@
 import pytest
 
 from rtflite.input import (
-    AttributeDefaultsMixin,
-    DefaultsFactory,
     RTFBody,
     RTFColumnHeader,
     RTFFootnote,
     RTFPage,
+    RTFPageFooter,
+    RTFPageHeader,
+    RTFSource,
+    RTFSubline,
+    RTFTitle,
     ValidationHelpers,
 )
 
 
-class TestAttributeDefaultsMixin:
-    """Test the AttributeDefaultsMixin class."""
+class TestTextComponentDefaults:
+    """Ensure text-oriented components apply declarative defaults."""
 
-    def test_set_attribute_defaults_basic(self):
-        """Test basic attribute default setting."""
+    def test_page_header_defaults(self):
+        """Page headers should populate all text defaults during initialization."""
 
-        class TestClass(AttributeDefaultsMixin):
-            def __init__(self):
-                self.text_font = 1
-                self.text_size = 12
-                self.text_bold = True
-                self.text_color = "red"
-                self.excluded_attr = "special"
+        header = RTFPageHeader()
 
-        obj = TestClass()
-        obj._set_attribute_defaults(exclude_attrs={"excluded_attr"})
+        assert header.text == ("Page \\chpgn of {\\field{\\*\\fldinst NUMPAGES }}",)
+        assert header.text_font_size == (12,)
+        assert header.text_justification == ("r",)
+        assert header.text_convert == (False,)
+        assert header.text_indent_reference == "page"
 
-        assert obj.text_font == [1]
-        assert obj.text_size == [12]
-        assert obj.text_bold == [True]
-        assert obj.text_color == ["red"]
-        assert obj.excluded_attr == "special"  # Should remain unchanged
+    def test_page_footer_defaults(self):
+        """Footers should align center with text conversion disabled."""
 
-    def test_set_attribute_defaults_list_to_tuple(self):
-        """Test conversion of lists to tuples."""
+        footer = RTFPageFooter()
 
-        class TestClass(AttributeDefaultsMixin):
-            def __init__(self):
-                self.list_attr = [1, 2, 3]
-                self.scalar_attr = 42
+        assert footer.text_justification == ("c",)
+        assert footer.text_convert == (False,)
+        assert footer.text_indent_reference == "page"
 
-        obj = TestClass()
-        obj._set_attribute_defaults()
+    def test_subline_defaults(self):
+        """Sublines default to left alignment without text conversion."""
 
-        assert obj.list_attr == (1, 2, 3)
-        assert obj.scalar_attr == [42]
+        subline = RTFSubline()
+
+        assert subline.text_justification == ("l",)
+        assert subline.text_convert == (False,)
+        assert subline.text_indent_reference == "table"
+
+    def test_title_spacing_defaults(self):
+        """Titles should add extra spacing and keep conversion enabled."""
+
+        title = RTFTitle()
+
+        assert title.text_space_before == (180.0,)
+        assert title.text_space_after == (180.0,)
+        assert title.text_convert == (True,)
+        assert title.text_indent_reference == "table"
+
+    def test_source_defaults(self):
+        """Sources default to plain text rendering with centered justification."""
+
+        source = RTFSource()
+
+        assert source.as_table is False
+        assert source.border_left == [[""]]
+        assert source.text_justification == [["c"]]
+
+    def test_footnote_defaults(self):
+        """Footnotes render as tables with borders by default."""
+
+        footnote = RTFFootnote()
+
+        assert footnote.as_table is True
+        assert footnote.border_left == [["single"]]
+        assert footnote.text_justification == [["l"]]
 
 
 class TestValidationHelpers:
@@ -85,50 +111,6 @@ class TestValidationHelpers:
 
         with pytest.raises(ValueError, match="test_field must be a boolean"):
             ValidationHelpers.validate_boolean_field(1, "test_field")
-
-
-class TestDefaultsFactory:
-    """Test the DefaultsFactory class."""
-
-    def test_get_text_defaults(self):
-        """Test text defaults generation."""
-        defaults = DefaultsFactory.get_text_defaults()
-
-        assert "text_font" in defaults
-        assert "text_font_size" in defaults
-        assert "text_hyphenation" in defaults
-        assert defaults["text_font"] == [1]
-        assert defaults["text_font_size"] == [9]
-        assert defaults["text_hyphenation"] == [True]
-
-    def test_get_table_defaults(self):
-        """Test table defaults generation."""
-        defaults = DefaultsFactory.get_table_defaults()
-
-        assert "col_rel_width" in defaults
-        assert "border_width" in defaults
-        assert "cell_height" in defaults
-        assert defaults["col_rel_width"] == [1.0]
-        assert defaults["border_width"] == [[15]]
-        assert defaults["cell_height"] == [[0.15]]
-
-    def test_get_border_defaults_as_table_true(self):
-        """Test border defaults when as_table=True."""
-        defaults = DefaultsFactory.get_border_defaults(as_table=True)
-
-        assert defaults["border_left"] == [["single"]]
-        assert defaults["border_right"] == [["single"]]
-        assert defaults["border_top"] == [["single"]]
-        assert defaults["border_bottom"] == [[""]]
-
-    def test_get_border_defaults_as_table_false(self):
-        """Test border defaults when as_table=False."""
-        defaults = DefaultsFactory.get_border_defaults(as_table=False)
-
-        assert defaults["border_left"] == [[""]]
-        assert defaults["border_right"] == [[""]]
-        assert defaults["border_top"] == [[""]]
-        assert defaults["border_bottom"] == [[""]]
 
 
 class TestRTFPageHelpers:

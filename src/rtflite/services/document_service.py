@@ -3,6 +3,160 @@
 from collections.abc import Mapping, Sequence
 from typing import Any, Tuple
 
+from ..pagination import ContentDistributor, PageBreakCalculator, RTFPagination
+from ..row import Utils
+
+
+class PaginationPlanner:
+    """Compute pagination-specific metrics for an RTF document."""
+
+    def __init__(self, document) -> None:
+        self.document = document
+        self._pagination = RTFPagination(
+            page_width=document.rtf_page.width,
+            page_height=document.rtf_page.height,
+            margin=document.rtf_page.margin,
+            nrow=document.rtf_page.nrow,
+            orientation=document.rtf_page.orientation,
+        )
+        self._calculator: PageBreakCalculator | None = None
+        self._content_rows: list[int] | None = None
+        self._additional_rows: int | None = None
+
+    @property
+    def pagination(self) -> RTFPagination:
+        return self._pagination
+
+    @property
+    def calculator(self) -> PageBreakCalculator:
+        if self._calculator is None:
+            self._calculator = PageBreakCalculator(pagination=self._pagination)
+        return self._calculator
+
+    def additional_rows_per_page(self) -> int:
+        if self._additional_rows is None:
+            self._additional_rows = self._compute_additional_rows()
+        return self._additional_rows
+
+    def requires_pagination(self) -> bool:
+        if self._has_multiple_figures():
+            return True
+
+        if self.document.df is None:
+            return False
+
+        if self._is_multi_section():
+            return self._multi_section_requires_pagination()
+
+        if self._single_section_forces_pagination():
+            return True
+
+        additional_rows = self.additional_rows_per_page()
+        if additional_rows >= self.document.rtf_page.nrow:
+            return True
+
+        data_rows = sum(self.content_rows())
+        available_data_rows = max(1, self.document.rtf_page.nrow - additional_rows)
+        return data_rows > available_data_rows
+
+    def build_distributor(self) -> ContentDistributor:
+        return ContentDistributor(pagination=self.pagination, calculator=self.calculator)
+
+    def content_rows(self) -> list[int]:
+        if self._content_rows is None:
+            self._content_rows = self._compute_content_rows()
+        return self._content_rows
+
+    def _has_multiple_figures(self) -> bool:
+        figure = getattr(self.document, "rtf_figure", None)
+        if not figure or not getattr(figure, "figures", None):
+            return False
+
+        figures = figure.figures
+        return isinstance(figures, (list, tuple)) and len(figures) > 1
+
+    def _is_multi_section(self) -> bool:
+        return isinstance(self.document.df, list)
+
+    def _multi_section_requires_pagination(self) -> bool:
+        bodies = self._iter_bodies()
+        for body in bodies:
+            if (body.page_by and body.new_page) or body.subline_by:
+                return True
+        return False
+
+    def _single_section_forces_pagination(self) -> bool:
+        body = self.document.rtf_body
+        return bool(
+            (getattr(body, "page_by", None) and getattr(body, "new_page", False))
+            or getattr(body, "subline_by", None)
+        )
+
+    def _compute_additional_rows(self) -> int:
+        document = self.document
+        additional_rows = 0
+
+        for body in self._iter_bodies():
+            if getattr(body, "subline_by", None):
+                additional_rows += 1
+                break
+
+        headers = getattr(document, "rtf_column_header", None)
+        if headers:
+            first_header = headers[0] if len(headers) > 0 else None
+            if isinstance(first_header, list):
+                for section_headers in headers:
+                    if not section_headers:
+                        continue
+                    for header in section_headers:
+                        if header and header.text is not None:
+                            additional_rows += 1
+            else:
+                for header in headers:
+                    if header and header.text is not None:
+                        additional_rows += 1
+
+        if document.rtf_footnote and document.rtf_footnote.text:
+            additional_rows += 1
+
+        if document.rtf_source and document.rtf_source.text:
+            additional_rows += 1
+
+        return additional_rows
+
+    def _compute_content_rows(self) -> list[int]:
+        if self.document.df is None:
+            return []
+
+        col_total_width = self.document.rtf_page.col_width
+        if self._is_multi_section():
+            rows: list[int] = []
+            for df, body in self._iter_sections():
+                col_widths = Utils._col_widths(body.col_rel_width, col_total_width)
+                rows.extend(self.calculator.calculate_content_rows(df, col_widths, body))
+            return rows
+
+        col_widths = Utils._col_widths(
+            self.document.rtf_body.col_rel_width, col_total_width
+        )
+        return list(
+            self.calculator.calculate_content_rows(
+                self.document.df, col_widths, self.document.rtf_body
+            )
+        )
+
+    def _iter_bodies(self) -> Sequence:
+        bodies = getattr(self.document, "rtf_body", None)
+        if isinstance(bodies, list):
+            return bodies
+        return [bodies] if bodies is not None else []
+
+    def _iter_sections(self) -> Sequence[tuple[Any, Any]]:
+        bodies = self._iter_bodies()
+        if not isinstance(self.document.df, list):
+            return []
+        return list(zip(self.document.df, bodies))
+
 
 class RTFDocumentService:
     """Service for handling RTF document operations including pagination and layout."""
@@ -14,143 +168,17 @@ class RTFDocumentService:
 
     def calculate_additional_rows_per_page(self, document) -> int:
         """Calculate additional rows needed per page for headers, footnotes, sources."""
-        additional_rows = 0
-
-        # Count subline_by header (appears on each page)
-        if document.rtf_body.subline_by:
-            additional_rows += 1  # Each subline_by header consumes 1 row
-
-        # Count column headers (repeat on each page)
-        if document.rtf_column_header:
-            # Handle nested column headers for multi-section documents
-            if isinstance(document.rtf_column_header[0], list):
-                # Nested format: count all non-None headers across all sections
-                for section_headers in document.rtf_column_header:
-                    if section_headers:  # Skip [None] sections
-                        for header in section_headers:
-                            if header and header.text is not None:
-                                additional_rows += 1
-            else:
-                # Flat format: original logic
-                for header in document.rtf_column_header:
-                    if header.text is not None:
-                        additional_rows += 1
-
-        # Count footnote rows
-        if document.rtf_footnote and document.rtf_footnote.text:
-            additional_rows += 1
-
-        # Count source rows
-        if document.rtf_source and document.rtf_source.text:
-            additional_rows += 1
-
-        return additional_rows
+        return PaginationPlanner(document).additional_rows_per_page()
 
     def needs_pagination(self, document) -> bool:
         """Check if document needs pagination based on content size and page limits."""
 
-        # Multiple figures always need pagination (each figure on separate page)
-        if document.rtf_figure and document.rtf_figure.figures:
-            # Check if multiple figures are provided
-            figures = document.rtf_figure.figures
-            if isinstance(figures, (list, tuple)) and len(figures) > 1:
-                return True
-
-        # Figure-only documents don't need pagination beyond multi-figure handling above
-        if document.df is None:
-            return False
-
-        # Handle multi-section documents
-        if isinstance(document.df, list):
-            # Check if any section needs pagination
-            for body in document.rtf_body:
-                if (body.page_by and body.new_page) or body.subline_by:
-                    return True
-            # For now, multi-section documents use single page strategy
-            return False
-        else:
-            # Single section document
-            if (
-                document.rtf_body.page_by and document.rtf_body.new_page
-            ) or document.rtf_body.subline_by:
-                return True
-
-        # Create pagination instance to calculate rows needed
-        from ..pagination import PageBreakCalculator, RTFPagination
-
-        pagination = RTFPagination(
-            page_width=document.rtf_page.width,
-            page_height=document.rtf_page.height,
-            margin=document.rtf_page.margin,
-            nrow=document.rtf_page.nrow,
-            orientation=document.rtf_page.orientation,
-        )
-
-        calculator = PageBreakCalculator(pagination=pagination)
-        from ..row import Utils
-
-        col_total_width = document.rtf_page.col_width
-
-        # Handle multi-section vs single section for column widths
-        if isinstance(document.df, list):
-            # Use first section for pagination calculation
-            col_widths = Utils._col_widths(
-                document.rtf_body[0].col_rel_width, col_total_width
-            )
-            # Calculate rows needed for all sections combined
-            total_content_rows: list[Any] = []
-            for df, body in zip(document.df, document.rtf_body):
-                section_col_widths = Utils._col_widths(
-                    body.col_rel_width, col_total_width
-                )
-                section_content_rows = calculator.calculate_content_rows(
-                    df, section_col_widths, body
-                )
-                total_content_rows.extend(section_content_rows)
-            content_rows = total_content_rows
-        else:
-            col_widths = Utils._col_widths(
-                document.rtf_body.col_rel_width, col_total_width
-            )
-            # Calculate rows needed for data content only
-            content_rows = list(
-                calculator.calculate_content_rows(
-                    document.df, col_widths, document.rtf_body
-                )
-            )
-
-        # Calculate additional rows per page
-        additional_rows_per_page = self.calculate_additional_rows_per_page(document)
-
-        # Calculate how many data rows can fit per page
-        data_rows = sum(content_rows)
-        available_data_rows_per_page = max(
-            1, document.rtf_page.nrow - additional_rows_per_page
-        )
-
-        # If we can't fit even the additional components, we definitely need pagination
-        if additional_rows_per_page >= document.rtf_page.nrow:
-            return True
-
-        # Check if data rows exceed what can fit on a single page
-        return data_rows > available_data_rows_per_page
+        return PaginationPlanner(document).requires_pagination()
 
     def create_pagination_instance(self, document) -> Tuple:
         """Create pagination and content distributor instances."""
-        from ..pagination import ContentDistributor, PageBreakCalculator, RTFPagination
-
-        pagination = RTFPagination(
-            page_width=document.rtf_page.width,
-            page_height=document.rtf_page.height,
-            margin=document.rtf_page.margin,
-            nrow=document.rtf_page.nrow,
-            orientation=document.rtf_page.orientation,
-        )
-
-        calculator = PageBreakCalculator(pagination=pagination)
-        distributor = ContentDistributor(pagination=pagination, calculator=calculator)
-
-        return pagination, distributor
+        planner = PaginationPlanner(document)
+        return planner.pagination, planner.build_distributor()
 
     def generate_page_break(self, document) -> str:
         """Generate proper RTF page break sequence."""

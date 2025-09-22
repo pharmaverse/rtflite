@@ -1,6 +1,6 @@
 import math
-from collections.abc import MutableSequence, Sequence
-from typing import Any, Tuple
+from collections.abc import Callable, Iterable, MutableSequence, Sequence
+from typing import Any, Tuple, TypeVar
 
 import narwhals as nw
 import polars as pl
@@ -19,6 +19,46 @@ from rtflite.row import (
 )
 from rtflite.services.color_service import color_service
 from rtflite.strwidth import get_string_width
+
+
+T = TypeVar("T")
+
+
+def _iter_nested(value: Sequence[T]) -> Iterable[T]:
+    """Yield flattened elements from a possibly nested 2D structure."""
+
+    if not value:
+        return
+
+    first = value[0]
+    if isinstance(first, Sequence) and not isinstance(first, (str, bytes)):
+        for row in value:
+            yield from row  # type: ignore[arg-type]
+    else:
+        yield from value
+
+
+def _validate_nested(
+    values: Sequence[T] | None,
+    predicate: Callable[[T], bool],
+    error_factory: Callable[[T], ValueError],
+) -> Sequence[T] | None:
+    """Apply predicate to each item and raise the provided error when it fails."""
+
+    if values is None:
+        return values
+
+    for item in _iter_nested(values):
+        if not predicate(item):
+            raise error_factory(item)
+
+    return values
+
+
+def _color_error(prefix: str, color: str) -> ValueError:
+    suggestions = color_service.get_color_suggestions(color, 3)
+    suggestion_text = f" Did you mean: {', '.join(suggestions)}?" if suggestions else ""
+    return ValueError(f"Invalid {prefix}: '{color}'.{suggestion_text}")
 
 
 def _to_nested_list(v):
@@ -73,21 +113,11 @@ class TextAttributes(BaseModel):
 
     @field_validator("text_font", mode="after")
     def validate_text_font(cls, v):
-        if v is None:
-            return v
-
-        # Check if it's a nested list
-        if v and isinstance(v[0], list):
-            for row in v:
-                for font in row:
-                    if font not in Utils._font_type()["type"]:
-                        raise ValueError(f"Invalid font number: {font}")
-        else:
-            # Flat list
-            for font in v:
-                if font not in Utils._font_type()["type"]:
-                    raise ValueError(f"Invalid font number: {font}")
-        return v
+        return _validate_nested(
+            v,
+            predicate=lambda font: font in Utils._font_type()["type"],
+            error_factory=lambda font: ValueError(f"Invalid font number: {font}"),
+        )
 
     text_format: list[str] | list[list[str]] | None = Field(
         default=None,
@@ -99,19 +129,10 @@ class TextAttributes(BaseModel):
         if v is None:
             return v
 
-        # Check if it's a nested list
-        if v and isinstance(v[0], list):
-            for row in v:
-                for format in row:
-                    for fmt in format:
-                        if fmt not in FORMAT_CODES:
-                            raise ValueError(f"Invalid text format: {fmt}")
-        else:
-            # Flat list
-            for format in v:
-                for fmt in format:
-                    if fmt not in FORMAT_CODES:
-                        raise ValueError(f"Invalid text format: {fmt}")
+        for format_string in _iter_nested(v):
+            for fmt in format_string:
+                if fmt not in FORMAT_CODES:
+                    raise ValueError(f"Invalid text format: {fmt}")
         return v
 
     text_font_size: list[float] | list[list[float]] | None = Field(
@@ -120,21 +141,11 @@ class TextAttributes(BaseModel):
 
     @field_validator("text_font_size", mode="after")
     def validate_text_font_size(cls, v):
-        if v is None:
-            return v
-
-        # Check if it's a nested list
-        if v and isinstance(v[0], list):
-            for row in v:
-                for size in row:
-                    if size <= 0:
-                        raise ValueError(f"Invalid font size: {size}")
-        else:
-            # Flat list
-            for size in v:
-                if size <= 0:
-                    raise ValueError(f"Invalid font size: {size}")
-        return v
+        return _validate_nested(
+            v,
+            predicate=lambda size: size > 0,
+            error_factory=lambda size: ValueError(f"Invalid font size: {size}"),
+        )
 
     text_color: list[str] | list[list[str]] | None = Field(
         default=None, description="Text color name or RGB value"
@@ -142,37 +153,11 @@ class TextAttributes(BaseModel):
 
     @field_validator("text_color", mode="after")
     def validate_text_color(cls, v):
-        if v is None:
-            return v
-
-        # Check if it's a nested list
-        if v and isinstance(v[0], list):
-            for row in v:
-                for color in row:
-                    # Allow empty string for "no color"
-                    if color and not color_service.validate_color(color):
-                        suggestions = color_service.get_color_suggestions(color, 3)
-                        suggestion_text = (
-                            f" Did you mean: {', '.join(suggestions)}?"
-                            if suggestions
-                            else ""
-                        )
-                        raise ValueError(
-                            f"Invalid text color: '{color}'.{suggestion_text}"
-                        )
-        else:
-            # Flat list
-            for color in v:
-                # Allow empty string for "no color"
-                if color and not color_service.validate_color(color):
-                    suggestions = color_service.get_color_suggestions(color, 3)
-                    suggestion_text = (
-                        f" Did you mean: {', '.join(suggestions)}?"
-                        if suggestions
-                        else ""
-                    )
-                    raise ValueError(f"Invalid text color: '{color}'.{suggestion_text}")
-        return v
+        return _validate_nested(
+            v,
+            predicate=lambda color: not color or color_service.validate_color(color),
+            error_factory=lambda color: _color_error("text color", color),
+        )
 
     text_background_color: list[str] | list[list[str]] | None = Field(
         default=None, description="Background color name or RGB value"
@@ -180,39 +165,11 @@ class TextAttributes(BaseModel):
 
     @field_validator("text_background_color", mode="after")
     def validate_text_background_color(cls, v):
-        if v is None:
-            return v
-
-        # Check if it's a nested list
-        if v and isinstance(v[0], list):
-            for row in v:
-                for color in row:
-                    # Allow empty string for "no color"
-                    if color and not color_service.validate_color(color):
-                        suggestions = color_service.get_color_suggestions(color, 3)
-                        suggestion_text = (
-                            f" Did you mean: {', '.join(suggestions)}?"
-                            if suggestions
-                            else ""
-                        )
-                        raise ValueError(
-                            f"Invalid text background color: '{color}'.{suggestion_text}"
-                        )
-        else:
-            # Flat list
-            for color in v:
-                # Allow empty string for "no color"
-                if color and not color_service.validate_color(color):
-                    suggestions = color_service.get_color_suggestions(color, 3)
-                    suggestion_text = (
-                        f" Did you mean: {', '.join(suggestions)}?"
-                        if suggestions
-                        else ""
-                    )
-                    raise ValueError(
-                        f"Invalid text background color: '{color}'.{suggestion_text}"
-                    )
-        return v
+        return _validate_nested(
+            v,
+            predicate=lambda color: not color or color_service.validate_color(color),
+            error_factory=lambda color: _color_error("text background color", color),
+        )
 
     text_justification: list[str] | list[list[str]] | None = Field(
         default=None,
@@ -221,21 +178,13 @@ class TextAttributes(BaseModel):
 
     @field_validator("text_justification", mode="after")
     def validate_text_justification(cls, v):
-        if v is None:
-            return v
-
-        # Check if it's a nested list
-        if v and isinstance(v[0], list):
-            for row in v:
-                for justification in row:
-                    if justification not in TEXT_JUSTIFICATION_CODES:
-                        raise ValueError(f"Invalid text justification: {justification}")
-        else:
-            # Flat list
-            for justification in v:
-                if justification not in TEXT_JUSTIFICATION_CODES:
-                    raise ValueError(f"Invalid text justification: {justification}")
-        return v
+        return _validate_nested(
+            v,
+            predicate=lambda justification: justification in TEXT_JUSTIFICATION_CODES,
+            error_factory=lambda justification: ValueError(
+                f"Invalid text justification: {justification}"
+            ),
+        )
 
     text_indent_first: list[int] | list[list[int]] | None = Field(
         default=None, description="First line indent in twips"

@@ -1,4 +1,5 @@
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
+from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
@@ -8,31 +9,81 @@ from rtflite.attributes import TableAttributes, TextAttributes
 from rtflite.core.constants import RTFConstants
 from rtflite.row import BORDER_CODES
 
+def _clone_default(value: Any) -> Any:
+    """Return a defensive copy of mutable default values."""
 
-class AttributeDefaultsMixin:
-    """Mixin class for common attribute default setting patterns."""
-
-    def _set_attribute_defaults(self, exclude_attrs: set[Any] | None = None) -> None:
-        """Set default values for text attributes by converting scalars to lists/tuples."""
-        exclude_attrs = exclude_attrs or set()
-        for attr, value in self.__dict__.items():
-            if attr not in exclude_attrs:
-                if isinstance(value, (str, int, float, bool)):
-                    setattr(self, attr, [value])
-                elif isinstance(value, list):
-                    setattr(self, attr, tuple(value))
+    return deepcopy(value)
 
 
-class RTFTextComponent(TextAttributes, AttributeDefaultsMixin):
+def _apply_model_defaults(model: BaseModel, defaults: Mapping[str, Any]) -> None:
+    """Populate missing fields on ``model`` using ``defaults`` values."""
+
+    model_fields = model.__class__.model_fields
+    for field, default in defaults.items():
+        if field not in model_fields:
+            continue
+
+        if field in model.model_fields_set:
+            continue
+
+        setattr(model, field, _clone_default(default))
+
+
+def _coerce_fields_to_tuple(model: BaseModel, fields: Sequence[str]) -> None:
+    """Convert top-level lists on ``model`` to tuples for immutability."""
+
+    model_fields = model.__class__.model_fields
+    for field in fields:
+        if field not in model_fields:
+            continue
+
+        value = getattr(model, field, None)
+        if isinstance(value, list):
+            setattr(model, field, tuple(value))
+
+
+class RTFTextComponent(TextAttributes):
     """Consolidated base class for text-based RTF components.
 
     This class unifies RTFPageHeader, RTFPageFooter, RTFSubline, and RTFTitle
     components which share nearly identical structure with only different defaults.
     """
 
+    BASE_DEFAULTS: Mapping[str, Any] = {
+        "text_font": [1],
+        "text_font_size": [9],
+        "text_indent_first": [0],
+        "text_indent_left": [0],
+        "text_indent_right": [0],
+        "text_space": [1.0],
+        "text_space_before": [RTFConstants.DEFAULT_SPACE_BEFORE],
+        "text_space_after": [RTFConstants.DEFAULT_SPACE_AFTER],
+        "text_hyphenation": [True],
+        "text_convert": [True],
+        "text_indent_reference": "table",
+    }
+    COMPONENT_DEFAULTS: Mapping[str, Any] = {}
+    TUPLE_FIELDS: tuple[str, ...] = (
+        "text",
+        "text_font",
+        "text_format",
+        "text_font_size",
+        "text_color",
+        "text_background_color",
+        "text_justification",
+        "text_indent_first",
+        "text_indent_left",
+        "text_indent_right",
+        "text_space",
+        "text_space_before",
+        "text_space_after",
+        "text_hyphenation",
+        "text_convert",
+    )
+
     text: Sequence[str] | None = Field(default=None, description="Text content")
     text_indent_reference: str | None = Field(
-        default="table",
+        default=None,
         description="Reference point for indentation ('page' or 'table')",
     )
 
@@ -40,22 +91,13 @@ class RTFTextComponent(TextAttributes, AttributeDefaultsMixin):
     def convert_text(cls, v):
         return ValidationHelpers.convert_string_to_sequence(v)
 
-    def __init__(self, **data):
-        # Get defaults from the component-specific config
-        defaults = self._get_component_defaults()
+    def model_post_init(self, __context: Any) -> None:
+        super().model_post_init(__context)
 
-        # Update defaults with any provided values
-        defaults.update(data)
-        super().__init__(**defaults)
-        self._set_default()
-
-    def _set_default(self):
-        self._set_attribute_defaults()
-        return self
-
-    def _get_component_defaults(self) -> dict:
-        """Override in subclasses to provide component-specific defaults."""
-        return DefaultsFactory.get_text_defaults()
+        defaults: dict[str, Any] = dict(self.BASE_DEFAULTS)
+        defaults.update(self.COMPONENT_DEFAULTS)
+        _apply_model_defaults(self, defaults)
+        _coerce_fields_to_tuple(self, self.TUPLE_FIELDS)
 
 
 class ValidationHelpers:
@@ -79,124 +121,6 @@ class ValidationHelpers:
             )
         return v
 
-
-class DefaultsFactory:
-    """Factory class for creating common default configurations."""
-
-    @staticmethod
-    def get_text_defaults() -> dict:
-        """Get common text attribute defaults."""
-        return {
-            "text_font": [1],
-            "text_font_size": [9],
-            "text_indent_first": [0],
-            "text_indent_left": [0],
-            "text_indent_right": [0],
-            "text_space": [1.0],
-            "text_space_before": [RTFConstants.DEFAULT_SPACE_BEFORE],
-            "text_space_after": [RTFConstants.DEFAULT_SPACE_AFTER],
-            "text_hyphenation": [True],
-        }
-
-    @staticmethod
-    def get_page_header_defaults() -> dict:
-        """Get page header specific defaults."""
-        defaults = DefaultsFactory.get_text_defaults()
-        defaults.update(
-            {
-                "text_font_size": [12],
-                "text_justification": ["r"],
-                "text_convert": [False],  # Preserve RTF field codes
-                "text_indent_reference": "page",
-            }
-        )
-        return defaults
-
-    @staticmethod
-    def get_page_footer_defaults() -> dict:
-        """Get page footer specific defaults."""
-        defaults = DefaultsFactory.get_text_defaults()
-        defaults.update(
-            {
-                "text_font_size": [12],
-                "text_justification": ["c"],
-                "text_convert": [False],  # Preserve RTF field codes
-                "text_indent_reference": "page",
-            }
-        )
-        return defaults
-
-    @staticmethod
-    def get_title_defaults() -> dict:
-        """Get title specific defaults."""
-        defaults = DefaultsFactory.get_text_defaults()
-        defaults.update(
-            {
-                "text_font_size": [12],
-                "text_justification": ["c"],
-                "text_space_before": [180.0],
-                "text_space_after": [180.0],
-                "text_convert": [True],  # Enable LaTeX conversion for titles
-                "text_indent_reference": "table",
-            }
-        )
-        return defaults
-
-    @staticmethod
-    def get_subline_defaults() -> dict:
-        """Get subline specific defaults."""
-        defaults = DefaultsFactory.get_text_defaults()
-        defaults.update(
-            {
-                "text_font_size": [9],
-                "text_justification": ["l"],
-                "text_convert": [False],
-                "text_indent_reference": "table",
-            }
-        )
-        return defaults
-
-    @staticmethod
-    def get_table_defaults() -> dict:
-        """Get common table attribute defaults."""
-        return {
-            "col_rel_width": [1.0],
-            "border_width": [[15]],
-            "cell_height": [[0.15]],
-            "cell_justification": [["c"]],
-            "cell_vertical_justification": [["top"]],
-            "text_font": [[1]],
-            "text_format": [[""]],
-            "text_font_size": [[9]],
-            "text_justification": [["l"]],
-            "text_indent_first": [[0]],
-            "text_indent_left": [[0]],
-            "text_indent_right": [[0]],
-            "text_space": [[1]],
-            "text_space_before": [[15]],
-            "text_space_after": [[15]],
-            "text_hyphenation": [[True]],
-        }
-
-    @staticmethod
-    def get_border_defaults(as_table: bool) -> dict:
-        """Get conditional border defaults based on table rendering mode."""
-        if as_table:
-            # Table rendering: has borders (R2RTF as_table=TRUE behavior)
-            return {
-                "border_left": [["single"]],
-                "border_right": [["single"]],
-                "border_top": [["single"]],
-                "border_bottom": [[""]],
-            }
-        else:
-            # Plain text rendering: no borders (R2RTF as_table=FALSE behavior)
-            return {
-                "border_left": [[""]],
-                "border_right": [[""]],
-                "border_top": [[""]],
-                "border_bottom": [[""]],
-            }
 
 
 class RTFPage(BaseModel):
@@ -397,14 +321,13 @@ class RTFPageHeader(RTFTextComponent):
         - Right-aligned by default
     """
 
-    def __init__(self, **data):
-        # Set the default header text if not provided
-        if "text" not in data:
-            data["text"] = "Page \\chpgn of {\\field{\\*\\fldinst NUMPAGES }}"
-        super().__init__(**data)
-
-    def _get_component_defaults(self) -> dict:
-        return DefaultsFactory.get_page_header_defaults()
+    COMPONENT_DEFAULTS: Mapping[str, Any] = {
+        "text": ["Page \\chpgn of {\\field{\\*\\fldinst NUMPAGES }}"],
+        "text_font_size": [12],
+        "text_justification": ["r"],
+        "text_convert": [False],
+        "text_indent_reference": "page",
+    }
 
 
 class RTFPageFooter(RTFTextComponent):
@@ -447,15 +370,23 @@ class RTFPageFooter(RTFTextComponent):
         - Appears on every page of the document
     """
 
-    def _get_component_defaults(self) -> dict:
-        return DefaultsFactory.get_page_footer_defaults()
+    COMPONENT_DEFAULTS: Mapping[str, Any] = {
+        "text_font_size": [12],
+        "text_justification": ["c"],
+        "text_convert": [False],
+        "text_indent_reference": "page",
+    }
 
 
 class RTFSubline(RTFTextComponent):
     """RTF subline component with left-aligned text."""
 
-    def _get_component_defaults(self) -> dict:
-        return DefaultsFactory.get_subline_defaults()
+    COMPONENT_DEFAULTS: Mapping[str, Any] = {
+        "text_font_size": [9],
+        "text_justification": ["l"],
+        "text_convert": [False],
+        "text_indent_reference": "table",
+    }
 
 
 class RTFTableTextComponent(TableAttributes):
@@ -467,9 +398,45 @@ class RTFTableTextComponent(TableAttributes):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
+    BASE_DEFAULTS: Mapping[str, Any] = {
+        "col_rel_width": [1.0],
+        "border_width": [[15]],
+        "cell_height": [[0.15]],
+        "cell_justification": [["c"]],
+        "cell_vertical_justification": [["top"]],
+        "text_font": [[1]],
+        "text_format": [[""]],
+        "text_font_size": [[9]],
+        "text_justification": [["l"]],
+        "text_indent_first": [[0]],
+        "text_indent_left": [[0]],
+        "text_indent_right": [[0]],
+        "text_space": [[1]],
+        "text_space_before": [[15]],
+        "text_space_after": [[15]],
+        "text_hyphenation": [[True]],
+        "text_convert": [[True]],
+    }
+    TABLE_BORDER_DEFAULTS: Mapping[str, Any] = {
+        "border_left": [["single"]],
+        "border_right": [["single"]],
+        "border_top": [["single"]],
+        "border_bottom": [[""]],
+    }
+    PLAIN_BORDER_DEFAULTS: Mapping[str, Any] = {
+        "border_left": [[""]],
+        "border_right": [[""]],
+        "border_top": [[""]],
+        "border_bottom": [[""]],
+    }
+    COMPONENT_DEFAULTS: Mapping[str, Any] = {}
+    DEFAULT_AS_TABLE: bool = True
+
     text: Sequence[str] | None = Field(default=None, description="Text content")
     as_table: bool = Field(
+        default=True,
         description="Whether to render as table (True) or plain text (False)",
+        strict=True,
     )
 
     @field_validator("text", mode="before")
@@ -480,34 +447,24 @@ class RTFTableTextComponent(TableAttributes):
     def validate_as_table(cls, v):
         return ValidationHelpers.validate_boolean_field(v, "as_table")
 
-    def __init__(self, **data):
-        # Set as_table default if not provided
-        if "as_table" not in data:
-            data["as_table"] = self._get_default_as_table()
+    def model_post_init(self, __context: Any) -> None:
+        super().model_post_init(__context)
 
-        as_table = data["as_table"]
-        defaults = self._get_component_table_defaults(as_table)
-        defaults.update(data)
-        super().__init__(**defaults)
+        if "as_table" not in self.model_fields_set:
+            self.as_table = self.DEFAULT_AS_TABLE
+
+        defaults: dict[str, Any] = dict(self.BASE_DEFAULTS)
+        defaults.update(self.COMPONENT_DEFAULTS)
+        defaults.update(self._border_defaults())
+        _apply_model_defaults(self, defaults)
         self._process_text_conversion()
 
-    def _get_default_as_table(self) -> bool:
-        """Override in subclasses to provide component-specific as_table default."""
-        return True
-
-    def _get_component_table_defaults(self, as_table: bool) -> dict:
-        """Get defaults with component-specific overrides."""
-        defaults = DefaultsFactory.get_table_defaults()
-        border_defaults = DefaultsFactory.get_border_defaults(as_table)
-        component_overrides = self._get_component_overrides()
-
-        defaults.update(border_defaults)
-        defaults.update(component_overrides)
-        return defaults
-
-    def _get_component_overrides(self) -> dict:
-        """Override in subclasses to provide component-specific overrides."""
-        return {"text_convert": [[True]]}  # Default: enable text conversion
+    def _border_defaults(self) -> Mapping[str, Any]:
+        return (
+            self.TABLE_BORDER_DEFAULTS
+            if self.as_table
+            else self.PLAIN_BORDER_DEFAULTS
+        )
 
     def _process_text_conversion(self) -> None:
         """Convert text sequence to line-separated string format."""
@@ -517,12 +474,6 @@ class RTFTableTextComponent(TableAttributes):
                     self.text = []
                 else:
                     self.text = "\\line ".join(self.text)
-
-    def _set_default(self):
-        for attr, value in self.__dict__.items():
-            if isinstance(value, (str, int, float, bool)):
-                setattr(self, attr, [value])
-        return self
 
 
 class RTFFootnote(RTFTableTextComponent):
@@ -565,10 +516,6 @@ class RTFFootnote(RTFTableTextComponent):
         - Default rendering includes table borders (as_table=True)
     """
 
-    def _get_default_as_table(self) -> bool:
-        return True  # Footnotes default to table rendering
-
-
 class RTFSource(RTFTableTextComponent):
     """RTF source component for data source citations.
 
@@ -610,17 +557,8 @@ class RTFSource(RTFTableTextComponent):
         - Text conversion is enabled by default
     """
 
-    def _get_default_as_table(self) -> bool:
-        return False  # Sources default to plain text rendering
-
-    def _get_component_overrides(self) -> dict:
-        base_overrides = super()._get_component_overrides()
-        base_overrides.update(
-            {
-                "text_justification": [["c"]],  # Center justification for sources
-            }
-        )
-        return base_overrides
+    DEFAULT_AS_TABLE: bool = False
+    COMPONENT_DEFAULTS: Mapping[str, Any] = {"text_justification": [["c"]]}
 
 
 class RTFTitle(RTFTextComponent):
@@ -659,8 +597,14 @@ class RTFTitle(RTFTextComponent):
         - Other mathematical notation
     """
 
-    def _get_component_defaults(self) -> dict:
-        return DefaultsFactory.get_title_defaults()
+    COMPONENT_DEFAULTS: Mapping[str, Any] = {
+        "text_font_size": [12],
+        "text_justification": ["c"],
+        "text_space_before": [180.0],
+        "text_space_after": [180.0],
+        "text_convert": [True],
+        "text_indent_reference": "table",
+    }
 
 
 class RTFColumnHeader(TableAttributes):
