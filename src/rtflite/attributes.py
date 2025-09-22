@@ -1,6 +1,6 @@
 import math
 from collections.abc import Callable, Iterable, MutableSequence, Sequence
-from typing import Any, Tuple, TypeVar
+from typing import Any, Tuple, TypeVar, cast
 
 import narwhals as nw
 import polars as pl
@@ -33,7 +33,7 @@ def _iter_nested(value: Sequence[T]) -> Iterable[T]:
     first = value[0]
     if isinstance(first, Sequence) and not isinstance(first, (str, bytes)):
         for row in value:
-            yield from row  # type: ignore[arg-type]
+            yield from cast(Sequence[T], row)
     else:
         yield from value
 
