@@ -273,7 +273,6 @@ class TestRTFFigureIntegration:
     @patch("pathlib.Path.exists")
     def test_figure_error_handling_in_document(self, mock_exists):
         """Test graceful error handling for invalid figure paths."""
-        from rtflite.encode import RTFDocument
 
         # Mock that file doesn't exist for validation
         mock_exists.return_value = False

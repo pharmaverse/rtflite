@@ -6,8 +6,6 @@ from typing import TYPE_CHECKING
 from ..services.grouping_service import grouping_service
 from ..type_guards import (
     is_flat_header_list,
-    is_list_body,
-    is_list_header,
     is_nested_header_list,
     is_single_body,
     is_single_header,

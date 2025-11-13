@@ -133,11 +133,11 @@ class TestPageDict:
         # Note: The actual PageDict doesn't have get_page_for_row method
         # We'll test the page configs directly
         for page_num, config in page_dict.page_configs.items():
-            if 0 >= config.start_row and 0 <= config.end_row:
+            if config.start_row <= 0 and config.end_row >= 0:
                 assert page_num == 1
-            if 15 >= config.start_row and 15 <= config.end_row:
+            if config.start_row <= 15 and config.end_row >= 15:
                 assert page_num == 2
-            if 25 >= config.start_row and 25 <= config.end_row:
+            if config.start_row <= 25 and config.end_row >= 25:
                 assert page_num == 3
 
     def test_get_page_config(self):
@@ -368,16 +368,16 @@ class TestPageIndexManager:
         # Verify row distribution by checking page configs directly
         # Row 2 should be on page 1 (0-4)
         assert (
-            2 >= page_dict.get_page_config(1).start_row
-            and 2 <= page_dict.get_page_config(1).end_row
+            page_dict.get_page_config(1).start_row <= 2
+            and page_dict.get_page_config(1).end_row >= 2
         )
         # Row 7 should be on page 2 (5-9)
         assert (
-            7 >= page_dict.get_page_config(2).start_row
-            and 7 <= page_dict.get_page_config(2).end_row
+            page_dict.get_page_config(2).start_row <= 7
+            and page_dict.get_page_config(2).end_row >= 7
         )
         # Row 11 should be on page 3 (10-12)
         assert (
-            11 >= page_dict.get_page_config(3).start_row
-            and 11 <= page_dict.get_page_config(3).end_row
+            page_dict.get_page_config(3).start_row <= 11
+            and page_dict.get_page_config(3).end_row >= 11
         )

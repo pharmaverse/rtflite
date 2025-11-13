@@ -8,7 +8,7 @@ from typing import Any
 
 import polars as pl
 
-from ..pagination import PageBreakType, PageConfig, PageDict, PageIndexManager
+from ..pagination import PageConfig, PageDict, PageIndexManager
 from .document_service import RTFDocumentService
 
 

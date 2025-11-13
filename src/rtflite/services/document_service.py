@@ -1,7 +1,7 @@
 """RTF Document Service - handles all document-level operations."""
 
 from collections.abc import Mapping, Sequence
-from typing import Any, Tuple
+from typing import Any
 
 
 class RTFDocumentService:
@@ -135,7 +135,7 @@ class RTFDocumentService:
         # Check if data rows exceed what can fit on a single page
         return data_rows > available_data_rows_per_page
 
-    def create_pagination_instance(self, document) -> Tuple:
+    def create_pagination_instance(self, document) -> tuple:
         """Create pagination and content distributor instances."""
         from ..pagination import ContentDistributor, PageBreakCalculator, RTFPagination
 
@@ -174,7 +174,7 @@ class RTFDocumentService:
 
     def process_page_by(
         self, document
-    ) -> Sequence[Sequence[Tuple[int, int, int]]] | None:
+    ) -> Sequence[Sequence[tuple[int, int, int]]] | None:
         """Create components for page_by format."""
         # Obtain input data
         data = document.df.to_dicts()
@@ -269,9 +269,6 @@ class RTFDocumentService:
         - All other rows: Use existing border_top/bottom from rtf_body
         """
         from copy import deepcopy
-
-        from ..attributes import BroadcastValue
-        from ..input import TableAttributes
 
         # Create a deep copy of the attributes to avoid modifying the original
         page_attrs = deepcopy(rtf_attrs)

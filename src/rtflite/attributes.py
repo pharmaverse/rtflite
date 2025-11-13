@@ -1,6 +1,6 @@
 import math
 from collections.abc import MutableSequence, Sequence
-from typing import Any, Tuple
+from typing import Any
 
 import narwhals as nw
 import polars as pl
@@ -717,7 +717,7 @@ class BroadcastValue(BaseModel):
         description="The value of the table, can be various types including DataFrame.",
     )
 
-    dimension: Tuple[int, int] | None = Field(
+    dimension: tuple[int, int] | None = Field(
         None, description="Dimensions of the table (rows, columns)"
     )
 

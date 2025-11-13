@@ -8,7 +8,6 @@ import pytest
 
 from rtflite import (
     RTFBody,
-    RTFColumnHeader,
     RTFDocument,
     RTFFigure,
     RTFFootnote,
