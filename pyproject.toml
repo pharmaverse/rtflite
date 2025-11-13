@@ -32,6 +32,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
 ]
 
 requires-python = ">= 3.10"
@@ -60,5 +61,6 @@ dev = [
     "mypy>=1.17.1",
     "matplotlib>=3.10.5",
     "pandas>=2.2.3",
-    "pyarrow>=21.0.0",
+    "pyarrow >= 21.0.0; python_version < '3.14'",
+    "pyarrow >= 22.0.0; python_version >= '3.14'",
 ]
