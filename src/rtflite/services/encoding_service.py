@@ -517,6 +517,7 @@ class RTFEncodingService:
         ]
         margins = [Utils._inch_to_twip(m) for m in page_config.margin]
         margin = "".join(
-            f"{code}{margin}" for code, margin in zip(margin_codes, margins)
+            f"{code}{margin}"
+            for code, margin in zip(margin_codes, margins, strict=True)
         )
         return margin + "\n"

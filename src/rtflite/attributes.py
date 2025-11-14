@@ -602,14 +602,21 @@ class TableAttributes(TextAttributes):
         # Get all attributes that start with text_, col_, border_, or cell_
         attrs = {}
         for attr in dir(self):
-            if (
+            if not (
                 attr.startswith("text_")
                 or attr.startswith("col_")
                 or attr.startswith("border_")
                 or attr.startswith("cell_")
             ):
-                if not callable(getattr(self, attr)):
-                    attrs[attr] = getattr(self, attr)
+                continue
+
+            try:
+                attr_value = getattr(self, attr)
+            except AttributeError:
+                continue
+
+            if not callable(attr_value):
+                attrs[attr] = attr_value
 
         # Broadcast attributes to section indices, excluding None values
         return {
@@ -665,10 +672,7 @@ class TableAttributes(TextAttributes):
 
                 # Handle null values - display as empty string instead of "None"
                 raw_value = row[j]
-                if raw_value is None:
-                    cell_value = ""
-                else:
-                    cell_value = str(raw_value)
+                cell_value = "" if raw_value is None else str(raw_value)
 
                 cell = Cell(
                     text=TextContent(
@@ -754,7 +758,7 @@ class BroadcastValue(BaseModel):
                 column_index % len(self.value[0])
             ]
         except IndexError as e:
-            raise ValueError(f"Invalid DataFrame index or slice: {e}")
+            raise ValueError(f"Invalid DataFrame index or slice: {e}") from e
 
     def to_list(self) -> list | None:
         if self.value is None:

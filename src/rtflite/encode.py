@@ -205,7 +205,7 @@ class RTFDocument(BaseModel):
                     except Exception as e:
                         raise ValueError(
                             f"DataFrame must be a valid DataFrame: {str(e)}"
-                        )
+                        ) from e
             # Handle list of DataFrames
             else:
                 converted_dfs = []
@@ -221,7 +221,7 @@ class RTFDocument(BaseModel):
                             raise ValueError(
                                 f"DataFrame at index {i} must be a valid "
                                 f"DataFrame: {str(e)}"
-                            )
+                            ) from e
                 values["df"] = converted_dfs
         return values
 
@@ -271,16 +271,22 @@ class RTFDocument(BaseModel):
                 )
 
             # Validate rtf_column_header if it's nested list format
-            if isinstance(self.rtf_column_header[0], list):
-                if len(self.rtf_column_header) != len(self.df):
-                    raise ValueError(
-                        "rtf_column_header nested list length "
-                        f"({len(self.rtf_column_header)}) must match df list "
-                        f"length ({len(self.df)})"
-                    )
+            if (
+                isinstance(self.rtf_column_header, list)
+                and self.rtf_column_header
+                and isinstance(self.rtf_column_header[0], list)
+                and len(self.rtf_column_header) != len(self.df)
+            ):
+                raise ValueError(
+                    "rtf_column_header nested list length "
+                    f"({len(self.rtf_column_header)}) must match df list "
+                    f"length ({len(self.df)})"
+                )
 
             # Per-section column validation
-            for i, (section_df, section_body) in enumerate(zip(self.df, self.rtf_body)):
+            for i, (section_df, section_body) in enumerate(
+                zip(self.df, self.rtf_body, strict=True)
+            ):
                 self._validate_section_columns(section_df, section_body, i)
         else:
             # Single section validation (existing logic)
@@ -324,7 +330,9 @@ class RTFDocument(BaseModel):
 
             if is_multi_section:
                 # Handle multi-section documents
-                for section_df, section_body in zip(self.df, self.rtf_body):
+                for section_df, section_body in zip(
+                    self.df, self.rtf_body, strict=True
+                ):
                     dim = section_df.shape
                     section_body.col_rel_width = (
                         section_body.col_rel_width or [1] * dim[1]
@@ -336,7 +344,7 @@ class RTFDocument(BaseModel):
                 ):
                     # Nested list format: [[header1], [header2], [None]]
                     for section_headers, section_body in zip(
-                        self.rtf_column_header, self.rtf_body
+                        self.rtf_column_header, self.rtf_body, strict=True
                     ):
                         if section_headers:  # Skip if [None]
                             for header in section_headers:

@@ -123,7 +123,7 @@ class ColorService:
 
         # Find colors that contain the partial string
         suggestions = []
-        for color_name in self._name_to_type.keys():
+        for color_name in self._name_to_type:
             if partial_lower in color_name.lower():
                 suggestions.append(color_name)
                 if len(suggestions) >= max_suggestions:
@@ -132,7 +132,7 @@ class ColorService:
         # If no substring matches, find colors that start with same letter
         if not suggestions:
             first_char = partial_lower[0] if partial_lower else ""
-            for color_name in self._name_to_type.keys():
+            for color_name in self._name_to_type:
                 if color_name.lower().startswith(first_char):
                     suggestions.append(color_name)
                     if len(suggestions) >= max_suggestions:

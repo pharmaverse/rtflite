@@ -232,13 +232,14 @@ class PageDict(BaseModel):
 
             if row_idx > 0:  # Don't break on first row
                 for rule in self.break_rules:
-                    if rule.applies_to_row(df, row_idx, row_idx - 1):
-                        if rule.force_new_page:
-                            forced_break = True
-                            break_type = PageBreakType.FORCED
-                            if rule.column and "subline" in rule.column.lower():
-                                break_type = PageBreakType.SUBLINE
-                            break
+                    if rule.force_new_page and rule.applies_to_row(
+                        df, row_idx, row_idx - 1
+                    ):
+                        forced_break = True
+                        break_type = PageBreakType.FORCED
+                        if rule.column and "subline" in rule.column.lower():
+                            break_type = PageBreakType.SUBLINE
+                        break
 
             # Check if we need to break due to row limit or forced break
             rows_on_current_page = row_idx - current_start

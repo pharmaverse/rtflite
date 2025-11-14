@@ -31,7 +31,7 @@ class RTFFigureService:
         rtf_output = []
 
         for i, (figure_data, figure_format) in enumerate(
-            zip(figure_data_list, figure_formats)
+            zip(figure_data_list, figure_formats, strict=True)
         ):
             # Get dimensions for this figure
             width = RTFFigureService._get_dimension(rtf_figure.fig_width, i)

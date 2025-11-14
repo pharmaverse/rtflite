@@ -36,7 +36,7 @@ class RTFSyntaxGenerator:
 
         font_table = RTFConstants.Control.FONT_TABLE_START
         for rtf, style, name, charset in zip(
-            font_rtf, font_style, font_name, font_charset
+            font_rtf, font_style, font_name, font_charset, strict=True
         ):
             font_table = (
                 font_table + "{" + rtf + style + charset + "\\fprq2 " + name + ";}\n"

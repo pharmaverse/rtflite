@@ -81,7 +81,7 @@ class LibreOfficeConverter:
                     f"version {min_version}."
                 )
         except subprocess.CalledProcessError as e:
-            raise RuntimeError(f"Failed to get LibreOffice version: {e}.")
+            raise RuntimeError(f"Failed to get LibreOffice version: {e}.") from e
 
     def convert(
         self,
@@ -208,4 +208,4 @@ class LibreOfficeConverter:
                 f"LibreOffice conversion failed:\n"
                 f"Command output: {e.stdout}\n"
                 f"Error output: {e.stderr}"
-            )
+            ) from e

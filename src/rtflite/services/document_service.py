@@ -99,7 +99,7 @@ class RTFDocumentService:
             )
             # Calculate rows needed for all sections combined
             total_content_rows: list[Any] = []
-            for df, body in zip(document.df, document.rtf_body):
+            for df, body in zip(document.df, document.rtf_body, strict=True):
                 section_col_widths = Utils._col_widths(
                     body.col_rel_width, col_total_width
                 )
@@ -307,33 +307,39 @@ class RTFDocumentService:
         has_column_headers = (
             document.rtf_column_header and len(document.rtf_column_header) > 0
         )
-        if page_info["is_first_page"] and not has_column_headers:
-            if document.rtf_page.border_first:
-                # Apply border to all cells in the first row
-                for col_idx in range(page_df_width):
-                    page_attrs = self._apply_border_to_cell(
-                        page_attrs,
-                        0,
-                        col_idx,
-                        "top",
-                        document.rtf_page.border_first,
-                        page_shape,
-                    )
+        if (
+            page_info["is_first_page"]
+            and not has_column_headers
+            and document.rtf_page.border_first
+        ):
+            # Apply border to all cells in the first row
+            for col_idx in range(page_df_width):
+                page_attrs = self._apply_border_to_cell(
+                    page_attrs,
+                    0,
+                    col_idx,
+                    "top",
+                    document.rtf_page.border_first,
+                    page_shape,
+                )
 
         # For first page with column headers: ensure consistent border style
-        if page_info["is_first_page"] and has_column_headers:
+        if (
+            page_info["is_first_page"]
+            and has_column_headers
+            and document.rtf_body.border_first
+        ):
             # Apply same border style as non-first pages to maintain consistency
-            if document.rtf_body.border_first:
-                border_style = (
-                    document.rtf_body.border_first[0][0]
-                    if isinstance(document.rtf_body.border_first, list)
-                    else document.rtf_body.border_first
+            border_style = (
+                document.rtf_body.border_first[0][0]
+                if isinstance(document.rtf_body.border_first, list)
+                else document.rtf_body.border_first
+            )
+            # Apply single border style to first data row (same as other pages)
+            for col_idx in range(page_df_width):
+                page_attrs = self._apply_border_to_cell(
+                    page_attrs, 0, col_idx, "top", border_style, page_shape
                 )
-                # Apply single border style to first data row (same as other pages)
-                for col_idx in range(page_df_width):
-                    page_attrs = self._apply_border_to_cell(
-                        page_attrs, 0, col_idx, "top", border_style, page_shape
-                    )
 
         # Apply page-level borders for non-first/last pages
         if not page_info["is_first_page"] and document.rtf_body.border_first:

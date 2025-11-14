@@ -279,6 +279,4 @@ class TestRTFFigureIntegration:
 
         # Should raise error when creating RTFFigure with non-existent file
         with pytest.raises(FileNotFoundError, match="Figure file not found"):
-            rtf_figure = RTFFigure(
-                figures=["nonexistent_image.png"], fig_width=4.0, fig_height=3.0
-            )
+            RTFFigure(figures=["nonexistent_image.png"], fig_width=4.0, fig_height=3.0)

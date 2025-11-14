@@ -199,7 +199,7 @@ class GroupingService:
         # Count unique combinations at each level
         structure = {}
 
-        for i, col in enumerate(group_by):
+        for i, _col in enumerate(group_by):
             level_cols = group_by[: i + 1]
             unique_combinations = df.select(level_cols).unique().height
             structure[f"level_{i + 1}"] = {
@@ -442,7 +442,7 @@ class GroupingService:
                         value=attr_value, dimension=(num_rows, num_cols)
                     )
                     broadcasted = broadcast_obj.to_list()
-                except:
+                except Exception:
                     # If broadcasting fails, skip this attribute
                     continue
 

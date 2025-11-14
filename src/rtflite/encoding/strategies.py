@@ -231,11 +231,14 @@ class SinglePageStrategy(EncodingStrategy):
                 rtf_column_header = []
 
         # Only update borders if DataFrame has rows
-        if dim[0] > 0 and is_single_body(document.rtf_body):
-            if page_border_top is not None:
-                document.rtf_body.border_top = BroadcastValue(
-                    value=document.rtf_body.border_top, dimension=dim
-                ).update_row(0, page_border_top)
+        if (
+            dim[0] > 0
+            and is_single_body(document.rtf_body)
+            and page_border_top is not None
+        ):
+            document.rtf_body.border_top = BroadcastValue(
+                value=document.rtf_body.border_top, dimension=dim
+            ).update_row(0, page_border_top)
 
         # Bottom border last line update
         if document.rtf_footnote is not None:
@@ -346,12 +349,10 @@ class SinglePageStrategy(EncodingStrategy):
         """
         from ..attributes import BroadcastValue
 
-        # Calculate total rows across all sections for border management
+        # Calculate column counts for border management
         if isinstance(document.df, list):
-            total_rows = sum(df.shape[0] for df in document.df)
             first_section_cols = document.df[0].shape[1] if document.df else 0
         else:
-            total_rows = document.df.shape[0] if document.df is not None else 0
             first_section_cols = document.df.shape[1] if document.df is not None else 0
 
         # Document structure components
@@ -390,7 +391,9 @@ class SinglePageStrategy(EncodingStrategy):
             else []
         )
 
-        for i, (section_df, section_body) in enumerate(zip(df_list, body_list)):
+        for i, (section_df, section_body) in enumerate(
+            zip(df_list, body_list, strict=True)
+        ):
             dim = section_df.shape
 
             # Handle column headers for this section
@@ -754,7 +757,7 @@ class PaginatedStrategy(EncodingStrategy):
             )
 
         # Replace page data with processed data (without subline_by columns)
-        for i, page_info in enumerate(pages):
+        for page_info in pages:
             start_row = page_info["start_row"]
             end_row = page_info["end_row"]
             page_info["data"] = processed_df.slice(start_row, end_row - start_row + 1)
@@ -964,29 +967,28 @@ class PaginatedStrategy(EncodingStrategy):
                     # Apply page-level borders to column headers (matching
                     # non-paginated behavior)
                     if (
-                        page_info["is_first_page"] and i == 0
+                        page_info["is_first_page"]
+                        and i == 0
+                        and document.rtf_page.border_first
+                        and header_copy.text is not None
                     ):  # First header on first page
-                        if (
-                            document.rtf_page.border_first
-                            and header_copy.text is not None
-                        ):
-                            # Get dimensions based on text type
-                            import polars as pl
+                        # Get dimensions based on text type
+                        import polars as pl
 
-                            if isinstance(header_copy.text, pl.DataFrame):
-                                header_dims = header_copy.text.shape
-                            else:
-                                # For Sequence[str], assume single row
-                                header_dims = (
-                                    1,
-                                    len(header_copy.text) if header_copy.text else 0,
-                                )
-                            # Apply page border_first to top of first column header
-                            header_copy.border_top = BroadcastValue(
-                                value=header_copy.border_top, dimension=header_dims
-                            ).update_row(
-                                0, [document.rtf_page.border_first] * header_dims[1]
+                        if isinstance(header_copy.text, pl.DataFrame):
+                            header_dims = header_copy.text.shape
+                        else:
+                            # For Sequence[str], assume single row
+                            header_dims = (
+                                1,
+                                len(header_copy.text) if header_copy.text else 0,
                             )
+                        # Apply page border_first to top of first column header
+                        header_copy.border_top = BroadcastValue(
+                            value=header_copy.border_top, dimension=header_dims
+                        ).update_row(
+                            0, [document.rtf_page.border_first] * header_dims[1]
+                        )
 
                     # Encode the header with modified borders
                     # Use the header_copy to preserve border modifications
@@ -1248,7 +1250,7 @@ class PaginatedStrategy(EncodingStrategy):
         if "group_values" in subline_header_info:
             # Extract just the values without column prefixes
             header_parts = []
-            for col, value in subline_header_info["group_values"].items():
+            for _col, value in subline_header_info["group_values"].items():
                 if value is not None:
                     header_parts.append(str(value))
 

@@ -528,12 +528,8 @@ class RTFTableTextComponent(TableAttributes):
 
     def _process_text_conversion(self) -> None:
         """Convert text sequence to line-separated string format."""
-        if self.text is not None:
-            if isinstance(self.text, Sequence):
-                if len(self.text) == 0:
-                    self.text = []
-                else:
-                    self.text = "\\line ".join(self.text)
+        if self.text is not None and isinstance(self.text, Sequence):
+            self.text = [] if len(self.text) == 0 else "\\line ".join(self.text)
 
     def _set_default(self):
         for attr, value in self.__dict__.items():
