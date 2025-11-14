@@ -134,7 +134,8 @@ class TextConversionService:
 
         stats = self.converter.get_conversion_statistics(text)
 
-        # Extract valid commands from the stats (need to get the actual converted commands)
+        # Extract valid commands from the stats (need to capture the converted
+        # commands themselves)
         import re
 
         latex_pattern = re.compile(r"\\[a-zA-Z]+(?:\{[^}]*\})?")

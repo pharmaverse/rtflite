@@ -7,7 +7,7 @@ from rtflite import RTFDocument, RTFFootnote, RTFPage, RTFSource, RTFTitle
 
 
 class TestRTFPageComponentPlacement:
-    """Test the RTFPage settings for controlling component placement in multi-page documents."""
+    """Validate RTFPage component placement across multi-page documents."""
 
     @pytest.fixture
     def large_dataset(self):
@@ -169,7 +169,7 @@ class TestRTFPageComponentPlacement:
         )
 
     def test_single_page_document_uses_all_components(self, large_dataset):
-        """Test that single-page documents show all components regardless of settings."""
+        """Single-page documents show all components regardless of settings."""
         # Create a document that won't be paginated
         small_df = large_dataset.head(5)
 

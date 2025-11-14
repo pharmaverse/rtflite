@@ -86,7 +86,10 @@ def extract_r_tests(test_files):
             output_{test_name}_{label} <- capture.output({{
             {clean_code}
             }})
-            cat(paste(output_{test_name}_{label}, collapse = "\\n"), file = "{output_file}")
+            cat(
+                paste(output_{test_name}_{label}, collapse = "\\n"),
+                file = "{output_file}"
+            )
             """)
 
     # Write R script

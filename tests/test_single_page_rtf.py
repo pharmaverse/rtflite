@@ -689,8 +689,10 @@ class TestSinglePageEdgeCases:
         # df <- data.frame(
         #   Short = c("A", "B"),
         #   Long = c(
-        #     "This is a very long text that might wrap to multiple lines in the RTF cell",
-        #     "Another long piece of text that demonstrates how the RTF handles wrapping"
+        #     "This is a very long text that might wrap to multiple lines in "
+        #     "the RTF cell",
+        #     "Another long piece of text that demonstrates how the RTF "
+        #     "handles wrapping"
         #   )
         # )
         #
@@ -710,8 +712,14 @@ class TestSinglePageEdgeCases:
             {
                 "Short": ["A", "B"],
                 "Long": [
-                    "This is a very long text that might wrap to multiple lines in the RTF cell",
-                    "Another long piece of text that demonstrates how the RTF handles wrapping",
+                    (
+                        "This is a very long text that might wrap to multiple "
+                        "lines in the RTF cell"
+                    ),
+                    (
+                        "Another long piece of text that demonstrates how the "
+                        "RTF handles wrapping"
+                    ),
                 ],
             }
         )

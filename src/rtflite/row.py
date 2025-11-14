@@ -31,7 +31,9 @@ class Utils:
 
     @staticmethod
     def _col_widths(rel_widths: Sequence[float], col_width: float) -> list[float]:
-        """Convert relative widths to absolute widths. Returns mutable list since we're building it."""
+        """Convert relative widths to absolute widths.
+        Returns mutable list since we are building it.
+        """
         total_width = sum(rel_widths)
         cumulative_sum = 0.0
         return [
@@ -48,7 +50,8 @@ class Utils:
         from .services.color_service import ColorValidationError, color_service
 
         try:
-            # If no explicit used_colors provided, the color service will use document context
+            # If no explicit used_colors provided, the color service
+            # will uses document context
             return color_service.get_rtf_color_index(color, used_colors)
         except ColorValidationError:
             # Invalid color name - return default
@@ -63,7 +66,10 @@ class TextContent(BaseModel):
     size: int = Field(default=9, description="Font size")
     format: str | None = Field(
         default=None,
-        description="Text formatting codes: b=bold, i=italic, u=underline, s=strikethrough, ^=superscript, _=subscript",
+        description=(
+            "Text formatting codes: b=bold, i=italic, u=underline, "
+            "s=strikethrough, ^=superscript, _=subscript"
+        ),
     )
     color: str | None = Field(default=None, description="Text color")
     background_color: str | None = Field(default=None, description="Background color")
@@ -104,20 +110,19 @@ class TextContent(BaseModel):
             )
 
         # Indentation
-        rtf.append(
-            f"\\fi{Utils._inch_to_twip(self.indent_first / RTFConstants.TWIPS_PER_INCH)}"
-        )
-        rtf.append(
-            f"\\li{Utils._inch_to_twip(self.indent_left / RTFConstants.TWIPS_PER_INCH)}"
-        )
-        rtf.append(
-            f"\\ri{Utils._inch_to_twip(self.indent_right / RTFConstants.TWIPS_PER_INCH)}"
-        )
+        indent_first = self.indent_first / RTFConstants.TWIPS_PER_INCH
+        indent_left = self.indent_left / RTFConstants.TWIPS_PER_INCH
+        indent_right = self.indent_right / RTFConstants.TWIPS_PER_INCH
+        rtf.append(f"\\fi{Utils._inch_to_twip(indent_first)}")
+        rtf.append(f"\\li{Utils._inch_to_twip(indent_left)}")
+        rtf.append(f"\\ri{Utils._inch_to_twip(indent_right)}")
 
         # Justification
         if self.justification not in TEXT_JUSTIFICATION_CODES:
+            allowed = ", ".join(TEXT_JUSTIFICATION_CODES.keys())
             raise ValueError(
-                f"Text: Invalid justification '{self.justification}'. Must be one of: {', '.join(TEXT_JUSTIFICATION_CODES.keys())}"
+                "Text: Invalid justification "
+                f"'{self.justification}'. Must be one of: {allowed}"
             )
         rtf.append(TEXT_JUSTIFICATION_CODES[self.justification])
 
@@ -148,8 +153,10 @@ class TextContent(BaseModel):
                 if fmt in FORMAT_CODES:
                     rtf.append(FORMAT_CODES[fmt])
                 else:
+                    allowed = ", ".join(FORMAT_CODES.keys())
                     raise ValueError(
-                        f"Text: Invalid format character '{fmt}' in '{self.format}'. Must be one of: {', '.join(FORMAT_CODES.keys())}"
+                        "Text: Invalid format character "
+                        f"'{fmt}' in '{self.format}'. Must be one of: {allowed}"
                     )
 
         return "".join(rtf)
@@ -184,13 +191,24 @@ class TextContent(BaseModel):
 
     def _as_rtf(self, method: str) -> str:
         """Format source as RTF."""
+        formatted_text = self._convert_special_chars()
         if method == "paragraph":
-            return f"{{\\pard{self._get_paragraph_formatting()}{self._get_text_formatting()} {self._convert_special_chars()}}}\\par}}"
+            return (
+                "{\\pard"
+                f"{self._get_paragraph_formatting()}"
+                f"{self._get_text_formatting()} "
+                f"{formatted_text}}}\\par}}"
+            )
         if method == "cell":
-            return f"\\pard{self._get_paragraph_formatting()}{self._get_text_formatting()} {self._convert_special_chars()}}}\\cell"
+            return (
+                "\\pard"
+                f"{self._get_paragraph_formatting()}"
+                f"{self._get_text_formatting()} "
+                f"{formatted_text}}}\\cell"
+            )
 
         if method == "plain":
-            return f"{self._get_text_formatting()} {self._convert_special_chars()}}}"
+            return f"{self._get_text_formatting()} {formatted_text}}}"
 
         if method == "paragraph_format":
             return f"{{\\pard{self._get_paragraph_formatting()}{self.text}\\par}}"
@@ -274,16 +292,19 @@ class Row(BaseModel):
     height: float = Field(default=0.15, description="Row height")
 
     def _as_rtf(self) -> MutableSequence[str]:
-        """Format a row of cells in RTF. Returns mutable list since we're building it."""
+        """Format a row of cells in RTF.
+        Returns mutable list since we are building it."""
         # Justification
         if self.justification not in ROW_JUSTIFICATION_CODES:
+            allowed = ", ".join(ROW_JUSTIFICATION_CODES.keys())
             raise ValueError(
-                f"Row: Invalid justification '{self.justification}'. Must be one of: {', '.join(ROW_JUSTIFICATION_CODES.keys())}"
+                "Row: Invalid justification "
+                f"'{self.justification}'. Must be one of: {allowed}"
             )
 
-        rtf = [
-            f"\\trowd\\trgaph{int(Utils._inch_to_twip(self.height) / 2)}\\trleft0{ROW_JUSTIFICATION_CODES[self.justification]}"
-        ]
+        row_height = int(Utils._inch_to_twip(self.height) / 2)
+        justification_code = ROW_JUSTIFICATION_CODES[self.justification]
+        rtf = [(f"\\trowd\\trgaph{row_height}\\trleft0{justification_code}")]
         rtf.extend(cell._as_rtf() for cell in self.row_cells)
         rtf.extend(cell.text._as_rtf(method="cell") for cell in self.row_cells)
         rtf.append("\\intbl\\row\\pard")

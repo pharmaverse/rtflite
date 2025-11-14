@@ -63,7 +63,8 @@ class ColorService:
                 f" Did you mean: {', '.join(suggestions[:3])}?" if suggestions else ""
             )
             raise ColorValidationError(
-                f"Invalid color name '{color}'. Must be one of 657 supported colors.{suggestion_text}"
+                "Invalid color name "
+                f"'{color}'. Must be one of 657 supported colors.{suggestion_text}"
             )
 
         return self._name_to_type[color]
@@ -204,7 +205,8 @@ class ColorService:
         """Generate RTF color table definition for used colors.
 
         Args:
-            used_colors: List of color names used in document. If None, includes all 657 colors.
+            used_colors: Color names used in the document.
+                If None, includes all 657 colors.
 
         Returns:
             RTF color table definition string, or empty string if no color table needed
@@ -257,14 +259,17 @@ class ColorService:
     def get_rtf_color_index(
         self, color: str, used_colors: Sequence[str] | None = None
     ) -> int:
-        """Get the RTF color table index for a color in the context of a specific document.
+        """Get the RTF color table index for a color in the context of
+        a specific document
 
         Args:
             color: Color name to look up
-            used_colors: List of colors used in the document (determines table structure)
+            used_colors: Colors used in the document
+                (determines table structure)
 
         Returns:
-            Sequential color index in the RTF table (1-based for dense table, original index for full table)
+            Sequential color index in the RTF table (1-based for dense tables,
+            original index for full tables)
         """
         if not color or color == "black":
             return 0  # Default/black color

@@ -196,7 +196,8 @@ class TextAttributes(BaseModel):
                             else ""
                         )
                         raise ValueError(
-                            f"Invalid text background color: '{color}'.{suggestion_text}"
+                            "Invalid text background color: "
+                            f"'{color}'.{suggestion_text}"
                         )
         else:
             # Flat list
@@ -291,7 +292,7 @@ class TextAttributes(BaseModel):
         dim = [len(text), 1]
 
         def get_broadcast_value(attr_name, row_idx, col_idx=0):
-            """Helper function to get broadcast value for a given attribute at specified indices."""
+            """Get broadcast value for an attribute at specified indices."""
             attr_value = getattr(self, attr_name)
             return BroadcastValue(value=attr_value, dimension=dim).iloc(
                 row_idx, col_idx
@@ -471,7 +472,9 @@ class TableAttributes(TextAttributes):
     )
     cell_justification: list[list[str]] = Field(
         default=[["l"]],
-        description="Cell horizontal alignment ('l'=left, 'c'=center, 'r'=right, 'j'=justify)",
+        description=(
+            "Cell horizontal alignment ('l'=left, 'c'=center, 'r'=right, 'j'=justify)"
+        ),
     )
 
     cell_vertical_justification: list[list[str]] = Field(
@@ -624,7 +627,7 @@ class TableAttributes(TextAttributes):
         dim = df.shape
 
         def get_broadcast_value(attr_name, row_idx, col_idx=0):
-            """Helper function to get broadcast value for a given attribute at specified indices."""
+            """Get broadcast value for an attribute at specified indices."""
             attr_value = getattr(self, attr_name)
             return BroadcastValue(value=attr_value, dimension=dim).iloc(
                 row_idx, col_idx

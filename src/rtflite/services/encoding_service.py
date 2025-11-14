@@ -32,7 +32,8 @@ class RTFEncodingService:
 
         Args:
             document: RTF document to analyze for color usage (preferred)
-            used_colors: List of color names used in document. If None and document provided, colors are auto-detected.
+            used_colors: Color names used in the document. If None and a
+                document is provided, colors are auto-detected.
 
         Returns:
             RTF color table string (empty if no colors beyond black/"" are used)
@@ -253,14 +254,15 @@ class RTFEncodingService:
                 return rtf_attrs._encode(df)
 
     def prepare_dataframe_for_body_encoding(self, df, rtf_attrs):
-        """Prepare DataFrame for body encoding with group_by processing and column removal.
+        """Prepare DataFrame for body encoding with group_by and column removal.
 
         Args:
             df: Input DataFrame
             rtf_attrs: RTFBody attributes
 
         Returns:
-            Tuple of (processed_df, original_df) where processed_df has transformations applied
+            Tuple of (processed_df, original_df) where processed_df has
+            transformations applied
         """
         original_df = df.clone()
         processed_df = df.clone()
@@ -340,7 +342,8 @@ class RTFEncodingService:
         # Handle existing page_by grouping (non-paginated)
         page_by = document_service.process_page_by(document)
         if page_by is None:
-            # Note: subline_by documents should use pagination, so this path should not be reached for them
+            # Note: subline_by documents should use pagination, so this path
+            # should not be reached for them
             # Apply group_by processing for non-paginated documents
             if rtf_attrs.group_by is not None:
                 processed_df = grouping_service.enhance_group_by(

@@ -1,8 +1,9 @@
 """
 Advanced pagination control system for rtflite.
 
-This module implements a PageDict equivalent to r2rtf's advanced pagination features,
-providing page_index-like functionality while maintaining rtflite's existing architecture.
+This module implements a PageDict equivalent to r2rtf's advanced pagination
+features, providing page_index-like functionality while maintaining rtflite's
+existing architecture.
 """
 
 from collections.abc import Mapping, MutableMapping, MutableSet, Sequence
@@ -152,9 +153,10 @@ class PageDict(BaseModel):
         new_page: bool = False,
         additional_rows_per_page: int = 0,
     ) -> None:
-        """Calculate page configurations from a DataFrame
+        """Calculate page configurations from a DataFrame.
 
-        This method implements the core pagination algorithm inspired by r2rtf's approach.
+        This method implements the core pagination algorithm inspired by
+        r2rtf's approach.
         """
         if df.is_empty():
             return

@@ -262,11 +262,13 @@ class RTFDocumentService:
         rtf_body.border_top/bottom: Controls borders for individual cells
 
         Logic:
-        - First page, first row: Apply rtf_page.border_first (overrides rtf_body.border_first)
-        - Last page, last row: Apply rtf_page.border_last (overrides rtf_body.border_last)
-        - Non-first pages, first row: Apply rtf_body.border_first
-        - Non-last pages, last row: Apply rtf_body.border_last
-        - All other rows: Use existing border_top/bottom from rtf_body
+        - First page, first row: apply rtf_page.border_first (overrides
+          rtf_body.border_first)
+        - Last page, last row: apply rtf_page.border_last (overrides
+          rtf_body.border_last)
+        - Non-first pages, first row: apply rtf_body.border_first
+        - Non-last pages, last row: apply rtf_body.border_last
+        - All other rows: use existing border_top/bottom from rtf_body
         """
         from copy import deepcopy
 
@@ -300,7 +302,8 @@ class RTFDocumentService:
             ]
 
         # Apply borders based on page position
-        # For first page: only apply rtf_page.border_first to table body if NO column headers
+        # For first page: only apply rtf_page.border_first to table body
+        # if NO column headers
         has_column_headers = (
             document.rtf_column_header and len(document.rtf_column_header) > 0
         )
@@ -378,7 +381,8 @@ class RTFDocumentService:
 
         # Apply border logic based on page position and footnote/source presence
         if not page_info["is_last_page"]:
-            # Non-last pages: apply single border after footnote/source, or after data if no footnote/source
+            # Non-last pages: apply single border after footnote/source, or
+            # after data if no footnote/source
             if document.rtf_body.border_last:
                 border_style = (
                     document.rtf_body.border_last[0][0]
@@ -426,7 +430,8 @@ class RTFDocumentService:
                                 page_shape,
                             )
                     else:
-                        # Has footnote/source on last page: set border for footnote/source
+                        # Has footnote/source on last page: set border for
+                        # footnote/source
                         self._apply_footnote_source_borders(
                             document,
                             page_info,
@@ -457,7 +462,8 @@ class RTFDocumentService:
         )
 
         # Apply border to components based on as_table setting
-        # Priority: Source with as_table=True > Footnote with as_table=True > any component
+        # Priority: Source with as_table=True > Footnote with as_table=True >
+        # any component
         target_component = None
 
         # Extract as_table values (now stored as booleans)
@@ -475,8 +481,8 @@ class RTFDocumentService:
         elif has_footnote and footnote_as_table:
             # Footnote is rendered as table: use footnote for borders
             target_component = ("footnote", document.rtf_footnote)
-        # Note: Removed fallback to plain text components - borders should only be applied
-        # to components that are rendered as tables (as_table=True)
+        # Note: Removed fallback to plain text components - borders should only
+        # apply to components rendered as tables (as_table=True)
 
         if target_component:
             component_name, component = target_component

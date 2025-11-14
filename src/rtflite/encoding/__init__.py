@@ -1,7 +1,7 @@
 """RTF encoding engine module.
 
-This module provides a clean separation between document structure and RTF encoding logic,
-supporting multiple encoding strategies and preparing for future content types.
+This module separates document structure from RTF encoding logic,
+supports multiple encoding strategies, and prepares for future content types.
 """
 
 from .engine import RTFEncodingEngine

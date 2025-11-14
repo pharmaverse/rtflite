@@ -5,7 +5,7 @@ from rtflite.input import RTFBody, RTFColumnHeader
 
 
 def test_col_rel_width_inheritance_from_body():
-    """Test that rtf_column_header inherits col_rel_width from rtf_body when not specified"""
+    """rtf_column_header inherits col_rel_width from rtf_body when unspecified"""
     df = pl.DataFrame(
         {"Treatment": ["Placebo", "Drug A"], "N": [50, 48], "Response": ["75%", "92%"]}
     )
@@ -13,7 +13,8 @@ def test_col_rel_width_inheritance_from_body():
     # Custom column width ratios
     custom_widths = [3.0, 1.2, 0.8]
 
-    # Create document with custom body col_rel_width but no explicit header col_rel_width
+    # Create document with custom body col_rel_width but
+    # no explicit header col_rel_width
     doc = RTFDocument(
         df=df,
         rtf_body=RTFBody(col_rel_width=custom_widths),
@@ -26,7 +27,7 @@ def test_col_rel_width_inheritance_from_body():
 
 
 def test_col_rel_width_no_inheritance_when_header_specified():
-    """Test that rtf_column_header does NOT inherit when it has its own col_rel_width"""
+    """rtf_column_header does NOT inherit when it has its own col_rel_width"""
     df = pl.DataFrame(
         {"Treatment": ["Placebo", "Drug A"], "N": [50, 48], "Response": ["75%", "92%"]}
     )

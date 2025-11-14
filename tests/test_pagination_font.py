@@ -16,7 +16,11 @@ class TestPaginationFont:
             {
                 "col1": [
                     "Short",
-                    "This is a much, much, much, much, much, much, much, much, much, much longer piece of text that wraps differently with fonts",
+                    (
+                        "This is a much, much, much, much, much, much, much, "
+                        "much, much, much longer piece of text that wraps "
+                        "differently with fonts"
+                    ),
                 ],
                 "col2": ["Val1", "Another value that demonstrates font differences"],
             }

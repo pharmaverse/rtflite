@@ -215,7 +215,11 @@ def normalize_rtf_borders(rtf_text: str) -> str:
 
     # Pattern to match border commands with explicit styles (single, double, etc.)
     # and normalize them all to single style for comparison
-    pattern2 = r"(\\cl(?:brdrl|brdrt|brdrr|brdrb))\\brdr(?:s|db|th|sh|dot|dash|hair|inset|outset|triple)\\brdrw(\d+)"
+    pattern2 = (
+        r"(\\cl(?:brdrl|brdrt|brdrr|brdrb))"
+        r"\\brdr(?:s|db|th|sh|dot|dash|hair|inset|outset|triple)"
+        r"\\brdrw(\d+)"
+    )
 
     def replacer2(match):
         border_side = match.group(1)

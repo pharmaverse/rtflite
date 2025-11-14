@@ -67,7 +67,8 @@ def test_pagination_basic_with_headers():
     rtf_output = doc.rtf_encode()
     expected = r_output.read("basic_with_headers")
 
-    # Use exact assertion with semantic normalization (handles font tables, page breaks, border styles, etc.)
+    # Use exact assertion with semantic normalization (handles font tables,
+    # page breaks, border styles, etc.)
     assert_rtf_equals_semantic(
         rtf_output, expected, "test_pagination_basic_with_headers"
     )
