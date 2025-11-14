@@ -15,7 +15,7 @@
 
 ## Development workflow expectations
 - Use [uv](https://docs.astral.sh/uv/) for environment management. Run `uv sync` to create/refresh the local virtual environment before developing.
-- Keep imports sorted with `isort .` and format code with `ruff format`. Follow existing typing conventions—prefer explicit type hints and Pydantic field validators over dynamic typing.
+- Keep imports sorted with `isort .` and format code with `ruff format`. Follow existing typing conventions---prefer explicit type hints and Pydantic field validators over dynamic typing.
 - Maintain consistency with existing error handling (primarily `ValueError`/`TypeError` for validation issues) and adhere to the RTF command patterns already present in helper modules.
 - When touching Markdown files in the repository root, run `sh docs/scripts/sync.sh` to propagate changes into the documentation site.
 
