@@ -58,7 +58,8 @@ def get_string_width(
         raise ValueError(f"Unsupported font name: {font_name}")
 
     font_path = pkg_resources.files(rtflite.fonts) / _FONT_PATHS[font_name]
-    # Convert size to int for Pillow < 10.0.0 compatibility (use ceiling for conservative pagination)
+    # Convert size to int for Pillow < 10.0.0 compatibility
+    # (use ceiling for conservative pagination)
     size_param = int(math.ceil(font_size)) if _PILLOW_REQUIRES_INT_SIZE else font_size
     font_obj = ImageFont.truetype(str(font_path), size=size_param)
     width_px = font_obj.getlength(text)

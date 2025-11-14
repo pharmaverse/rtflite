@@ -9,6 +9,7 @@ The main entry point is the `convert_text` function which handles the
 text_convert parameter found throughout RTF components.
 """
 
+from ..text_convert import text_convert  # For backward compatibility
 from .converter import TextConverter
 from .symbols import LaTeXSymbolMapper
 
@@ -42,9 +43,6 @@ def convert_text(text: str | None, enable_conversion: bool = True) -> str | None
     converter = TextConverter()
     return converter.convert_latex_to_unicode(text)
 
-
-# For backward compatibility with existing imports
-from ..text_convert import text_convert
 
 __all__ = [
     "convert_text",

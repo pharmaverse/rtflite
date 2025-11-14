@@ -1,8 +1,9 @@
 """
 Pagination system for rtflite.
 
-This package provides advanced pagination capabilities inspired by r2rtf's approach,
-including page_index-like functionality through the PageDict and PageIndexManager classes.
+This package provides advanced pagination capabilities inspired by r2rtf's
+approach, including page_index-like functionality through the PageDict and
+PageIndexManager classes.
 """
 
 # Import existing core pagination classes for backward compatibility

@@ -6,7 +6,7 @@ from rtflite.strwidth import get_string_width
 
 
 class TestTextWidthAndLineCalculation:
-    """Test cases for text width and line calculation functionality using existing RTF components"""
+    """Validate text width and line calculations via RTF components."""
 
     def test_rtf_title_initialization_and_attributes(self):
         """Test RTFTitle initialization and text attributes"""

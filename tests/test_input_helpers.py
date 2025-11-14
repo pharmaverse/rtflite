@@ -274,7 +274,7 @@ class TestRTFBodyHelpers:
 
         assert body.text_font == [1]
         assert body.text_font_size == [12]
-        assert body.as_colheader == True  # Should remain unchanged
+        assert body.as_colheader  # Should remain unchanged
         assert body.page_by == ["col"]  # Should remain unchanged
 
     def test_set_border_defaults(self):

@@ -49,6 +49,8 @@ class TestMultiSectionSinglePageStrategy:
         """Test multi-section document with different headers per section."""
         df1 = pl.DataFrame({"Col1": [1, 2], "Col2": [3, 4]})
         df2 = pl.DataFrame({"ColA": [5, 6], "ColB": [7, 8]})
+        header1 = RTFColumnHeader(text=["Header1"])
+        header2 = RTFColumnHeader(text=["HeaderA"])
 
         # Skip this test - multi-section with custom headers not fully supported
         pytest.skip("Multi-section documents with custom headers not fully implemented")

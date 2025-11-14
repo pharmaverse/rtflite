@@ -8,7 +8,7 @@ from typing import Any
 
 import polars as pl
 
-from ..pagination import PageBreakType, PageConfig, PageDict, PageIndexManager
+from ..pagination import PageConfig, PageDict, PageIndexManager
 from .document_service import RTFDocumentService
 
 
@@ -157,7 +157,7 @@ class AdvancedPaginationService:
         return (0, 0)
 
     def force_content_to_page(self, content_id: str, page_num: int) -> None:
-        """Force specific content to appear on a specific page (page_index functionality)"""
+        """Force specific content to appear on a specific page (page_index feature)."""
         manager = self.get_page_index_manager()
         manager.assign_content_to_page(content_id, page_num)
 
@@ -221,7 +221,9 @@ class AdvancedPaginationService:
 
             if current_page.end_row >= next_page.start_row:
                 issues.append(
-                    f"Pages {current_page.page_number} and {next_page.page_number} have overlapping row ranges"
+                    "Pages "
+                    f"{current_page.page_number} and {next_page.page_number} have "
+                    "overlapping row ranges"
                 )
 
         # Check for missing row coverage

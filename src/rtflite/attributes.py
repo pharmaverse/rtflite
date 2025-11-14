@@ -1,6 +1,6 @@
 import math
 from collections.abc import MutableSequence, Sequence
-from typing import Any, Tuple
+from typing import Any
 
 import narwhals as nw
 import polars as pl
@@ -196,7 +196,8 @@ class TextAttributes(BaseModel):
                             else ""
                         )
                         raise ValueError(
-                            f"Invalid text background color: '{color}'.{suggestion_text}"
+                            "Invalid text background color: "
+                            f"'{color}'.{suggestion_text}"
                         )
         else:
             # Flat list
@@ -291,7 +292,7 @@ class TextAttributes(BaseModel):
         dim = [len(text), 1]
 
         def get_broadcast_value(attr_name, row_idx, col_idx=0):
-            """Helper function to get broadcast value for a given attribute at specified indices."""
+            """Get broadcast value for an attribute at specified indices."""
             attr_value = getattr(self, attr_name)
             return BroadcastValue(value=attr_value, dimension=dim).iloc(
                 row_idx, col_idx
@@ -471,7 +472,9 @@ class TableAttributes(TextAttributes):
     )
     cell_justification: list[list[str]] = Field(
         default=[["l"]],
-        description="Cell horizontal alignment ('l'=left, 'c'=center, 'r'=right, 'j'=justify)",
+        description=(
+            "Cell horizontal alignment ('l'=left, 'c'=center, 'r'=right, 'j'=justify)"
+        ),
     )
 
     cell_vertical_justification: list[list[str]] = Field(
@@ -599,14 +602,21 @@ class TableAttributes(TextAttributes):
         # Get all attributes that start with text_, col_, border_, or cell_
         attrs = {}
         for attr in dir(self):
-            if (
+            if not (
                 attr.startswith("text_")
                 or attr.startswith("col_")
                 or attr.startswith("border_")
                 or attr.startswith("cell_")
             ):
-                if not callable(getattr(self, attr)):
-                    attrs[attr] = getattr(self, attr)
+                continue
+
+            try:
+                attr_value = getattr(self, attr)
+            except AttributeError:
+                continue
+
+            if not callable(attr_value):
+                attrs[attr] = attr_value
 
         # Broadcast attributes to section indices, excluding None values
         return {
@@ -624,7 +634,7 @@ class TableAttributes(TextAttributes):
         dim = df.shape
 
         def get_broadcast_value(attr_name, row_idx, col_idx=0):
-            """Helper function to get broadcast value for a given attribute at specified indices."""
+            """Get broadcast value for an attribute at specified indices."""
             attr_value = getattr(self, attr_name)
             return BroadcastValue(value=attr_value, dimension=dim).iloc(
                 row_idx, col_idx
@@ -662,10 +672,7 @@ class TableAttributes(TextAttributes):
 
                 # Handle null values - display as empty string instead of "None"
                 raw_value = row[j]
-                if raw_value is None:
-                    cell_value = ""
-                else:
-                    cell_value = str(raw_value)
+                cell_value = "" if raw_value is None else str(raw_value)
 
                 cell = Cell(
                     text=TextContent(
@@ -717,7 +724,7 @@ class BroadcastValue(BaseModel):
         description="The value of the table, can be various types including DataFrame.",
     )
 
-    dimension: Tuple[int, int] | None = Field(
+    dimension: tuple[int, int] | None = Field(
         None, description="Dimensions of the table (rows, columns)"
     )
 
@@ -751,7 +758,7 @@ class BroadcastValue(BaseModel):
                 column_index % len(self.value[0])
             ]
         except IndexError as e:
-            raise ValueError(f"Invalid DataFrame index or slice: {e}")
+            raise ValueError(f"Invalid DataFrame index or slice: {e}") from e
 
     def to_list(self) -> list | None:
         if self.value is None:

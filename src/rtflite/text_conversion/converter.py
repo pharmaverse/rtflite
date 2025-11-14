@@ -7,7 +7,7 @@ readability and maintainability rather than performance.
 """
 
 import re
-from typing import Pattern
+from re import Pattern
 
 from .symbols import LaTeXSymbolMapper
 

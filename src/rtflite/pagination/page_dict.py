@@ -1,8 +1,9 @@
 """
 Advanced pagination control system for rtflite.
 
-This module implements a PageDict equivalent to r2rtf's advanced pagination features,
-providing page_index-like functionality while maintaining rtflite's existing architecture.
+This module implements a PageDict equivalent to r2rtf's advanced pagination
+features, providing page_index-like functionality while maintaining rtflite's
+existing architecture.
 """
 
 from collections.abc import Mapping, MutableMapping, MutableSet, Sequence
@@ -152,9 +153,10 @@ class PageDict(BaseModel):
         new_page: bool = False,
         additional_rows_per_page: int = 0,
     ) -> None:
-        """Calculate page configurations from a DataFrame
+        """Calculate page configurations from a DataFrame.
 
-        This method implements the core pagination algorithm inspired by r2rtf's approach.
+        This method implements the core pagination algorithm inspired by
+        r2rtf's approach.
         """
         if df.is_empty():
             return
@@ -230,13 +232,14 @@ class PageDict(BaseModel):
 
             if row_idx > 0:  # Don't break on first row
                 for rule in self.break_rules:
-                    if rule.applies_to_row(df, row_idx, row_idx - 1):
-                        if rule.force_new_page:
-                            forced_break = True
-                            break_type = PageBreakType.FORCED
-                            if rule.column and "subline" in rule.column.lower():
-                                break_type = PageBreakType.SUBLINE
-                            break
+                    if rule.force_new_page and rule.applies_to_row(
+                        df, row_idx, row_idx - 1
+                    ):
+                        forced_break = True
+                        break_type = PageBreakType.FORCED
+                        if rule.column and "subline" in rule.column.lower():
+                            break_type = PageBreakType.SUBLINE
+                        break
 
             # Check if we need to break due to row limit or forced break
             rows_on_current_page = row_idx - current_start

@@ -13,7 +13,7 @@ class AttributeDefaultsMixin:
     """Mixin class for common attribute default setting patterns."""
 
     def _set_attribute_defaults(self, exclude_attrs: set[Any] | None = None) -> None:
-        """Set default values for text attributes by converting scalars to lists/tuples."""
+        """Convert scalar text attributes to sequences for default handling."""
         exclude_attrs = exclude_attrs or set()
         for attr, value in self.__dict__.items():
             if attr not in exclude_attrs:
@@ -211,7 +211,14 @@ class RTFPage(BaseModel):
         ```python
         page = RTFPage(
             orientation="portrait",
-            margin=[1.0, 1.0, 1.5, 1.0, 1.5, 1.0]  # left, right, top, bottom, header, footer
+            margin=[
+                1.0,
+                1.0,
+                1.5,
+                1.0,
+                1.5,
+                1.0,
+            ],  # left, right, top, bottom, header, footer
         )
         ```
 
@@ -271,7 +278,10 @@ class RTFPage(BaseModel):
 
     nrow: int | None = Field(
         default=None,
-        description="Total rows per page including headers, data, footnotes, and sources. NOT just data rows - this is the complete page row budget.",
+        description=(
+            "Total rows per page including headers, data, footnotes, and "
+            "sources. NOT just data rows - this is the complete page row budget."
+        ),
     )
 
     border_first: str | None = Field(
@@ -289,15 +299,22 @@ class RTFPage(BaseModel):
 
     page_title: str = Field(
         default="all",
-        description="Where to display titles in multi-page documents ('first', 'last', 'all')",
+        description=(
+            "Where to display titles in multi-page documents ('first', 'last', 'all')"
+        ),
     )
     page_footnote: str = Field(
         default="last",
-        description="Where to display footnotes in multi-page documents ('first', 'last', 'all')",
+        description=(
+            "Where to display footnotes in multi-page documents ('first', "
+            "'last', 'all')"
+        ),
     )
     page_source: str = Field(
         default="last",
-        description="Where to display source in multi-page documents ('first', 'last', 'all')",
+        description=(
+            "Where to display source in multi-page documents ('first', 'last', 'all')"
+        ),
     )
 
     @field_validator("border_first", "border_last")
@@ -511,12 +528,8 @@ class RTFTableTextComponent(TableAttributes):
 
     def _process_text_conversion(self) -> None:
         """Convert text sequence to line-separated string format."""
-        if self.text is not None:
-            if isinstance(self.text, Sequence):
-                if len(self.text) == 0:
-                    self.text = []
-                else:
-                    self.text = "\\line ".join(self.text)
+        if self.text is not None and isinstance(self.text, Sequence):
+            self.text = [] if len(self.text) == 0 else "\\line ".join(self.text)
 
     def _set_default(self):
         for attr, value in self.__dict__.items():
@@ -853,7 +866,11 @@ class RTFBody(TableAttributes):
     )
     group_by: Sequence[str] | None = Field(
         default=None,
-        description="Column names for hierarchical value suppression. Values are shown only on first occurrence within groups, with page context restoration for multi-page tables.",
+        description=(
+            "Column names for hierarchical value suppression. Values appear "
+            "only on the first occurrence within groups, with page context "
+            "restoration for multi-page tables."
+        ),
     )
     page_by: Sequence[str] | None = Field(
         default=None,
@@ -861,18 +878,28 @@ class RTFBody(TableAttributes):
     )
     new_page: bool = Field(
         default=False,
-        description="Force new page before table. Automatically set to True when using subline_by.",
+        description=(
+            "Force a new page before the table. Automatically set to True when "
+            "using subline_by."
+        ),
     )
     pageby_header: bool = Field(
         default=True, description="Repeat column headers on new pages"
     )
     pageby_row: str = Field(
         default="column",
-        description="Page break handling: 'column' (keep column) or 'first_row' (use first row as header)",
+        description=(
+            "Page break handling: 'column' (keep column) or 'first_row' (use "
+            "first row as header)"
+        ),
     )
     subline_by: Sequence[str] | None = Field(
         default=None,
-        description="Column names to create paragraph headers. These columns are removed from the table and their values appear as section headers above each group. Forces pagination.",
+        description=(
+            "Column names to create paragraph headers. These columns are "
+            "removed from the table and their values appear as section headers "
+            "above each group. Forces pagination."
+        ),
     )
     last_row: bool = Field(
         default=True,
@@ -928,7 +955,7 @@ class RTFBody(TableAttributes):
         return self
 
     def _set_table_attribute_defaults(self) -> None:
-        """Set default values for table attributes, excluding special control attributes."""
+        """Set default table attributes, excluding special control fields."""
         excluded_attrs = {
             "as_colheader",
             "page_by",
@@ -977,7 +1004,9 @@ class RTFFigure(BaseModel):
     # Figure data
     figures: str | Path | list[str | Path] | None = Field(
         default=None,
-        description="Image file path(s) - single path or list of paths to PNG, JPEG, or EMF files",
+        description=(
+            "Image file path(s)-single path or list of paths to PNG, JPEG, or EMF files"
+        ),
     )
 
     # Figure dimensions

@@ -64,3 +64,19 @@ dev = [
     "pyarrow >= 21.0.0; python_version < '3.14'",
     "pyarrow >= 22.0.0; python_version >= '3.14'",
 ]
+
+[tool.ruff.lint]
+select = [
+    # pycodestyle
+    "E",
+    # Pyflakes
+    "F",
+    # pyupgrade
+    "UP",
+    # flake8-bugbear
+    "B",
+    # flake8-simplify
+    "SIM",
+    # isort
+    "I",
+]

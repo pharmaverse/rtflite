@@ -76,10 +76,12 @@ class LibreOfficeConverter:
 
             if current_version < min_version:
                 raise RuntimeError(
-                    f"LibreOffice version {current_version} is below minimum required version {min_version}."
+                    "LibreOffice version "
+                    f"{current_version} is below minimum required "
+                    f"version {min_version}."
                 )
         except subprocess.CalledProcessError as e:
-            raise RuntimeError(f"Failed to get LibreOffice version: {e}.")
+            raise RuntimeError(f"Failed to get LibreOffice version: {e}.") from e
 
     def convert(
         self,
@@ -171,7 +173,8 @@ class LibreOfficeConverter:
 
         if output_file.exists() and not overwrite:
             raise FileExistsError(
-                f"Output file already exists: {output_file}. Use overwrite=True to force."
+                f"Output file already exists: {output_file}. "
+                "Use overwrite=True to force."
             )
 
         # executable_path is guaranteed to be non-None after __init__
@@ -205,4 +208,4 @@ class LibreOfficeConverter:
                 f"LibreOffice conversion failed:\n"
                 f"Command output: {e.stdout}\n"
                 f"Error output: {e.stderr}"
-            )
+            ) from e

@@ -147,7 +147,8 @@ class PageBreakCalculator(BaseModel):
             page_by: Columns to group by for page breaks
             new_page: Whether to force new pages between groups
             table_attrs: Table attributes for accurate row calculation
-            additional_rows_per_page: Additional rows per page (headers, footnotes, sources)
+            additional_rows_per_page: Additional rows per page (headers,
+                footnotes, sources)
 
         Returns:
             List of (start_row, end_row) tuples for each page
@@ -167,7 +168,8 @@ class PageBreakCalculator(BaseModel):
         )
 
         for row_idx, row_height in enumerate(row_counts):
-            # Check if adding this row would exceed page limit (accounting for additional rows)
+            # Check if adding this row would exceed the page limit (including
+            # additional rows)
             if current_page_rows + row_height > available_data_rows_per_page:
                 # Create page break before this row
                 if current_page_start < row_idx:
@@ -223,7 +225,8 @@ class ContentDistributor(BaseModel):
             new_page: Force new pages between groups
             pageby_header: Repeat headers on new pages
             table_attrs: Table attributes for accurate calculations
-            additional_rows_per_page: Additional rows per page (headers, footnotes, sources)
+            additional_rows_per_page: Additional rows per page (headers,
+                footnotes, sources)
             subline_by: Columns to create subline headers by (forces new_page=True)
 
         Returns:

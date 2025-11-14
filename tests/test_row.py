@@ -1,3 +1,5 @@
+import pytest
+
 from rtflite.row import Border, Cell, Row, TextContent, Utils
 
 from .utils import ROutputReader
@@ -139,11 +141,8 @@ def test_text_justification():
     )
 
     # Test invalid justification value
-    try:
+    with pytest.raises(ValueError):
         TextContent(text="test", justification="left")._get_paragraph_formatting()
-        assert False, "Should have raised ValueError"
-    except ValueError:
-        pass
 
 
 def test_get_text_formatting():
@@ -170,11 +169,8 @@ def test_get_text_formatting():
     )
 
     # Test invalid format character
-    try:
+    with pytest.raises(ValueError):
         TextContent(text="test", format="xi")._get_text_formatting()
-        assert False, "Should have raised ValueError"
-    except ValueError:
-        pass
 
 
 # Note: Text color tests removed as feature is not implemented yet.

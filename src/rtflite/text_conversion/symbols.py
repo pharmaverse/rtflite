@@ -181,7 +181,7 @@ class LaTeXSymbolMapper:
         }
 
         # Optimized: use single dictionary and set lookups
-        for command in self.latex_to_char.keys():
+        for command in self.latex_to_char:
             if command in greek_letters:
                 categories["Greek Letters"].append(command)
             elif command in operators:

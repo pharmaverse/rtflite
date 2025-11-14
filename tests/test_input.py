@@ -44,12 +44,13 @@ def test_rtf_encode_minimal():
     rtf_output = rtf_doc.rtf_encode()
     expected = r_output.read("rtf_minimal")
 
-    # Use semantic RTF comparison (handles font tables, borders, whitespace, page breaks)
+    # Use semantic RTF comparison (handles font tables, borders, whitespace,
+    # and page breaks)
     assert_rtf_equals_semantic(rtf_output, expected, "test_rtf_encode_minimal")
 
 
 def test_rtf_encode_with_title():
-    """Test RTF document creation with title - legacy encoding methods removed during refactoring."""
+    """RTF document creation with title uses refactored encoding."""
     # Test text_font_size as a list conversion
     rtf_doc = RTFDocument(
         df=TestData.df1(),
@@ -351,7 +352,7 @@ def test_rtf_document_with_source_as_table():
 
 
 def test_rtf_document_with_both_footnote_and_source():
-    """Test RTF document with both footnote and source with different as_table settings."""
+    """Footnote/source combinations respect as_table settings."""
     df = TestData.df1()
 
     # Test default configuration (footnote as table, source as plain text)
@@ -405,7 +406,7 @@ def test_rtf_source_empty_text():
 
 
 def test_rtf_as_table_border_inheritance():
-    """Test that as_table setting correctly sets border defaults without overriding explicit borders."""
+    """as_table defaults honor explicit border overrides."""
     # Test footnote with explicit borders should not be overridden by as_table
     footnote_custom = RTFFootnote(
         text=["Test"],
@@ -537,7 +538,7 @@ def test_rtf_source_as_table_borders():
 
 
 def test_rtf_footnote_and_source_multipage_mixed():
-    """Test document with both footnote and source with different as_table settings across 3 pages."""
+    """Footnote/source combos across three pages keep as_table rules."""
     # Create dataset for 3 pages
     data_for_3_pages = {
         "Patient ID": [f"P{str(i + 1).zfill(3)}" for i in range(24)],
@@ -651,7 +652,8 @@ def test_rtf_multipage_pagination_with_as_table():
         # Note: underscores in case names get converted to RTF subscript (\sub)
         rtf_case_name = case_name.replace("_", "\\sub ")
         assert rtf_case_name in rtf_output, (
-            f"Case name should appear in RTF for {case_name} (looking for: {rtf_case_name})"
+            "Case name should appear in RTF for "
+            f"{case_name} (looking for: {rtf_case_name})"
         )
 
     # Compare different combinations to ensure they produce different outputs

@@ -23,7 +23,7 @@ def extract_r_tests(test_files):
     r_script = []
 
     for test_file in test_files:
-        with open(test_file, "r") as f:
+        with open(test_file) as f:
             content = f.read()
 
         # Find all R code chunks with labels
@@ -86,7 +86,10 @@ def extract_r_tests(test_files):
             output_{test_name}_{label} <- capture.output({{
             {clean_code}
             }})
-            cat(paste(output_{test_name}_{label}, collapse = "\\n"), file = "{output_file}")
+            cat(
+                paste(output_{test_name}_{label}, collapse = "\\n"),
+                file = "{output_file}"
+            )
             """)
 
     # Write R script

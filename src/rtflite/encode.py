@@ -122,7 +122,13 @@ class RTFDocument(BaseModel):
     # Core data
     df: pl.DataFrame | list[pl.DataFrame] | None = Field(
         default=None,
-        description="The DataFrame(s) containing the data for the RTF document. Accepts single DataFrame or list of DataFrames for multi-section documents. Accepts pandas or polars DataFrame, internally converted to polars. Optional when using figure-only documents.",
+        description=(
+            "The DataFrame(s) containing the data for the RTF document. "
+            "Accepts single DataFrame or list of DataFrames for "
+            "multi-section documents. Accepts pandas or polars DataFrame, "
+            "internally converted to polars. Optional when using figure-only "
+            "documents."
+        ),
     )
 
     # Document structure
@@ -144,11 +150,19 @@ class RTFDocument(BaseModel):
         Sequence[RTFColumnHeader] | Sequence[Sequence[RTFColumnHeader | None]]
     ) = Field(
         default_factory=lambda: [RTFColumnHeader()],
-        description="Column header settings. For multi-section documents, use nested list format: [[header1], [header2], [None]] where None means no header for that section.",
+        description=(
+            "Column header settings. For multi-section documents, use nested "
+            "list format: [[header1], [header2], [None]] where None means no "
+            "header for that section."
+        ),
     )
     rtf_body: RTFBody | Sequence[RTFBody] | None = Field(
         default_factory=lambda: RTFBody(),
-        description="Table body section settings including column widths and formatting. For multi-section documents, provide a list of RTFBody objects.",
+        description=(
+            "Table body section settings including column widths and "
+            "formatting. For multi-section documents, provide a list of "
+            "RTFBody objects."
+        ),
     )
     rtf_footnote: RTFFootnote | None = Field(
         default=None, description="Footnote text to appear at bottom of document"
@@ -191,7 +205,7 @@ class RTFDocument(BaseModel):
                     except Exception as e:
                         raise ValueError(
                             f"DataFrame must be a valid DataFrame: {str(e)}"
-                        )
+                        ) from e
             # Handle list of DataFrames
             else:
                 converted_dfs = []
@@ -205,21 +219,23 @@ class RTFDocument(BaseModel):
                             converted_dfs.append(nw_df.to_native(pl.DataFrame))
                         except Exception as e:
                             raise ValueError(
-                                f"DataFrame at index {i} must be a valid DataFrame: {str(e)}"
-                            )
+                                f"DataFrame at index {i} must be a valid "
+                                f"DataFrame: {str(e)}"
+                            ) from e
                 values["df"] = converted_dfs
         return values
 
     @model_validator(mode="after")
     def validate_column_names(self):
-        """Validate that column references exist in DataFrame and multi-section consistency."""
+        """Validate column references and multi-section consistency."""
         # Validate df and rtf_figure usage
         if self.df is None and self.rtf_figure is None:
             raise ValueError("Either 'df' or 'rtf_figure' must be provided")
 
         if self.df is not None and self.rtf_figure is not None:
             raise ValueError(
-                "Cannot use both 'df' and 'rtf_figure' together. Use either tables or figures in a single document."
+                "Cannot use both 'df' and 'rtf_figure' together. Use either "
+                "tables or figures in a single document."
             )
 
         # When RTFFigure is used, enforce as_table=False for footnotes and sources
@@ -249,18 +265,28 @@ class RTFDocument(BaseModel):
                 raise ValueError("When df is a list, rtf_body must also be a list")
             if len(self.df) != len(self.rtf_body):
                 raise ValueError(
-                    f"df list length ({len(self.df)}) must match rtf_body list length ({len(self.rtf_body)})"
+                    "df list length "
+                    f"({len(self.df)}) must match rtf_body list length "
+                    f"({len(self.rtf_body)})"
                 )
 
             # Validate rtf_column_header if it's nested list format
-            if isinstance(self.rtf_column_header[0], list):
-                if len(self.rtf_column_header) != len(self.df):
-                    raise ValueError(
-                        f"rtf_column_header nested list length ({len(self.rtf_column_header)}) must match df list length ({len(self.df)})"
-                    )
+            if (
+                isinstance(self.rtf_column_header, list)
+                and self.rtf_column_header
+                and isinstance(self.rtf_column_header[0], list)
+                and len(self.rtf_column_header) != len(self.df)
+            ):
+                raise ValueError(
+                    "rtf_column_header nested list length "
+                    f"({len(self.rtf_column_header)}) must match df list "
+                    f"length ({len(self.df)})"
+                )
 
             # Per-section column validation
-            for i, (section_df, section_body) in enumerate(zip(self.df, self.rtf_body)):
+            for i, (section_df, section_body) in enumerate(
+                zip(self.df, self.rtf_body, strict=True)
+            ):
                 self._validate_section_columns(section_df, section_body, i)
         else:
             # Single section validation (existing logic)
@@ -297,13 +323,16 @@ class RTFDocument(BaseModel):
     def __init__(self, **data):
         super().__init__(**data)
 
-        # Set default column widths based on DataFrame dimensions (if DataFrame provided)
+        # Set default column widths based on DataFrame dimensions when a
+        # DataFrame is provided.
         if self.df is not None:
             is_multi_section = isinstance(self.df, list)
 
             if is_multi_section:
                 # Handle multi-section documents
-                for section_df, section_body in zip(self.df, self.rtf_body):
+                for section_df, section_body in zip(
+                    self.df, self.rtf_body, strict=True
+                ):
                     dim = section_df.shape
                     section_body.col_rel_width = (
                         section_body.col_rel_width or [1] * dim[1]
@@ -315,7 +344,7 @@ class RTFDocument(BaseModel):
                 ):
                     # Nested list format: [[header1], [header2], [None]]
                     for section_headers, section_body in zip(
-                        self.rtf_column_header, self.rtf_body
+                        self.rtf_column_header, self.rtf_body, strict=True
                     ):
                         if section_headers:  # Skip if [None]
                             for header in section_headers:
@@ -335,7 +364,8 @@ class RTFDocument(BaseModel):
                     self.rtf_body.col_rel_width or [1] * dim[1]
                 )
 
-                # Inherit col_rel_width from rtf_body to rtf_column_header if not specified
+                # Inherit col_rel_width from rtf_body to rtf_column_header if
+                # not specified
                 if self.rtf_column_header:
                     for header in self.rtf_column_header:
                         if header.col_rel_width is None:

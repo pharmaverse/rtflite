@@ -199,7 +199,7 @@ class GroupingService:
         # Count unique combinations at each level
         structure = {}
 
-        for i, col in enumerate(group_by):
+        for i, _col in enumerate(group_by):
             level_cols = group_by[: i + 1]
             unique_combinations = df.select(level_cols).unique().height
             structure[f"level_{i + 1}"] = {
@@ -270,7 +270,8 @@ class GroupingService:
             subline_by: List of subline_by columns (optional)
 
         Raises:
-            ValueError: If data is not properly sorted or if there are overlapping columns
+            ValueError: If data is not properly sorted or
+                if there are overlapping columns
         """
         if df.is_empty():
             return
@@ -323,12 +324,16 @@ class GroupingService:
                 for j in range(1, len(values)):
                     if values[j] != current_value:
                         if values[j] in seen_values:
-                            # Found a value that appeared before but with different values in between
+                            # Found a value that appeared before but with
+                            # different values in between
                             raise ValueError(
                                 f"Data is not properly grouped by '{var}'. "
-                                f"Values with the same '{var}' must be contiguous (together). "
-                                f"Found '{values[j]}' at position {j} but it also appeared earlier. "
-                                f"Please reorder your data so that all rows with the same '{var}' are together."
+                                "Values with the same "
+                                f"'{var}' must be contiguous. Found "
+                                f"'{values[j]}' at position {j} but it also "
+                                "appeared earlier. Please reorder your data so "
+                                f"that all rows with the same '{var}' are "
+                                "together."
                             )
                         current_value = values[j]
                         seen_values.add(current_value)
@@ -367,9 +372,11 @@ class GroupingService:
                             key_desc = ", ".join(key_parts)
 
                             raise ValueError(
-                                f"Data is not properly grouped. "
-                                f"Group with {key_desc} appears in multiple non-contiguous sections. "
-                                f"Please reorder your data so that rows with the same grouping values are together."
+                                "Data is not properly grouped. "
+                                f"Group with {key_desc} appears in multiple "
+                                "non-contiguous sections. Please reorder your "
+                                "data so that rows with the same grouping "
+                                "values are together."
                             )
                         current_key = group_keys[j]
                         seen_keys.add(current_key)
@@ -435,7 +442,7 @@ class GroupingService:
                         value=attr_value, dimension=(num_rows, num_cols)
                     )
                     broadcasted = broadcast_obj.to_list()
-                except:
+                except Exception:
                     # If broadcasting fails, skip this attribute
                     continue
 
@@ -460,9 +467,12 @@ class GroupingService:
                     if len(unique_values) > 1:
                         col_name = remaining_cols[col_idx]
                         warnings.append(
-                            f"Column '{col_name}' has inconsistent {attr_name} values {list(unique_values)} "
-                            f"after broadcasting. When using subline_by, formatting should be consistent "
-                            f"within each column to ensure uniform appearance within subline groups."
+                            "Column "
+                            f"'{col_name}' has inconsistent {attr_name} values "
+                            f"{list(unique_values)} after broadcasting. When "
+                            "using subline_by, formatting should be consistent "
+                            "within each column to ensure uniform appearance "
+                            "within subline groups."
                         )
 
         return warnings
@@ -512,8 +522,9 @@ class GroupingService:
         if overlaps:
             overlap_details = "; ".join(overlaps)
             raise ValueError(
-                f"Overlapping variables found between grouping parameters: {overlap_details}. "
-                f"Each variable can only be used in one grouping parameter (group_by, page_by, or subline_by)."
+                "Overlapping variables found between grouping parameters: "
+                f"{overlap_details}. Each variable can only be used in one "
+                "grouping parameter (group_by, page_by, or subline_by)."
             )
 
 

@@ -1,4 +1,5 @@
-from typing import Literal, Mapping
+from collections.abc import Mapping
+from typing import Literal
 
 FontName = Literal[
     "Times New Roman",
