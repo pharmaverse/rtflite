@@ -11,8 +11,13 @@ This module tests all components of the text conversion functionality:
 
 import pytest
 
-from rtflite.text_conversion import text_convert  # backward compatibility
-from rtflite.text_conversion import LaTeXSymbolMapper, TextConverter, convert_text
+# Importing text_convert is for testing backward compatibility
+from rtflite.text_conversion import (
+    LaTeXSymbolMapper,
+    TextConverter,
+    convert_text,
+    text_convert,
+)
 
 
 class TestConvertTextFunction:
