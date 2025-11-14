@@ -1,5 +1,31 @@
 # Changelog
 
+## rtflite 1.1.0
+
+### Python version support
+
+- Added Python 3.14 support by conditionally requiring pyarrow >= 22.0.0
+  under Python 3.14 (#114).
+
+### Linting and typing
+
+- Added ruff linter configuration to `pyproject.toml` with popular rule sets
+  and fixed all linting issues (#115).
+- Refactored type annotations to use built-in generics and abstract base classes
+  following modern typing best practices (#107).
+
+### Documentation
+
+- Added pharmaverse badge to the README (#108).
+- Added `AGENTS.md` with guidelines for AI coding agents (#109).
+
+### Maintenance
+
+- Updated GitHub Actions workflows to use the latest `checkout` and
+  `setup-python` versions (#114).
+- Refactored the logo generation script to use ImageMagick, removing the
+  R and hexSticker dependency (#111).
+
 ## rtflite 1.0.2
 
 ### Typing
