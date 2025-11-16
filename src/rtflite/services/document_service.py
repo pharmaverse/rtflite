@@ -233,7 +233,7 @@ class RTFDocumentService:
                             need_header = True
                             break
 
-                if need_header:
+                if need_header and current_val != "-----":
                     col_idx = get_column_index(var_name)
                     # Add level information as third element in tuple
                     output.append([(indices[0], col_idx, level)])

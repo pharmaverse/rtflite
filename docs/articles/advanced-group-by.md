@@ -383,3 +383,45 @@ converter.convert("advanced-group-by-comprehensive.rtf", output_dir="../pdf/", f
 ```
 
 <embed src="../pdf/advanced-group-by-comprehensive.pdf" style="width:100%; height:400px" type="application/pdf">
+
+## page_by with divider row filtering
+
+A common scenario in clinical reporting is data that includes divider rows marked with "-----" to visually separate sections. 
+The page_by feature automatically filters these divider rows to create clean output while preserving all associated data.
+
+### Example: Data with divider rows
+
+```python exec="on" session="default" workdir="docs/articles/rtf/"
+# Create example data with divider rows
+df = pl.DataFrame({
+    "section": ["-----", "Age", "Age"],
+    "item": ["Participant in Population", "    <60", "    >=60"],
+    "value": [55, 25, 30],
+})
+
+df
+```
+
+When using `page_by` on data containing "-----" divider rows, rtflite automatically:
+
+```python exec="on" session="default" workdir="docs/articles/rtf/"
+doc_divider = rtf.RTFDocument(
+    df=df,
+    rtf_body=rtf.RTFBody(
+        page_by="section",
+        col_rel_width=[1, 1],
+        text_justification=["l", "l", "c"],
+        border_top = ["single", "", ""],
+        border_bottom = ["single", "", ""]
+    ),
+)
+
+# Generate the RTF file
+doc_divider.write_rtf("advanced-group-by-divider-filtering.rtf")
+```
+
+```python exec="on" session="default" workdir="docs/articles/rtf/"
+converter.convert("advanced-group-by-divider-filtering.rtf", output_dir="../pdf/", format="pdf", overwrite=True)
+```
+
+<embed src="../pdf/advanced-group-by-divider-filtering.pdf" style="width:100%; height:400px" type="application/pdf">
