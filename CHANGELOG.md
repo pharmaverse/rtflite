@@ -1,5 +1,16 @@
 # Changelog
 
+## rtflite 1.1.1
+
+### Bug fixes
+
+- Fixed text conversion issue for greater than or equal (>=) and less than or equal (<=) symbols (#119).
+- Resolved mypy type checking issue in text conversion service.
+
+### Features
+
+- Enhanced group-by divider filtering functionality (#118).
+
 ## rtflite 1.1.0
 
 ### Python version support
