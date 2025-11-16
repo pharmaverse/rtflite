@@ -163,7 +163,7 @@ class TextContent(BaseModel):
 
     def _convert_special_chars(self) -> str:
         """Convert special characters to RTF codes."""
-        text = self.text 
+        text = self.text
 
         # Basic RTF character conversion (matching r2rtf char_rtf mapping)
         # Only apply character conversions if text conversion is enabled
