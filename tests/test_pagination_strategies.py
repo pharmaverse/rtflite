@@ -204,6 +204,197 @@ class TestPaginationWithSublineBy:
         assert len(rtf_output) > 500
 
 
+class TestSublineByDividerFeature:
+    """Test the ----- divider feature for suppressing subline_by headers.
+
+    Based on r2rtf compatibility: when a page_by/subline_by value is '-----',
+    the section header row should be suppressed while maintaining pagination.
+    """
+
+    def test_divider_suppresses_header(self):
+        """Test that ----- value suppresses the subline header."""
+        df = pl.DataFrame(
+            {
+                "Section": ["-----", "-----", "Results", "Results"],
+                "Item": ["A", "B", "C", "D"],
+                "Value": [1, 2, 3, 4],
+            }
+        )
+
+        doc = RTFDocument(
+            df=df,
+            rtf_body=RTFBody(
+                subline_by=["Section"],
+                col_rel_width=[1, 1],
+            ),
+        )
+
+        rtf_output = doc.rtf_encode()
+
+        # Should have RTF content
+        assert isinstance(rtf_output, str)
+        # Should NOT have the ----- header text in output
+        assert "-----" not in rtf_output
+        # Should have the Results header
+        assert "Results" in rtf_output
+
+    def test_divider_with_page_breaks(self):
+        """Test ----- with forced page breaks (new_page=True)."""
+        df = pl.DataFrame(
+            {
+                "Chapter": ["-----", "-----", "Introduction", "Introduction", "-----", "-----"],
+                "Content": ["Item1", "Item2", "Item3", "Item4", "Item5", "Item6"],
+                "Value": [10, 20, 30, 40, 50, 60],
+            }
+        )
+
+        doc = RTFDocument(
+            df=df,
+            rtf_body=RTFBody(
+                subline_by=["Chapter"],
+                page_by=["Chapter"],
+                new_page=True,
+                col_rel_width=[1, 1],
+            ),
+            rtf_page=RTFPage(nrow=15),
+        )
+
+        rtf_output = doc.rtf_encode()
+
+        # Should have page breaks (3 groups)
+        assert "\\page" in rtf_output
+        # Should NOT have ----- in output
+        assert "-----" not in rtf_output
+        # Should have Introduction header
+        assert "Introduction" in rtf_output
+
+    def test_mixed_divider_and_regular_headers(self):
+        """Test document with both ----- and regular section headers."""
+        df = pl.DataFrame(
+            {
+                "Category": [
+                    "-----",  # Suppressed header
+                    "-----",  # Suppressed header
+                    "Active Patients",  # Visible header
+                    "Active Patients",  # Visible header
+                    "-----",  # Suppressed header
+                    "Completed",  # Visible header
+                ],
+                "Name": ["John", "Jane", "Bob", "Alice", "Charlie", "David"],
+                "Count": [100, 150, 200, 250, 300, 350],
+            }
+        )
+
+        doc = RTFDocument(
+            df=df,
+            rtf_body=RTFBody(
+                subline_by=["Category"],
+                col_rel_width=[2, 1],
+            ),
+        )
+
+        rtf_output = doc.rtf_encode()
+
+        # Should NOT have ----- in output
+        assert "-----" not in rtf_output
+        # Should have visible headers
+        assert "Active Patients" in rtf_output
+        assert "Completed" in rtf_output
+        # Should have data
+        assert "John" in rtf_output
+        assert "David" in rtf_output
+
+    def test_divider_with_multiple_subline_columns(self):
+        """Test ----- with multiple columns in subline_by."""
+        df = pl.DataFrame(
+            {
+                "Department": ["-----", "-----", "Sales", "Sales"],
+                "Region": ["North", "South", "East", "West"],
+                "Employee": ["A", "B", "C", "D"],
+                "Revenue": [100, 200, 300, 400],
+            }
+        )
+
+        doc = RTFDocument(
+            df=df,
+            rtf_body=RTFBody(
+                subline_by=["Department", "Region"],
+                col_rel_width=[1, 1],
+            ),
+        )
+
+        rtf_output = doc.rtf_encode()
+
+        # Should have RTF content
+        assert isinstance(rtf_output, str)
+        # ----- should suppress the entire header even with multiple columns
+        assert "-----" not in rtf_output
+        # Should have Sales header
+        assert "Sales" in rtf_output
+
+    def test_divider_preserves_pagination_structure(self):
+        """Test that ----- preserves pagination but only suppresses header."""
+        df = pl.DataFrame(
+            {
+                "Phase": ["-----", "-----", "Phase 2", "Phase 2", "Phase 3", "Phase 3"],
+                "Study": ["S1", "S2", "S3", "S4", "S5", "S6"],
+                "Patients": [10, 20, 30, 40, 50, 60],
+            }
+        )
+
+        doc = RTFDocument(
+            df=df,
+            rtf_body=RTFBody(
+                subline_by=["Phase"],
+                page_by=["Phase"],
+                new_page=True,
+                col_rel_width=[1, 1],
+            ),
+            rtf_page=RTFPage(nrow=10),
+        )
+
+        rtf_output = doc.rtf_encode()
+
+        # Should still have page breaks (3 phases)
+        assert rtf_output.count("\\page") >= 2
+        # Should NOT have ----- visible
+        assert "-----" not in rtf_output
+        # Should have Phase 2 and Phase 3 headers
+        assert "Phase 2" in rtf_output
+        assert "Phase 3" in rtf_output
+        # Should have all data rows
+        assert "S1" in rtf_output
+        assert "S6" in rtf_output
+
+    def test_all_dividers_no_headers(self):
+        """Test when all sections use ----- (no headers shown)."""
+        df = pl.DataFrame(
+            {
+                "Section": ["-----", "-----", "-----", "-----"],
+                "Item": ["A", "B", "C", "D"],
+                "Value": [1, 2, 3, 4],
+            }
+        )
+
+        doc = RTFDocument(
+            df=df,
+            rtf_body=RTFBody(
+                subline_by=["Section"],
+                col_rel_width=[1, 1],
+            ),
+        )
+
+        rtf_output = doc.rtf_encode()
+
+        # Should have RTF content
+        assert isinstance(rtf_output, str)
+        # Should NOT have any ----- in output
+        assert "-----" not in rtf_output
+        # Should still have the data
+        assert "A" in rtf_output
+        assert "D" in rtf_output
+
+
 class TestPaginationBoundaryConditions:
     """Test edge cases and boundary conditions for pagination."""
 

@@ -1241,7 +1241,7 @@ class PaginatedStrategy(EncodingStrategy):
             rtf_body: RTFBody attributes for formatting
 
         Returns:
-            RTF string for the subline paragraph
+            RTF string for the subline paragraph, or empty string if value is "-----"
         """
         if not subline_header_info:
             return ""
@@ -1252,6 +1252,9 @@ class PaginatedStrategy(EncodingStrategy):
             header_parts = []
             for _col, value in subline_header_info["group_values"].items():
                 if value is not None:
+                    # Skip header if value is "-----" (r2rtf compatibility)
+                    if str(value) == "-----":
+                        return ""
                     header_parts.append(str(value))
 
             if not header_parts:
@@ -1263,6 +1266,9 @@ class PaginatedStrategy(EncodingStrategy):
             header_parts = []
             for col, value in subline_header_info.items():
                 if value is not None and col not in ["group_by_columns", "header_text"]:
+                    # Skip header if value is "-----" (r2rtf compatibility)
+                    if str(value) == "-----":
+                        return ""
                     header_parts.append(str(value))
 
             if not header_parts:
