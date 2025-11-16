@@ -173,10 +173,12 @@ class TextContent(BaseModel):
                 text = text.replace(char, rtf)
 
         # Apply LaTeX to Unicode conversion if enabled
-        text = text_convert(text, self.convert)
+        converted_text = text_convert(text, self.convert)
 
-        if text is None:
+        if converted_text is None:
             return ""
+
+        text = converted_text
 
         converted_text = ""
         for char in text:
