@@ -386,6 +386,62 @@ class TestBackwardCompatibility:
         assert result is not None
 
 
+class TestRTFCharacterMapping:
+    """Test RTF character mapping conversions."""
+
+    def test_greater_than_or_equal_conversion(self):
+        """Test that >= symbol is properly converted through the full RTF pipeline."""
+        from rtflite.row import TextContent
+
+        # Test with conversion enabled
+        content = TextContent(text="Score >= 5", convert=True)
+        result = content._convert_special_chars()
+
+        # The >= should be converted to \geq, then to Unicode ≥, then to RTF encoding
+        assert ">=" not in result  # Original symbol should be converted
+        assert "\\uc1\\u8805*" in result  # Should contain RTF Unicode encoding for ≥
+        assert "Score" in result  # Other text should be preserved
+        assert "5" in result
+
+    def test_less_than_or_equal_conversion(self):
+        """Test that <= symbol is properly converted through the full RTF pipeline."""
+        from rtflite.row import TextContent
+
+        content = TextContent(text="Score <= 10", convert=True)
+        result = content._convert_special_chars()
+
+        # The <= should be converted to \leq, then to Unicode ≤, then to RTF encoding
+        assert "<=" not in result  # Original symbol should be converted
+        assert "\\uc1\\u8804*" in result  # Should contain RTF Unicode encoding for ≤
+        assert "Score" in result  # Other text should be preserved
+        assert "10" in result
+
+    def test_conversion_disabled_preserves_symbols(self):
+        """Test that symbols are preserved when conversion is disabled."""
+        from rtflite.row import TextContent
+
+        content = TextContent(text="Score >= 5 and <= 10", convert=False)
+        result = content._convert_special_chars()
+        assert ">=" in result
+        assert "<=" in result
+        assert "\\geq" not in result
+        assert "\\leq" not in result
+
+    def test_rtf_char_mapping_order_matters(self):
+        """Test that RTF character mapping happens before LaTeX conversion."""
+        from rtflite.row import TextContent
+
+        # This test verifies the fix where RTF char mapping now happens before LaTeX
+        content = TextContent(text="Test >= condition", convert=True)
+        result = content._convert_special_chars()
+
+        # Should follow the pipeline: >= -> \geq -> Unicode ≥ -> RTF \uc1\u8805*
+        assert ">=" not in result  # Should not have original >=
+        assert result != "Test >= condition"  # Should be different from input
+        assert "Test" in result  # Preserve other text
+        assert "condition" in result
+
+
 class TestIntegrationScenarios:
     """Test integration scenarios that simulate real usage."""
 

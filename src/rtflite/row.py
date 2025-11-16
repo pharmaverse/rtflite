@@ -163,8 +163,17 @@ class TextContent(BaseModel):
 
     def _convert_special_chars(self) -> str:
         """Convert special characters to RTF codes."""
-        # First apply LaTeX to Unicode conversion if enabled
-        text = text_convert(self.text, self.convert)
+        text = self.text 
+
+        # Basic RTF character conversion (matching r2rtf char_rtf mapping)
+        # Only apply character conversions if text conversion is enabled
+        if self.convert:
+            rtf_chars = RTFConstants.RTF_CHAR_MAPPING
+            for char, rtf in rtf_chars.items():
+                text = text.replace(char, rtf)
+
+        # Apply LaTeX to Unicode conversion if enabled
+        text = text_convert(text, self.convert)
 
         if text is None:
             return ""
@@ -179,13 +188,6 @@ class TextContent(BaseModel):
                 converted_text += f"\\uc1\\u{rtf_value}*"
 
         text = converted_text
-
-        # Basic RTF character conversion (matching r2rtf char_rtf mapping)
-        # Only apply character conversions if text conversion is enabled
-        if self.convert:
-            rtf_chars = RTFConstants.RTF_CHAR_MAPPING
-            for char, rtf in rtf_chars.items():
-                text = text.replace(char, rtf)
 
         return text
 
