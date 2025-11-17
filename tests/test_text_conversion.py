@@ -397,10 +397,14 @@ class TestRTFCharacterMapping:
         content = TextContent(text="Score >= 5", convert=True)
         result = content._convert_special_chars()
 
-        # The >= should be converted to \geq, then to Unicode ≥, then to RTF encoding
-        assert ">=" not in result  # Original symbol should be converted
-        assert "\\uc1\\u8805*" in result  # Should contain RTF Unicode encoding for ≥
-        assert "Score" in result  # Other text should be preserved
+        # The >= should be converted to \geq, then to Unicode U+2265,
+        # then to RTF encoding
+        # Original symbol should be converted
+        assert ">=" not in result
+        # Should contain RTF Unicode encoding for U+2265
+        assert "\\uc1\\u8805*" in result
+        # Other text should be preserved
+        assert "Score" in result
         assert "5" in result
 
     def test_less_than_or_equal_conversion(self):
@@ -410,10 +414,15 @@ class TestRTFCharacterMapping:
         content = TextContent(text="Score <= 10", convert=True)
         result = content._convert_special_chars()
 
-        # The <= should be converted to \leq, then to Unicode ≤, then to RTF encoding
-        assert "<=" not in result  # Original symbol should be converted
-        assert "\\uc1\\u8804*" in result  # Should contain RTF Unicode encoding for ≤
-        assert "Score" in result  # Other text should be preserved
+        # The <= should be converted to \leq, then to Unicode U+2264,
+        # then to RTF encoding
+
+        # Original symbol should be converted
+        assert "<=" not in result
+        # Should contain RTF Unicode encoding for U+2264
+        assert "\\uc1\\u8804*" in result
+        # Other text should be preserved
+        assert "Score" in result
         assert "10" in result
 
     def test_conversion_disabled_preserves_symbols(self):
@@ -435,7 +444,7 @@ class TestRTFCharacterMapping:
         content = TextContent(text="Test >= condition", convert=True)
         result = content._convert_special_chars()
 
-        # Should follow the pipeline: >= -> \geq -> Unicode ≥ -> RTF \uc1\u8805*
+        # Should follow the pipeline: >= -> \geq -> Unicode U+2265 -> RTF \uc1\u8805*
         assert ">=" not in result  # Should not have original >=
         assert result != "Test >= condition"  # Should be different from input
         assert "Test" in result  # Preserve other text
