@@ -391,7 +391,7 @@ The page_by feature automatically filters these divider rows to create clean out
 
 ### Example: Data with divider rows
 
-```python exec="on" session="default" workdir="docs/articles/rtf/"
+```python exec="on" source="above" session="default" workdir="docs/articles/rtf/"
 # Create example data with divider rows
 df = pl.DataFrame({
     "section": ["-----", "Age", "Age"],
@@ -404,7 +404,7 @@ df
 
 When using `page_by` on data containing "-----" divider rows, rtflite automatically:
 
-```python exec="on" session="default" workdir="docs/articles/rtf/"
+```python exec="on" source="above" session="default" workdir="docs/articles/rtf/"
 doc_divider = rtf.RTFDocument(
     df=df,
     rtf_body=rtf.RTFBody(
