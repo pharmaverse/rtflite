@@ -1,5 +1,17 @@
 # Changelog
 
+## rtflite 1.1.1
+
+### New features
+
+- Enhanced group-by divider filtering functionality to support the
+  `-----` syntax (#118).
+
+### Bug fixes
+
+- Fixed text conversion issue for greater than or equal (>=) and less than or
+  equal (<=) symbols (#119).
+
 ## rtflite 1.1.0
 
 ### Python version support
