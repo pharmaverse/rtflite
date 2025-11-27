@@ -916,7 +916,7 @@ class PaginatedStrategy(EncodingStrategy):
                             else []
                         )
                         # Collect columns that should be excluded
-                        excluded_cols = set()
+                        excluded_cols: set[str] = set()
                         if document.rtf_body.subline_by:
                             excluded_cols.update(document.rtf_body.subline_by)
                         if document.rtf_body.page_by and document.rtf_body.new_page:
