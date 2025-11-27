@@ -17,6 +17,125 @@ class RTFEncodingService:
 
         self.syntax = RTFSyntaxGenerator()
 
+    def encode_spanning_row(
+        self,
+        text: str,
+        page_width: float,
+        rtf_body_attrs=None,
+    ) -> Sequence[str]:
+        """Generate a spanning table row (single cell spanning full width).
+
+        This is used for page_by group headers that span across all columns.
+        Works for both single-page and paginated documents.
+
+        Args:
+            text: Text to display in the spanning row
+            page_width: Total page width in inches
+            rtf_body_attrs: RTFBody attributes for styling (optional)
+
+        Returns:
+            List of RTF strings for the spanning row
+        """
+        from ..row import Border, Cell, Row, TextContent
+
+        # Use body attributes if provided, otherwise use defaults
+        if rtf_body_attrs:
+            font = rtf_body_attrs.text_font[0][0] if rtf_body_attrs.text_font else 0
+            size = (
+                rtf_body_attrs.text_font_size[0][0]
+                if rtf_body_attrs.text_font_size
+                else 18
+            )
+            text_format = (
+                rtf_body_attrs.text_format[0][0] if rtf_body_attrs.text_format else ""
+            )
+            color = rtf_body_attrs.text_color[0][0] if rtf_body_attrs.text_color else ""
+            bg_color = (
+                rtf_body_attrs.text_background_color[0][0]
+                if rtf_body_attrs.text_background_color
+                else ""
+            )
+            justification = (
+                rtf_body_attrs.text_justification[0][0]
+                if rtf_body_attrs.text_justification
+                else "c"
+            )
+            border_left = (
+                rtf_body_attrs.border_left[0][0]
+                if rtf_body_attrs.border_left
+                else "single"
+            )
+            border_right = (
+                rtf_body_attrs.border_right[0][0]
+                if rtf_body_attrs.border_right
+                else "single"
+            )
+            border_top = (
+                rtf_body_attrs.border_top[0][0]
+                if rtf_body_attrs.border_top
+                else "single"
+            )
+            border_bottom = (
+                rtf_body_attrs.border_bottom[0][0]
+                if rtf_body_attrs.border_bottom
+                else "single"
+            )
+            v_just = (
+                rtf_body_attrs.cell_vertical_justification[0][0]
+                if rtf_body_attrs.cell_vertical_justification
+                else "b"
+            )
+            cell_just = (
+                rtf_body_attrs.cell_justification[0][0]
+                if rtf_body_attrs.cell_justification
+                else "c"
+            )
+        else:
+            font = 0
+            size = 18
+            text_format = ""
+            color = ""
+            bg_color = ""
+            justification = "c"
+            border_left = "single"
+            border_right = "single"
+            border_top = "single"
+            border_bottom = "single"
+            v_just = "b"
+            cell_just = "c"
+
+        # Create spanning cell
+        cell = Cell(
+            text=TextContent(
+                text=text,
+                font=font,
+                size=size,
+                format=text_format,
+                color=color,
+                background_color=bg_color,
+                justification=justification,
+                indent_first=0,
+                indent_left=0,
+                indent_right=0,
+                space=0,  # No line spacing
+                space_before=15,
+                space_after=15,
+                convert=False,
+                hyphenation=True,
+            ),
+            width=page_width,
+            border_left=Border(style=border_left),
+            border_right=Border(style=border_right),
+            border_top=Border(style=border_top),
+            border_bottom=Border(style=border_bottom),
+            vertical_justification=v_just,
+        )
+
+        # Create row with single spanning cell
+        row = Row(row_cells=[cell], justification=cell_just, height=0)
+
+        return row._as_rtf()
+
     def encode_document_start(self) -> str:
         """Encode RTF document start."""
         return "{\\rtf1\\ansi\n\\deff0\\deflang1033"

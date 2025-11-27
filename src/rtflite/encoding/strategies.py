@@ -1005,6 +1005,28 @@ class PaginatedStrategy(EncodingStrategy):
 
                 page_elements.extend(header_elements)
 
+            # Add page_by spanning table row after headers if specified
+            if page_info.get("pageby_header_info"):
+                # Extract group values for spanning row text
+                header_info = page_info["pageby_header_info"]
+                if "group_values" in header_info:
+                    header_parts = [
+                        str(value)
+                        for value in header_info["group_values"].values()
+                        if value is not None
+                    ]
+                    if header_parts:
+                        header_text = ", ".join(header_parts)
+                        # Use shared encoding service method
+                        pageby_row_content = self.encoding_service.encode_spanning_row(
+                            text=header_text,
+                            page_width=document.rtf_page.col_width
+                            if document.rtf_page.col_width
+                            else 8.5,
+                            rtf_body_attrs=document.rtf_body,
+                        )
+                        page_elements.extend(pageby_row_content)
+
             # Add page content (table body) with proper border handling
             page_df = page_info["data"]
 
@@ -1281,3 +1303,4 @@ class PaginatedStrategy(EncodingStrategy):
         return (
             f"{{\\pard\\hyphpar\\fi0\\li0\\ri0\\ql\\fs18{{\\f0 {header_text}}}\\par}}"
         )
+

@@ -4,7 +4,7 @@ import polars as pl
 
 from rtflite.encode import RTFDocument
 from rtflite.encoding import PaginatedStrategy, RTFEncodingEngine, SinglePageStrategy
-from rtflite.input import RTFBody, RTFPage
+from rtflite.input import RTFBody, RTFColumnHeader, RTFPage, RTFTitle
 from rtflite.services.document_service import RTFDocumentService
 
 
@@ -158,8 +158,6 @@ class TestPaginatedStrategy:
         as regular data columns when used with pagination (new_page=True), commonly
         used with landscape orientation.
         """
-        from rtflite.input import RTFColumnHeader, RTFTitle
-
         strategy = PaginatedStrategy()
 
         # Create test data with a page_by column
@@ -216,9 +214,12 @@ class TestPaginatedStrategy:
         # The exact cell count will depend on headers and structure, but it should
         # be consistent with 2 data columns, not 3
 
-        # Most importantly: verify that Subject 1 and Subject 2 text does NOT
-        # appear in table cells (they should be used for pagination only)
-        # The page_by values might appear in page breaks or section markers,
-        # but should not appear as table cell content
-        # Note: This is a simplified check - in practice the values may appear
-        # in other contexts, but the key is they're not in the data table structure
+        # Verify that Subject 1 and Subject 2 appear as section headers
+        # (not in table cells)
+        # The page_by values should appear as section headers before each group
+        assert "Subject 1" in result
+        assert "Subject 2" in result
+
+        # Verify that section headers appear before table content
+        # The page_by values should be in paragraph format (\\pard), not table cells
+        assert "\\pard" in result  # Paragraph formatting for section headers
