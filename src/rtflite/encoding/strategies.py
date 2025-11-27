@@ -98,7 +98,6 @@ class EncodingStrategy(ABC):
             elements.extend(extra_top_elements)
 
         # 4. Figure (Before)
-        # Logic: "before" position figures show on first page (or if handled by caller)
         if (
             page_figure
             and page_figure.figures
@@ -109,22 +108,15 @@ class EncodingStrategy(ABC):
             elements.append("\n")
 
         # 5. Column Headers
-        # Note: The caller is responsible for passing the correct headers for this page
-        # (e.g. PaginatedStrategy passes headers for every page if needed)
-        
-        # Auto-generate header text if missing (and if body asks for it)
-        # We need to handle both single body and list body (for multi-section)
+        # Auto-generate header text if missing
         current_body = (
             page_body_attrs[0]
             if isinstance(page_body_attrs, list) and page_body_attrs
             else page_body_attrs
         )
         
-        # Check if we need to generate headers (only if headers provided but text is None)
-        # This logic mimics SinglePageStrategy and PaginatedStrategy header gen
         headers_to_process = []
         if page_column_header:
-            # Check structure
             if is_nested_header_list(page_column_header):
                 for section_headers in page_column_header:
                     if section_headers:
@@ -134,12 +126,6 @@ class EncodingStrategy(ABC):
             elif is_single_header(page_column_header):
                 headers_to_process = [page_column_header]
 
-            # Auto-fill text if needed
-            # Only for the FIRST header if flat list?
-            # SinglePageStrategy: "Flat list case - get first header... if text is None... auto-generate"
-            # PaginatedStrategy: "For each header... if text is None... auto-generate"
-            
-            # Unified logic: Check first applicable header
             first_header = headers_to_process[0] if headers_to_process else None
             if (
                 first_header
@@ -147,15 +133,13 @@ class EncodingStrategy(ABC):
                 and is_single_body(current_body)
                 and current_body.as_colheader
                 and page_df is not None
-                and not isinstance(page_df, list) # Only for single DF
+                and not isinstance(page_df, list)
             ):
-                 # Auto-generate headers from column names
                 import polars as pl
                 
                 excluded_columns = list(current_body.page_by or []) + list(
                     current_body.subline_by or []
                 )
-                # Also exclude page_by if new_page=True (handled in preparation usually, but safe to check)
                 
                 columns = [
                     col for col in page_df.columns if col not in excluded_columns
@@ -167,23 +151,12 @@ class EncodingStrategy(ABC):
                 )
                 first_header.text = header_df
 
-                # Adjust col_rel_width if needed
-                # (This logic matches SinglePageStrategy)
                 if excluded_columns and current_body.col_rel_width:
-                     # We assume the caller hasn't already stripped cols from col_rel_width
-                     # But wait, PaginatedStrategy strips cols from DF.
-                     # If page_df has stripped cols, we just use its cols.
-                     
-                     # If col_rel_width length matches ORIGINAL cols, we need to filter.
-                     # But we don't have original cols here easily.
-                     # Fallback: if col_rel_width doesn't match new col count, use 1s.
                      if len(current_body.col_rel_width) != len(columns):
                          first_header.col_rel_width = [1] * len(columns)
-                     # Else assume it matches
                 elif first_header.col_rel_width is None:
                      first_header.col_rel_width = [1] * len(columns)
 
-        # Encode headers
         if headers_to_process:
             for header in headers_to_process:
                 if header:
@@ -199,7 +172,6 @@ class EncodingStrategy(ABC):
 
         # 7. Body
         if page_df is not None:
-            # Handle multi-section (list) or single DF
             df_list = page_df if isinstance(page_df, list) else [page_df]
             body_list = (
                 page_body_attrs
@@ -207,17 +179,11 @@ class EncodingStrategy(ABC):
                 else [page_body_attrs]
             )
             
-            # Adjust lists to match length
             if len(body_list) < len(df_list):
                 body_list = body_list * (len(df_list) // len(body_list) + 1)
             body_list = body_list[:len(df_list)]
 
             for df, body in zip(df_list, body_list, strict=False):
-                # We assume body borders are already set correctly by caller for this page
-                
-                # Create temp doc/context if needed?
-                # encode_body needs 'document' for needs_pagination check.
-                # We pass force_single_page=True to avoid recursion/pagination logic
                 body_content = self.encoding_service.encode_body(
                     document, df, body, force_single_page=True
                 )
@@ -288,19 +254,12 @@ class SinglePageStrategy(EncodingStrategy):
         """Encode a single-page document with complete border and layout handling."""
         import polars as pl
         from ..attributes import BroadcastValue
+        from copy import deepcopy
         
-        # Handle figure-only documents (no table)
         if document.df is None:
             return self._encode_figure_only_document_simple(document)
 
-        # Handle multi-section document (list of DFs)
-        # We treat the whole list as one "page" content
-        # But we need to handle borders for each section if they are joined
-        # actually SinglePageStrategy logic for multi-section is specific:
-        # it stacks them.
-        
-        # Calculate global borders
-        dim = (0, 0) # Placeholder
+        dim = (0, 0)
         if isinstance(document.df, list) and document.df:
              dim = document.df[0].shape
         elif document.df is not None:
@@ -317,35 +276,21 @@ class SinglePageStrategy(EncodingStrategy):
             doc_border_bottom_list[0] if doc_border_bottom_list else None
         )
 
-        # Prepare body attributes with borders
-        # We need to copy them to avoid side effects?
-        # The original code modified them in place. We will do the same for now to match behavior
-        # or copy. Copy is safer.
-        from copy import deepcopy
-        
-        # Prepare Data
         page_df = document.df
-        
-        # Prepare Body Attributes
         page_body_attrs = deepcopy(document.rtf_body)
         
-        # Logic to apply borders to page_body_attrs
-        # If list:
         if isinstance(page_body_attrs, list):
-             # First section gets top border
              if page_body_attrs and doc_border_top:
                   b = page_body_attrs[0]
                   d = page_df[0].shape
                   b.border_top = BroadcastValue(value=b.border_top, dimension=d).update_row(0, doc_border_top)
              
-             # Last section gets bottom border (if no footnote)
              if document.rtf_footnote is None and page_body_attrs and doc_border_bottom:
                   b = page_body_attrs[-1]
                   d = page_df[-1].shape
                   if d[0] > 0:
                       b.border_bottom = BroadcastValue(value=b.border_bottom, dimension=d).update_row(d[0]-1, doc_border_bottom)
         else:
-             # Single body
              if page_body_attrs:
                  d = page_df.shape
                  if doc_border_top:
@@ -354,11 +299,8 @@ class SinglePageStrategy(EncodingStrategy):
                  if document.rtf_footnote is None and doc_border_bottom and d[0] > 0:
                      page_body_attrs.border_bottom = BroadcastValue(value=page_body_attrs.border_bottom, dimension=d).update_row(d[0]-1, doc_border_bottom)
 
-        # Prepare Headers
         page_column_header = deepcopy(document.rtf_column_header)
-        # Apply border top to header if it exists
         if page_column_header and doc_border_top:
-            # Check first header
             first = None
             if is_nested_header_list(page_column_header) and page_column_header[0]:
                 first = page_column_header[0][0]
@@ -368,24 +310,20 @@ class SinglePageStrategy(EncodingStrategy):
                 first = page_column_header
             
             if first:
-                 # Dimension?
-                 h_dim = (1, dim[1]) # Approximate
-                 if first.text:
+                 h_dim = (1, dim[1])
+                 if first.text is not None:
                      if isinstance(first.text, pl.DataFrame): h_dim = first.text.shape
                      else: h_dim = (1, len(first.text))
                  
                  first.border_top = BroadcastValue(value=first.border_top, dimension=h_dim).update_row(0, doc_border_top)
 
-        # Prepare Footnote
         page_footnote = deepcopy(document.rtf_footnote)
         if page_footnote and doc_border_bottom:
              page_footnote.border_bottom = BroadcastValue(value=page_footnote.border_bottom, dimension=(1,1)).update_row(0, [doc_border_bottom[0]])
 
-        # Set color context
         from ..services.color_service import color_service
         color_service.set_document_context(document)
 
-        # Render
         content_parts = self._render_page_content(
             document=document,
             page_df=page_df,
@@ -402,7 +340,6 @@ class SinglePageStrategy(EncodingStrategy):
         )
         
         result = self._wrap_document(document, content_parts)
-        
         color_service.clear_document_context()
         return result
 
@@ -439,22 +376,18 @@ class PaginatedStrategy(EncodingStrategy):
         from ..row import Utils
         from ..attributes import BroadcastValue
 
-        # Handle figure-only documents
         if document.df is None:
             return self._encode_figure_only_document_with_pagination(document)
 
-        # Set color context
         from ..services.color_service import color_service
         color_service.set_document_context(document)
 
-        # Prepare Data (Flatten/Process)
         processed_df, original_df = (
             self.encoding_service.prepare_dataframe_for_body_encoding(
                 document.df, document.rtf_body
             )
         )
         
-        # Warnings check (from original)
         if is_single_body(document.rtf_body) and document.rtf_body.subline_by is not None:
             import warnings
             from typing import cast
@@ -467,11 +400,9 @@ class PaginatedStrategy(EncodingStrategy):
             for warning_msg in formatting_warnings:
                 warnings.warn(f"subline_by formatting: {warning_msg}", UserWarning, stacklevel=3)
 
-        # Pagination Setup
         _, distributor = self.document_service.create_pagination_instance(document)
         col_total_width = document.rtf_page.col_width
         
-        # Calculate Col Widths (logic from original)
         if isinstance(document.df, list):
             dim = (sum(d.shape[0] for d in document.df), document.df[0].shape[1])
         else:
@@ -484,7 +415,6 @@ class PaginatedStrategy(EncodingStrategy):
 
         additional_rows = self.document_service.calculate_additional_rows_per_page(document)
         
-        # Distribute
         pages = distributor.distribute_content(
             df=original_df,
             col_widths=col_widths,
@@ -496,16 +426,12 @@ class PaginatedStrategy(EncodingStrategy):
             subline_by=document.rtf_body.subline_by if is_single_body(document.rtf_body) else None,
         )
 
-        # Replace page data with processed data
         for page_info in pages:
             start_row = page_info["start_row"]
             end_row = page_info["end_row"]
             page_info["data"] = processed_df.slice(start_row, end_row - start_row + 1)
             
-        # Apply group_by processing (Global context restoration)
         if is_single_body(document.rtf_body) and document.rtf_body.group_by:
-            # (Logic copied from original - omitted for brevity, assumes it works similarly)
-            # I'll just copy the block
             page_start_indices = []
             cumulative_rows = 0
             for i, page_info in enumerate(pages):
@@ -530,7 +456,6 @@ class PaginatedStrategy(EncodingStrategy):
                 page_info["data"] = restored_df.slice(start_idx, page_rows)
                 start_idx += page_rows
 
-        # Render Pages
         all_content_parts = []
         
         for i, page_info in enumerate(pages):
@@ -538,44 +463,41 @@ class PaginatedStrategy(EncodingStrategy):
             is_last = page_info["is_last_page"]
             page_num = page_info["page_number"]
             
-            # Page Break
             if not is_first:
                 all_content_parts.append(self.document_service.generate_page_break(document))
                 
-            # Determine active elements
             show_title = document.rtf_title and self.document_service.should_show_element_on_page(document.rtf_page.page_title, page_info)
-            show_subline = document.rtf_subline and self.document_service.should_show_element_on_page(document.rtf_page.page_title, page_info) # Note: uses page_title setting for subline? Original code: "document.rtf_page.page_title, page_info" for subline too.
+            show_subline = document.rtf_subline and self.document_service.should_show_element_on_page(document.rtf_page.page_title, page_info)
             show_footnote = document.rtf_footnote and self.document_service.should_show_element_on_page(document.rtf_page.page_footnote, page_info)
             show_source = document.rtf_source and self.document_service.should_show_element_on_page(document.rtf_page.page_source, page_info)
             
-            # Prepare Attributes (Borders)
             page_body_attrs = self.document_service.apply_pagination_borders(
                 document, document.rtf_body, page_info, len(pages)
             )
+
+            # Clear attributes handled by pagination strategy
+            if is_single_body(page_body_attrs):
+                if page_body_attrs.new_page and page_body_attrs.page_by:
+                    page_body_attrs.page_by = None
+                    page_body_attrs.new_page = False
+                if page_body_attrs.subline_by:
+                    page_body_attrs.subline_by = None
             
-            # Prepare Headers
             page_column_header = deepcopy(document.rtf_column_header)
             if page_info["needs_header"] and page_column_header:
-                # Apply border first logic
                  if is_first and document.rtf_page.border_first:
-                     # ... check first header ...
                      first = None
                      if is_nested_header_list(page_column_header) and page_column_header[0]: first = page_column_header[0][0]
                      elif is_flat_header_list(page_column_header) and page_column_header: first = page_column_header[0]
                      elif is_single_header(page_column_header): first = page_column_header
                      
-                     if first and first.text:
-                          # Approx dim
+                     if first and first.text is not None:
                           first.border_top = BroadcastValue(value=first.border_top, dimension=(1, dim[1])).update_row(0, [document.rtf_page.border_first]*dim[1])
             elif not page_info["needs_header"]:
-                page_column_header = None # Suppress headers
+                page_column_header = None
 
-            # Extra Elements
             extra_top = []
             if page_info.get("subline_header"):
-                 # This logic was in _generate_subline_header
-                 # I should probably move _generate_subline_header to EncodingStrategy too or just inline/replicate
-                 # It generates a string paragraph
                  txt = self._generate_subline_header(page_info["subline_header"], document.rtf_body)
                  if txt: extra_top.append(txt)
             
@@ -592,7 +514,6 @@ class PaginatedStrategy(EncodingStrategy):
                            )
                            extra_mid.extend(row_content)
 
-            # Render Page
             page_parts = self._render_page_content(
                 document=document,
                 page_df=page_info["data"],
@@ -617,46 +538,98 @@ class PaginatedStrategy(EncodingStrategy):
         return result
 
     def _encode_figure_only_document_with_pagination(self, document: "RTFDocument") -> str:
-         # Reuse original logic or adapt... for now keeping logic but adapting to new structure?
-         # It's easier to just keep it as is or paste it back.
-         # I will paste the original method back to avoid breaking it.
-         from copy import deepcopy
-         from ..figure import rtf_read_figure
+        from copy import deepcopy
+        from ..figure import rtf_read_figure
 
-         if document.rtf_figure is None or document.rtf_figure.figures is None:
+        if document.rtf_figure is None or document.rtf_figure.figures is None:
             return ""
-         
-         figure_data_list, figure_formats = rtf_read_figure(document.rtf_figure.figures)
-         num_figures = len(figure_data_list)
-         
-         elements = []
-         
-         # Loop figures
-         for i in range(num_figures):
-             is_first = i == 0
-             is_last = i == num_figures - 1
-             
-             # Logic for title/footnote visibility
-             show_title = (document.rtf_page.page_title == "all") or (document.rtf_page.page_title == "first" and is_first) or (document.rtf_page.page_title == "last" and is_last)
-             
-             # ... (reconstruct elements) ...
-             # Actually, I can use _render_page_content here too!
-             # DF is None.
-             # Figure is specific.
-             
-             # Let's try to use _render_page_content for figure pages too.
-             # We need to construct a "page figure" object for the single figure
-             fig_obj = deepcopy(document.rtf_figure)
-             # Hack: modify fig_obj to only contain the i-th figure?
-             # The FigureService encodes whatever is in the object.
-             # If I want single figure, I should probably just rely on the existing specific method
-             # because FigureService might not support "only encode index i".
-             # Existing method: self.figure_service._encode_single_figure(...)
-             # So keeping the specific method is safer.
-             pass # (I will paste the code in the file write)
-         
-         # Placeholder for the write_file call
-         return "..." 
+
+        figure_data_list, figure_formats = rtf_read_figure(document.rtf_figure.figures)
+        num_figures = len(figure_data_list)
+
+        rtf_title = self.encoding_service.encode_title(
+            document.rtf_title, method="line"
+        )
+
+        footnote_component = document.rtf_footnote
+        if footnote_component is not None:
+            footnote_component = deepcopy(footnote_component)
+            footnote_component.as_table = False
+
+        show_title_on_all = document.rtf_page.page_title == "all"
+        show_footnote_on_all = document.rtf_page.page_footnote == "all"
+        show_source_on_all = document.rtf_page.page_source == "all"
+
+        inner_elements = []
+        
+        for i in range(num_figures):
+            is_first_page = i == 0
+            is_last_page = i == num_figures - 1
+
+            if (
+                show_title_on_all
+                or (document.rtf_page.page_title == "first" and is_first_page)
+                or (document.rtf_page.page_title == "last" and is_last_page)
+            ):
+                inner_elements.append(rtf_title)
+                inner_elements.append("\n")
+
+            if is_first_page:
+                inner_elements.append(
+                    self.encoding_service.encode_subline(
+                        document.rtf_subline, method="line"
+                    )
+                )
+
+            width = self.figure_service._get_dimension(document.rtf_figure.fig_width, i)
+            height = self.figure_service._get_dimension(
+                document.rtf_figure.fig_height, i
+            )
+
+            figure_rtf = self.figure_service._encode_single_figure(
+                figure_data_list[i],
+                figure_formats[i],
+                width,
+                height,
+                document.rtf_figure.fig_align,
+            )
+            inner_elements.append(figure_rtf)
+            inner_elements.append("\\par ")
+
+            if footnote_component is not None and (
+                show_footnote_on_all
+                or (document.rtf_page.page_footnote == "first" and is_first_page)
+                or (document.rtf_page.page_footnote == "last" and is_last_page)
+            ):
+                footnote_content = "\n".join(
+                    self.encoding_service.encode_footnote(
+                        footnote_component,
+                        page_number=i + 1,
+                        page_col_width=document.rtf_page.col_width,
+                    )
+                )
+                if footnote_content:
+                    inner_elements.append(footnote_content)
+
+            if document.rtf_source is not None and (
+                show_source_on_all
+                or (document.rtf_page.page_source == "first" and is_first_page)
+                or (document.rtf_page.page_source == "last" and is_last_page)
+            ):
+                source_content = "\n".join(
+                    self.encoding_service.encode_source(
+                        document.rtf_source,
+                        page_number=i + 1,
+                        page_col_width=document.rtf_page.col_width,
+                    )
+                )
+                if source_content:
+                    inner_elements.append(source_content)
+
+            if not is_last_page:
+                inner_elements.append("\\page ")
+
+        return self._wrap_document(document, inner_elements)
 
     def _generate_subline_header(self, subline_header_info: dict, rtf_body) -> str:
         """Generate RTF paragraph for subline_by header."""
@@ -681,5 +654,5 @@ class PaginatedStrategy(EncodingStrategy):
             header_text = ", ".join(header_parts)
 
         return (
-            f"{{\pard\hyphpar\fi0\li0\ri0\ql\fs18{{\f0 {header_text}}}\par}}"
+            f"{{\\pard\\hyphpar\\fi0\\li0\\ri0\\ql\\fs18{{\\f0 {header_text}}}\\par}}"
         )
