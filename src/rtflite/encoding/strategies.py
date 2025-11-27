@@ -908,7 +908,7 @@ class PaginatedStrategy(EncodingStrategy):
                     # subline_by and page_by)
                     if (
                         is_single_body(document.rtf_body)
-                        and (document.rtf_body.subline_by or (document.rtf_body.page_by and document.rtf_body.new_page))
+                        and (document.rtf_body.subline_by or document.rtf_body.page_by)
                     ):
                         original_cols = (
                             list(document.df.columns)
