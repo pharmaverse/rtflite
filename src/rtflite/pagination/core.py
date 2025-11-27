@@ -262,6 +262,12 @@ class ContentDistributor(BaseModel):
                 page_info["subline_header"] = self.get_group_headers(
                     df, subline_by, start_row
                 )
+            # Add page_by header information when new_page=True (and not already
+            # handled by subline_by)
+            elif page_by and new_page:
+                page_info["pageby_header_info"] = self.get_group_headers(
+                    df, page_by, start_row
+                )
 
             pages.append(page_info)
 
