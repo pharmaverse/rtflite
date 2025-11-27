@@ -905,21 +905,27 @@ class PaginatedStrategy(EncodingStrategy):
                     document.rtf_column_header[0].text = header_df  # type: ignore[assignment]
 
                     # Adjust col_rel_width to match processed columns (without
-                    # subline_by)
+                    # subline_by and page_by)
                     if (
                         is_single_body(document.rtf_body)
-                        and document.rtf_body.subline_by
+                        and (document.rtf_body.subline_by or (document.rtf_body.page_by and document.rtf_body.new_page))
                     ):
                         original_cols = (
                             list(document.df.columns)
                             if isinstance(document.df, pl.DataFrame)
                             else []
                         )
-                        subline_cols = set(document.rtf_body.subline_by)
+                        # Collect columns that should be excluded
+                        excluded_cols = set()
+                        if document.rtf_body.subline_by:
+                            excluded_cols.update(document.rtf_body.subline_by)
+                        if document.rtf_body.page_by and document.rtf_body.new_page:
+                            excluded_cols.update(document.rtf_body.page_by)
+
                         processed_col_indices = [
                             i
                             for i, col in enumerate(original_cols)
-                            if col not in subline_cols
+                            if col not in excluded_cols
                         ]
 
                         # Ensure there are enough col_rel_width values for all

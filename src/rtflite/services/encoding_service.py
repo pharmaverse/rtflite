@@ -267,9 +267,21 @@ class RTFEncodingService:
         original_df = df.clone()
         processed_df = df.clone()
 
+        # Collect columns to remove
+        columns_to_remove = set()
+
         # Remove subline_by columns from the processed DataFrame
         if rtf_attrs.subline_by is not None:
-            columns_to_remove = set(rtf_attrs.subline_by)
+            columns_to_remove.update(rtf_attrs.subline_by)
+
+        # Remove page_by columns when new_page=True (paginated mode)
+        # When new_page=True, page_by columns are used for pagination/grouping only
+        # and should not appear in the table display
+        if rtf_attrs.page_by is not None and rtf_attrs.new_page:
+            columns_to_remove.update(rtf_attrs.page_by)
+
+        # Apply column removal if any columns need to be removed
+        if columns_to_remove:
             remaining_columns = [
                 col for col in processed_df.columns if col not in columns_to_remove
             ]
