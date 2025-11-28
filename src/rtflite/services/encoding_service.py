@@ -409,17 +409,20 @@ class RTFEncodingService:
             # Update col_rel_width to match the new column count
             # Find indices of removed columns to remove corresponding width entries
             if rtf_attrs.col_rel_width is not None:
-                removed_indices = [
-                    i for i, col in enumerate(original_df.columns)
-                    if col in columns_to_remove
-                ]
-                # Create new col_rel_width with removed column widths excluded
-                new_col_rel_width = [
-                    width for i, width in enumerate(rtf_attrs.col_rel_width)
-                    if i not in removed_indices
-                ]
-                # Update rtf_attrs with new col_rel_width
-                rtf_attrs.col_rel_width = new_col_rel_width
+                if len(rtf_attrs.col_rel_width) == len(original_df.columns):
+                    removed_indices = [
+                        i
+                        for i, col in enumerate(original_df.columns)
+                        if col in columns_to_remove
+                    ]
+                    # Create new col_rel_width with removed column widths excluded
+                    new_col_rel_width = [
+                        width
+                        for i, width in enumerate(rtf_attrs.col_rel_width)
+                        if i not in removed_indices
+                    ]
+                    # Update rtf_attrs with new col_rel_width
+                    rtf_attrs.col_rel_width = new_col_rel_width
 
         # Note: group_by suppression is handled in the pagination strategy
         # for documents that need pagination. For non-paginated documents,

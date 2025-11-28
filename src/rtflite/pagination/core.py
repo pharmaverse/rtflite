@@ -280,11 +280,16 @@ class ContentDistributor(BaseModel):
                         current_group = {col: df[col][row_idx] for col in page_by}
                         next_group = {col: df[col][row_idx + 1] for col in page_by}
                         if current_group != next_group:
+                            # Filter out divider values for the next group header
+                            next_group_filtered = {
+                                k: v for k, v in next_group.items() if str(v) != "-----"
+                            }
+
                             # Group changes at row_idx+1 (relative to page: row_idx+1-start_row)
                             group_boundaries.append({
                                 "absolute_row": row_idx + 1,
                                 "page_relative_row": row_idx + 1 - start_row,
-                                "group_values": next_group
+                                "group_values": next_group_filtered
                             })
 
                 if group_boundaries:
@@ -312,7 +317,10 @@ class ContentDistributor(BaseModel):
 
         group_values = {}
         for col in page_by:
-            group_values[col] = df[col][start_row]
+            val = df[col][start_row]
+            # Filter out divider rows marked with "-----"
+            if str(val) != "-----":
+                group_values[col] = val
 
         return {
             "group_by_columns": page_by,
