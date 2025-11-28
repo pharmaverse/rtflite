@@ -334,9 +334,10 @@ class RTFDocument(BaseModel):
                     self.df, self.rtf_body, strict=True
                 ):
                     dim = section_df.shape
-                    section_body.col_rel_width = (
-                        section_body.col_rel_width or [1] * dim[1]
-                    )
+                    if section_body.col_rel_width is None:
+                        section_body.col_rel_width = [1] * dim[1]
+                    elif len(section_body.col_rel_width) == 1 and dim[1] > 1:
+                        section_body.col_rel_width = section_body.col_rel_width * dim[1]
 
                 # Handle column headers for multi-section
                 if self.rtf_column_header and isinstance(
@@ -360,9 +361,10 @@ class RTFDocument(BaseModel):
             else:
                 # Handle single section documents (existing logic)
                 dim = self.df.shape
-                self.rtf_body.col_rel_width = (
-                    self.rtf_body.col_rel_width or [1] * dim[1]
-                )
+                if self.rtf_body.col_rel_width is None:
+                    self.rtf_body.col_rel_width = [1] * dim[1]
+                elif len(self.rtf_body.col_rel_width) == 1 and dim[1] > 1:
+                    self.rtf_body.col_rel_width = self.rtf_body.col_rel_width * dim[1]
 
                 # Inherit col_rel_width from rtf_body to rtf_column_header if
                 # not specified

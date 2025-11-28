@@ -720,8 +720,9 @@ class PaginatedStrategy(EncodingStrategy):
             )
         else:
             # Default to equal widths if body is not single
+            # Use processed_df column count (after page_by/subline_by columns removed)
             col_widths = Utils._col_widths(
-                [1] * dim[1], col_total_width if col_total_width is not None else 8.5
+                [1] * processed_df.shape[1], col_total_width if col_total_width is not None else 8.5
             )
 
         # Calculate additional rows per page for r2rtf compatibility
@@ -970,6 +971,22 @@ class PaginatedStrategy(EncodingStrategy):
                         continue
                     header_copy = deepcopy(header)
 
+                    # Remove page_by/subline_by columns from header to match body
+                    import polars as pl
+                    if isinstance(header_copy.text, pl.DataFrame):
+                        columns_to_remove = set()
+                        if document.rtf_body.page_by:
+                            columns_to_remove.update(document.rtf_body.page_by)
+                        if document.rtf_body.subline_by:
+                            columns_to_remove.update(document.rtf_body.subline_by)
+
+                        if columns_to_remove:
+                            remaining_columns = [
+                                col for col in header_copy.text.columns
+                                if col not in columns_to_remove
+                            ]
+                            header_copy.text = header_copy.text.select(remaining_columns)
+
                     # Apply page-level borders to column headers (matching
                     # non-paginated behavior)
                     if (
@@ -979,8 +996,6 @@ class PaginatedStrategy(EncodingStrategy):
                         and header_copy.text is not None
                     ):  # First header on first page
                         # Get dimensions based on text type
-                        import polars as pl
-
                         if isinstance(header_copy.text, pl.DataFrame):
                             header_dims = header_copy.text.shape
                         else:
