@@ -64,15 +64,16 @@ class RTFDocumentService:
         if isinstance(document.df, list):
             # Check if any section needs pagination
             for body in document.rtf_body:
-                if (body.page_by and body.new_page) or body.subline_by:
+                # Use PaginatedStrategy when page_by or subline_by is set
+                # (page_by requires spanning row logic, which is in PaginatedStrategy)
+                if body.page_by or body.subline_by:
                     return True
             # For now, multi-section documents use single page strategy
             return False
         else:
             # Single section document
-            if (
-                document.rtf_body.page_by and document.rtf_body.new_page
-            ) or document.rtf_body.subline_by:
+            # Use PaginatedStrategy when page_by or subline_by is set
+            if document.rtf_body.page_by or document.rtf_body.subline_by:
                 return True
 
         # Create pagination instance to calculate rows needed

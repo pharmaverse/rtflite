@@ -720,8 +720,9 @@ class PaginatedStrategy(EncodingStrategy):
             )
         else:
             # Default to equal widths if body is not single
+            # Use processed_df column count (after page_by/subline_by columns removed)
             col_widths = Utils._col_widths(
-                [1] * dim[1], col_total_width if col_total_width is not None else 8.5
+                [1] * processed_df.shape[1], col_total_width if col_total_width is not None else 8.5
             )
 
         # Calculate additional rows per page for r2rtf compatibility
@@ -919,7 +920,7 @@ class PaginatedStrategy(EncodingStrategy):
                         excluded_cols: set[str] = set()
                         if document.rtf_body.subline_by:
                             excluded_cols.update(document.rtf_body.subline_by)
-                        if document.rtf_body.page_by and document.rtf_body.new_page:
+                        if document.rtf_body.page_by:
                             excluded_cols.update(document.rtf_body.page_by)
 
                         processed_col_indices = [
@@ -970,6 +971,22 @@ class PaginatedStrategy(EncodingStrategy):
                         continue
                     header_copy = deepcopy(header)
 
+                    # Remove page_by/subline_by columns from header to match body
+                    import polars as pl
+                    if isinstance(header_copy.text, pl.DataFrame):
+                        columns_to_remove = set()
+                        if document.rtf_body.page_by:
+                            columns_to_remove.update(document.rtf_body.page_by)
+                        if document.rtf_body.subline_by:
+                            columns_to_remove.update(document.rtf_body.subline_by)
+
+                        if columns_to_remove:
+                            remaining_columns = [
+                                col for col in header_copy.text.columns
+                                if col not in columns_to_remove
+                            ]
+                            header_copy.text = header_copy.text.select(remaining_columns)
+
                     # Apply page-level borders to column headers (matching
                     # non-paginated behavior)
                     if (
@@ -979,8 +996,6 @@ class PaginatedStrategy(EncodingStrategy):
                         and header_copy.text is not None
                     ):  # First header on first page
                         # Get dimensions based on text type
-                        import polars as pl
-
                         if isinstance(header_copy.text, pl.DataFrame):
                             header_dims = header_copy.text.shape
                         else:
@@ -1035,9 +1050,88 @@ class PaginatedStrategy(EncodingStrategy):
                 document, document.rtf_body, page_info, len(pages)
             )
 
-            # Encode page content with modified borders
-            page_body = page_attrs._encode(page_df, col_widths)
-            page_elements.extend(page_body)
+            # Check if there are group boundaries within this page
+            if page_info.get("group_boundaries"):
+                # Handle mid-page group changes: insert spanning rows at boundaries
+                group_boundaries = page_info["group_boundaries"]
+                prev_row = 0
+
+                for boundary in group_boundaries:
+                    page_relative_row = boundary["page_relative_row"]
+
+                    # Encode rows before this boundary
+                    if page_relative_row > prev_row:
+                        segment_df = page_df[prev_row:page_relative_row]
+                        segment_body = page_attrs._encode(segment_df, col_widths)
+                        page_elements.extend(segment_body)
+
+                    # Insert spanning row at boundary
+                    group_values = boundary["group_values"]
+                    header_parts = [
+                        str(value)
+                        for value in group_values.values()
+                        if value is not None
+                    ]
+                    if header_parts:
+                        header_text = ", ".join(header_parts)
+                        spanning_row = self.encoding_service.encode_spanning_row(
+                            text=header_text,
+                            page_width=document.rtf_page.col_width or 8.5,
+                            rtf_body_attrs=document.rtf_body,
+                        )
+                        page_elements.extend(spanning_row)
+
+                    prev_row = page_relative_row
+
+                # Encode remaining rows after last boundary
+                if prev_row < len(page_df):
+                    segment_df = page_df[prev_row:]
+
+                    # For the last segment on non-last pages, we need to ensure
+                    # the bottom border is applied correctly
+                    # The border was applied to page_df row indices, but we're now
+                    # encoding a segment, so we need to adjust
+                    if (
+                        not page_info["is_last_page"]
+                        and is_single_body(document.rtf_body)
+                        and document.rtf_body.border_last
+                    ):
+                        # Apply bottom border to the last row of this segment
+                        # This ensures proper table closing on middle pages
+                        import copy
+
+                        segment_attrs = copy.deepcopy(page_attrs)
+
+                        # Adjust border_bottom to apply to last row of segment
+                        last_segment_row = len(segment_df) - 1
+                        if segment_attrs.border_bottom:
+                            # Ensure border_bottom is sized correctly for segment
+                            border_style = (
+                                document.rtf_body.border_last[0][0]
+                                if isinstance(document.rtf_body.border_last, list)
+                                else document.rtf_body.border_last
+                            )
+                            # Set bottom border for all columns on last row
+                            for col_idx in range(len(segment_df.columns)):
+                                if last_segment_row < len(
+                                    segment_attrs.border_bottom
+                                ):
+                                    if col_idx < len(
+                                        segment_attrs.border_bottom[last_segment_row]
+                                    ):
+                                        segment_attrs.border_bottom[last_segment_row][
+                                            col_idx
+                                        ] = border_style
+
+                        segment_body = segment_attrs._encode(segment_df, col_widths)
+                    else:
+                        segment_body = page_attrs._encode(segment_df, col_widths)
+
+                    page_elements.extend(segment_body)
+            else:
+                # No group boundaries: encode entire page as before
+                page_body = page_attrs._encode(page_df, col_widths)
+                page_elements.extend(page_body)
 
             # Add footnote if it should appear on this page
             if (

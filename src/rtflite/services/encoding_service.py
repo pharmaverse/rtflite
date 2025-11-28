@@ -393,10 +393,10 @@ class RTFEncodingService:
         if rtf_attrs.subline_by is not None:
             columns_to_remove.update(rtf_attrs.subline_by)
 
-        # Remove page_by columns when new_page=True (paginated mode)
-        # When new_page=True, page_by columns are used for pagination/grouping only
-        # and should not appear in the table display
-        if rtf_attrs.page_by is not None and rtf_attrs.new_page:
+        # Remove page_by columns from table display
+        # page_by columns are shown as spanning rows, not as table columns
+        # The new_page flag only controls whether to force page breaks at group boundaries
+        if rtf_attrs.page_by is not None:
             columns_to_remove.update(rtf_attrs.page_by)
 
         # Apply column removal if any columns need to be removed
@@ -405,6 +405,24 @@ class RTFEncodingService:
                 col for col in processed_df.columns if col not in columns_to_remove
             ]
             processed_df = processed_df.select(remaining_columns)
+
+            # Update col_rel_width to match the new column count
+            # Find indices of removed columns to remove corresponding width entries
+            if rtf_attrs.col_rel_width is not None:
+                if len(rtf_attrs.col_rel_width) == len(original_df.columns):
+                    removed_indices = [
+                        i
+                        for i, col in enumerate(original_df.columns)
+                        if col in columns_to_remove
+                    ]
+                    # Create new col_rel_width with removed column widths excluded
+                    new_col_rel_width = [
+                        width
+                        for i, width in enumerate(rtf_attrs.col_rel_width)
+                        if i not in removed_indices
+                    ]
+                    # Update rtf_attrs with new col_rel_width
+                    rtf_attrs.col_rel_width = new_col_rel_width
 
         # Note: group_by suppression is handled in the pagination strategy
         # for documents that need pagination. For non-paginated documents,
@@ -434,7 +452,6 @@ class RTFEncodingService:
 
         document_service = RTFDocumentService()
         col_total_width = document.rtf_page.col_width
-        col_widths = Utils._col_widths(rtf_attrs.col_rel_width, col_total_width)
 
         # Validate data sorting for all grouping parameters
         if any([rtf_attrs.group_by, rtf_attrs.page_by, rtf_attrs.subline_by]):
@@ -463,6 +480,10 @@ class RTFEncodingService:
         processed_df, original_df = self.prepare_dataframe_for_body_encoding(
             df, rtf_attrs
         )
+
+        # Calculate col_widths AFTER prepare_dataframe_for_body_encoding()
+        # because that method may modify col_rel_width when removing columns (page_by, subline_by)
+        col_widths = Utils._col_widths(rtf_attrs.col_rel_width, col_total_width)
 
         # Check if pagination is needed (unless forced to single page)
         if not force_single_page and document_service.needs_pagination(document):
