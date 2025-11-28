@@ -22,6 +22,7 @@ class RTFEncodingService:
         text: str,
         page_width: float,
         rtf_body_attrs=None,
+        col_idx: int = 0,
     ) -> Sequence[str]:
         """Generate a spanning table row (single cell spanning full width).
 
@@ -32,77 +33,49 @@ class RTFEncodingService:
             text: Text to display in the spanning row
             page_width: Total page width in inches
             rtf_body_attrs: RTFBody attributes for styling (optional)
+            col_idx: Column index to inherit attributes from (default: 0)
 
         Returns:
             List of RTF strings for the spanning row
         """
+        from ..attributes import BroadcastValue
         from ..row import Border, Cell, Row, TextContent
 
-        # Use body attributes if provided, otherwise use defaults
-        if rtf_body_attrs:
-            font = rtf_body_attrs.text_font[0][0] if rtf_body_attrs.text_font else 0
-            size = (
-                rtf_body_attrs.text_font_size[0][0]
-                if rtf_body_attrs.text_font_size
-                else 18
-            )
-            text_format = (
-                rtf_body_attrs.text_format[0][0] if rtf_body_attrs.text_format else ""
-            )
-            color = rtf_body_attrs.text_color[0][0] if rtf_body_attrs.text_color else ""
-            bg_color = (
-                rtf_body_attrs.text_background_color[0][0]
-                if rtf_body_attrs.text_background_color
-                else ""
-            )
-            justification = (
-                rtf_body_attrs.text_justification[0][0]
-                if rtf_body_attrs.text_justification
-                else "c"
-            )
-            border_left = (
-                rtf_body_attrs.border_left[0][0]
-                if rtf_body_attrs.border_left
-                else "single"
-            )
-            border_right = (
-                rtf_body_attrs.border_right[0][0]
-                if rtf_body_attrs.border_right
-                else "single"
-            )
-            border_top = (
-                rtf_body_attrs.border_top[0][0]
-                if rtf_body_attrs.border_top
-                else "single"
-            )
-            border_bottom = (
-                rtf_body_attrs.border_bottom[0][0]
-                if rtf_body_attrs.border_bottom
-                else "single"
-            )
-            v_just = (
-                rtf_body_attrs.cell_vertical_justification[0][0]
-                if rtf_body_attrs.cell_vertical_justification
-                else "b"
-            )
-            cell_just = (
-                rtf_body_attrs.cell_justification[0][0]
-                if rtf_body_attrs.cell_justification
-                else "c"
-            )
-        else:
-            font = 0
-            size = 18
-            text_format = ""
-            color = ""
-            bg_color = ""
-            justification = "c"
-            border_left = "single"
-            border_right = "single"
-            border_top = "single"
-            border_bottom = "single"
-            v_just = "b"
-            cell_just = "c"
+        def get_attr(attr_name, default_val):
+            if rtf_body_attrs is None:
+                return default_val
+            val = getattr(rtf_body_attrs, attr_name, None)
+            if val is None:
+                return default_val
+            # Use BroadcastValue to resolve the attribute for the specific column
+            # We use row 0 as the reference for column-based attributes
+            return BroadcastValue(value=val, dimension=None).iloc(0, col_idx)
+
+        # Extract attributes using the helper
+        font = get_attr("text_font", 0)
+        size = get_attr("text_font_size", 18)
+        text_format = get_attr("text_format", "")
+        color = get_attr("text_color", "")
+        bg_color = get_attr("text_background_color", "")
+        justification = get_attr("text_justification", "c")
+        
+        indent_first = get_attr("text_indent_first", 0)
+        indent_left = get_attr("text_indent_left", 0)
+        indent_right = get_attr("text_indent_right", 0)
+        space = get_attr("text_space", 1)
+        space_before = get_attr("text_space_before", 15)
+        space_after = get_attr("text_space_after", 15)
+        convert = get_attr("text_convert", False)
+        hyphenation = get_attr("text_hyphenation", True)
+
+        border_left = get_attr("border_left", "single")
+        border_right = get_attr("border_right", "single")
+        border_top = get_attr("border_top", "single")
+        border_bottom = get_attr("border_bottom", "single")
+        
+        v_just = get_attr("cell_vertical_justification", "b")
+        cell_just = get_attr("cell_justification", "c")
+        cell_height = get_attr("cell_height", 0.15)
 
         # Create spanning cell
         cell = Cell(
@@ -114,14 +87,14 @@ class RTFEncodingService:
                 color=color,
                 background_color=bg_color,
                 justification=justification,
-                indent_first=0,
-                indent_left=0,
-                indent_right=0,
-                space=0,  # No line spacing
-                space_before=15,
-                space_after=15,
-                convert=False,
-                hyphenation=True,
+                indent_first=indent_first,
+                indent_left=indent_left,
+                indent_right=indent_right,
+                space=space,
+                space_before=space_before,
+                space_after=space_after,
+                convert=convert,
+                hyphenation=hyphenation,
             ),
             width=page_width,
             border_left=Border(style=border_left),
@@ -132,7 +105,7 @@ class RTFEncodingService:
         )
 
         # Create row with single spanning cell
-        row = Row(row_cells=[cell], justification=cell_just, height=0)
+        row = Row(row_cells=[cell], justification=cell_just, height=cell_height)
 
         return row._as_rtf()
 
@@ -395,10 +368,17 @@ class RTFEncodingService:
 
         # Remove page_by columns from table display
         # page_by columns are shown as spanning rows, not as table columns
-        # The new_page flag only controls whether to force page breaks at group
-        # boundaries
+        # The new_page flag only controls whether to force page breaks at group boundaries
         if rtf_attrs.page_by is not None:
-            columns_to_remove.update(rtf_attrs.page_by)
+            # Restore previous behavior:
+            # - If new_page=True: Respect pageby_row (default 'column' -> keep column)
+            # - If new_page=False: Always remove columns (legacy behavior implies spanning rows)
+            if rtf_attrs.new_page:
+                pageby_row = getattr(rtf_attrs, "pageby_row", "column")
+                if pageby_row != "column":
+                    columns_to_remove.update(rtf_attrs.page_by)
+            else:
+                columns_to_remove.update(rtf_attrs.page_by)
 
         # Apply column removal if any columns need to be removed
         if columns_to_remove:

@@ -217,6 +217,7 @@ doc_treatment_separated = rtf.RTFDocument(
     rtf_body=rtf.RTFBody(
         page_by=["TRTA"],  # Separate pages by treatment
         new_page=True,  # Force new page for each treatment
+        pageby_row="first_row",  # Display treatment as spanning row and remove column
         group_by=[
             "USUBJID",
             "ASTDY",

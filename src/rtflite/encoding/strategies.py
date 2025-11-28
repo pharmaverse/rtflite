@@ -1025,7 +1025,22 @@ class PaginatedStrategy(EncodingStrategy):
                 page_elements.extend(header_elements)
 
             # Add page_by spanning table row after headers if specified
-            if page_info.get("pageby_header_info"):
+            # Only if pageby_row is not 'column' (which keeps the column instead of spanning row)
+            # OR if not new_page (legacy behavior implies spanning rows)
+            if page_info.get("pageby_header_info") and (
+                not document.rtf_body.new_page
+                or document.rtf_body.pageby_row != "column"
+            ):
+                # Determine column index for attribute inheritance
+                col_idx = 0
+                if document.rtf_body.page_by and original_df is not None:
+                    try:
+                        col_idx = original_df.columns.index(
+                            document.rtf_body.page_by[0]
+                        )
+                    except ValueError:
+                        col_idx = 0
+
                 # Extract group values for spanning row text
                 header_info = page_info["pageby_header_info"]
                 if "group_values" in header_info:
@@ -1043,6 +1058,7 @@ class PaginatedStrategy(EncodingStrategy):
                             if document.rtf_page.col_width
                             else 8.5,
                             rtf_body_attrs=document.rtf_body,
+                            col_idx=col_idx,
                         )
                         page_elements.extend(pageby_row_content)
 
@@ -1055,7 +1071,22 @@ class PaginatedStrategy(EncodingStrategy):
             )
 
             # Check if there are group boundaries within this page
-            if page_info.get("group_boundaries"):
+            # Only apply spanning rows at boundaries if pageby_row is not 'column'
+            # OR if not new_page (legacy behavior implies spanning rows)
+            if page_info.get("group_boundaries") and (
+                not document.rtf_body.new_page
+                or document.rtf_body.pageby_row != "column"
+            ):
+                # Determine column index for attribute inheritance
+                col_idx = 0
+                if document.rtf_body.page_by and original_df is not None:
+                    try:
+                        col_idx = original_df.columns.index(
+                            document.rtf_body.page_by[0]
+                        )
+                    except ValueError:
+                        col_idx = 0
+
                 # Handle mid-page group changes: insert spanning rows at boundaries
                 group_boundaries = page_info["group_boundaries"]
                 prev_row = 0
@@ -1082,6 +1113,7 @@ class PaginatedStrategy(EncodingStrategy):
                             text=header_text,
                             page_width=document.rtf_page.col_width or 8.5,
                             rtf_body_attrs=document.rtf_body,
+                            col_idx=col_idx,
                         )
                         page_elements.extend(spanning_row)
 
