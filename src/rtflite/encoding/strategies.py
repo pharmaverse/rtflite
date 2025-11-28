@@ -919,7 +919,7 @@ class PaginatedStrategy(EncodingStrategy):
                         excluded_cols: set[str] = set()
                         if document.rtf_body.subline_by:
                             excluded_cols.update(document.rtf_body.subline_by)
-                        if document.rtf_body.page_by and document.rtf_body.new_page:
+                        if document.rtf_body.page_by:
                             excluded_cols.update(document.rtf_body.page_by)
 
                         processed_col_indices = [
@@ -1035,9 +1035,48 @@ class PaginatedStrategy(EncodingStrategy):
                 document, document.rtf_body, page_info, len(pages)
             )
 
-            # Encode page content with modified borders
-            page_body = page_attrs._encode(page_df, col_widths)
-            page_elements.extend(page_body)
+            # Check if there are group boundaries within this page
+            if page_info.get("group_boundaries"):
+                # Handle mid-page group changes: insert spanning rows at boundaries
+                group_boundaries = page_info["group_boundaries"]
+                prev_row = 0
+
+                for boundary in group_boundaries:
+                    page_relative_row = boundary["page_relative_row"]
+
+                    # Encode rows before this boundary
+                    if page_relative_row > prev_row:
+                        segment_df = page_df[prev_row:page_relative_row]
+                        segment_body = page_attrs._encode(segment_df, col_widths)
+                        page_elements.extend(segment_body)
+
+                    # Insert spanning row at boundary
+                    group_values = boundary["group_values"]
+                    header_parts = [
+                        str(value)
+                        for value in group_values.values()
+                        if value is not None
+                    ]
+                    if header_parts:
+                        header_text = ", ".join(header_parts)
+                        spanning_row = self.encoding_service.encode_spanning_row(
+                            text=header_text,
+                            page_width=document.rtf_page.col_width or 8.5,
+                            rtf_body_attrs=document.rtf_body,
+                        )
+                        page_elements.extend(spanning_row)
+
+                    prev_row = page_relative_row
+
+                # Encode remaining rows after last boundary
+                if prev_row < len(page_df):
+                    segment_df = page_df[prev_row:]
+                    segment_body = page_attrs._encode(segment_df, col_widths)
+                    page_elements.extend(segment_body)
+            else:
+                # No group boundaries: encode entire page as before
+                page_body = page_attrs._encode(page_df, col_widths)
+                page_elements.extend(page_body)
 
             # Add footnote if it should appear on this page
             if (

@@ -180,6 +180,8 @@ class PageBreakCalculator(BaseModel):
                 current_page_rows += row_height
 
             # Handle group-based page breaks
+            # When page_by + new_page=True, force breaks at group boundaries
+            # When page_by alone, allow natural pagination with spanning rows mid-page
             if page_by and new_page and row_idx < df.height - 1:
                 current_group = {col: df[col][row_idx] for col in page_by}
                 next_group = {col: df[col][row_idx + 1] for col in page_by}
@@ -262,12 +264,31 @@ class ContentDistributor(BaseModel):
                 page_info["subline_header"] = self.get_group_headers(
                     df, subline_by, start_row
                 )
-            # Add page_by header information when new_page=True (and not already
-            # handled by subline_by)
-            elif page_by and new_page:
+            # Add page_by header information (spanning rows) on each page
+            # Note: new_page flag only controls forced page breaks, not spanning row creation
+            elif page_by:
+                # Get header for first group on this page
                 page_info["pageby_header_info"] = self.get_group_headers(
                     df, page_by, start_row
                 )
+
+                # Detect all group boundaries within this page
+                # This allows spanning rows to be inserted mid-page when new_page=False
+                group_boundaries = []
+                for row_idx in range(start_row, end_row):
+                    if row_idx + 1 <= end_row:
+                        current_group = {col: df[col][row_idx] for col in page_by}
+                        next_group = {col: df[col][row_idx + 1] for col in page_by}
+                        if current_group != next_group:
+                            # Group changes at row_idx+1 (relative to page: row_idx+1-start_row)
+                            group_boundaries.append({
+                                "absolute_row": row_idx + 1,
+                                "page_relative_row": row_idx + 1 - start_row,
+                                "group_values": next_group
+                            })
+
+                if group_boundaries:
+                    page_info["group_boundaries"] = group_boundaries
 
             pages.append(page_info)
 

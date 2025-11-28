@@ -169,6 +169,7 @@ class PageDict(BaseModel):
         effective_nrow = max(1, self.nrow_per_page - additional_rows_per_page)
 
         # Add break rules based on parameters
+        # When page_by + new_page=True, force breaks at group boundaries
         if page_by and new_page:
             for col in page_by:
                 self.add_break_rule(

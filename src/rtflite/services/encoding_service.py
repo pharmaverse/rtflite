@@ -393,10 +393,10 @@ class RTFEncodingService:
         if rtf_attrs.subline_by is not None:
             columns_to_remove.update(rtf_attrs.subline_by)
 
-        # Remove page_by columns when new_page=True (paginated mode)
-        # When new_page=True, page_by columns are used for pagination/grouping only
-        # and should not appear in the table display
-        if rtf_attrs.page_by is not None and rtf_attrs.new_page:
+        # Remove page_by columns from table display
+        # page_by columns are shown as spanning rows, not as table columns
+        # The new_page flag only controls whether to force page breaks at group boundaries
+        if rtf_attrs.page_by is not None:
             columns_to_remove.update(rtf_attrs.page_by)
 
         # Apply column removal if any columns need to be removed
