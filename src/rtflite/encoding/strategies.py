@@ -1087,7 +1087,7 @@ class PaginatedStrategy(EncodingStrategy):
 
                     prev_row = page_relative_row
 
-                    # Encode remaining rows after last boundary
+                # Encode remaining rows after last boundary
                 if prev_row < len(page_df):
                     segment_df = page_df[prev_row:]
 

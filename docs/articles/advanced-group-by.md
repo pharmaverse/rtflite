@@ -217,7 +217,6 @@ doc_treatment_separated = rtf.RTFDocument(
         page_by=["TRTA"],  # Separate pages by treatment
         new_page=True,  # Force new page for each treatment
         group_by=[
-            "TRTA",
             "USUBJID",
             "ASTDY",
         ],  # Suppress duplicates within each treatment page
