@@ -1091,10 +1091,15 @@ class PaginatedStrategy(EncodingStrategy):
                     # the bottom border is applied correctly
                     # The border was applied to page_df row indices, but we're now
                     # encoding a segment, so we need to adjust
-                    if not page_info["is_last_page"] and document.rtf_body.border_last:
+                    if (
+                        not page_info["is_last_page"]
+                        and is_single_body(document.rtf_body)
+                        and document.rtf_body.border_last
+                    ):
                         # Apply bottom border to the last row of this segment
                         # This ensures proper table closing on middle pages
                         import copy
+
                         segment_attrs = copy.deepcopy(page_attrs)
 
                         # Adjust border_bottom to apply to last row of segment
@@ -1108,9 +1113,15 @@ class PaginatedStrategy(EncodingStrategy):
                             )
                             # Set bottom border for all columns on last row
                             for col_idx in range(len(segment_df.columns)):
-                                if last_segment_row < len(segment_attrs.border_bottom):
-                                    if col_idx < len(segment_attrs.border_bottom[last_segment_row]):
-                                        segment_attrs.border_bottom[last_segment_row][col_idx] = border_style
+                                if last_segment_row < len(
+                                    segment_attrs.border_bottom
+                                ):
+                                    if col_idx < len(
+                                        segment_attrs.border_bottom[last_segment_row]
+                                    ):
+                                        segment_attrs.border_bottom[last_segment_row][
+                                            col_idx
+                                        ] = border_style
 
                         segment_body = segment_attrs._encode(segment_df, col_widths)
                     else:
