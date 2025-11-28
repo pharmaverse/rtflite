@@ -1071,7 +1071,36 @@ class PaginatedStrategy(EncodingStrategy):
                 # Encode remaining rows after last boundary
                 if prev_row < len(page_df):
                     segment_df = page_df[prev_row:]
-                    segment_body = page_attrs._encode(segment_df, col_widths)
+
+                    # For the last segment on non-last pages, we need to ensure
+                    # the bottom border is applied correctly
+                    # The border was applied to page_df row indices, but we're now
+                    # encoding a segment, so we need to adjust
+                    if not page_info["is_last_page"] and document.rtf_body.border_last:
+                        # Apply bottom border to the last row of this segment
+                        # This ensures proper table closing on middle pages
+                        import copy
+                        segment_attrs = copy.deepcopy(page_attrs)
+
+                        # Adjust border_bottom to apply to last row of segment
+                        last_segment_row = len(segment_df) - 1
+                        if segment_attrs.border_bottom:
+                            # Ensure border_bottom is sized correctly for segment
+                            border_style = (
+                                document.rtf_body.border_last[0][0]
+                                if isinstance(document.rtf_body.border_last, list)
+                                else document.rtf_body.border_last
+                            )
+                            # Set bottom border for all columns on last row
+                            for col_idx in range(len(segment_df.columns)):
+                                if last_segment_row < len(segment_attrs.border_bottom):
+                                    if col_idx < len(segment_attrs.border_bottom[last_segment_row]):
+                                        segment_attrs.border_bottom[last_segment_row][col_idx] = border_style
+
+                        segment_body = segment_attrs._encode(segment_df, col_widths)
+                    else:
+                        segment_body = page_attrs._encode(segment_df, col_widths)
+
                     page_elements.extend(segment_body)
             else:
                 # No group boundaries: encode entire page as before
