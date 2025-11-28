@@ -209,9 +209,10 @@ doc_treatment_separated = rtf.RTFDocument(
         text_convert=False,
     ),
     rtf_column_header=rtf.RTFColumnHeader(
-        text=["Treatment", "Subject ID", "Study Day", "Adverse Event", "Severity"],
+        text=["Subject ID", "Study Day", "Adverse Event", "Severity"],
+        col_rel_width=[3, 1, 4, 2],
         text_format="b",
-        text_justification=["l", "l", "c", "l", "c"],
+        text_justification=["l", "c", "l", "c"],
     ),
     rtf_body=rtf.RTFBody(
         page_by=["TRTA"],  # Separate pages by treatment
