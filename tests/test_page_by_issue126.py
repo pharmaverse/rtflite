@@ -6,7 +6,6 @@ and multi-page scenarios with new_page=True.
 """
 
 import polars as pl
-import pytest
 
 import rtflite as rtf
 
@@ -21,11 +20,13 @@ class TestPageByIssue126:
             group_name = f"Subject {group_idx}"
             for row_idx in range(1, rows_per_group + 1):
                 global_idx = (group_idx - 1) * rows_per_group + row_idx
-                data.append({
-                    "__index__": group_name,
-                    "ID": f"{global_idx:03d}",
-                    "Event": f"AE{global_idx}",
-                })
+                data.append(
+                    {
+                        "__index__": group_name,
+                        "ID": f"{global_idx:03d}",
+                        "Event": f"AE{global_idx}",
+                    }
+                )
         return pl.DataFrame(data)
 
     def test_page_by_single_page_without_new_page(self):
@@ -54,7 +55,8 @@ class TestPageByIssue126:
         # Should have NO page breaks (all fits naturally)
         page_breaks = rtf_output.count(r"\page")
         assert page_breaks == 0, (
-            f"Expected no page breaks with new_page=False and small data, found {page_breaks}"
+            f"Expected no page breaks with new_page=False and small data, found "
+            f"{page_breaks}"
         )
 
         # Should have spanning rows for BOTH groups (on same page)
@@ -64,8 +66,10 @@ class TestPageByIssue126:
 
         # Verify columns removed: should have only 2 column headers (ID, Event)
         # not 3 (__index__, ID, Event)
-        lines = rtf_output.split('\n')
-        header_cols = sum(1 for line in lines[:50] if '\\clvertalb' in line and '\\cellx' in line)
+        lines = rtf_output.split("\n")
+        header_cols = sum(
+            1 for line in lines[:50] if "\\clvertalb" in line and "\\cellx" in line
+        )
         assert header_cols == 2, (
             f"Expected 2 columns after fix (ID, Event), found {header_cols}"
         )
@@ -175,11 +179,13 @@ class TestPageByIssue126:
         data = []
         for i in range(20):
             subject = "Subject 2" if i % 2 == 0 else "Subject 1"
-            data.append({
-                "__index__": subject,
-                "ID": f"{i+1:03d}",
-                "Event": f"AE{i+1}",
-            })
+            data.append(
+                {
+                    "__index__": subject,
+                    "ID": f"{i + 1:03d}",
+                    "Event": f"AE{i + 1}",
+                }
+            )
         df = pl.DataFrame(data)
 
         # Sort by __index__ (groups together)
@@ -297,11 +303,13 @@ class TestPageByEdgeCases:
 
     def test_page_by_single_row(self):
         """Test page_by with single row."""
-        df = pl.DataFrame({
-            "__index__": ["Subject 1"],
-            "ID": ["001"],
-            "Event": ["AE1"],
-        })
+        df = pl.DataFrame(
+            {
+                "__index__": ["Subject 1"],
+                "ID": ["001"],
+                "Event": ["AE1"],
+            }
+        )
 
         doc = rtf.RTFDocument(
             df=df,
@@ -320,11 +328,13 @@ class TestPageByEdgeCases:
 
     def test_page_by_all_same_group(self):
         """Test page_by when all rows belong to same group."""
-        df = pl.DataFrame({
-            "__index__": ["Subject 1"] * 20,
-            "ID": [f"{i:03d}" for i in range(1, 21)],
-            "Event": [f"AE{i}" for i in range(1, 21)],
-        })
+        df = pl.DataFrame(
+            {
+                "__index__": ["Subject 1"] * 20,
+                "ID": [f"{i:03d}" for i in range(1, 21)],
+                "Event": [f"AE{i}" for i in range(1, 21)],
+            }
+        )
 
         doc = rtf.RTFDocument(
             df=df,

@@ -722,7 +722,8 @@ class PaginatedStrategy(EncodingStrategy):
             # Default to equal widths if body is not single
             # Use processed_df column count (after page_by/subline_by columns removed)
             col_widths = Utils._col_widths(
-                [1] * processed_df.shape[1], col_total_width if col_total_width is not None else 8.5
+                [1] * processed_df.shape[1],
+                col_total_width if col_total_width is not None else 8.5,
             )
 
         # Calculate additional rows per page for r2rtf compatibility
@@ -907,9 +908,8 @@ class PaginatedStrategy(EncodingStrategy):
 
                     # Adjust col_rel_width to match processed columns (without
                     # subline_by and page_by)
-                    if (
-                        is_single_body(document.rtf_body)
-                        and (document.rtf_body.subline_by or document.rtf_body.page_by)
+                    if is_single_body(document.rtf_body) and (
+                        document.rtf_body.subline_by or document.rtf_body.page_by
                     ):
                         original_cols = (
                             list(document.df.columns)
@@ -973,6 +973,7 @@ class PaginatedStrategy(EncodingStrategy):
 
                     # Remove page_by/subline_by columns from header to match body
                     import polars as pl
+
                     if isinstance(header_copy.text, pl.DataFrame):
                         columns_to_remove = set()
                         if document.rtf_body.page_by:
@@ -982,10 +983,13 @@ class PaginatedStrategy(EncodingStrategy):
 
                         if columns_to_remove:
                             remaining_columns = [
-                                col for col in header_copy.text.columns
+                                col
+                                for col in header_copy.text.columns
                                 if col not in columns_to_remove
                             ]
-                            header_copy.text = header_copy.text.select(remaining_columns)
+                            header_copy.text = header_copy.text.select(
+                                remaining_columns
+                            )
 
                     # Apply page-level borders to column headers (matching
                     # non-paginated behavior)
@@ -1083,7 +1087,7 @@ class PaginatedStrategy(EncodingStrategy):
 
                     prev_row = page_relative_row
 
-                # Encode remaining rows after last boundary
+                    # Encode remaining rows after last boundary
                 if prev_row < len(page_df):
                     segment_df = page_df[prev_row:]
 
@@ -1115,13 +1119,12 @@ class PaginatedStrategy(EncodingStrategy):
                             for col_idx in range(len(segment_df.columns)):
                                 if last_segment_row < len(
                                     segment_attrs.border_bottom
+                                ) and col_idx < len(
+                                    segment_attrs.border_bottom[last_segment_row]
                                 ):
-                                    if col_idx < len(
-                                        segment_attrs.border_bottom[last_segment_row]
-                                    ):
-                                        segment_attrs.border_bottom[last_segment_row][
-                                            col_idx
-                                        ] = border_style
+                                    segment_attrs.border_bottom[last_segment_row][
+                                        col_idx
+                                    ] = border_style
 
                         segment_body = segment_attrs._encode(segment_df, col_widths)
                     else:
@@ -1397,4 +1400,3 @@ class PaginatedStrategy(EncodingStrategy):
         return (
             f"{{\\pard\\hyphpar\\fi0\\li0\\ri0\\ql\\fs18{{\\f0 {header_text}}}\\par}}"
         )
-
