@@ -9,7 +9,7 @@ on:
       - '**'
 
 jobs:
-  build:
+  ruff-check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
