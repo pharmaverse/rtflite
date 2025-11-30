@@ -29,8 +29,10 @@ class PageFeatureProcessor:
     def _apply_pagination_borders(self, document, page: PageContext) -> Any:
         """Apply proper borders for paginated context following r2rtf design."""
 
-        # Start with a deep copy of the document's body attributes
-        page_attrs = deepcopy(document.rtf_body)
+        # Start with a deep copy of the page's table attributes (processed/sliced)
+        # or document's body attributes if not available
+        base_attrs = page.table_attrs or document.rtf_body
+        page_attrs = deepcopy(base_attrs)
 
         page_df_height = page.data.height
         page_df_width = page.data.width

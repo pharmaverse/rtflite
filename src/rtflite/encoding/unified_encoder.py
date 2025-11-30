@@ -125,6 +125,7 @@ class UnifiedRTFEncoder(EncodingStrategy):
                     is_last_page=True,
                     col_widths=col_widths,
                     needs_header=True,
+                    table_attrs=processed_attrs,
                 )
             ]
 

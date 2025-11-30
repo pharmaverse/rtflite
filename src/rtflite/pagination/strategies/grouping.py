@@ -50,6 +50,7 @@ class PageByStrategy(PaginationStrategy):
                 is_last_page=(page_num == len(page_breaks) - 1),
                 col_widths=context.col_widths,
                 needs_header=needs_header,
+                table_attrs=context.table_attrs,
             )
 
             # Add page_by header info
@@ -155,6 +156,7 @@ class SublineStrategy(PageByStrategy):
                 is_last_page=(page_num == len(page_breaks) - 1),
                 col_widths=context.col_widths,
                 needs_header=is_first or context.rtf_body.pageby_header,
+                table_attrs=context.table_attrs,
             )
 
             if subline_by:
