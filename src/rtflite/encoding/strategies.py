@@ -1028,9 +1028,13 @@ class PaginatedStrategy(EncodingStrategy):
             # Only if pageby_row is not 'column'
             # (which keeps the column instead of spanning row)
             # OR if not new_page (legacy behavior implies spanning rows)
-            if page_info.get("pageby_header_info") and (
-                not document.rtf_body.new_page
-                or document.rtf_body.pageby_row != "column"
+            if (
+                is_single_body(document.rtf_body)
+                and page_info.get("pageby_header_info")
+                and (
+                    not document.rtf_body.new_page
+                    or document.rtf_body.pageby_row != "column"
+                )
             ):
                 # Determine column index for attribute inheritance
                 col_idx = 0
@@ -1074,9 +1078,13 @@ class PaginatedStrategy(EncodingStrategy):
             # Check if there are group boundaries within this page
             # Only apply spanning rows at boundaries if pageby_row is not 'column'
             # OR if not new_page (legacy behavior implies spanning rows)
-            if page_info.get("group_boundaries") and (
-                not document.rtf_body.new_page
-                or document.rtf_body.pageby_row != "column"
+            if (
+                is_single_body(document.rtf_body)
+                and page_info.get("group_boundaries")
+                and (
+                    not document.rtf_body.new_page
+                    or document.rtf_body.pageby_row != "column"
+                )
             ):
                 # Determine column index for attribute inheritance
                 col_idx = 0
