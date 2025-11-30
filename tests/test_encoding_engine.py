@@ -1,13 +1,11 @@
 """Tests for RTF encoding engine and strategies."""
 
 import polars as pl
-import pytest
 
 from rtflite.encode import RTFDocument
 from rtflite.encoding import RTFEncodingEngine
 from rtflite.encoding.unified_encoder import UnifiedRTFEncoder
 from rtflite.input import RTFBody, RTFColumnHeader, RTFPage, RTFTitle
-from rtflite.services.document_service import RTFDocumentService
 
 
 class TestRTFEncodingEngine:

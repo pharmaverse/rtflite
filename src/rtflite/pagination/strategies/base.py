@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Protocol
+from typing import Any
 
 import polars as pl
 from pydantic import BaseModel, ConfigDict, Field

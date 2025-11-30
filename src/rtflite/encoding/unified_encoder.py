@@ -1,9 +1,10 @@
-from typing import Any
-
-import polars as pl
+from typing import TYPE_CHECKING, Any
 
 from ..attributes import BroadcastValue
-from .base import EncodingStrategy
+
+if TYPE_CHECKING:
+    from ..encode import RTFDocument
+
 from ..pagination.processor import PageFeatureProcessor
 from ..pagination.strategies import PageContext, PaginationContext, StrategyRegistry
 from ..pagination.strategies.defaults import DefaultPaginationStrategy
@@ -15,6 +16,7 @@ from ..services.document_service import RTFDocumentService
 from ..services.figure_service import RTFFigureService
 from ..services.grouping_service import grouping_service
 from ..type_guards import is_single_body
+from .base import EncodingStrategy
 from .renderer import PageRenderer
 
 
@@ -213,6 +215,7 @@ class UnifiedRTFEncoder(EncodingStrategy):
         # ... (Implementation omitted for brevity, would match PaginatedStrategy._encode_figure_only_document_with_pagination)
         # Since the user wants a WORKING system, I must implement it.
         from copy import deepcopy
+
         from ..figure import rtf_read_figure
 
         if not document.rtf_figure or not document.rtf_figure.figures:
@@ -330,7 +333,6 @@ class UnifiedRTFEncoder(EncodingStrategy):
         """
         from copy import deepcopy
 
-        from ..attributes import BroadcastValue
         from ..input import RTFColumnHeader
         from ..type_guards import (
             is_flat_header_list,

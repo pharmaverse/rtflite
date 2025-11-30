@@ -1,6 +1,7 @@
 """rtflite: A Python library for creating RTF documents."""
 
 from .attributes import TableAttributes
+from .convert import LibreOfficeConverter
 from .encode import RTFDocument
 from .encoding import RTFEncodingEngine
 from .input import (
@@ -17,7 +18,6 @@ from .input import (
 )
 from .pagination import PageBreakCalculator, RTFPagination
 from .strwidth import get_string_width
-from .convert import LibreOfficeConverter
 
 __version__ = "0.0.1"
 

@@ -19,14 +19,12 @@ class PageFeatureProcessor:
 
     def _should_show_element(self, element_location: str, page: PageContext) -> bool:
         """Determine if an element should be shown on a specific page."""
-        if element_location == "all":
-            return True
-        elif element_location == "first":
-            return page.is_first_page
-        elif element_location == "last":
-            return page.is_last_page
-        else:
-            return False
+        rules = {
+            "all": True,
+            "first": page.is_first_page,
+            "last": page.is_last_page,
+        }
+        return rules.get(element_location, False)
 
     def _apply_pagination_borders(self, document, page: PageContext) -> Any:
         """Apply proper borders for paginated context following r2rtf design."""

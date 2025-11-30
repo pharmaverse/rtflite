@@ -1,5 +1,4 @@
 from collections.abc import Mapping, Sequence
-from typing import Any
 
 import polars as pl
 from pydantic import BaseModel, ConfigDict, Field

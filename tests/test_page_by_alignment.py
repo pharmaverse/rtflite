@@ -1,15 +1,19 @@
-import polars as pl
-import pytest
-import rtflite as rtf
 import re
+
+import polars as pl
+
+import rtflite as rtf
+
 
 def test_page_by_column_alignment():
     """Test that column properties are correctly aligned when page_by is used."""
-    df = pl.DataFrame({
-        "section": ["-----", "Age", "Age"],
-        "item": ["Participant in Population", "    <60", "    >=60"],
-        "value": [55, 25, 30],
-    })
+    df = pl.DataFrame(
+        {
+            "section": ["-----", "Age", "Age"],
+            "item": ["Participant in Population", "    <60", "    >=60"],
+            "value": [55, 25, 30],
+        }
+    )
 
     doc = rtf.RTFDocument(
         df=df,
@@ -17,8 +21,8 @@ def test_page_by_column_alignment():
             page_by="section",
             col_rel_width=[1],
             text_justification=["l", "l", "c"],
-            border_top = ["single", "", ""],
-            border_bottom = ["single", "", ""]
+            border_top=["single", "", ""],
+            border_bottom=["single", "", ""],
         ),
     )
 
@@ -39,15 +43,17 @@ def test_page_by_column_alignment():
     pre_part = row_with_55[:idx_part]
     aligns_part = re.findall(r"\\q[lcrj]", pre_part)
 
-    # Note: The table definition (\trowd...) also contains \trqc etc. but that's row alignment.
-    # Cell content alignment is \ql, \qc etc. inside \pard.
+    # Note: The table definition (\trowd...) also contains \trqc etc. but that's row
+    # alignment. Cell content alignment is \ql, \qc etc. inside \pard.
     # Usually \pard resets, so we should see \ql inside the \pard block.
     # \trowd... contains \clvertalt etc. but not \ql/\qc usually (unless \clq...?)
     # The output shows: \pard\hyphpar0... \ql ... content.
 
     assert len(aligns_part) > 0, "No alignment found for Participant"
     last_align_part = aligns_part[-1]
-    assert last_align_part == "\\ql", f"Expected \\ql for Participant, got {last_align_part}"
+    assert last_align_part == "\\ql", (
+        f"Expected \\ql for Participant, got {last_align_part}"
+    )
 
     # Check alignment for "55"
     idx_55 = row_with_55.find("55")

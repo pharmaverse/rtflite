@@ -1,4 +1,5 @@
-from typing import Any, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 import polars as pl
 
@@ -38,7 +39,8 @@ class PageByStrategy(PaginationStrategy):
             page_df = context.df.slice(start_row, end_row - start_row + 1)
 
             is_first = page_num == 0
-            # Logic for repeating headers: if pageby_header is True, or if it's the first page
+            # Logic for repeating headers: if pageby_header is True,
+            # or if it's the first page
             needs_header = context.rtf_body.pageby_header or is_first
 
             page_ctx = PageContext(
@@ -118,7 +120,8 @@ class SublineStrategy(PageByStrategy):
     """Pagination strategy for subline_by (forces new pages and special headers)."""
 
     def paginate(self, context: PaginationContext) -> list[PageContext]:
-        # Subline strategy acts like page_by but uses subline_by columns and forces new_page=True
+        # Subline strategy acts like page_by but uses subline_by columns and forces
+        # new_page=True
         subline_by = context.rtf_body.subline_by
 
         # Initialize calculator
