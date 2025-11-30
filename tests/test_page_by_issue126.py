@@ -83,7 +83,8 @@ class TestPageByIssue126:
             rtf_page=rtf.RTFPage(orientation="landscape"),
             rtf_body=rtf.RTFBody(
                 page_by=["__index__"],
-                new_page=True,  # Creates spanning rows
+                new_page=True,
+                pageby_row="first_row",  # Creates spanning rows
             ),
         )
 
@@ -116,6 +117,7 @@ class TestPageByIssue126:
             rtf_body=rtf.RTFBody(
                 page_by=["__index__"],
                 new_page=True,
+                pageby_row="first_row",
             ),
         )
 
@@ -150,6 +152,7 @@ class TestPageByIssue126:
             rtf_body=rtf.RTFBody(
                 page_by=["__index__"],
                 new_page=True,
+                pageby_row="first_row",
             ),
         )
 
@@ -197,6 +200,7 @@ class TestPageByIssue126:
             rtf_body=rtf.RTFBody(
                 page_by=["__index__"],
                 new_page=True,
+                pageby_row="first_row",
             ),
         )
 
@@ -219,6 +223,7 @@ class TestPageByIssue126:
             rtf_body=rtf.RTFBody(
                 page_by=["__index__"],
                 new_page=True,
+                pageby_row="first_row",
             ),
         )
 
@@ -265,6 +270,7 @@ class TestPageByIssue126:
             rtf_body=rtf.RTFBody(
                 page_by=["__index__"],
                 new_page=True,
+                pageby_row="first_row",
             ),
         )
 
@@ -294,6 +300,7 @@ class TestPageByEdgeCases:
             rtf_body=rtf.RTFBody(
                 page_by=["__index__"],
                 new_page=True,
+                pageby_row="first_row",
             ),
         )
 
@@ -317,6 +324,7 @@ class TestPageByEdgeCases:
             rtf_body=rtf.RTFBody(
                 page_by=["__index__"],
                 new_page=True,
+                pageby_row="first_row",
             ),
         )
 
@@ -342,6 +350,7 @@ class TestPageByEdgeCases:
             rtf_body=rtf.RTFBody(
                 page_by=["__index__"],
                 new_page=True,
+                pageby_row="first_row",
             ),
         )
 

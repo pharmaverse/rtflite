@@ -629,7 +629,7 @@ class TableAttributes(TextAttributes):
         }
 
     def _encode(
-        self, df: pl.DataFrame, col_widths: Sequence[float]
+        self, df: pl.DataFrame, col_widths: Sequence[float], row_offset: int = 0
     ) -> MutableSequence[str]:
         dim = df.shape
 
@@ -637,7 +637,7 @@ class TableAttributes(TextAttributes):
             """Get broadcast value for an attribute at specified indices."""
             attr_value = getattr(self, attr_name)
             return BroadcastValue(value=attr_value, dimension=dim).iloc(
-                row_idx, col_idx
+                row_idx + row_offset, col_idx
             )
 
         if self.cell_nrow is None:
@@ -651,8 +651,11 @@ class TableAttributes(TextAttributes):
                     )
 
                     # Enhanced: Use calculate_lines method for better text wrapping
-                    self.cell_nrow[i, j] = self.calculate_lines(
-                        text=text, available_width=col_width, row_idx=i, col_idx=j
+                    self.cell_nrow[i][j] = self.calculate_lines(
+                        text=text,
+                        available_width=col_width,
+                        row_idx=i + row_offset,
+                        col_idx=j,
                     )
 
         rows: MutableSequence[str] = []

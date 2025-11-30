@@ -37,7 +37,7 @@ class TestRTFEncodingEngine:
 
         # Create a document with page_by enabled
         df = pl.DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})
-        rtf_body = RTFBody(page_by=["A"], new_page=True)
+        rtf_body = RTFBody(page_by=["A"], new_page=True, pageby_row="first_row")
         document = RTFDocument(df=df, rtf_body=rtf_body)
 
         strategy = engine._select_strategy(document)
@@ -60,7 +60,7 @@ class TestRTFEncodingEngine:
         document_service = RTFDocumentService()
 
         df = pl.DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})
-        rtf_body = RTFBody(page_by=["A"], new_page=True)
+        rtf_body = RTFBody(page_by=["A"], new_page=True, pageby_row="first_row")
         document = RTFDocument(df=df, rtf_body=rtf_body)
 
         assert document_service.needs_pagination(document) is True
@@ -104,7 +104,7 @@ class TestRTFEncodingEngine:
         engine = RTFEncodingEngine()
 
         df = pl.DataFrame({"A": [1, 2], "B": [3, 4]})
-        rtf_body = RTFBody(page_by=["A"], new_page=True)
+        rtf_body = RTFBody(page_by=["A"], new_page=True, pageby_row="first_row")
         document = RTFDocument(df=df, rtf_body=rtf_body)
 
         # Test that encoding produces a valid paginated document
@@ -141,7 +141,7 @@ class TestPaginatedStrategy:
         strategy = PaginatedStrategy()
 
         df = pl.DataFrame({"A": [1, 2], "B": [3, 4]})
-        rtf_body = RTFBody(page_by=["A"], new_page=True)
+        rtf_body = RTFBody(page_by=["A"], new_page=True, pageby_row="first_row")
         document = RTFDocument(df=df, rtf_body=rtf_body)
 
         # Test successful paginated encoding
@@ -184,6 +184,7 @@ class TestPaginatedStrategy:
                 col_rel_width=[2, 1, 1],  # All columns including page_by
                 page_by=["__index__"],
                 new_page=True,  # This triggers pagination
+                pageby_row="first_row",
             ),
         )
 

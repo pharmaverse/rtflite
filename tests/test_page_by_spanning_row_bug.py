@@ -194,6 +194,7 @@ def test_page_by_correct_spanning_row_structure():
         rtf_body=rtf.RTFBody(
             page_by=["Subject"],
             new_page=True,  # This makes it work
+            pageby_row="first_row",
         ),
     )
 
