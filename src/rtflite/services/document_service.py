@@ -12,6 +12,25 @@ class RTFDocumentService:
 
         self.encoding_service = RTFEncodingService()
 
+    def get_pagination_strategy(self, document):
+        """Get the appropriate pagination strategy for the document.
+
+        Returns:
+            PaginationStrategy instance
+        """
+        from ..pagination.strategies import StrategyRegistry
+
+        # Determine strategy
+        strategy_name = "default"
+        if document.rtf_body.subline_by:
+            strategy_name = "subline"
+        elif document.rtf_body.page_by:
+            strategy_name = "page_by"
+
+        # Get strategy class
+        strategy_cls = StrategyRegistry.get(strategy_name)
+        return strategy_cls()
+
     def calculate_additional_rows_per_page(self, document) -> int:
         """Calculate additional rows needed per page for headers, footnotes, sources."""
         additional_rows = 0

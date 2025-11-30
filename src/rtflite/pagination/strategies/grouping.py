@@ -176,6 +176,20 @@ class SublineStrategy(PageByStrategy):
                     context.df, subline_by, start_row
                 )
 
+            # Also handle page_by if present (spanning rows)
+            page_by = context.rtf_body.page_by
+            if page_by:
+                page_ctx.pageby_header_info = self._get_group_headers(
+                    context.df, page_by, start_row
+                )
+
+                # Detect group boundaries for spanning rows mid-page
+                group_boundaries = self._detect_group_boundaries(
+                    context.df, page_by, start_row, end_row
+                )
+                if group_boundaries:
+                    page_ctx.group_boundaries = group_boundaries
+
             pages.append(page_ctx)
 
         return pages

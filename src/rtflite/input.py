@@ -2,7 +2,6 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
-import polars as pl
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from rtflite.attributes import TableAttributes, TextAttributes
@@ -737,13 +736,15 @@ class RTFColumnHeader(TableAttributes):
                 isinstance(item, str) for item in v
             ):
                 return list(v)
-            
+
             # Handle DataFrame input by converting to list
             try:
                 import polars as pl
+
                 if isinstance(v, pl.DataFrame):
                     # For backwards compatibility/renderer usage
-                    # If DataFrame has multiple rows, transpose it first (or take first row)
+                    # If DataFrame has multiple rows, transpose it first
+                    # (or take first row)
                     if v.shape[0] > 1 and v.shape[1] == 1:
                         # Column-oriented: transpose to row-oriented
                         return v.get_column(v.columns[0]).to_list()
@@ -752,7 +753,7 @@ class RTFColumnHeader(TableAttributes):
                         return list(v.row(0))
             except ImportError:
                 pass
-                
+
         return v
 
     @field_validator("text", mode="after")
