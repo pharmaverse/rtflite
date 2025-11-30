@@ -277,18 +277,13 @@ doc_subline = rtf.RTFDocument(
             "Severity",
             "Serious",
         ],  # Headers for remaining columns after SUBLINEBY removal
+        col_rel_width=[3, 2, 4, 2,],  
         text_format="b",
         text_justification=["l", "l", "c", "c"],
     ),
     rtf_body=rtf.RTFBody(
         subline_by=["SUBLINEBY"],  # Creates subheader rows from SUBLINEBY values
-        col_rel_width=[
-            1,
-            3,
-            4,
-            2,
-            2,
-        ],  # Widths for remaining 4 columns after SUBLINEBY removal
+        col_rel_width=[3, 2, 4, 2,],  
         text_justification=["l", "l", "l", "c", "c"],
     ),
     rtf_footnote=rtf.RTFFootnote(
@@ -351,19 +346,14 @@ doc_comprehensive = rtf.RTFDocument(
             "Adverse Event",
             "Severity",
         ],  # Headers for remaining columns after SUBLINEBY removal
+        col_rel_width=[3, 2, 4, 2,],  
         text_format="b",
         text_justification=["l", "c", "l", "c"],
     ),
     rtf_body=rtf.RTFBody(
         subline_by=["SUBLINEBY"],  # Creates trial/site subheaders
         group_by=["USUBJID"],  # Suppresses duplicate subject IDs
-        col_rel_width=[
-            1,
-            3,
-            2,
-            4,
-            2,
-        ],  
+        col_rel_width=[3, 2, 4, 2,],  
         text_justification=["l", "l", "c", "l", "c"],
     ),
     rtf_footnote=rtf.RTFFootnote(
