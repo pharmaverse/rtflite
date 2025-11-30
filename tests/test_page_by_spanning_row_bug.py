@@ -214,27 +214,3 @@ def test_page_by_correct_spanning_row_structure():
     assert header_cols == 2, (
         f"Even with new_page=True, expected 2 columns but found {header_cols}"
     )
-
-
-if __name__ == "__main__":
-    print("=" * 80)
-    print("TESTING: page_by spanning row bug")
-    print("=" * 80)
-
-    try:
-        test_page_by_should_create_spanning_rows_not_data_column()
-        print("\n✓ TEST PASSED - Bug does not exist (spanning rows working correctly)")
-    except AssertionError as e:
-        print("\n✗ TEST FAILED - Bug confirmed!")
-        print(f"\nError:\n{e}")
-
-    print("\n" + "=" * 80)
-    print("TESTING: page_by with new_page=True (should work)")
-    print("=" * 80)
-
-    try:
-        test_page_by_correct_spanning_row_structure()
-        print("\n✓ TEST PASSED - new_page=True creates correct structure")
-    except AssertionError as e:
-        print("\n✗ TEST FAILED")
-        print(f"\nError:\n{e}")
