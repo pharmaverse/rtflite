@@ -126,7 +126,7 @@ class TestPageByIssue126:
         # Calculate expected pages
         # nrow=15 includes headers (2 rows) + spanning row (1 row) + data
         # So ~12 data rows per page
-        # 50 rows / 12 ≈ 4-5 pages
+        # 50 rows / 12 is approximately 4-5 pages
         page_breaks = rtf_output.count(r"\page")
         total_pages = page_breaks + 1
 
@@ -167,8 +167,8 @@ class TestPageByIssue126:
         subject2_count = rtf_output.count("Subject 2")
 
         # With 30 rows per group and ~12 rows per page:
-        # Subject 1 should span ~3 pages → 3 spanning rows
-        # Subject 2 should span ~3 pages → 3 spanning rows
+        # Subject 1 should span ~3 pages -> 3 spanning rows
+        # Subject 2 should span ~3 pages -> 3 spanning rows
         assert subject1_count >= 2, (
             f"Subject 1 should appear on multiple pages, found {subject1_count}"
         )
