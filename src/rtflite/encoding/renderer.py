@@ -93,7 +93,7 @@ class PageRenderer:
             )
         ):
             col_idx = 0
-            # Try to find column index for legacy reasons, though likely unused if we handle spanning cleanly
+            # Find col index for legacy reasons; likely unused with clean spanning.
             if document.rtf_body.page_by and isinstance(document.df, pl.DataFrame):
                 try:
                     col_idx = document.df.columns.index(document.rtf_body.page_by[0])
@@ -223,15 +223,15 @@ class PageRenderer:
 
                     # Adjust col_rel_width if needed (logic from PaginatedStrategy)
                     # Since we are using page.data which is already sliced/processed,
-                    # we might need to adjust widths if they were originally defined for full table
+                    # Might need to adjust widths if defined for full table.
                     if document.rtf_body.col_rel_width is not None:
                         # If body has specific widths, try to map them.
-                        # For simplicity in this refactor, if we have header text now, we proceed.
+                        # If header text exists, proceed.
                         pass
 
             # Remove columns if necessary (page_by/subline_by)
-            # Note: If we just populated from page.data, page.data already has columns removed!
-            # So we only need to filter if text came from original document and has extra columns.
+            # Note: page.data already has columns removed if populated from it.
+            # Filter only if text is from original document with extra columns.
             if isinstance(header_copy.text, pl.DataFrame):
                 cols_remove = set()
                 if document.rtf_body.page_by:
@@ -299,7 +299,7 @@ class PageRenderer:
 
                 if page_rel_row > prev_row:
                     segment = page_df[prev_row:page_rel_row]
-                    # We must use internal _encode method of TableAttributes (attrs are already finalized)
+                    # Use internal _encode method (attributes already finalized).
                     # Note: We need to ensure page_attrs is the TableAttributes object
                     elements.extend(
                         page_attrs._encode(segment, col_widths, row_offset=prev_row)

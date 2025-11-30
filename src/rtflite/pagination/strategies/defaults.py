@@ -1,4 +1,3 @@
-
 from ..core import PageBreakCalculator, RTFPagination
 from .base import PageContext, PaginationContext, PaginationStrategy
 
