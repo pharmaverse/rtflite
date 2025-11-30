@@ -226,6 +226,7 @@ class RTFEncodingService:
         footnote_config,
         page_number: int | None = None,
         page_col_width: float | None = None,
+        border_style: str | None = None,
     ) -> Sequence[str]:
         """Encode footnote component with advanced formatting.
 
@@ -233,6 +234,7 @@ class RTFEncodingService:
             footnote_config: RTFFootnote configuration
             page_number: Page number for footnote
             page_col_width: Page column width for calculations
+            border_style: Optional border style to override defaults
 
         Returns:
             List of RTF footnote strings
@@ -242,13 +244,8 @@ class RTFEncodingService:
 
         rtf_attrs = footnote_config
 
-        # Apply page-specific border if set
-        if (
-            hasattr(rtf_attrs, "_page_border_style")
-            and page_number is not None
-            and page_number in rtf_attrs._page_border_style
-        ):
-            border_style = rtf_attrs._page_border_style[page_number]
+        # Apply explicitly passed border style
+        if border_style:
             # Create a copy with modified border
             rtf_attrs = rtf_attrs.model_copy()
             rtf_attrs.border_bottom = [[border_style]]
@@ -288,6 +285,7 @@ class RTFEncodingService:
         source_config,
         page_number: int | None = None,
         page_col_width: float | None = None,
+        border_style: str | None = None,
     ) -> Sequence[str]:
         """Encode source component with advanced formatting.
 
@@ -295,6 +293,7 @@ class RTFEncodingService:
             source_config: RTFSource configuration
             page_number: Page number for source
             page_col_width: Page column width for calculations
+            border_style: Optional border style to override defaults
 
         Returns:
             List of RTF source strings
@@ -304,13 +303,8 @@ class RTFEncodingService:
 
         rtf_attrs = source_config
 
-        # Apply page-specific border if set
-        if (
-            hasattr(rtf_attrs, "_page_border_style")
-            and page_number is not None
-            and page_number in rtf_attrs._page_border_style
-        ):
-            border_style = rtf_attrs._page_border_style[page_number]
+        # Apply explicitly passed border style
+        if border_style:
             # Create a copy with modified border
             rtf_attrs = rtf_attrs.model_copy()
             rtf_attrs.border_bottom = [[border_style]]
@@ -389,15 +383,16 @@ class RTFEncodingService:
             ]
             processed_df = processed_df.select(remaining_columns)
 
+            # Create a copy of attributes to modify
+            processed_attrs = rtf_attrs.model_copy(deep=True)
+
             # Handle attribute slicing for removed columns
             # We need to slice list-based attributes to match the new column structure
             from ..attributes import BroadcastValue
 
-            # Create a copy of attributes to modify
-            # We use deepcopy to ensure nested lists are copied
-            # model_copy(deep=True) is not sufficient for nested lists in
-            # Pydantic v2 sometimes
-            processed_attrs = rtf_attrs.model_copy(deep=True)
+            # Add footer content
+            # For now, we assume standard document footers are handled outside.
+            # But typically footers are page footers handled by RTFPageFooter.
 
             # Get indices of removed columns in the original dataframe
             removed_indices = [
@@ -580,51 +575,50 @@ class RTFEncodingService:
         self, document, df, rtf_attrs, col_widths
     ) -> Sequence[str]:
         """Encode body content with pagination support."""
+        from ..pagination.strategies import PaginationContext
         from .document_service import RTFDocumentService
 
         document_service = RTFDocumentService()
-        _, distributor = document_service.create_pagination_instance(document)
+        strategy = document_service.get_pagination_strategy(document)
 
-        # Distribute content across pages (r2rtf compatible)
+        # Calculate additional rows
         additional_rows = document_service.calculate_additional_rows_per_page(document)
-        pages = distributor.distribute_content(
+
+        # Create pagination context
+        context = PaginationContext(
             df=df,
+            rtf_body=rtf_attrs,
+            rtf_page=document.rtf_page,
             col_widths=col_widths,
             table_attrs=rtf_attrs,
             additional_rows_per_page=additional_rows,
         )
 
+        # Paginate
+        pages = strategy.paginate(context)
+
         # Generate RTF for each page
         all_rows = []
-        for page_num, page_content in enumerate(pages, 1):
-            page_rows = []
+        for page_num, page in enumerate(pages, 1):
+            page_rows: list[str] = []
 
             # Add page header content
-            if page_content.get("headers"):
-                for header_content in page_content["headers"]:
-                    header_text = header_content.get("text", "")
-                    if header_text:
-                        page_rows.append(header_text)
+            if page.needs_header and document.rtf_column_header:
+                header_elements = self.encode_column_header(
+                    None,
+                    document.rtf_column_header[0]
+                    if isinstance(document.rtf_column_header, list)
+                    else document.rtf_column_header,
+                    document.rtf_page.col_width,
+                )
+                if header_elements:
+                    page_rows.extend(header_elements)
 
             # Add table data
-            page_data = page_content.get("data")
-            if page_data is not None:
-                # Check if it's a DataFrame or a list
-                if hasattr(page_data, "is_empty"):
-                    # It's a DataFrame
-                    if not page_data.is_empty():
-                        page_rows.extend(page_data)
-                else:
-                    # It's a list or other iterable
-                    if page_data:
-                        page_rows.extend(page_data)
-
-            # Add footer content
-            if page_content.get("footers"):
-                for footer_content in page_content["footers"]:
-                    footer_text = footer_content.get("text", "")
-                    if footer_text:
-                        page_rows.append(footer_text)
+            if not page.data.is_empty():
+                # Encode the dataframe chunk
+                chunk_rows = rtf_attrs._encode(page.data, col_widths)
+                page_rows.extend(chunk_rows)
 
             # Add page break between pages (except last page)
             if page_num < len(pages):
@@ -650,7 +644,25 @@ class RTFEncodingService:
         if rtf_attrs is None:
             return None
 
-        dim = df.shape
+        # Convert text list to DataFrame for encoding if needed
+        import polars as pl
+
+        df_to_encode = df
+        if isinstance(df, (list, tuple)):
+            # Create DataFrame from list
+            schema = [f"col_{i + 1}" for i in range(len(df))]
+            df_to_encode = pl.DataFrame([df], schema=schema, orient="row")
+        elif df is None and rtf_attrs.text:
+            # Fallback to rtf_attrs.text if df is None
+            text = rtf_attrs.text
+            if isinstance(text, (list, tuple)):
+                schema = [f"col_{i + 1}" for i in range(len(text))]
+                df_to_encode = pl.DataFrame([text], schema=schema, orient="row")
+
+        if df_to_encode is None:
+            return None
+
+        dim = df_to_encode.shape
 
         rtf_attrs.col_rel_width = rtf_attrs.col_rel_width or [1] * dim[1]
         rtf_attrs = rtf_attrs._set_default()
@@ -659,7 +671,7 @@ class RTFEncodingService:
 
         col_widths = Utils._col_widths(rtf_attrs.col_rel_width, page_col_width)
 
-        return rtf_attrs._encode(df, col_widths)
+        return rtf_attrs._encode(df_to_encode, col_widths)
 
     def encode_page_break(self, page_config, page_margin_encode_func) -> str:
         """Generate proper RTF page break sequence matching r2rtf format.

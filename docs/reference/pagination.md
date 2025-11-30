@@ -19,12 +19,3 @@ Calculates optimal page break positions.
     options:
       show_root_heading: false
       show_source: false
-
-## ContentDistributor
-
-Distributes content across pages while maintaining formatting.
-
-::: rtflite.pagination.ContentDistributor
-    options:
-      show_root_heading: false
-      show_source: false

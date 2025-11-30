@@ -29,3 +29,26 @@
 - Reuse utility functions in `tests/utils.py` and `tests/utils_snapshot.py` when authoring new tests to ensure consistent normalization of RTF strings.
 - Consult `scripts/update_color_table.R` and `scripts/update_unicode_latex.py` when modifying color tables or Unicode handling to avoid drifting from validated data sources.
 - Public API exports are centralized in `src/rtflite/__init__.py`; update `__all__` when adding new user-facing classes or helpers.
+
+## System Architecture: Pagination & Rendering
+
+The project uses a modular, strategy-based architecture for pagination and rendering.
+
+### 1. Strategy Registry & Index
+- **Pagination Logic**: Decoupled from the core distributor.
+- **Strategies**:
+    - `DefaultPaginationStrategy`: Standard row-limit based pagination.
+    - `PageByStrategy`: Handles `page_by` grouping logic.
+    - `SublineStrategy`: Handles `subline_by` logic.
+- **Registry**: `StrategyRegistry` resolves strategies based on configuration.
+
+### 2. Unified Rendering Pipeline
+- **`UnifiedRTFEncoder`**: Handles all document encoding (replacing legacy split strategies).
+- **Flow**:
+    1.  **Paginate**: Select strategy -> Split DataFrame into `List[PageContext]`.
+    2.  **Process**: Apply per-page features (borders, headers, dynamic attributes) via `PageFeatureProcessor`.
+    3.  **Render**: Use `PageRenderer` to convert each `PageContext` to RTF.
+    4.  **Assemble**: Concatenate page RTF chunks.
+
+### 3. Feature Isolation
+- Page-specific features (top/bottom borders, spanning rows, footnotes) are calculated and finalized on the `PageContext` object before rendering.

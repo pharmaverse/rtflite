@@ -445,11 +445,6 @@ def validate_color(color: str) -> bool:
     return color_service.validate_color(color)
 
 
-def get_color_index(color: str) -> int:
-    """Get the RTF color table index for a color name."""
-    return color_service.get_color_index(color)
-
-
 def get_color_suggestions(
     partial_color: str, max_suggestions: int = 5
 ) -> Sequence[str]:

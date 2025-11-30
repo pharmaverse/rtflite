@@ -2,7 +2,7 @@
 
 from typing import TYPE_CHECKING
 
-from .strategies import EncodingStrategy, PaginatedStrategy, SinglePageStrategy
+from .unified_encoder import UnifiedRTFEncoder
 
 if TYPE_CHECKING:
     from ..encode import RTFDocument
@@ -11,20 +11,15 @@ if TYPE_CHECKING:
 class RTFEncodingEngine:
     """Main engine for RTF document encoding.
 
-    This class orchestrates the encoding process by selecting the appropriate
-    strategy based on document characteristics and delegating the actual
-    encoding to strategy classes.
+    This class orchestrates the encoding process using the UnifiedRTFEncoder
+    which implements the strategy pattern for pagination and rendering.
     """
 
     def __init__(self):
-        from ..services.document_service import RTFDocumentService
-
-        self._document_service = RTFDocumentService()
-        self._single_page_strategy = SinglePageStrategy()
-        self._paginated_strategy = PaginatedStrategy()
+        self._encoder = UnifiedRTFEncoder()
 
     def encode_document(self, document: "RTFDocument") -> str:
-        """Encode an RTF document using the appropriate strategy.
+        """Encode an RTF document using the unified encoder.
 
         Args:
             document: The RTF document to encode
@@ -32,19 +27,4 @@ class RTFEncodingEngine:
         Returns:
             Complete RTF string
         """
-        strategy = self._select_strategy(document)
-        return strategy.encode(document)
-
-    def _select_strategy(self, document: "RTFDocument") -> "EncodingStrategy":
-        """Select the appropriate encoding strategy based on document characteristics.
-
-        Args:
-            document: The RTF document to analyze
-
-        Returns:
-            The selected encoding strategy
-        """
-        if self._document_service.needs_pagination(document):
-            return self._paginated_strategy
-        else:
-            return self._single_page_strategy
+        return self._encoder.encode(document)

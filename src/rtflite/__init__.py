@@ -1,7 +1,11 @@
+"""rtflite: A Python library for creating RTF documents."""
+
+from .attributes import TableAttributes
 from .convert import LibreOfficeConverter
-from .core import RTFConfiguration, RTFConstants
+from .core.config import RTFConfiguration
+from .core.constants import RTFConstants
 from .encode import RTFDocument
-from .figure import rtf_read_figure
+from .encoding import RTFEncodingEngine
 from .input import (
     RTFBody,
     RTFColumnHeader,
@@ -11,26 +15,32 @@ from .input import (
     RTFPageFooter,
     RTFPageHeader,
     RTFSource,
+    RTFSubline,
     RTFTitle,
 )
-from .pagination import ContentDistributor, PageBreakCalculator, RTFPagination
+from .pagination import PageBreakCalculator, RTFPagination
+from .strwidth import get_string_width
+
+__version__ = "0.0.1"
 
 __all__ = [
-    "LibreOfficeConverter",
     "RTFDocument",
+    "RTFEncodingEngine",
+    "RTFConfiguration",
+    "RTFConstants",
     "RTFBody",
-    "RTFColumnHeader",
-    "RTFFigure",
     "RTFPage",
     "RTFTitle",
-    "RTFPageHeader",
-    "RTFPageFooter",
+    "RTFColumnHeader",
     "RTFFootnote",
     "RTFSource",
-    "rtf_read_figure",
+    "RTFFigure",
+    "RTFPageHeader",
+    "RTFPageFooter",
+    "RTFSubline",
+    "TableAttributes",
     "RTFPagination",
     "PageBreakCalculator",
-    "ContentDistributor",
-    "RTFConstants",
-    "RTFConfiguration",
+    "get_string_width",
+    "LibreOfficeConverter",
 ]

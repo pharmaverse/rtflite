@@ -16,7 +16,6 @@ from rtflite.text_conversion import (
     LaTeXSymbolMapper,
     TextConverter,
     convert_text,
-    text_convert,
 )
 
 
@@ -366,24 +365,6 @@ class TestEdgeCasesAndErrorHandling:
         assert "\\beta" not in result  # Should be converted
         # \\newline might or might not be converted depending on mapping
         assert result != text  # Result should be different
-
-
-class TestBackwardCompatibility:
-    """Test backward compatibility features."""
-
-    def test_text_convert_import(self):
-        """Test that text_convert can still be imported for backward compatibility."""
-        # Should be able to import text_convert from the old location
-        from rtflite.text_conversion import text_convert
-
-        assert callable(text_convert)
-
-    def test_text_convert_function_exists(self):
-        """Test that text_convert function works."""
-        # This tests the backward compatibility import
-        result = text_convert("\\alpha", True)
-        # The exact behavior depends on the implementation in the old module
-        assert result is not None
 
 
 class TestRTFCharacterMapping:

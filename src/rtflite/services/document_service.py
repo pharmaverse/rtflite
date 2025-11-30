@@ -12,6 +12,25 @@ class RTFDocumentService:
 
         self.encoding_service = RTFEncodingService()
 
+    def get_pagination_strategy(self, document):
+        """Get the appropriate pagination strategy for the document.
+
+        Returns:
+            PaginationStrategy instance
+        """
+        from ..pagination.strategies import StrategyRegistry
+
+        # Determine strategy
+        strategy_name = "default"
+        if document.rtf_body.subline_by:
+            strategy_name = "subline"
+        elif document.rtf_body.page_by:
+            strategy_name = "page_by"
+
+        # Get strategy class
+        strategy_cls = StrategyRegistry.get(strategy_name)
+        return strategy_cls()
+
     def calculate_additional_rows_per_page(self, document) -> int:
         """Calculate additional rows needed per page for headers, footnotes, sources."""
         additional_rows = 0
@@ -133,23 +152,6 @@ class RTFDocumentService:
 
         # Check if data rows exceed what can fit on a single page
         return data_rows > available_data_rows_per_page
-
-    def create_pagination_instance(self, document) -> tuple:
-        """Create pagination and content distributor instances."""
-        from ..pagination import ContentDistributor, PageBreakCalculator, RTFPagination
-
-        pagination = RTFPagination(
-            page_width=document.rtf_page.width,
-            page_height=document.rtf_page.height,
-            margin=document.rtf_page.margin,
-            nrow=document.rtf_page.nrow,
-            orientation=document.rtf_page.orientation,
-        )
-
-        calculator = PageBreakCalculator(pagination=pagination)
-        distributor = ContentDistributor(pagination=pagination, calculator=calculator)
-
-        return pagination, distributor
 
     def generate_page_break(self, document) -> str:
         """Generate proper RTF page break sequence."""
@@ -553,9 +555,12 @@ class RTFDocumentService:
 
         if target_component:
             component_name, component = target_component
-            if not hasattr(component, "_page_border_style"):
-                component._page_border_style = {}
-            component._page_border_style[page_info["page_number"]] = border_style
+            # Store the border style in page_info to be used during encoding
+            # instead of modifying the component directly
+            if "component_borders" not in page_info:
+                page_info["component_borders"] = {}
+
+            page_info["component_borders"][component_name] = border_style
 
     def _apply_border_to_cell(
         self,
