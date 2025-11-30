@@ -1,4 +1,4 @@
-name: ruff check
+name: Ruff check
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - main
   pull_request:
     branches:
-      - '**'
+      - "**"
 
 jobs:
   ruff-check:
