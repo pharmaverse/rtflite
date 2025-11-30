@@ -209,15 +209,16 @@ doc_treatment_separated = rtf.RTFDocument(
         text_convert=False,
     ),
     rtf_column_header=rtf.RTFColumnHeader(
-        text=["Treatment", "Subject ID", "Study Day", "Adverse Event", "Severity"],
+        text=["Subject ID", "Study Day", "Adverse Event", "Severity"],
+        col_rel_width=[3, 1, 4, 2],
         text_format="b",
-        text_justification=["l", "l", "c", "l", "c"],
+        text_justification=["l", "c", "l", "c"],
     ),
     rtf_body=rtf.RTFBody(
         page_by=["TRTA"],  # Separate pages by treatment
         new_page=True,  # Force new page for each treatment
+        pageby_row="first_row",  # Display treatment as spanning row and remove column
         group_by=[
-            "TRTA",
             "USUBJID",
             "ASTDY",
         ],  # Suppress duplicates within each treatment page
@@ -276,18 +277,14 @@ doc_subline = rtf.RTFDocument(
             "Severity",
             "Serious",
         ],  # Headers for remaining columns after SUBLINEBY removal
+        col_rel_width=[3, 2, 4, 2,],  
         text_format="b",
         text_justification=["l", "l", "c", "c"],
     ),
     rtf_body=rtf.RTFBody(
         subline_by=["SUBLINEBY"],  # Creates subheader rows from SUBLINEBY values
-        col_rel_width=[
-            3,
-            4,
-            2,
-            2,
-        ],  # Widths for remaining 4 columns after SUBLINEBY removal
-        text_justification=["l", "l", "c", "c"],
+        col_rel_width=[3, 2, 4, 2,],  
+        text_justification=["l", "l", "l", "c", "c"],
     ),
     rtf_footnote=rtf.RTFFootnote(
         text=[
@@ -349,19 +346,15 @@ doc_comprehensive = rtf.RTFDocument(
             "Adverse Event",
             "Severity",
         ],  # Headers for remaining columns after SUBLINEBY removal
+        col_rel_width=[3, 2, 4, 2,],  
         text_format="b",
         text_justification=["l", "c", "l", "c"],
     ),
     rtf_body=rtf.RTFBody(
         subline_by=["SUBLINEBY"],  # Creates trial/site subheaders
         group_by=["USUBJID"],  # Suppresses duplicate subject IDs
-        col_rel_width=[
-            3,
-            2,
-            4,
-            2,
-        ],  # Widths for remaining 4 columns after SUBLINEBY removal
-        text_justification=["l", "c", "l", "c"],
+        col_rel_width=[3, 2, 4, 2,],  
+        text_justification=["l", "l", "c", "l", "c"],
     ),
     rtf_footnote=rtf.RTFFootnote(
         text=[

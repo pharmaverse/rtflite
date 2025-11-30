@@ -265,7 +265,8 @@ class ContentDistributor(BaseModel):
                     df, subline_by, start_row
                 )
             # Add page_by header information (spanning rows) on each page
-            # Note: new_page flag only controls forced page breaks, not spanning row creation
+            # Note: new_page flag only controls forced page breaks, not spanning row
+            # creation
             elif page_by:
                 # Get header for first group on this page
                 page_info["pageby_header_info"] = self.get_group_headers(
@@ -285,12 +286,15 @@ class ContentDistributor(BaseModel):
                                 k: v for k, v in next_group.items() if str(v) != "-----"
                             }
 
-                            # Group changes at row_idx+1 (relative to page: row_idx+1-start_row)
-                            group_boundaries.append({
-                                "absolute_row": row_idx + 1,
-                                "page_relative_row": row_idx + 1 - start_row,
-                                "group_values": next_group_filtered
-                            })
+                            # Group changes at row_idx+1
+                            # (relative to page: row_idx+1-start_row)
+                            group_boundaries.append(
+                                {
+                                    "absolute_row": row_idx + 1,
+                                    "page_relative_row": row_idx + 1 - start_row,
+                                    "group_values": next_group_filtered,
+                                }
+                            )
 
                 if group_boundaries:
                     page_info["group_boundaries"] = group_boundaries

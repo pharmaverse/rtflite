@@ -681,7 +681,7 @@ class PaginatedStrategy(EncodingStrategy):
 
         # Prepare DataFrame for processing (remove subline_by columns, apply
         # group_by if needed)
-        processed_df, original_df = (
+        processed_df, original_df, processed_attrs = (
             self.encoding_service.prepare_dataframe_for_body_encoding(
                 document.df, document.rtf_body
             )
@@ -712,17 +712,18 @@ class PaginatedStrategy(EncodingStrategy):
         col_total_width = document.rtf_page.col_width
         if (
             is_single_body(document.rtf_body)
-            and document.rtf_body.col_rel_width is not None
+            and processed_attrs.col_rel_width is not None
         ):
             col_widths = Utils._col_widths(
-                document.rtf_body.col_rel_width,
+                processed_attrs.col_rel_width,
                 col_total_width if col_total_width is not None else 8.5,
             )
         else:
             # Default to equal widths if body is not single
             # Use processed_df column count (after page_by/subline_by columns removed)
             col_widths = Utils._col_widths(
-                [1] * processed_df.shape[1], col_total_width if col_total_width is not None else 8.5
+                [1] * processed_df.shape[1],
+                col_total_width if col_total_width is not None else 8.5,
             )
 
         # Calculate additional rows per page for r2rtf compatibility
@@ -740,7 +741,7 @@ class PaginatedStrategy(EncodingStrategy):
                 page_by=document.rtf_body.page_by,
                 new_page=document.rtf_body.new_page,
                 pageby_header=document.rtf_body.pageby_header,
-                table_attrs=document.rtf_body,
+                table_attrs=processed_attrs,
                 additional_rows_per_page=additional_rows,
                 subline_by=document.rtf_body.subline_by,
             )
@@ -907,9 +908,8 @@ class PaginatedStrategy(EncodingStrategy):
 
                     # Adjust col_rel_width to match processed columns (without
                     # subline_by and page_by)
-                    if (
-                        is_single_body(document.rtf_body)
-                        and (document.rtf_body.subline_by or document.rtf_body.page_by)
+                    if is_single_body(document.rtf_body) and (
+                        document.rtf_body.subline_by or document.rtf_body.page_by
                     ):
                         original_cols = (
                             list(document.df.columns)
@@ -973,6 +973,7 @@ class PaginatedStrategy(EncodingStrategy):
 
                     # Remove page_by/subline_by columns from header to match body
                     import polars as pl
+
                     if isinstance(header_copy.text, pl.DataFrame):
                         columns_to_remove = set()
                         if document.rtf_body.page_by:
@@ -982,10 +983,13 @@ class PaginatedStrategy(EncodingStrategy):
 
                         if columns_to_remove:
                             remaining_columns = [
-                                col for col in header_copy.text.columns
+                                col
+                                for col in header_copy.text.columns
                                 if col not in columns_to_remove
                             ]
-                            header_copy.text = header_copy.text.select(remaining_columns)
+                            header_copy.text = header_copy.text.select(
+                                remaining_columns
+                            )
 
                     # Apply page-level borders to column headers (matching
                     # non-paginated behavior)
@@ -1021,7 +1025,27 @@ class PaginatedStrategy(EncodingStrategy):
                 page_elements.extend(header_elements)
 
             # Add page_by spanning table row after headers if specified
-            if page_info.get("pageby_header_info"):
+            # Only if pageby_row is not 'column'
+            # (which keeps the column instead of spanning row)
+            # OR if not new_page (legacy behavior implies spanning rows)
+            if (
+                is_single_body(document.rtf_body)
+                and page_info.get("pageby_header_info")
+                and (
+                    not document.rtf_body.new_page
+                    or document.rtf_body.pageby_row != "column"
+                )
+            ):
+                # Determine column index for attribute inheritance
+                col_idx = 0
+                if document.rtf_body.page_by and original_df is not None:
+                    try:
+                        col_idx = original_df.columns.index(
+                            document.rtf_body.page_by[0]
+                        )
+                    except ValueError:
+                        col_idx = 0
+
                 # Extract group values for spanning row text
                 header_info = page_info["pageby_header_info"]
                 if "group_values" in header_info:
@@ -1039,6 +1063,7 @@ class PaginatedStrategy(EncodingStrategy):
                             if document.rtf_page.col_width
                             else 8.5,
                             rtf_body_attrs=document.rtf_body,
+                            col_idx=col_idx,
                         )
                         page_elements.extend(pageby_row_content)
 
@@ -1047,11 +1072,30 @@ class PaginatedStrategy(EncodingStrategy):
 
             # Apply pagination borders to the body attributes
             page_attrs = self.document_service.apply_pagination_borders(
-                document, document.rtf_body, page_info, len(pages)
+                document, processed_attrs, page_info, len(pages)
             )
 
             # Check if there are group boundaries within this page
-            if page_info.get("group_boundaries"):
+            # Only apply spanning rows at boundaries if pageby_row is not 'column'
+            # OR if not new_page (legacy behavior implies spanning rows)
+            if (
+                is_single_body(document.rtf_body)
+                and page_info.get("group_boundaries")
+                and (
+                    not document.rtf_body.new_page
+                    or document.rtf_body.pageby_row != "column"
+                )
+            ):
+                # Determine column index for attribute inheritance
+                col_idx = 0
+                if document.rtf_body.page_by and original_df is not None:
+                    try:
+                        col_idx = original_df.columns.index(
+                            document.rtf_body.page_by[0]
+                        )
+                    except ValueError:
+                        col_idx = 0
+
                 # Handle mid-page group changes: insert spanning rows at boundaries
                 group_boundaries = page_info["group_boundaries"]
                 prev_row = 0
@@ -1062,7 +1106,9 @@ class PaginatedStrategy(EncodingStrategy):
                     # Encode rows before this boundary
                     if page_relative_row > prev_row:
                         segment_df = page_df[prev_row:page_relative_row]
-                        segment_body = page_attrs._encode(segment_df, col_widths)
+                        segment_body = page_attrs._encode(
+                            segment_df, col_widths, row_offset=prev_row
+                        )
                         page_elements.extend(segment_body)
 
                     # Insert spanning row at boundary
@@ -1078,6 +1124,7 @@ class PaginatedStrategy(EncodingStrategy):
                             text=header_text,
                             page_width=document.rtf_page.col_width or 8.5,
                             rtf_body_attrs=document.rtf_body,
+                            col_idx=col_idx,
                         )
                         page_elements.extend(spanning_row)
 
@@ -1086,51 +1133,13 @@ class PaginatedStrategy(EncodingStrategy):
                 # Encode remaining rows after last boundary
                 if prev_row < len(page_df):
                     segment_df = page_df[prev_row:]
-
-                    # For the last segment on non-last pages, we need to ensure
-                    # the bottom border is applied correctly
-                    # The border was applied to page_df row indices, but we're now
-                    # encoding a segment, so we need to adjust
-                    if (
-                        not page_info["is_last_page"]
-                        and is_single_body(document.rtf_body)
-                        and document.rtf_body.border_last
-                    ):
-                        # Apply bottom border to the last row of this segment
-                        # This ensures proper table closing on middle pages
-                        import copy
-
-                        segment_attrs = copy.deepcopy(page_attrs)
-
-                        # Adjust border_bottom to apply to last row of segment
-                        last_segment_row = len(segment_df) - 1
-                        if segment_attrs.border_bottom:
-                            # Ensure border_bottom is sized correctly for segment
-                            border_style = (
-                                document.rtf_body.border_last[0][0]
-                                if isinstance(document.rtf_body.border_last, list)
-                                else document.rtf_body.border_last
-                            )
-                            # Set bottom border for all columns on last row
-                            for col_idx in range(len(segment_df.columns)):
-                                if last_segment_row < len(
-                                    segment_attrs.border_bottom
-                                ):
-                                    if col_idx < len(
-                                        segment_attrs.border_bottom[last_segment_row]
-                                    ):
-                                        segment_attrs.border_bottom[last_segment_row][
-                                            col_idx
-                                        ] = border_style
-
-                        segment_body = segment_attrs._encode(segment_df, col_widths)
-                    else:
-                        segment_body = page_attrs._encode(segment_df, col_widths)
-
+                    segment_body = page_attrs._encode(
+                        segment_df, col_widths, row_offset=prev_row
+                    )
                     page_elements.extend(segment_body)
             else:
                 # No group boundaries: encode entire page as before
-                page_body = page_attrs._encode(page_df, col_widths)
+                page_body = page_attrs._encode(page_df, col_widths, row_offset=0)
                 page_elements.extend(page_body)
 
             # Add footnote if it should appear on this page
@@ -1397,4 +1406,3 @@ class PaginatedStrategy(EncodingStrategy):
         return (
             f"{{\\pard\\hyphpar\\fi0\\li0\\ri0\\ql\\fs18{{\\f0 {header_text}}}\\par}}"
         )
-

@@ -37,7 +37,7 @@ class TestRTFEncodingEngine:
 
         # Create a document with page_by enabled
         df = pl.DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})
-        rtf_body = RTFBody(page_by=["A"], new_page=True)
+        rtf_body = RTFBody(page_by=["A"], new_page=True, pageby_row="first_row")
         document = RTFDocument(df=df, rtf_body=rtf_body)
 
         strategy = engine._select_strategy(document)
@@ -60,7 +60,7 @@ class TestRTFEncodingEngine:
         document_service = RTFDocumentService()
 
         df = pl.DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})
-        rtf_body = RTFBody(page_by=["A"], new_page=True)
+        rtf_body = RTFBody(page_by=["A"], new_page=True, pageby_row="first_row")
         document = RTFDocument(df=df, rtf_body=rtf_body)
 
         assert document_service.needs_pagination(document) is True
@@ -104,7 +104,7 @@ class TestRTFEncodingEngine:
         engine = RTFEncodingEngine()
 
         df = pl.DataFrame({"A": [1, 2], "B": [3, 4]})
-        rtf_body = RTFBody(page_by=["A"], new_page=True)
+        rtf_body = RTFBody(page_by=["A"], new_page=True, pageby_row="first_row")
         document = RTFDocument(df=df, rtf_body=rtf_body)
 
         # Test that encoding produces a valid paginated document
@@ -141,7 +141,7 @@ class TestPaginatedStrategy:
         strategy = PaginatedStrategy()
 
         df = pl.DataFrame({"A": [1, 2], "B": [3, 4]})
-        rtf_body = RTFBody(page_by=["A"], new_page=True)
+        rtf_body = RTFBody(page_by=["A"], new_page=True, pageby_row="first_row")
         document = RTFDocument(df=df, rtf_body=rtf_body)
 
         # Test successful paginated encoding
@@ -161,26 +161,31 @@ class TestPaginatedStrategy:
         strategy = PaginatedStrategy()
 
         # Create test data with a page_by column
-        df = pl.DataFrame({
-            '__index__': ['Subject 1', 'Subject 1', 'Subject 2', 'Subject 2'],
-            'ID': ['001', '002', '003', '004'],
-            'Event': ['AE1', 'AE2', 'AE3', 'AE4'],
-        })
+        df = pl.DataFrame(
+            {
+                "__index__": ["Subject 1", "Subject 1", "Subject 2", "Subject 2"],
+                "ID": ["001", "002", "003", "004"],
+                "Event": ["AE1", "AE2", "AE3", "AE4"],
+            }
+        )
 
         # Test with landscape orientation (common use case for the bug)
         document = RTFDocument(
             df=df,
             rtf_page=RTFPage(orientation="landscape"),
-            rtf_title=RTFTitle(text=['Test Page By with Landscape']),
-            rtf_column_header=[RTFColumnHeader(
-                text=['ID', 'Event'],  # Headers only for non-page_by columns
-                col_rel_width=[1, 1],
-            )],
+            rtf_title=RTFTitle(text=["Test Page By with Landscape"]),
+            rtf_column_header=[
+                RTFColumnHeader(
+                    text=["ID", "Event"],  # Headers only for non-page_by columns
+                    col_rel_width=[1, 1],
+                )
+            ],
             rtf_body=RTFBody(
                 col_rel_width=[2, 1, 1],  # All columns including page_by
-                page_by=['__index__'],
+                page_by=["__index__"],
                 new_page=True,  # This triggers pagination
-            )
+                pageby_row="first_row",
+            ),
         )
 
         result = strategy.encode(document)
@@ -207,7 +212,7 @@ class TestPaginatedStrategy:
         # With page_by column excluded, we should have 2 columns (ID, Event) not 3
         # Each data row should have 2 cells, not 3
         cell_pattern = r"\\cell"
-        cell_count = result.count(cell_pattern)
+        result.count(cell_pattern)
 
         # We have 4 data rows + headers, so we expect cells for 2 columns
         # (not 3 columns which would indicate page_by column wasn't removed)

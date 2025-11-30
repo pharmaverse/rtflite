@@ -63,13 +63,11 @@ class RTFDocumentService:
         # Handle multi-section documents
         if isinstance(document.df, list):
             # Check if any section needs pagination
-            for body in document.rtf_body:
-                # Use PaginatedStrategy when page_by or subline_by is set
-                # (page_by requires spanning row logic, which is in PaginatedStrategy)
-                if body.page_by or body.subline_by:
-                    return True
-            # For now, multi-section documents use single page strategy
-            return False
+            # Use PaginatedStrategy when page_by or subline_by is set
+            # (page_by requires spanning row logic, which is in PaginatedStrategy)
+            # For now, multi-section documents use single page strategy unless
+            # pagination features are used
+            return any(body.page_by or body.subline_by for body in document.rtf_body)
         else:
             # Single section document
             # Use PaginatedStrategy when page_by or subline_by is set
@@ -330,30 +328,92 @@ class RTFDocumentService:
             and has_column_headers
             and document.rtf_body.border_first
         ):
-            # Apply same border style as non-first pages to maintain consistency
-            border_style = (
-                document.rtf_body.border_first[0][0]
-                if isinstance(document.rtf_body.border_first, list)
-                else document.rtf_body.border_first
-            )
-            # Apply single border style to first data row (same as other pages)
-            for col_idx in range(page_df_width):
-                page_attrs = self._apply_border_to_cell(
-                    page_attrs, 0, col_idx, "top", border_style, page_shape
+            # Apply border_first to first data row, respecting per-column settings
+            # Only use border_top if it has non-empty values;
+            # empty means use border_first
+            if isinstance(document.rtf_body.border_first, list):
+                border_first_row = document.rtf_body.border_first[0]
+                has_border_top = (
+                    document.rtf_body.border_top
+                    and isinstance(document.rtf_body.border_top, list)
+                    and len(document.rtf_body.border_top[0]) > len(border_first_row)
                 )
+
+                for col_idx in range(page_df_width):
+                    # Start with border_first value as default
+                    if col_idx < len(border_first_row):
+                        border_style = border_first_row[col_idx]
+                    else:
+                        border_style = border_first_row[0]
+
+                    # Only override with border_top if it has a non-empty value
+                    # for this column
+                    if (
+                        has_border_top
+                        and col_idx < len(document.rtf_body.border_top[0])
+                        and document.rtf_body.border_top[0][col_idx]
+                    ):  # Only if non-empty
+                        border_style = document.rtf_body.border_top[0][col_idx]
+
+                    page_attrs = self._apply_border_to_cell(
+                        page_attrs, 0, col_idx, "top", border_style, page_shape
+                    )
+            else:
+                # Single border style for all columns
+                for col_idx in range(page_df_width):
+                    page_attrs = self._apply_border_to_cell(
+                        page_attrs,
+                        0,
+                        col_idx,
+                        "top",
+                        document.rtf_body.border_first,
+                        page_shape,
+                    )
 
         # Apply page-level borders for non-first/last pages
         if not page_info["is_first_page"] and document.rtf_body.border_first:
-            # Apply border_first to first row of non-first pages
-            border_style = (
-                document.rtf_body.border_first[0][0]
-                if isinstance(document.rtf_body.border_first, list)
-                else document.rtf_body.border_first
-            )
-            for col_idx in range(page_df_width):
-                page_attrs = self._apply_border_to_cell(
-                    page_attrs, 0, col_idx, "top", border_style, page_shape
+            # Apply border_first to first row of non-first pages,
+            # respecting per-column settings
+            # Only use border_top if it has non-empty values;
+            # empty means use border_first
+            if isinstance(document.rtf_body.border_first, list):
+                border_first_row = document.rtf_body.border_first[0]
+                has_border_top = (
+                    document.rtf_body.border_top
+                    and isinstance(document.rtf_body.border_top, list)
+                    and len(document.rtf_body.border_top[0]) > len(border_first_row)
                 )
+
+                for col_idx in range(page_df_width):
+                    # Start with border_first value as default
+                    if col_idx < len(border_first_row):
+                        border_style = border_first_row[col_idx]
+                    else:
+                        border_style = border_first_row[0]
+
+                    # Only override with border_top if it has a non-empty value
+                    # for this column
+                    if (
+                        has_border_top
+                        and col_idx < len(document.rtf_body.border_top[0])
+                        and document.rtf_body.border_top[0][col_idx]
+                    ):  # Only if non-empty
+                        border_style = document.rtf_body.border_top[0][col_idx]
+
+                    page_attrs = self._apply_border_to_cell(
+                        page_attrs, 0, col_idx, "top", border_style, page_shape
+                    )
+            else:
+                # Single border style for all columns
+                for col_idx in range(page_df_width):
+                    page_attrs = self._apply_border_to_cell(
+                        page_attrs,
+                        0,
+                        col_idx,
+                        "top",
+                        document.rtf_body.border_first,
+                        page_shape,
+                    )
 
         # Check if footnotes or sources will appear on this page
         has_footnote_on_page = (
