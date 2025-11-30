@@ -32,7 +32,7 @@ class DefaultPaginationStrategy(PaginationStrategy):
         pages = []
         for page_num, (start_row, end_row) in enumerate(page_breaks):
             page_df = context.df.slice(start_row, end_row - start_row + 1)
-            
+
             pages.append(
                 PageContext(
                     page_number=page_num + 1,
@@ -44,5 +44,5 @@ class DefaultPaginationStrategy(PaginationStrategy):
                     needs_header=(context.rtf_body.pageby_header or page_num == 0),
                 )
             )
-            
+
         return pages

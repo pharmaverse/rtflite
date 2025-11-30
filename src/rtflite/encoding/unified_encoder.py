@@ -27,7 +27,7 @@ class UnifiedRTFEncoder(EncodingStrategy):
         self.figure_service = RTFFigureService()
         self.feature_processor = PageFeatureProcessor()
         self.renderer = PageRenderer()
-        
+
         # Register strategies (if not already registered elsewhere)
         # Ideally this happens at app startup, but for now we ensure they are available
         StrategyRegistry.register("default", DefaultPaginationStrategy)
@@ -36,12 +36,12 @@ class UnifiedRTFEncoder(EncodingStrategy):
 
     def encode(self, document: Any) -> str:
         """Encode the document using the unified pipeline."""
-        
+
         # 1. Figure-only handling
         if document.df is None:
             # Reuse the logic from previous implementation, adapted slightly
             # For now, we can't easily unify figure-only documents into the same pipeline
-            # without a "FigurePaginationStrategy". 
+            # without a "FigurePaginationStrategy".
             # So we defer to a helper method similar to the old one.
             return self._encode_figure_only(document)
 
@@ -55,14 +55,14 @@ class UnifiedRTFEncoder(EncodingStrategy):
 
         # 3. Standard Pipeline
         color_service.set_document_context(document)
-        
+
         # A. Prepare Data
         processed_df, original_df, processed_attrs = (
             self.encoding_service.prepare_dataframe_for_body_encoding(
                 document.df, document.rtf_body
             )
         )
-        
+
         # B. Select Strategy
         strategy_name = "default"
         if is_single_body(document.rtf_body):
@@ -77,86 +77,96 @@ class UnifiedRTFEncoder(EncodingStrategy):
                 strategy_name = "subline"
             elif document.rtf_body.page_by:
                 strategy_name = "page_by"
-        
+
         strategy_cls = StrategyRegistry.get(strategy_name)
         strategy = strategy_cls()
-        
+
         # C. Prepare Context
         col_total_width = document.rtf_page.col_width
         if is_single_body(document.rtf_body) and processed_attrs.col_rel_width:
-             col_widths = Utils._col_widths(
+            col_widths = Utils._col_widths(
                 processed_attrs.col_rel_width,
                 col_total_width if col_total_width is not None else 8.5,
             )
         else:
-             col_widths = Utils._col_widths(
+            col_widths = Utils._col_widths(
                 [1] * processed_df.shape[1],
                 col_total_width if col_total_width is not None else 8.5,
             )
-            
-        additional_rows = self.document_service.calculate_additional_rows_per_page(document)
-        
+
+        additional_rows = self.document_service.calculate_additional_rows_per_page(
+            document
+        )
+
         pagination_ctx = PaginationContext(
             df=original_df if is_single_body(document.rtf_body) else processed_df,
             rtf_body=document.rtf_body,
             rtf_page=document.rtf_page,
             col_widths=col_widths,
             table_attrs=processed_attrs,
-            additional_rows_per_page=additional_rows
+            additional_rows_per_page=additional_rows,
         )
-        
+
         # D. Paginate
         pages = strategy.paginate(pagination_ctx)
-        
+
         # Handle case where no pages are generated (e.g. empty dataframe)
         if not pages:
             # Create a single empty page to ensure document structure (title, etc.) is rendered
             # We use processed_df which might be empty but has correct schema
-            pages = [PageContext(
-                page_number=1,
-                total_pages=1,
-                data=processed_df,
-                is_first_page=True,
-                is_last_page=True,
-                col_widths=col_widths,
-                needs_header=True
-            )]
-        
+            pages = [
+                PageContext(
+                    page_number=1,
+                    total_pages=1,
+                    data=processed_df,
+                    is_first_page=True,
+                    is_last_page=True,
+                    col_widths=col_widths,
+                    needs_header=True,
+                )
+            ]
+
         # Post-pagination fixup: Replace data with processed data (sliced correctly)
         # The strategy used original_df for calculation, but we want to render processed_df
         # (which has removed columns).
         if is_single_body(document.rtf_body):
-             self._apply_data_post_processing(pages, processed_df, document.rtf_body)
+            self._apply_data_post_processing(pages, processed_df, document.rtf_body)
 
         # E. Process & Render Pages
         page_rtf_chunks = []
-        
+
         for page in pages:
             # Process features (borders, etc.)
             processed_page = self.feature_processor.process(document, page)
-            
+
             # Render
             chunks = self.renderer.render(document, processed_page)
             page_rtf_chunks.extend(chunks)
-            
+
         # F. Assembly
         result = "\n".join(
             [
-                item for item in [
+                item
+                for item in [
                     self.encoding_service.encode_document_start(),
                     self.encoding_service.encode_font_table(),
                     self.encoding_service.encode_color_table(document),
                     "\n",
-                    self.encoding_service.encode_page_header(document.rtf_page_header, method="line"),
-                    self.encoding_service.encode_page_footer(document.rtf_page_footer, method="line"),
+                    self.encoding_service.encode_page_header(
+                        document.rtf_page_header, method="line"
+                    ),
+                    self.encoding_service.encode_page_footer(
+                        document.rtf_page_footer, method="line"
+                    ),
                     self.encoding_service.encode_page_settings(document.rtf_page),
                     "\n".join(page_rtf_chunks),
                     "\n\n",
-                    "}"
-                ] if item is not None
+                    "}",
+                ]
+                if item is not None
             ]
         )
-        
+
         color_service.clear_document_context()
         return result
 
@@ -171,23 +181,24 @@ class UnifiedRTFEncoder(EncodingStrategy):
             rows = page.data.height
             page.data = processed_df.slice(current_idx, rows)
             current_idx += rows
-            
+
         # 2. Re-implementation of group_by logic
         if rtf_body.group_by:
             # Collect page start indices for context restoration
             page_start_indices = []
             cumulative = 0
             for i, p in enumerate(pages):
-                if i > 0: page_start_indices.append(cumulative)
+                if i > 0:
+                    page_start_indices.append(cumulative)
                 cumulative += p.data.height
-            
-            full_df = processed_df 
-            
+
+            full_df = processed_df
+
             suppressed = grouping_service.enhance_group_by(full_df, rtf_body.group_by)
             restored = grouping_service.restore_page_context(
                 suppressed, full_df, rtf_body.group_by, page_start_indices
             )
-            
+
             curr = 0
             for p in pages:
                 rows = p.data.height
@@ -196,20 +207,22 @@ class UnifiedRTFEncoder(EncodingStrategy):
 
     def _encode_figure_only(self, document):
         # (Legacy support for figure only)
-        # For brevity, I will rely on the existing FigureService logic if possible 
+        # For brevity, I will rely on the existing FigureService logic if possible
         # or just reproduce the simple loop.
         # ... (Implementation omitted for brevity, would match PaginatedStrategy._encode_figure_only_document_with_pagination)
         # Since the user wants a WORKING system, I must implement it.
         from copy import deepcopy
         from ..figure import rtf_read_figure
-        if not document.rtf_figure or not document.rtf_figure.figures: return ""
-        
+
+        if not document.rtf_figure or not document.rtf_figure.figures:
+            return ""
+
         figs, formats = rtf_read_figure(document.rtf_figure.figures)
         num = len(figs)
-        
+
         # Pre-calculate shared elements
         title = self.encoding_service.encode_title(document.rtf_title, method="line")
-        
+
         # For figure-only documents, footnote should be as_table=False
         footnote_component = document.rtf_footnote
         if footnote_component is not None:
@@ -227,34 +240,46 @@ class UnifiedRTFEncoder(EncodingStrategy):
             self.encoding_service.encode_font_table(),
             self.encoding_service.encode_color_table(document),
             "\n",
-            self.encoding_service.encode_page_header(document.rtf_page_header, method="line"),
-            self.encoding_service.encode_page_footer(document.rtf_page_footer, method="line"),
-            self.encoding_service.encode_page_settings(document.rtf_page)
+            self.encoding_service.encode_page_header(
+                document.rtf_page_header, method="line"
+            ),
+            self.encoding_service.encode_page_footer(
+                document.rtf_page_footer, method="line"
+            ),
+            self.encoding_service.encode_page_settings(document.rtf_page),
         ]
-        
+
         for i in range(num):
-            is_first = (i == 0)
-            is_last = (i == num - 1)
-            
+            is_first = i == 0
+            is_last = i == num - 1
+
             # Title
-            if (show_title_on_all or 
-               (document.rtf_page.page_title == "first" and is_first) or
-               (document.rtf_page.page_title == "last" and is_last)):
+            if (
+                show_title_on_all
+                or (document.rtf_page.page_title == "first" and is_first)
+                or (document.rtf_page.page_title == "last" and is_last)
+            ):
                 parts.append(title)
                 parts.append("\n")
-            
+
             # Subline
             if is_first and document.rtf_subline:
-                 parts.append(self.encoding_service.encode_subline(document.rtf_subline, method="line"))
+                parts.append(
+                    self.encoding_service.encode_subline(
+                        document.rtf_subline, method="line"
+                    )
+                )
 
             # Figure
             w = self.figure_service._get_dimension(document.rtf_figure.fig_width, i)
             h = self.figure_service._get_dimension(document.rtf_figure.fig_height, i)
-            parts.append(self.figure_service._encode_single_figure(
-                figs[i], formats[i], w, h, document.rtf_figure.fig_align
-            ))
+            parts.append(
+                self.figure_service._encode_single_figure(
+                    figs[i], formats[i], w, h, document.rtf_figure.fig_align
+                )
+            )
             parts.append(r"\par ")
-            
+
             # Footnote based on page settings
             if footnote_component is not None and (
                 show_footnote_on_all
@@ -286,7 +311,7 @@ class UnifiedRTFEncoder(EncodingStrategy):
                 )
                 if source_content:
                     parts.append(source_content)
-            
+
             if not is_last:
                 parts.append(r"\page ")
 
@@ -379,9 +404,14 @@ class UnifiedRTFEncoder(EncodingStrategy):
                                 and document.rtf_page.border_first
                             ):
                                 doc_border_top_list = BroadcastValue(
-                                    value=document.rtf_page.border_first, dimension=(1, dim[1])
+                                    value=document.rtf_page.border_first,
+                                    dimension=(1, dim[1]),
                                 ).to_list()
-                                doc_border_top = doc_border_top_list[0] if doc_border_top_list else None
+                                doc_border_top = (
+                                    doc_border_top_list[0]
+                                    if doc_border_top_list
+                                    else None
+                                )
 
                                 header.border_top = BroadcastValue(
                                     value=header.border_top, dimension=dim
@@ -429,10 +459,13 @@ class UnifiedRTFEncoder(EncodingStrategy):
                             and header is not None
                         ):
                             doc_border_top_list = BroadcastValue(
-                                value=document.rtf_page.border_first, dimension=(1, dim[1])
+                                value=document.rtf_page.border_first,
+                                dimension=(1, dim[1]),
                             ).to_list()
-                            doc_border_top = doc_border_top_list[0] if doc_border_top_list else None
-                            
+                            doc_border_top = (
+                                doc_border_top_list[0] if doc_border_top_list else None
+                            )
+
                             header.border_top = BroadcastValue(
                                 value=header.border_top, dimension=dim
                             ).update_row(
@@ -453,7 +486,7 @@ class UnifiedRTFEncoder(EncodingStrategy):
                     value=document.rtf_page.border_first, dimension=(1, dim[1])
                 ).to_list()
                 doc_border_top = doc_border_top_list[0] if doc_border_top_list else None
-                
+
                 section_body.border_top = BroadcastValue(
                     value=section_body.border_top, dimension=dim
                 ).update_row(0, doc_border_top if doc_border_top is not None else [])

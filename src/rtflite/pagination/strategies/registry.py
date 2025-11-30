@@ -5,7 +5,7 @@ from .base import PaginationStrategy
 
 class StrategyRegistry:
     """Registry for pagination strategies."""
-    
+
     _strategies: dict[str, Type[PaginationStrategy]] = {}
 
     @classmethod

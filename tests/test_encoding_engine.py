@@ -95,7 +95,7 @@ class TestRTFEncodingEngine:
         assert result.endswith("}")
 
         # Verify page breaks exist (pagination is working)
-        assert r"\page" in result 
+        assert r"\page" in result
 
         # Verify the data columns are present in the output
         assert "001" in result
@@ -112,6 +112,6 @@ class TestRTFEncodingEngine:
         # The page_by values should appear as section headers before each group
         assert "Subject 1" in result
         assert "Subject 2" in result
-        
+
         # Ensure headers are applied correctly
         assert r"\pard" in result

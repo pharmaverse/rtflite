@@ -339,9 +339,9 @@ class TestEncoderErrorConditions:
     def test_subline_header_empty(self):
         """Test empty subline header handling."""
         from rtflite.encoding.renderer import PageRenderer
-        
+
         renderer = PageRenderer()
-        
+
         # Test with empty subline header info
         result = renderer._generate_subline_header({})
         assert result == ""  # Should return empty string for empty input
@@ -385,7 +385,6 @@ class TestStrategyIntegration:
         rtf_output = doc.rtf_encode()
         assert rtf_output
         assert r"{\rtf1" in rtf_output  # Valid RTF document
-
 
     def test_force_single_page_parameter(self):
         """Test force_single_page parameter in encode_body."""

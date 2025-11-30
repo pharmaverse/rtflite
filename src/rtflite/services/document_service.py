@@ -540,7 +540,7 @@ class RTFDocumentService:
             # instead of modifying the component directly
             if "component_borders" not in page_info:
                 page_info["component_borders"] = {}
-            
+
             page_info["component_borders"][component_name] = border_style
 
     def _apply_border_to_cell(

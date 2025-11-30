@@ -10,13 +10,11 @@ class PageFeatureProcessor:
 
     def process(self, document: Any, page: PageContext) -> PageContext:
         """Process a single page to apply all feature-specific logic."""
-        
+
         # Calculate final attributes for the table body on this page
         # (This includes applying top/bottom borders correctly)
-        page.final_body_attrs = self._apply_pagination_borders(
-            document, page
-        )
-        
+        page.final_body_attrs = self._apply_pagination_borders(document, page)
+
         return page
 
     def _should_show_element(self, element_location: str, page: PageContext) -> bool:
@@ -30,14 +28,12 @@ class PageFeatureProcessor:
         else:
             return False
 
-    def _apply_pagination_borders(
-        self, document, page: PageContext
-    ) -> Any:
+    def _apply_pagination_borders(self, document, page: PageContext) -> Any:
         """Apply proper borders for paginated context following r2rtf design."""
-        
+
         # Start with a deep copy of the document's body attributes
         page_attrs = deepcopy(document.rtf_body)
-        
+
         page_df_height = page.data.height
         page_df_width = page.data.width
         page_shape = (page_df_height, page_df_width)
@@ -68,7 +64,7 @@ class PageFeatureProcessor:
         has_column_headers = (
             document.rtf_column_header and len(document.rtf_column_header) > 0
         )
-        
+
         # If first page, NO headers, apply PAGE border_first to top of body
         if (
             page.is_first_page
@@ -86,32 +82,28 @@ class PageFeatureProcessor:
                 )
 
         # If first page, WITH headers, apply BODY border_first to top of body
-        if (
-            page.is_first_page
-            and has_column_headers
-            and document.rtf_body.border_first
-        ):
-            self._apply_body_border_first(document, page_attrs, page_df_width, page_shape)
+        if page.is_first_page and has_column_headers and document.rtf_body.border_first:
+            self._apply_body_border_first(
+                document, page_attrs, page_df_width, page_shape
+            )
 
         # 2. Middle Page Logic (Non-First)
         # Apply BODY border_first to top of body
         if not page.is_first_page and document.rtf_body.border_first:
-            self._apply_body_border_first(document, page_attrs, page_df_width, page_shape)
+            self._apply_body_border_first(
+                document, page_attrs, page_df_width, page_shape
+            )
 
         # 3. Footnote/Source Logic
         has_footnote_on_page = (
             document.rtf_footnote
             and document.rtf_footnote.text
-            and self._should_show_element(
-                document.rtf_page.page_footnote, page
-            )
+            and self._should_show_element(document.rtf_page.page_footnote, page)
         )
         has_source_on_page = (
             document.rtf_source
             and document.rtf_source.text
-            and self._should_show_element(
-                document.rtf_page.page_source, page
-            )
+            and self._should_show_element(document.rtf_page.page_source, page)
         )
 
         footnote_as_table_on_last = (
@@ -151,16 +143,20 @@ class PageFeatureProcessor:
                 else:
                     # Apply to component
                     self._apply_footnote_source_borders(
-                        document, page, has_footnote_on_page, has_source_on_page, border_style
+                        document,
+                        page,
+                        has_footnote_on_page,
+                        has_source_on_page,
+                        border_style,
                     )
         else:
             # Last page: use PAGE border_last
             if document.rtf_page.border_last:
-                # Only if this is truly the end (not just last page of a section, 
+                # Only if this is truly the end (not just last page of a section,
                 # but for now we assume 1 section or last section)
                 # The original code checked `page_info["end_row"] == total_rows - 1`.
                 # Here we rely on `is_last_page` flag which comes from strategy.
-                
+
                 if not (footnote_as_table_on_last or source_as_table_on_last):
                     # Apply to last data row
                     for col_idx in range(page_df_width):
@@ -175,11 +171,11 @@ class PageFeatureProcessor:
                 else:
                     # Apply to component
                     self._apply_footnote_source_borders(
-                        document, 
-                        page, 
-                        has_footnote_on_page, 
-                        has_source_on_page, 
-                        document.rtf_page.border_last
+                        document,
+                        page,
+                        has_footnote_on_page,
+                        has_source_on_page,
+                        document.rtf_page.border_last,
                     )
 
         return page_attrs
@@ -211,7 +207,7 @@ class PageFeatureProcessor:
                     page_attrs, 0, col_idx, "top", border_style, page_shape
                 )
         else:
-             for col_idx in range(page_df_width):
+            for col_idx in range(page_df_width):
                 self._apply_border_to_cell(
                     page_attrs,
                     0,
@@ -222,12 +218,12 @@ class PageFeatureProcessor:
                 )
 
     def _apply_footnote_source_borders(
-        self, 
-        document, 
-        page: PageContext, 
-        has_footnote: bool, 
-        has_source: bool, 
-        border_style: str
+        self,
+        document,
+        page: PageContext,
+        has_footnote: bool,
+        has_source: bool,
+        border_style: str,
     ):
         """Apply borders to footnote/source in the page context."""
         target_component = None

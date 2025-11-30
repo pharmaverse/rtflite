@@ -26,14 +26,12 @@ class PageRenderer:
 
     def render(self, document: Any, page: PageContext) -> list[str]:
         """Render a single page to RTF."""
-        
+
         page_elements = []
 
         # 1. Page Break (except first page)
         if not page.is_first_page:
-            page_elements.append(
-                self.document_service.generate_page_break(document)
-            )
+            page_elements.append(self.document_service.generate_page_break(document))
 
         # 2. Title
         if (
@@ -52,7 +50,9 @@ class PageRenderer:
         if (
             document.rtf_subline
             and document.rtf_subline.text
-            and self._should_show(document.rtf_page.page_title, page) # Using page_title rule for subline visibility as per original
+            and self._should_show(
+                document.rtf_page.page_title, page
+            )  # Using page_title rule for subline visibility as per original
         ):
             subline_content = self.encoding_service.encode_subline(
                 document.rtf_subline, method="line"
@@ -62,9 +62,7 @@ class PageRenderer:
 
         # 4. Subline Header (from Strategy)
         if page.subline_header:
-            subline_header_content = self._generate_subline_header(
-                page.subline_header
-            )
+            subline_header_content = self._generate_subline_header(page.subline_header)
             if subline_header_content:
                 page_elements.append(subline_header_content)
 
@@ -97,11 +95,9 @@ class PageRenderer:
             col_idx = 0
             # Try to find column index for legacy reasons, though likely unused if we handle spanning cleanly
             if document.rtf_body.page_by and isinstance(document.df, pl.DataFrame):
-                 try:
-                    col_idx = document.df.columns.index(
-                        document.rtf_body.page_by[0]
-                    )
-                 except ValueError:
+                try:
+                    col_idx = document.df.columns.index(document.rtf_body.page_by[0])
+                except ValueError:
                     col_idx = 0
 
             header_text = self._format_group_header(page.pageby_header_info)
@@ -124,9 +120,9 @@ class PageRenderer:
             and document.rtf_footnote.text
             and self._should_show(document.rtf_page.page_footnote, page)
         ):
-             # Check for border override from processor
+            # Check for border override from processor
             border_style = page.component_borders.get("footnote")
-            
+
             footnote_content = self.encoding_service.encode_footnote(
                 document.rtf_footnote,
                 page.page_number,
@@ -168,9 +164,12 @@ class PageRenderer:
         return page_elements
 
     def _should_show(self, location: str, page: PageContext) -> bool:
-        if location == "all": return True
-        if location == "first": return page.is_first_page
-        if location == "last": return page.is_last_page
+        if location == "all":
+            return True
+        if location == "first":
+            return page.is_first_page
+        if location == "last":
+            return page.is_last_page
         return False
 
     def _format_group_header(self, info: dict) -> str:
@@ -181,27 +180,30 @@ class PageRenderer:
 
     def _generate_subline_header(self, info: dict) -> str:
         text = self._format_group_header(info)
-        if not text: return ""
-        return fr"{{\pard\hyphpar\fi0\li0\ri0\ql\fs18{{\f0 {text}}}\par}}"
+        if not text:
+            return ""
+        return rf"{{\pard\hyphpar\fi0\li0\ri0\ql\fs18{{\f0 {text}}}\par}}"
 
     def _render_column_headers(self, document: Any, page: PageContext) -> list[str]:
         # Similar logic to PaginatedStrategy.encode header section
-        
+
         header_elements = []
         headers_to_process = []
-        
+
         if is_nested_header_list(document.rtf_column_header):
-             for section in document.rtf_column_header:
-                 if section: headers_to_process.extend(section)
+            for section in document.rtf_column_header:
+                if section:
+                    headers_to_process.extend(section)
         elif is_flat_header_list(document.rtf_column_header):
             headers_to_process = document.rtf_column_header
         elif is_single_header(document.rtf_column_header):
             headers_to_process = [document.rtf_column_header]
-            
+
         for i, header in enumerate(headers_to_process):
-            if header is None: continue
+            if header is None:
+                continue
             header_copy = deepcopy(header)
-            
+
             # Auto-populate header text from columns if missing and as_colheader is True
             if (
                 header_copy.text is None
@@ -218,53 +220,62 @@ class PageRenderer:
                         orient="row",
                     )
                     header_copy.text = header_df
-                    
+
                     # Adjust col_rel_width if needed (logic from PaginatedStrategy)
-                    # Since we are using page.data which is already sliced/processed, 
+                    # Since we are using page.data which is already sliced/processed,
                     # we might need to adjust widths if they were originally defined for full table
                     if document.rtf_body.col_rel_width is not None:
-                        # If body has specific widths, try to map them. 
+                        # If body has specific widths, try to map them.
                         # For simplicity in this refactor, if we have header text now, we proceed.
                         pass
-                
+
             # Remove columns if necessary (page_by/subline_by)
             # Note: If we just populated from page.data, page.data already has columns removed!
             # So we only need to filter if text came from original document and has extra columns.
             if isinstance(header_copy.text, pl.DataFrame):
                 cols_remove = set()
-                if document.rtf_body.page_by: cols_remove.update(document.rtf_body.page_by)
-                if document.rtf_body.subline_by: cols_remove.update(document.rtf_body.subline_by)
-                
+                if document.rtf_body.page_by:
+                    cols_remove.update(document.rtf_body.page_by)
+                if document.rtf_body.subline_by:
+                    cols_remove.update(document.rtf_body.subline_by)
+
                 if cols_remove:
-                    remaining = [c for c in header_copy.text.columns if c not in cols_remove]
+                    remaining = [
+                        c for c in header_copy.text.columns if c not in cols_remove
+                    ]
                     if remaining:
                         header_copy.text = header_copy.text.select(remaining)
 
             # Apply top border for first page/first header
-            if page.is_first_page and i == 0 and document.rtf_page.border_first and header_copy.text is not None:
-                 if isinstance(header_copy.text, pl.DataFrame):
-                     dims = header_copy.text.shape
-                 else:
-                     dims = (1, len(header_copy.text) if header_copy.text else 0)
-                 
-                 header_copy.border_top = BroadcastValue(
-                     value=header_copy.border_top, dimension=dims
-                 ).update_row(0, [document.rtf_page.border_first] * dims[1])
+            if (
+                page.is_first_page
+                and i == 0
+                and document.rtf_page.border_first
+                and header_copy.text is not None
+            ):
+                if isinstance(header_copy.text, pl.DataFrame):
+                    dims = header_copy.text.shape
+                else:
+                    dims = (1, len(header_copy.text) if header_copy.text else 0)
+
+                header_copy.border_top = BroadcastValue(
+                    value=header_copy.border_top, dimension=dims
+                ).update_row(0, [document.rtf_page.border_first] * dims[1])
 
             header_rtf = self.encoding_service.encode_column_header(
                 header_copy.text, header_copy, document.rtf_page.col_width
             )
             header_elements.extend(header_rtf)
-            
+
         return header_elements
 
     def _render_body(self, document: Any, page: PageContext) -> list[str]:
         page_attrs = page.final_body_attrs or document.rtf_body
         page_df = page.data
         col_widths = page.col_widths
-        
+
         elements = []
-        
+
         # Check for internal group boundaries
         if (
             is_single_body(document.rtf_body)
@@ -277,41 +288,43 @@ class PageRenderer:
             col_idx = 0
             # Find col idx for spanning
             if document.rtf_body.page_by and isinstance(document.df, pl.DataFrame):
-                 try:
-                    col_idx = document.df.columns.index(
-                        document.rtf_body.page_by[0]
-                    )
-                 except ValueError:
+                try:
+                    col_idx = document.df.columns.index(document.rtf_body.page_by[0])
+                except ValueError:
                     col_idx = 0
 
             prev_row = 0
             for boundary in page.group_boundaries:
                 page_rel_row = boundary["page_relative_row"]
-                
+
                 if page_rel_row > prev_row:
                     segment = page_df[prev_row:page_rel_row]
                     # We must use internal _encode method of TableAttributes (attrs are already finalized)
                     # Note: We need to ensure page_attrs is the TableAttributes object
-                    elements.extend(page_attrs._encode(segment, col_widths, row_offset=prev_row))
-                
+                    elements.extend(
+                        page_attrs._encode(segment, col_widths, row_offset=prev_row)
+                    )
+
                 # Spanning Row
                 header_text = self._format_group_header(boundary)
                 if header_text:
                     spanning = self.encoding_service.encode_spanning_row(
-                         text=header_text,
-                         page_width=document.rtf_page.col_width or 8.5,
-                         rtf_body_attrs=document.rtf_body,
-                         col_idx=col_idx
+                        text=header_text,
+                        page_width=document.rtf_page.col_width or 8.5,
+                        rtf_body_attrs=document.rtf_body,
+                        col_idx=col_idx,
                     )
                     elements.extend(spanning)
-                
+
                 prev_row = page_rel_row
-            
+
             if prev_row < len(page_df):
                 segment = page_df[prev_row:]
-                elements.extend(page_attrs._encode(segment, col_widths, row_offset=prev_row))
+                elements.extend(
+                    page_attrs._encode(segment, col_widths, row_offset=prev_row)
+                )
         else:
             # Simple body render
             elements.extend(page_attrs._encode(page_df, col_widths, row_offset=0))
-            
+
         return elements
