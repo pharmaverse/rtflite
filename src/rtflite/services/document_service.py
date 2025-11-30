@@ -346,9 +346,11 @@ class RTFDocumentService:
                         border_style = border_first_row[0]
 
                     # Only override with border_top if it has a non-empty value for this column
-                    if (has_border_top
+                    if (
+                        has_border_top
                         and col_idx < len(document.rtf_body.border_top[0])
-                        and document.rtf_body.border_top[0][col_idx]):  # Only if non-empty
+                        and document.rtf_body.border_top[0][col_idx]
+                    ):  # Only if non-empty
                         border_style = document.rtf_body.border_top[0][col_idx]
 
                     page_attrs = self._apply_border_to_cell(
@@ -358,7 +360,12 @@ class RTFDocumentService:
                 # Single border style for all columns
                 for col_idx in range(page_df_width):
                     page_attrs = self._apply_border_to_cell(
-                        page_attrs, 0, col_idx, "top", document.rtf_body.border_first, page_shape
+                        page_attrs,
+                        0,
+                        col_idx,
+                        "top",
+                        document.rtf_body.border_first,
+                        page_shape,
                     )
 
         # Apply page-level borders for non-first/last pages
@@ -381,9 +388,11 @@ class RTFDocumentService:
                         border_style = border_first_row[0]
 
                     # Only override with border_top if it has a non-empty value for this column
-                    if (has_border_top
+                    if (
+                        has_border_top
                         and col_idx < len(document.rtf_body.border_top[0])
-                        and document.rtf_body.border_top[0][col_idx]):  # Only if non-empty
+                        and document.rtf_body.border_top[0][col_idx]
+                    ):  # Only if non-empty
                         border_style = document.rtf_body.border_top[0][col_idx]
 
                     page_attrs = self._apply_border_to_cell(
@@ -393,7 +402,12 @@ class RTFDocumentService:
                 # Single border style for all columns
                 for col_idx in range(page_df_width):
                     page_attrs = self._apply_border_to_cell(
-                        page_attrs, 0, col_idx, "top", document.rtf_body.border_first, page_shape
+                        page_attrs,
+                        0,
+                        col_idx,
+                        "top",
+                        document.rtf_body.border_first,
+                        page_shape,
                     )
 
         # Check if footnotes or sources will appear on this page

@@ -58,7 +58,7 @@ class RTFEncodingService:
         color = get_attr("text_color", "")
         bg_color = get_attr("text_background_color", "")
         justification = get_attr("text_justification", "c")
-        
+
         indent_first = get_attr("text_indent_first", 0)
         indent_left = get_attr("text_indent_left", 0)
         indent_right = get_attr("text_indent_right", 0)
@@ -72,7 +72,7 @@ class RTFEncodingService:
         border_right = get_attr("border_right", "single")
         border_top = get_attr("border_top", "single")
         border_bottom = get_attr("border_bottom", "single")
-        
+
         v_just = get_attr("cell_vertical_justification", "b")
         cell_just = get_attr("cell_justification", "c")
         cell_height = get_attr("cell_height", 0.15)
@@ -396,43 +396,45 @@ class RTFEncodingService:
             # We use deepcopy to ensure nested lists are copied
             # model_copy(deep=True) is not sufficient for nested lists in Pydantic v2 sometimes
             processed_attrs = rtf_attrs.model_copy(deep=True)
-            
+
             # Get indices of removed columns in the original dataframe
             removed_indices = [
                 original_df.columns.index(col) for col in columns_to_remove
             ]
-            removed_indices.sort(reverse=True) # Sort reverse to remove safely
+            removed_indices.sort(reverse=True)  # Sort reverse to remove safely
 
             rows, cols = original_df.shape
-            
+
             # attributes to slice
             # We iterate over all fields that could be list-based
             for attr_name in type(processed_attrs).model_fields:
                 if attr_name == "col_rel_width":
-                    continue # Handled separately below
-                
+                    continue  # Handled separately below
+
                 val = getattr(processed_attrs, attr_name)
                 if val is None:
                     continue
-                
+
                 # Check if it's a list/sequence that needs slicing
                 # We use BroadcastValue to expand it to full grid, then slice
                 if isinstance(val, (list, tuple)):
                     # Expand to full grid
-                    expanded = BroadcastValue(value=val, dimension=(rows, cols)).to_list()
-                    
+                    expanded = BroadcastValue(
+                        value=val, dimension=(rows, cols)
+                    ).to_list()
+
                     # Slice each row
                     sliced_expanded = []
                     if expanded:
                         for row_data in expanded:
                             # Remove items at specified indices
                             new_row = [
-                                item 
-                                for i, item in enumerate(row_data) 
+                                item
+                                for i, item in enumerate(row_data)
                                 if i not in removed_indices
                             ]
                             sliced_expanded.append(new_row)
-                    
+
                     # Update attribute
                     setattr(processed_attrs, attr_name, sliced_expanded)
 
@@ -442,11 +444,12 @@ class RTFEncodingService:
                 current_widths = processed_attrs.col_rel_width
                 # If it matches original columns, slice it
                 if len(current_widths) == cols:
-                     new_widths = [
-                        w for i, w in enumerate(current_widths) 
+                    new_widths = [
+                        w
+                        for i, w in enumerate(current_widths)
                         if i not in removed_indices
                     ]
-                     processed_attrs.col_rel_width = new_widths
+                    processed_attrs.col_rel_width = new_widths
         else:
             processed_attrs = rtf_attrs
 
@@ -503,8 +506,8 @@ class RTFEncodingService:
                 )
 
         # Apply group_by and subline_by processing if specified
-        processed_df, original_df, processed_attrs = self.prepare_dataframe_for_body_encoding(
-            df, rtf_attrs
+        processed_df, original_df, processed_attrs = (
+            self.prepare_dataframe_for_body_encoding(df, rtf_attrs)
         )
 
         # Calculate col_widths AFTER prepare_dataframe_for_body_encoding()
