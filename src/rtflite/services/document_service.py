@@ -134,23 +134,6 @@ class RTFDocumentService:
         # Check if data rows exceed what can fit on a single page
         return data_rows > available_data_rows_per_page
 
-    def create_pagination_instance(self, document) -> tuple:
-        """Create pagination and content distributor instances."""
-        from ..pagination import ContentDistributor, PageBreakCalculator, RTFPagination
-
-        pagination = RTFPagination(
-            page_width=document.rtf_page.width,
-            page_height=document.rtf_page.height,
-            margin=document.rtf_page.margin,
-            nrow=document.rtf_page.nrow,
-            orientation=document.rtf_page.orientation,
-        )
-
-        calculator = PageBreakCalculator(pagination=pagination)
-        distributor = ContentDistributor(pagination=pagination, calculator=calculator)
-
-        return pagination, distributor
-
     def generate_page_break(self, document) -> str:
         """Generate proper RTF page break sequence."""
         return self.encoding_service.encode_page_break(

@@ -789,6 +789,7 @@ class RTFColumnHeader(TableAttributes):
     def _get_column_header_defaults(self) -> dict:
         """Get default configuration for column headers."""
         return {
+            "col_rel_width": None, # Explicitly None to allow inheritance
             "border_left": ["single"],
             "border_right": ["single"],
             "border_top": ["single"],

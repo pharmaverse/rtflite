@@ -20,8 +20,8 @@ from rtflite import (
 )
 
 
-class TestMultiSectionSinglePageStrategy:
-    """Test the MultiSectionSinglePageStrategy class."""
+class TestMultiSectionEncoding:
+    """Test the MultiSection encoding functionality."""
 
     def test_multi_section_basic(self):
         """Test basic multi-section document encoding."""
@@ -123,8 +123,8 @@ class TestMultiSectionSinglePageStrategy:
         assert "Name" in rtf_output or "Age" in rtf_output
 
 
-class TestFigureOnlyPaginatedStrategy:
-    """Test the FigureOnlyPaginatedStrategy class."""
+class TestFigureOnlyEncoding:
+    """Test the FigureOnly encoding class."""
 
     @pytest.fixture(autouse=True)
     def setup_teardown(self, tmp_path):
@@ -164,7 +164,7 @@ class TestFigureOnlyPaginatedStrategy:
         rtf_output = doc.rtf_encode()
         assert rtf_output
         # Should have page breaks between figures
-        assert "\\page" in rtf_output or "\\par" in rtf_output
+        assert r"\page" in rtf_output or r"\par" in rtf_output
 
     def test_figure_with_footnote_placement(self):
         """Test figure document with footnote on different pages."""
@@ -210,8 +210,8 @@ class TestFigureOnlyPaginatedStrategy:
 
         rtf_output = doc.rtf_encode()
         assert rtf_output
-        assert "\\header" in rtf_output
-        assert "\\footer" in rtf_output
+        assert r"\header" in rtf_output
+        assert r"\footer" in rtf_output
 
     def test_figure_title_placement(self):
         """Test different title placement options for figures."""
@@ -243,8 +243,8 @@ class TestFigureOnlyPaginatedStrategy:
         assert rtf3
 
 
-class TestStrategyErrorConditions:
-    """Test error conditions and edge cases in strategies."""
+class TestEncoderErrorConditions:
+    """Test error conditions and edge cases in encoder."""
 
     def test_missing_df_error(self):
         """Test error when df is missing."""
@@ -285,7 +285,7 @@ class TestStrategyErrorConditions:
         assert "Empty Data" in rtf_output
 
     def test_single_page_with_missing_title(self):
-        """Test SinglePageStrategy when title is missing."""
+        """Test encoding when title is missing."""
         df = pl.DataFrame({"A": [1, 2], "B": [3, 4]})
 
         doc = RTFDocument(
@@ -296,7 +296,7 @@ class TestStrategyErrorConditions:
 
         rtf_output = doc.rtf_encode()
         assert rtf_output
-        assert "{\\rtf1" in rtf_output  # Document should still be valid RTF
+        assert r"{\rtf1" in rtf_output  # Document should still be valid RTF
 
     def test_strategy_with_none_components(self):
         """Test strategies handle None components gracefully."""
@@ -338,12 +338,12 @@ class TestStrategyErrorConditions:
 
     def test_subline_header_empty(self):
         """Test empty subline header handling."""
-        from rtflite.encoding.strategies import PaginatedStrategy
-
-        strategy = PaginatedStrategy()
-
+        from rtflite.encoding.renderer import PageRenderer
+        
+        renderer = PageRenderer()
+        
         # Test with empty subline header info
-        result = strategy._generate_subline_header({}, RTFBody())
+        result = renderer._generate_subline_header({})
         assert result == ""  # Should return empty string for empty input
 
     def test_page_by_empty_section(self):
@@ -384,7 +384,8 @@ class TestStrategyIntegration:
 
         rtf_output = doc.rtf_encode()
         assert rtf_output
-        assert "{\\rtf1" in rtf_output  # Valid RTF document
+        assert r"{\rtf1" in rtf_output  # Valid RTF document
+
 
     def test_force_single_page_parameter(self):
         """Test force_single_page parameter in encode_body."""

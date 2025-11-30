@@ -1,14 +1,9 @@
-"""RTF encoding engine module.
-
-This module separates document structure from RTF encoding logic,
-supports multiple encoding strategies, and prepares for future content types.
-"""
+"""RTF encoding module."""
 
 from .engine import RTFEncodingEngine
-from .strategies import PaginatedStrategy, SinglePageStrategy
+from .unified_encoder import UnifiedRTFEncoder
 
 __all__ = [
     "RTFEncodingEngine",
-    "SinglePageStrategy",
-    "PaginatedStrategy",
+    "UnifiedRTFEncoder",
 ]
