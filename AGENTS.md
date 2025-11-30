@@ -18,6 +18,7 @@
 - Keep imports sorted with `isort .` and format code with `ruff format`. Follow existing typing conventions---prefer explicit type hints and Pydantic field validators over dynamic typing.
 - Maintain consistency with existing error handling (primarily `ValueError`/`TypeError` for validation issues) and adhere to the RTF command patterns already present in helper modules.
 - When touching Markdown files in the repository root, run `sh docs/scripts/sync.sh` to propagate changes into the documentation site.
+- Do not automatically commit changes. Always leave changes unstaged for the user to review and commit manually, unless explicitly instructed to commit.
 
 ## Testing & quality gates
 - Execute `pytest` (or targeted subsets) before committing. Snapshot-style tests compare normalized RTF output; update fixtures thoughtfully and document rationale when expectations change.
