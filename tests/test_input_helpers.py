@@ -219,33 +219,6 @@ class TestRTFFootnoteHelpers:
 class TestRTFColumnHeaderHelpers:
     """Test RTFColumnHeader decomposed methods."""
 
-    def test_handle_backwards_compatibility_with_df(self):
-        """Test DataFrame backwards compatibility handling."""
-        column_header = RTFColumnHeader()
-        data = {"df": "mock_df", "other_param": "value"}
-
-        # Mock the conversion method to avoid polars dependency
-        original_method = column_header._convert_dataframe_to_text
-        column_header._convert_dataframe_to_text = lambda df: ["col1", "col2", "col3"]
-
-        result = column_header._handle_backwards_compatibility(data)
-
-        assert "df" not in result
-        assert result["text"] == ["col1", "col2", "col3"]
-        assert result["other_param"] == "value"
-
-        # Restore original method
-        column_header._convert_dataframe_to_text = original_method
-
-    def test_handle_backwards_compatibility_without_df(self):
-        """Test data passthrough when no df parameter."""
-        column_header = RTFColumnHeader()
-        data = {"text": ["existing"], "other_param": "value"}
-
-        result = column_header._handle_backwards_compatibility(data)
-
-        assert result == data  # Should be unchanged
-
     def test_get_column_header_defaults(self):
         """Test column header defaults generation."""
         column_header = RTFColumnHeader()

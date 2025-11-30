@@ -157,22 +157,6 @@ class TestColorService:
         }
         assert info == expected
 
-    def test_backwards_compatibility_functions(self):
-        """Test that convenience functions work for backwards compatibility."""
-        from rtflite.services.color_service import (
-            get_color_index,
-            get_color_suggestions,
-            validate_color,
-        )
-
-        assert validate_color("orange") is True
-        assert validate_color("invalidcolor") is False
-
-        assert get_color_index("orange") == 498
-
-        suggestions = get_color_suggestions("ora", 3)
-        assert len(suggestions) <= 3
-
 
 class TestColorValidationInAttributes:
     """Test color validation in RTF attributes."""

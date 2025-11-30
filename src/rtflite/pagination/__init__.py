@@ -1,5 +1,4 @@
 from .core import PageBreakCalculator, RTFPagination
-from .page_dict import PageBreakType, PageConfig, PageDict, PageIndexManager
 from .strategies import (
     PageContext,
     PaginationContext,
@@ -8,12 +7,8 @@ from .strategies import (
 )
 
 __all__ = [
-    "PageBreakType",
-    "PageConfig",
-    "PageIndexManager",
     "PageBreakCalculator",
     "RTFPagination",
-    "PageDict",
     "PageContext",
     "PaginationContext",
     "PaginationStrategy",

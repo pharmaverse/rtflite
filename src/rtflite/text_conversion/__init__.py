@@ -9,7 +9,6 @@ The main entry point is the `convert_text` function which handles the
 text_convert parameter found throughout RTF components.
 """
 
-from ..text_convert import text_convert  # For backward compatibility
 from .converter import TextConverter
 from .symbols import LaTeXSymbolMapper
 
@@ -48,5 +47,4 @@ __all__ = [
     "convert_text",
     "TextConverter",
     "LaTeXSymbolMapper",
-    "text_convert",  # backward compatibility
 ]

@@ -383,15 +383,16 @@ class RTFEncodingService:
             ]
             processed_df = processed_df.select(remaining_columns)
 
+            # Create a copy of attributes to modify
+            processed_attrs = rtf_attrs.model_copy(deep=True)
+
             # Handle attribute slicing for removed columns
             # We need to slice list-based attributes to match the new column structure
             from ..attributes import BroadcastValue
 
-            # Create a copy of attributes to modify
-            # We use deepcopy to ensure nested lists are copied
-            # model_copy(deep=True) is not sufficient for nested lists in
-            # Pydantic v2 sometimes
-            processed_attrs = rtf_attrs.model_copy(deep=True)
+            # Add footer content
+            # For now, we assume standard document footers are handled outside.
+            # But typically footers are page footers handled by RTFPageFooter.
 
             # Get indices of removed columns in the original dataframe
             removed_indices = [

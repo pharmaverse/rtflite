@@ -742,7 +742,6 @@ class RTFColumnHeader(TableAttributes):
                 import polars as pl
 
                 if isinstance(v, pl.DataFrame):
-                    # For backwards compatibility/renderer usage
                     # If DataFrame has multiple rows, transpose it first
                     # (or take first row)
                     if v.shape[0] > 1 and v.shape[1] == 1:
@@ -759,44 +758,13 @@ class RTFColumnHeader(TableAttributes):
     @field_validator("text", mode="after")
     def convert_text_after(cls, v):
         # Ensure it's a list of strings (or None)
-        # We NO LONGER convert to DataFrame here to keep the type simple
         return v
 
     def __init__(self, **data):
-        data = self._handle_backwards_compatibility(data)
         defaults = self._get_column_header_defaults()
         defaults.update(data)
         super().__init__(**defaults)
         self._set_default()
-
-    def _handle_backwards_compatibility(self, data: dict) -> dict:
-        """Handle backwards compatibility for df parameter."""
-        if "df" in data and "text" not in data:
-            df = data.pop("df")
-            data["text"] = self._convert_dataframe_to_text(df)
-        return data
-
-    def _convert_dataframe_to_text(self, df) -> list | None:
-        """Convert DataFrame to text list based on orientation."""
-        try:
-            import polars as pl
-
-            if isinstance(df, pl.DataFrame):
-                return self._handle_dataframe_orientation(df)
-        except ImportError:
-            pass
-        return None
-
-    def _handle_dataframe_orientation(self, df) -> list:
-        """Handle DataFrame orientation for column headers."""
-        # For backwards compatibility, assume single-row DataFrame
-        # If DataFrame has multiple rows, transpose it first
-        if df.shape[0] > 1 and df.shape[1] == 1:
-            # Column-oriented: transpose to row-oriented
-            return df.get_column(df.columns[0]).to_list()
-        else:
-            # Row-oriented: take first row
-            return list(df.row(0))
 
     def _get_column_header_defaults(self) -> dict:
         """Get default configuration for column headers."""
