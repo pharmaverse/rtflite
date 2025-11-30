@@ -121,8 +121,9 @@ class RTFDocumentService:
                 section_col_widths = Utils._col_widths(
                     body.col_rel_width, col_total_width
                 )
+                spanning_cols = (body.page_by or []) + (body.subline_by or [])
                 section_content_rows = calculator.calculate_content_rows(
-                    df, section_col_widths, body
+                    df, section_col_widths, body, spanning_columns=spanning_cols
                 )
                 total_content_rows.extend(section_content_rows)
             content_rows = total_content_rows
@@ -130,10 +131,16 @@ class RTFDocumentService:
             col_widths = Utils._col_widths(
                 document.rtf_body.col_rel_width, col_total_width
             )
+            spanning_cols = (document.rtf_body.page_by or []) + (
+                document.rtf_body.subline_by or []
+            )
             # Calculate rows needed for data content only
             content_rows = list(
                 calculator.calculate_content_rows(
-                    document.df, col_widths, document.rtf_body
+                    document.df,
+                    col_widths,
+                    document.rtf_body,
+                    spanning_columns=spanning_cols,
                 )
             )
 

@@ -36,48 +36,30 @@ class UnifiedRTFEncoder(EncodingStrategy):
         StrategyRegistry.register("page_by", PageByStrategy)
         StrategyRegistry.register("subline", SublineStrategy)
 
-    def encode(self, document: Any) -> str:
-        """Encode the document using the unified pipeline."""
+    def _encode_body_section(
+        self, document: RTFDocument, df: Any, rtf_body: Any
+    ) -> list[str]:
+        """Encode a single body section using the unified pipeline.
 
-        # 1. Figure-only handling
-        if document.df is None:
-            # Reuse the logic from previous implementation, adapted slightly
-            # Unifying figure-only documents into one pipeline is not straightforward.
-            # without a "FigurePaginationStrategy".
-            # So we defer to a helper method similar to the old one.
-            return self._encode_figure_only(document)
+        Args:
+            document: The RTF document context
+            df: DataFrame for this section
+            rtf_body: RTFBody attributes for this section
 
-        # 2. Multi-section handling
-        # The unified pipeline currently assumes a single DataFrame.
-        # Multi-section docs (list of DFs) need to be processed section by section
-        # or updated to support multi-df context.
-        # For now, we defer to the legacy multi-section handler if needed.
-        if isinstance(document.df, list):
-            return self._encode_multi_section(document)
-
-        # 3. Standard Pipeline
-        color_service.set_document_context(document)
-
+        Returns:
+            List of RTF strings (rendered pages/rows)
+        """
         # A. Prepare Data
         processed_df, original_df, processed_attrs = (
-            self.encoding_service.prepare_dataframe_for_body_encoding(
-                document.df, document.rtf_body
-            )
+            self.encoding_service.prepare_dataframe_for_body_encoding(df, rtf_body)
         )
 
         # B. Select Strategy
         strategy_name = "default"
-        if is_single_body(document.rtf_body):
-            if document.rtf_body.subline_by:
+        if is_single_body(rtf_body):
+            if rtf_body.subline_by:
                 strategy_name = "subline"
-            elif document.rtf_body.page_by:
-                strategy_name = "page_by"
-        # B. Select Strategy
-        strategy_name = "default"
-        if is_single_body(document.rtf_body):
-            if document.rtf_body.subline_by:
-                strategy_name = "subline"
-            elif document.rtf_body.page_by:
+            elif rtf_body.page_by:
                 strategy_name = "page_by"
 
         strategy_cls = StrategyRegistry.get(strategy_name)
@@ -85,7 +67,7 @@ class UnifiedRTFEncoder(EncodingStrategy):
 
         # C. Prepare Context
         col_total_width = document.rtf_page.col_width
-        if is_single_body(document.rtf_body) and processed_attrs.col_rel_width:
+        if is_single_body(rtf_body) and processed_attrs.col_rel_width:
             col_widths = Utils._col_widths(
                 processed_attrs.col_rel_width,
                 col_total_width if col_total_width is not None else 8.5,
@@ -101,8 +83,8 @@ class UnifiedRTFEncoder(EncodingStrategy):
         )
 
         pagination_ctx = PaginationContext(
-            df=original_df if is_single_body(document.rtf_body) else processed_df,
-            rtf_body=document.rtf_body,
+            df=original_df if is_single_body(rtf_body) else processed_df,
+            rtf_body=rtf_body,
             rtf_page=document.rtf_page,
             col_widths=col_widths,
             table_attrs=processed_attrs,
@@ -115,7 +97,6 @@ class UnifiedRTFEncoder(EncodingStrategy):
         # Handle case where no pages are generated (e.g. empty dataframe)
         if not pages:
             # Create empty page to ensure document structure (title, etc.) is rendered.
-            # We use processed_df which might be empty but has correct schema
             pages = [
                 PageContext(
                     page_number=1,
@@ -129,22 +110,50 @@ class UnifiedRTFEncoder(EncodingStrategy):
                 )
             ]
 
-        # Post-pagination fixup: Replace data with processed data (sliced correctly)
-        # Strategy used original_df, but we render processed_df.
-        # (which has removed columns).
-        if is_single_body(document.rtf_body):
-            self._apply_data_post_processing(pages, processed_df, document.rtf_body)
+        # Post-pagination fixup
+        if is_single_body(rtf_body):
+            self._apply_data_post_processing(pages, processed_df, rtf_body)
 
         # E. Process & Render Pages
-        page_rtf_chunks = []
+        section_rtf_chunks = []
 
-        for page in pages:
+        for i, page in enumerate(pages):
             # Process features (borders, etc.)
             processed_page = self.feature_processor.process(document, page)
 
             # Render
             chunks = self.renderer.render(document, processed_page)
-            page_rtf_chunks.extend(chunks)
+            section_rtf_chunks.extend(chunks)
+
+            # Add page break between pages (except last page)
+            # Note: PageRenderer might not add page breaks, so we add them here
+            # if we are paginating within a section.
+            # However, for multi-section, we might not want breaks if it flows.
+            # But PaginationStrategy assumes pages are pages.
+            if i < len(pages) - 1:
+                section_rtf_chunks.append(
+                    self.document_service.generate_page_break(document)
+                )
+
+        return section_rtf_chunks
+
+    def encode(self, document: Any) -> str:
+        """Encode the document using the unified pipeline."""
+
+        # 1. Figure-only handling
+        if document.df is None:
+            return self._encode_figure_only(document)
+
+        # 2. Multi-section handling
+        if isinstance(document.df, list):
+            return self._encode_multi_section(document)
+
+        # 3. Standard Pipeline
+        color_service.set_document_context(document)
+
+        page_rtf_chunks = self._encode_body_section(
+            document, document.df, document.rtf_body
+        )
 
         # F. Assembly
         result = "\n".join(
@@ -500,12 +509,14 @@ class UnifiedRTFEncoder(EncodingStrategy):
                 ).update_row(0, doc_border_top if doc_border_top is not None else [])
 
             # Create a temporary document for this section to maintain compatibility
+            # Note: We don't need deepcopy here if we just pass the components
+            # But _encode_body_section expects a document object for page config
             temp_document = deepcopy(document)
-            temp_document.df = section_df
-            temp_document.rtf_body = section_body
+            # We don't need to set df/body on temp_document if we pass them explicitly
+            # but _encode_body_section signature takes them explicitly.
 
-            # Encode section body
-            section_body_content = self.encoding_service.encode_body(
+            # Encode section body using new method
+            section_body_content = self._encode_body_section(
                 temp_document, section_df, section_body
             )
 

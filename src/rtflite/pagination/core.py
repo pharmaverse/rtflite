@@ -53,6 +53,7 @@ class PageBreakCalculator(BaseModel):
         col_widths: Sequence[float],
         table_attrs: TableAttributes | None = None,
         font_size: float = 9,
+        spanning_columns: Sequence[str] | None = None,
     ) -> Sequence[int]:
         """Calculate how many rows each content row will occupy when rendered
 
@@ -61,12 +62,15 @@ class PageBreakCalculator(BaseModel):
             col_widths: Width of each column in inches
             table_attrs: Table attributes containing cell height and font size info
             font_size: Default font size in points
+            spanning_columns: Columns that should be treated as spanning the full width
 
         Returns:
             List of row counts for each data row
         """
         row_counts = []
         dim = df.shape
+        spanning_columns = spanning_columns or []
+        total_width = sum(col_widths)
 
         for row_idx in range(df.height):
             max_lines_in_row = 1
@@ -110,7 +114,14 @@ class PageBreakCalculator(BaseModel):
                         font=actual_font,
                         font_size=actual_font_size,  # type: ignore[arg-type]
                     )
-                    lines_needed = max(1, int(text_width / col_width) + 1)
+
+                    # Determine effective width for wrapping
+                    # If column is a spanning column, use total table width
+                    effective_width = (
+                        total_width if col_name in spanning_columns else col_width
+                    )
+
+                    lines_needed = max(1, int(text_width / effective_width) + 1)
                     max_lines_in_row = max(max_lines_in_row, lines_needed)
 
             # Account for cell height if specified in table attributes
@@ -155,7 +166,9 @@ class PageBreakCalculator(BaseModel):
         if df.height == 0:
             return []
 
-        row_counts = self.calculate_content_rows(df, col_widths, table_attrs)
+        row_counts = self.calculate_content_rows(
+            df, col_widths, table_attrs, spanning_columns=page_by
+        )
         page_breaks = []
         current_page_start = 0
         current_page_rows = 0

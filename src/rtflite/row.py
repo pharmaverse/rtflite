@@ -5,7 +5,6 @@ from pydantic import BaseModel, Field
 from .core.constants import RTFConstants, RTFMeasurements
 from .fonts_mapping import FontMapping
 
-
 # Import constants from centralized location for backwards compatibility
 FORMAT_CODES = RTFConstants.FORMAT_CODES
 
