@@ -1,4 +1,3 @@
-import polars as pl
 
 from ..core import PageBreakCalculator, RTFPagination
 from .base import PageContext, PaginationContext, PaginationStrategy
@@ -42,6 +41,7 @@ class DefaultPaginationStrategy(PaginationStrategy):
                     is_last_page=(page_num == len(page_breaks) - 1),
                     col_widths=context.col_widths,
                     needs_header=(context.rtf_body.pageby_header or page_num == 0),
+                    table_attrs=context.table_attrs,
                 )
             )
 

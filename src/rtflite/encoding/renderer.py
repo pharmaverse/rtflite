@@ -270,7 +270,7 @@ class PageRenderer:
         return header_elements
 
     def _render_body(self, document: Any, page: PageContext) -> list[str]:
-        page_attrs = page.final_body_attrs or document.rtf_body
+        page_attrs = page.final_body_attrs or page.table_attrs or document.rtf_body
         page_df = page.data
         col_widths = page.col_widths
 
