@@ -681,7 +681,7 @@ class PaginatedStrategy(EncodingStrategy):
 
         # Prepare DataFrame for processing (remove subline_by columns, apply
         # group_by if needed)
-        processed_df, original_df = (
+        processed_df, original_df, processed_attrs = (
             self.encoding_service.prepare_dataframe_for_body_encoding(
                 document.df, document.rtf_body
             )
@@ -712,10 +712,10 @@ class PaginatedStrategy(EncodingStrategy):
         col_total_width = document.rtf_page.col_width
         if (
             is_single_body(document.rtf_body)
-            and document.rtf_body.col_rel_width is not None
+            and processed_attrs.col_rel_width is not None
         ):
             col_widths = Utils._col_widths(
-                document.rtf_body.col_rel_width,
+                processed_attrs.col_rel_width,
                 col_total_width if col_total_width is not None else 8.5,
             )
         else:
@@ -741,7 +741,7 @@ class PaginatedStrategy(EncodingStrategy):
                 page_by=document.rtf_body.page_by,
                 new_page=document.rtf_body.new_page,
                 pageby_header=document.rtf_body.pageby_header,
-                table_attrs=document.rtf_body,
+                table_attrs=processed_attrs,
                 additional_rows_per_page=additional_rows,
                 subline_by=document.rtf_body.subline_by,
             )
@@ -1067,7 +1067,7 @@ class PaginatedStrategy(EncodingStrategy):
 
             # Apply pagination borders to the body attributes
             page_attrs = self.document_service.apply_pagination_borders(
-                document, document.rtf_body, page_info, len(pages)
+                document, processed_attrs, page_info, len(pages)
             )
 
             # Check if there are group boundaries within this page

@@ -283,12 +283,13 @@ doc_subline = rtf.RTFDocument(
     rtf_body=rtf.RTFBody(
         subline_by=["SUBLINEBY"],  # Creates subheader rows from SUBLINEBY values
         col_rel_width=[
+            1,
             3,
             4,
             2,
             2,
         ],  # Widths for remaining 4 columns after SUBLINEBY removal
-        text_justification=["l", "l", "c", "c"],
+        text_justification=["l", "l", "l", "c", "c"],
     ),
     rtf_footnote=rtf.RTFFootnote(
         text=[
@@ -357,12 +358,13 @@ doc_comprehensive = rtf.RTFDocument(
         subline_by=["SUBLINEBY"],  # Creates trial/site subheaders
         group_by=["USUBJID"],  # Suppresses duplicate subject IDs
         col_rel_width=[
+            1,
             3,
             2,
             4,
             2,
-        ],  # Widths for remaining 4 columns after SUBLINEBY removal
-        text_justification=["l", "c", "l", "c"],
+        ],  
+        text_justification=["l", "l", "c", "l", "c"],
     ),
     rtf_footnote=rtf.RTFFootnote(
         text=[
