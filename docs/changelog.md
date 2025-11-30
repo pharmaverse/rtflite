@@ -1,5 +1,19 @@
 # Changelog
 
+## rtflite 1.2.0
+
+### Bug fixes
+
+- Fixed `page_by` pagination when using `RTFPage(orientation="landscape")`,
+  covering single- and multi-page tables and aligning documentation examples
+  (#128, #131, #134).
+
+### Maintenance
+
+- Added GitHub Actions workflow to run `ruff check` for code linting,
+  updated GitHub Actions workflows to use `actions/checkout@v6`,
+  and updated badges in `README.md` (#133).
+
 ## rtflite 1.1.1
 
 ### New features
