@@ -226,6 +226,7 @@ class RTFEncodingService:
         footnote_config,
         page_number: int | None = None,
         page_col_width: float | None = None,
+        border_style: str | None = None,
     ) -> Sequence[str]:
         """Encode footnote component with advanced formatting.
 
@@ -233,6 +234,7 @@ class RTFEncodingService:
             footnote_config: RTFFootnote configuration
             page_number: Page number for footnote
             page_col_width: Page column width for calculations
+            border_style: Optional border style to override defaults
 
         Returns:
             List of RTF footnote strings
@@ -242,13 +244,8 @@ class RTFEncodingService:
 
         rtf_attrs = footnote_config
 
-        # Apply page-specific border if set
-        if (
-            hasattr(rtf_attrs, "_page_border_style")
-            and page_number is not None
-            and page_number in rtf_attrs._page_border_style
-        ):
-            border_style = rtf_attrs._page_border_style[page_number]
+        # Apply explicitly passed border style
+        if border_style:
             # Create a copy with modified border
             rtf_attrs = rtf_attrs.model_copy()
             rtf_attrs.border_bottom = [[border_style]]
@@ -288,6 +285,7 @@ class RTFEncodingService:
         source_config,
         page_number: int | None = None,
         page_col_width: float | None = None,
+        border_style: str | None = None,
     ) -> Sequence[str]:
         """Encode source component with advanced formatting.
 
@@ -295,6 +293,7 @@ class RTFEncodingService:
             source_config: RTFSource configuration
             page_number: Page number for source
             page_col_width: Page column width for calculations
+            border_style: Optional border style to override defaults
 
         Returns:
             List of RTF source strings
@@ -304,13 +303,8 @@ class RTFEncodingService:
 
         rtf_attrs = source_config
 
-        # Apply page-specific border if set
-        if (
-            hasattr(rtf_attrs, "_page_border_style")
-            and page_number is not None
-            and page_number in rtf_attrs._page_border_style
-        ):
-            border_style = rtf_attrs._page_border_style[page_number]
+        # Apply explicitly passed border style
+        if border_style:
             # Create a copy with modified border
             rtf_attrs = rtf_attrs.model_copy()
             rtf_attrs.border_bottom = [[border_style]]

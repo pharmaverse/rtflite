@@ -553,9 +553,12 @@ class RTFDocumentService:
 
         if target_component:
             component_name, component = target_component
-            if not hasattr(component, "_page_border_style"):
-                component._page_border_style = {}
-            component._page_border_style[page_info["page_number"]] = border_style
+            # Store the border style in page_info to be used during encoding
+            # instead of modifying the component directly
+            if "component_borders" not in page_info:
+                page_info["component_borders"] = {}
+            
+            page_info["component_borders"][component_name] = border_style
 
     def _apply_border_to_cell(
         self,
