@@ -2,6 +2,8 @@
 
 from .attributes import TableAttributes
 from .convert import LibreOfficeConverter
+from .core.config import RTFConfiguration
+from .core.constants import RTFConstants
 from .encode import RTFDocument
 from .encoding import RTFEncodingEngine
 from .input import (
@@ -24,6 +26,8 @@ __version__ = "0.0.1"
 __all__ = [
     "RTFDocument",
     "RTFEncodingEngine",
+    "RTFConfiguration",
+    "RTFConstants",
     "RTFBody",
     "RTFPage",
     "RTFTitle",

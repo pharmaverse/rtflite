@@ -7,6 +7,12 @@ class DefaultPaginationStrategy(PaginationStrategy):
 
     def paginate(self, context: PaginationContext) -> list[PageContext]:
         # Initialize calculator
+        assert context.rtf_page.width is not None
+        assert context.rtf_page.height is not None
+        assert context.rtf_page.margin is not None
+        assert context.rtf_page.nrow is not None
+        assert context.rtf_page.orientation is not None
+
         pagination_config = RTFPagination(
             page_width=context.rtf_page.width,
             page_height=context.rtf_page.height,

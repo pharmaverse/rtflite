@@ -418,7 +418,7 @@ class UnifiedRTFEncoder(EncodingStrategy):
 
                                 header.border_top = BroadcastValue(
                                     value=header.border_top, dimension=dim
-                                ).update_row(0, doc_border_top)
+                                ).update_row(0, doc_border_top if doc_border_top is not None else [])
 
                             section_headers.append(
                                 self.encoding_service.encode_column_header(

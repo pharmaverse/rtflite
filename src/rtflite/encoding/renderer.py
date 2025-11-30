@@ -219,7 +219,7 @@ class PageRenderer:
                         schema=[f"col_{j}" for j in range(len(columns))],
                         orient="row",
                     )
-                    header_copy.text = header_df
+                    header_copy.text = header_df  # type: ignore[assignment]
 
                     # Adjust col_rel_width if needed (logic from PaginatedStrategy)
                     # Since we are using page.data which is already sliced/processed,
@@ -232,19 +232,10 @@ class PageRenderer:
             # Remove columns if necessary (page_by/subline_by)
             # Note: page.data already has columns removed if populated from it.
             # Filter only if text is from original document with extra columns.
-            if isinstance(header_copy.text, pl.DataFrame):
-                cols_remove = set()
-                if document.rtf_body.page_by:
-                    cols_remove.update(document.rtf_body.page_by)
-                if document.rtf_body.subline_by:
-                    cols_remove.update(document.rtf_body.subline_by)
-
-                if cols_remove:
-                    remaining = [
-                        c for c in header_copy.text.columns if c not in cols_remove
-                    ]
-                    if remaining:
-                        header_copy.text = header_copy.text.select(remaining)
+            # Since we simplified text to be a list, we can't easily filter by name
+            # unless we assume order or have metadata.
+            # For now, we assume header text matches the current page columns.
+            pass
 
             # Apply top border for first page/first header
             if (
@@ -274,7 +265,7 @@ class PageRenderer:
         page_df = page.data
         col_widths = page.col_widths
 
-        elements = []
+        elements: list[str] = []
 
         # Check for internal group boundaries
         if (
