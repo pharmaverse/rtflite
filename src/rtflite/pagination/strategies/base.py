@@ -28,6 +28,9 @@ class PageContext(BaseModel):
     # Content Flags
     needs_header: bool = True
 
+    # Base attributes for the table body (sliced/processed)
+    table_attrs: TableAttributes | None = None
+
     # Feature-specific Metadata (populated by strategies or processors)
     subline_header: dict[str, Any] | None = None
     pageby_header_info: dict[str, Any] | None = None
