@@ -368,11 +368,13 @@ class RTFEncodingService:
 
         # Remove page_by columns from table display
         # page_by columns are shown as spanning rows, not as table columns
-        # The new_page flag only controls whether to force page breaks at group boundaries
+        # The new_page flag only controls whether to force page breaks
+        # at group boundaries
         if rtf_attrs.page_by is not None:
             # Restore previous behavior:
             # - If new_page=True: Respect pageby_row (default 'column' -> keep column)
-            # - If new_page=False: Always remove columns (legacy behavior implies spanning rows)
+            # - If new_page=False: Always remove columns (legacy behavior
+            #   implies spanning rows)
             if rtf_attrs.new_page:
                 pageby_row = getattr(rtf_attrs, "pageby_row", "column")
                 if pageby_row != "column":
@@ -389,12 +391,12 @@ class RTFEncodingService:
 
             # Handle attribute slicing for removed columns
             # We need to slice list-based attributes to match the new column structure
-            from copy import deepcopy
             from ..attributes import BroadcastValue
 
             # Create a copy of attributes to modify
             # We use deepcopy to ensure nested lists are copied
-            # model_copy(deep=True) is not sufficient for nested lists in Pydantic v2 sometimes
+            # model_copy(deep=True) is not sufficient for nested lists in
+            # Pydantic v2 sometimes
             processed_attrs = rtf_attrs.model_copy(deep=True)
 
             # Get indices of removed columns in the original dataframe

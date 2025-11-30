@@ -329,7 +329,8 @@ class RTFDocumentService:
             and document.rtf_body.border_first
         ):
             # Apply border_first to first data row, respecting per-column settings
-            # Only use border_top if it has non-empty values; empty means use border_first
+            # Only use border_top if it has non-empty values;
+            # empty means use border_first
             if isinstance(document.rtf_body.border_first, list):
                 border_first_row = document.rtf_body.border_first[0]
                 has_border_top = (
@@ -345,7 +346,8 @@ class RTFDocumentService:
                     else:
                         border_style = border_first_row[0]
 
-                    # Only override with border_top if it has a non-empty value for this column
+                    # Only override with border_top if it has a non-empty value
+                    # for this column
                     if (
                         has_border_top
                         and col_idx < len(document.rtf_body.border_top[0])
@@ -370,8 +372,10 @@ class RTFDocumentService:
 
         # Apply page-level borders for non-first/last pages
         if not page_info["is_first_page"] and document.rtf_body.border_first:
-            # Apply border_first to first row of non-first pages, respecting per-column settings
-            # Only use border_top if it has non-empty values; empty means use border_first
+            # Apply border_first to first row of non-first pages,
+            # respecting per-column settings
+            # Only use border_top if it has non-empty values;
+            # empty means use border_first
             if isinstance(document.rtf_body.border_first, list):
                 border_first_row = document.rtf_body.border_first[0]
                 has_border_top = (
@@ -387,7 +391,8 @@ class RTFDocumentService:
                     else:
                         border_style = border_first_row[0]
 
-                    # Only override with border_top if it has a non-empty value for this column
+                    # Only override with border_top if it has a non-empty value
+                    # for this column
                     if (
                         has_border_top
                         and col_idx < len(document.rtf_body.border_top[0])

@@ -1025,7 +1025,8 @@ class PaginatedStrategy(EncodingStrategy):
                 page_elements.extend(header_elements)
 
             # Add page_by spanning table row after headers if specified
-            # Only if pageby_row is not 'column' (which keeps the column instead of spanning row)
+            # Only if pageby_row is not 'column'
+            # (which keeps the column instead of spanning row)
             # OR if not new_page (legacy behavior implies spanning rows)
             if page_info.get("pageby_header_info") and (
                 not document.rtf_body.new_page
