@@ -1,20 +1,18 @@
-from typing import Type
-
 from .base import PaginationStrategy
 
 
 class StrategyRegistry:
     """Registry for pagination strategies."""
 
-    _strategies: dict[str, Type[PaginationStrategy]] = {}
+    _strategies: dict[str, type[PaginationStrategy]] = {}
 
     @classmethod
-    def register(cls, name: str, strategy_cls: Type[PaginationStrategy]) -> None:
+    def register(cls, name: str, strategy_cls: type[PaginationStrategy]) -> None:
         """Register a new strategy."""
         cls._strategies[name] = strategy_cls
 
     @classmethod
-    def get(cls, name: str) -> Type[PaginationStrategy]:
+    def get(cls, name: str) -> type[PaginationStrategy]:
         """Get a strategy by name."""
         if name not in cls._strategies:
             raise ValueError(f"Strategy '{name}' not found in registry.")

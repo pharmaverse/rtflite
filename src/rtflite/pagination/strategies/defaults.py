@@ -1,5 +1,3 @@
-import polars as pl
-
 from ..core import PageBreakCalculator, RTFPagination
 from .base import PageContext, PaginationContext, PaginationStrategy
 

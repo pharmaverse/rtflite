@@ -2,7 +2,6 @@
 
 from typing import TYPE_CHECKING
 
-from .base import EncodingStrategy
 from .unified_encoder import UnifiedRTFEncoder
 
 if TYPE_CHECKING:

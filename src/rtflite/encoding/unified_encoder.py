@@ -1,9 +1,10 @@
+from __future__ import annotations
+
 from typing import Any
 
-import polars as pl
+from rtflite import RTFDocument
 
 from ..attributes import BroadcastValue
-from .base import EncodingStrategy
 from ..pagination.processor import PageFeatureProcessor
 from ..pagination.strategies import PageContext, PaginationContext, StrategyRegistry
 from ..pagination.strategies.defaults import DefaultPaginationStrategy
@@ -15,6 +16,7 @@ from ..services.document_service import RTFDocumentService
 from ..services.figure_service import RTFFigureService
 from ..services.grouping_service import grouping_service
 from ..type_guards import is_single_body
+from .base import EncodingStrategy
 from .renderer import PageRenderer
 
 
@@ -40,7 +42,7 @@ class UnifiedRTFEncoder(EncodingStrategy):
         # 1. Figure-only handling
         if document.df is None:
             # Reuse the logic from previous implementation, adapted slightly
-            # For now, we can't easily unify figure-only documents into the same pipeline
+            # Unifying figure-only documents into one pipeline is not straightforward.
             # without a "FigurePaginationStrategy".
             # So we defer to a helper method similar to the old one.
             return self._encode_figure_only(document)
@@ -112,7 +114,7 @@ class UnifiedRTFEncoder(EncodingStrategy):
 
         # Handle case where no pages are generated (e.g. empty dataframe)
         if not pages:
-            # Create a single empty page to ensure document structure (title, etc.) is rendered
+            # Create empty page to ensure document structure (title, etc.) is rendered.
             # We use processed_df which might be empty but has correct schema
             pages = [
                 PageContext(
@@ -127,7 +129,7 @@ class UnifiedRTFEncoder(EncodingStrategy):
             ]
 
         # Post-pagination fixup: Replace data with processed data (sliced correctly)
-        # The strategy used original_df for calculation, but we want to render processed_df
+        # Strategy used original_df, but we render processed_df.
         # (which has removed columns).
         if is_single_body(document.rtf_body):
             self._apply_data_post_processing(pages, processed_df, document.rtf_body)
@@ -205,13 +207,14 @@ class UnifiedRTFEncoder(EncodingStrategy):
                 p.data = restored.slice(curr, rows)
                 curr += rows
 
-    def _encode_figure_only(self, document):
+    def _encode_figure_only(self, document: RTFDocument):
         # (Legacy support for figure only)
         # For brevity, I will rely on the existing FigureService logic if possible
         # or just reproduce the simple loop.
-        # ... (Implementation omitted for brevity, would match PaginatedStrategy._encode_figure_only_document_with_pagination)
+        # Matches PaginatedStrategy._encode_figure_only_document_with_pagination.
         # Since the user wants a WORKING system, I must implement it.
         from copy import deepcopy
+
         from ..figure import rtf_read_figure
 
         if not document.rtf_figure or not document.rtf_figure.figures:
@@ -318,7 +321,7 @@ class UnifiedRTFEncoder(EncodingStrategy):
         parts.append("\n\n}")
         return "".join([p for p in parts if p])
 
-    def _encode_multi_section(self, document: "RTFDocument") -> str:
+    def _encode_multi_section(self, document: RTFDocument) -> str:
         """Encode a multi-section document where sections are concatenated row by row.
 
         Args:
@@ -329,7 +332,6 @@ class UnifiedRTFEncoder(EncodingStrategy):
         """
         from copy import deepcopy
 
-        from ..attributes import BroadcastValue
         from ..input import RTFColumnHeader
         from ..type_guards import (
             is_flat_header_list,
