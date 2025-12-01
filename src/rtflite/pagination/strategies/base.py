@@ -53,6 +53,8 @@ class PaginationContext(BaseModel):
     col_widths: list[float]
     table_attrs: TableAttributes | None
     additional_rows_per_page: int = 0
+    row_metadata: pl.DataFrame | None = None
+    removed_column_indices: list[int] | None = None
 
 
 class PaginationStrategy(ABC):

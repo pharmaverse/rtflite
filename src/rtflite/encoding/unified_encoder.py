@@ -36,48 +36,31 @@ class UnifiedRTFEncoder(EncodingStrategy):
         StrategyRegistry.register("page_by", PageByStrategy)
         StrategyRegistry.register("subline", SublineStrategy)
 
-    def encode(self, document: Any) -> str:
-        """Encode the document using the unified pipeline."""
+    def _encode_body_section(
+        self, document: RTFDocument, df: Any, rtf_body: Any
+    ) -> list[str]:
+        """Encode a single body section using the unified pipeline.
 
-        # 1. Figure-only handling
-        if document.df is None:
-            # Reuse the logic from previous implementation, adapted slightly
-            # Unifying figure-only documents into one pipeline is not straightforward.
-            # without a "FigurePaginationStrategy".
-            # So we defer to a helper method similar to the old one.
-            return self._encode_figure_only(document)
+        Args:
+            document: The RTF document context
+            df: DataFrame for this section
+            rtf_body: RTFBody attributes for this section
 
-        # 2. Multi-section handling
-        # The unified pipeline currently assumes a single DataFrame.
-        # Multi-section docs (list of DFs) need to be processed section by section
-        # or updated to support multi-df context.
-        # For now, we defer to the legacy multi-section handler if needed.
-        if isinstance(document.df, list):
-            return self._encode_multi_section(document)
-
-        # 3. Standard Pipeline
-        color_service.set_document_context(document)
+        Returns:
+            List of RTF strings (rendered pages/rows)
+        """
 
         # A. Prepare Data
         processed_df, original_df, processed_attrs = (
-            self.encoding_service.prepare_dataframe_for_body_encoding(
-                document.df, document.rtf_body
-            )
+            self.encoding_service.prepare_dataframe_for_body_encoding(df, rtf_body)
         )
 
         # B. Select Strategy
         strategy_name = "default"
-        if is_single_body(document.rtf_body):
-            if document.rtf_body.subline_by:
+        if is_single_body(rtf_body):
+            if rtf_body.subline_by:
                 strategy_name = "subline"
-            elif document.rtf_body.page_by:
-                strategy_name = "page_by"
-        # B. Select Strategy
-        strategy_name = "default"
-        if is_single_body(document.rtf_body):
-            if document.rtf_body.subline_by:
-                strategy_name = "subline"
-            elif document.rtf_body.page_by:
+            elif rtf_body.page_by:
                 strategy_name = "page_by"
 
         strategy_cls = StrategyRegistry.get(strategy_name)
@@ -85,7 +68,7 @@ class UnifiedRTFEncoder(EncodingStrategy):
 
         # C. Prepare Context
         col_total_width = document.rtf_page.col_width
-        if is_single_body(document.rtf_body) and processed_attrs.col_rel_width:
+        if is_single_body(rtf_body) and processed_attrs.col_rel_width:
             col_widths = Utils._col_widths(
                 processed_attrs.col_rel_width,
                 col_total_width if col_total_width is not None else 8.5,
@@ -101,8 +84,8 @@ class UnifiedRTFEncoder(EncodingStrategy):
         )
 
         pagination_ctx = PaginationContext(
-            df=original_df if is_single_body(document.rtf_body) else processed_df,
-            rtf_body=document.rtf_body,
+            df=original_df if is_single_body(rtf_body) else processed_df,
+            rtf_body=rtf_body,
             rtf_page=document.rtf_page,
             col_widths=col_widths,
             table_attrs=processed_attrs,
@@ -110,12 +93,12 @@ class UnifiedRTFEncoder(EncodingStrategy):
         )
 
         # D. Paginate
+
         pages = strategy.paginate(pagination_ctx)
 
         # Handle case where no pages are generated (e.g. empty dataframe)
         if not pages:
             # Create empty page to ensure document structure (title, etc.) is rendered.
-            # We use processed_df which might be empty but has correct schema
             pages = [
                 PageContext(
                     page_number=1,
@@ -129,22 +112,45 @@ class UnifiedRTFEncoder(EncodingStrategy):
                 )
             ]
 
-        # Post-pagination fixup: Replace data with processed data (sliced correctly)
-        # Strategy used original_df, but we render processed_df.
-        # (which has removed columns).
-        if is_single_body(document.rtf_body):
-            self._apply_data_post_processing(pages, processed_df, document.rtf_body)
+        # Post-pagination fixup
+        if is_single_body(rtf_body):
+            self._apply_data_post_processing(pages, processed_df, rtf_body)
 
         # E. Process & Render Pages
-        page_rtf_chunks = []
+        section_rtf_chunks = []
 
-        for page in pages:
+        for _i, page in enumerate(pages):
             # Process features (borders, etc.)
             processed_page = self.feature_processor.process(document, page)
 
             # Render
             chunks = self.renderer.render(document, processed_page)
-            page_rtf_chunks.extend(chunks)
+            section_rtf_chunks.extend(chunks)
+
+            # Add page break between pages (except last page)
+            # Note: PageRenderer handles page breaks at the start of non-first pages.
+            # So we do NOT add them here to avoid double breaks.
+            pass
+
+        return section_rtf_chunks
+
+    def encode(self, document: Any) -> str:
+        """Encode the document using the unified pipeline."""
+
+        # 1. Figure-only handling
+        if document.df is None:
+            return self._encode_figure_only(document)
+
+        # 2. Multi-section handling
+        if isinstance(document.df, list):
+            return self._encode_multi_section(document)
+
+        # 3. Standard Pipeline
+        color_service.set_document_context(document)
+
+        page_rtf_chunks = self._encode_body_section(
+            document, document.df, document.rtf_body
+        )
 
         # F. Assembly
         result = "\n".join(
@@ -209,11 +215,7 @@ class UnifiedRTFEncoder(EncodingStrategy):
                 curr += rows
 
     def _encode_figure_only(self, document: RTFDocument):
-        # (Legacy support for figure only)
-        # For brevity, I will rely on the existing FigureService logic if possible
-        # or just reproduce the simple loop.
-        # Matches PaginatedStrategy._encode_figure_only_document_with_pagination.
-        # Since the user wants a WORKING system, I must implement it.
+        """Encode a figure-only document."""
         from copy import deepcopy
 
         from ..figure import rtf_read_figure
@@ -331,13 +333,9 @@ class UnifiedRTFEncoder(EncodingStrategy):
         Returns:
             Complete RTF string
         """
-        from copy import deepcopy
 
-        from ..input import RTFColumnHeader
         from ..type_guards import (
-            is_flat_header_list,
             is_nested_header_list,
-            is_single_header,
         )
 
         # Calculate column counts for border management
@@ -347,15 +345,11 @@ class UnifiedRTFEncoder(EncodingStrategy):
             first_section_cols = document.df.shape[1] if document.df is not None else 0
 
         # Document structure components
-        rtf_title = self.encoding_service.encode_title(
-            document.rtf_title, method="line"
-        )
+        # rtf_title is handled per section via temp_document and renderer
+        # so we don't need to pre-calculate it here.
 
         # Handle page borders (use first section for dimensions)
-        doc_border_top_list = BroadcastValue(
-            value=document.rtf_page.border_first, dimension=(1, first_section_cols)
-        ).to_list()
-        doc_border_top = doc_border_top_list[0] if doc_border_top_list else None
+        # doc_border_top is not used in this scope
         doc_border_bottom_list = BroadcastValue(
             value=document.rtf_page.border_last, dimension=(1, first_section_cols)
         ).to_list()
@@ -385,139 +379,103 @@ class UnifiedRTFEncoder(EncodingStrategy):
         for i, (section_df, section_body) in enumerate(
             zip(df_list, body_list, strict=True)
         ):
-            dim = section_df.shape
-
-            # Handle column headers for this section
-            section_headers: list[str] = []
+            # Determine column headers for this section
+            section_headers_obj = None
             if is_nested_headers:
-                # Nested format: [[header1], [None], [header3]]
-                if (
-                    i < len(document.rtf_column_header)
-                    and document.rtf_column_header[i]
+                if isinstance(document.rtf_column_header, list) and i < len(
+                    document.rtf_column_header
                 ):
-                    for header in document.rtf_column_header[i]:
-                        if header is not None:
-                            # Ensure header is RTFColumnHeader, not tuple
-                            if not isinstance(header, RTFColumnHeader):
-                                continue
-                            # Apply top border to first section's first header
-                            if (
-                                i == 0
-                                and not section_headers
-                                and document.rtf_page.border_first
-                            ):
-                                doc_border_top_list = BroadcastValue(
-                                    value=document.rtf_page.border_first,
-                                    dimension=(1, dim[1]),
-                                ).to_list()
-                                doc_border_top = (
-                                    doc_border_top_list[0]
-                                    if doc_border_top_list
-                                    else None
-                                )
-
-                                header.border_top = BroadcastValue(
-                                    value=header.border_top, dimension=dim
-                                ).update_row(
-                                    0,
-                                    doc_border_top
-                                    if doc_border_top is not None
-                                    else [],
-                                )
-
-                            section_headers.append(
-                                self.encoding_service.encode_column_header(
-                                    header.text, header, document.rtf_page.col_width
-                                )
-                            )
+                    section_headers_obj = document.rtf_column_header[i]
             else:
                 # Flat format - only apply to first section
                 if i == 0:
-                    headers_to_check = []
-                    if is_flat_header_list(document.rtf_column_header):
-                        headers_to_check = document.rtf_column_header
-                    elif is_single_header(document.rtf_column_header):  # type: ignore[arg-type]
-                        headers_to_check = [document.rtf_column_header]
+                    section_headers_obj = document.rtf_column_header
 
-                    for header in headers_to_check:
-                        if (
-                            header is not None
-                            and header.text is None
-                            and section_body.as_colheader
-                        ):
-                            # Auto-generate headers from column names
-                            columns = [
-                                col
-                                for col in section_df.columns
-                                if col not in (section_body.page_by or [])
-                            ]
-                            import polars as pl
+            # Create a temporary document for this section
+            # We need to adjust page borders:
+            # - border_first only applies to the first section
+            # - border_last only applies to the last section
+            section_page = document.rtf_page.model_copy()
+            if i > 0:
+                section_page.border_first = None
+            if i < len(df_list) - 1:
+                section_page.border_last = None
 
-                            header_df = pl.DataFrame(
-                                [columns],
-                                schema=[f"col_{j}" for j in range(len(columns))],
-                                orient="row",
-                            )
-                            header.text = header_df  # type: ignore[assignment]
-
-                        # Apply top border to first header
-                        if (
-                            not section_headers
-                            and document.rtf_page.border_first
-                            and header is not None
-                        ):
-                            doc_border_top_list = BroadcastValue(
-                                value=document.rtf_page.border_first,
-                                dimension=(1, dim[1]),
-                            ).to_list()
-                            doc_border_top = (
-                                doc_border_top_list[0] if doc_border_top_list else None
-                            )
-
-                            header.border_top = BroadcastValue(
-                                value=header.border_top, dimension=dim
-                            ).update_row(
-                                0, doc_border_top if doc_border_top is not None else []
-                            )
-
-                        if header is not None:
-                            section_headers.append(
-                                self.encoding_service.encode_column_header(
-                                    header.text, header, document.rtf_page.col_width
-                                )
-                            )
-
-            # Handle borders for section body
-            if i == 0 and not section_headers:  # First section, no headers
-                # Apply top border to first row of first section
-                doc_border_top_list = BroadcastValue(
-                    value=document.rtf_page.border_first, dimension=(1, dim[1])
-                ).to_list()
-                doc_border_top = doc_border_top_list[0] if doc_border_top_list else None
-
-                section_body.border_top = BroadcastValue(
-                    value=section_body.border_top, dimension=dim
-                ).update_row(0, doc_border_top if doc_border_top is not None else [])
-
-            # Create a temporary document for this section to maintain compatibility
-            temp_document = deepcopy(document)
-            temp_document.df = section_df
-            temp_document.rtf_body = section_body
-
-            # Encode section body
-            section_body_content = self.encoding_service.encode_body(
-                temp_document, section_df, section_body
+            # Handle component visibility across sections
+            # Use model_copy to avoid modifying original document components
+            section_title = (
+                document.rtf_title.model_copy() if document.rtf_title else None
+            )
+            section_footnote = (
+                document.rtf_footnote.model_copy() if document.rtf_footnote else None
+            )
+            section_source = (
+                document.rtf_source.model_copy() if document.rtf_source else None
+            )
+            section_subline = (
+                document.rtf_subline.model_copy() if document.rtf_subline else None
+            )
+            section_page_header = (
+                document.rtf_page_header.model_copy()
+                if document.rtf_page_header
+                else None
+            )
+            section_page_footer = (
+                document.rtf_page_footer.model_copy()
+                if document.rtf_page_footer
+                else None
             )
 
-            # Add section content
-            if section_headers:
-                all_section_content.extend(
-                    [
-                        "\n".join(
-                            header for sublist in section_headers for header in sublist
-                        )
-                    ]
-                )
+            # Title: if "first", only show on first section
+            # Also suppress if this section continues on the same page (new_page=False)
+            if i > 0:
+                should_suppress = not section_body.new_page
+
+                if (document.rtf_page.page_title == "first") or should_suppress:
+                    if section_title:
+                        section_title.text = None
+                    if section_subline:
+                        section_subline.text = None
+
+                # Suppress Page Header/Footer for continuous sections
+                if should_suppress:
+                    if section_page_header:
+                        section_page_header.text = None
+                    if section_page_footer:
+                        section_page_footer.text = None
+
+            # Footnote/Source: if "last", only show on last section
+            # For continuous sections, suppress them unless it's the last one.
+            if i < len(df_list) - 1:
+                should_suppress = not body_list[
+                    i + 1
+                ].new_page  # Next section continues
+
+                if document.rtf_page.page_footnote == "last" and section_footnote:
+                    section_footnote.text = None
+                if document.rtf_page.page_source == "last" and section_source:
+                    section_source.text = None
+
+            # Use model_copy to safely create a new instance with updated fields
+            temp_document = document.model_copy(
+                update={
+                    "df": section_df,
+                    "rtf_body": section_body,
+                    "rtf_column_header": section_headers_obj,
+                    "rtf_page": section_page,
+                    "rtf_title": section_title,
+                    "rtf_subline": section_subline,
+                    "rtf_page_header": section_page_header,
+                    "rtf_page_footer": section_page_footer,
+                    "rtf_footnote": section_footnote,
+                    "rtf_source": section_source,
+                }
+            )
+
+            # Encode section body (headers will be handled by PageRenderer)
+            section_body_content = self._encode_body_section(
+                temp_document, section_df, section_body
+            )
             all_section_content.extend(section_body_content)
 
         # Handle bottom borders on last section
@@ -542,6 +500,7 @@ class UnifiedRTFEncoder(EncodingStrategy):
                 for item in [
                     self.encoding_service.encode_document_start(),
                     self.encoding_service.encode_font_table(),
+                    self.encoding_service.encode_color_table(document),
                     "\n",
                     self.encoding_service.encode_page_header(
                         document.rtf_page_header, method="line"
@@ -550,33 +509,44 @@ class UnifiedRTFEncoder(EncodingStrategy):
                         document.rtf_page_footer, method="line"
                     ),
                     self.encoding_service.encode_page_settings(document.rtf_page),
-                    rtf_title,
-                    "\n",
-                    self.encoding_service.encode_subline(
-                        document.rtf_subline, method="line"
-                    ),
                     "\n".join(all_section_content),
-                    "\n".join(
-                        self.encoding_service.encode_footnote(
-                            document.rtf_footnote,
-                            page_number=1,
-                            page_col_width=document.rtf_page.col_width,
-                        )
-                    )
-                    if document.rtf_footnote is not None
-                    else None,
-                    "\n".join(
-                        self.encoding_service.encode_source(
-                            document.rtf_source,
-                            page_number=1,
-                            page_col_width=document.rtf_page.col_width,
-                        )
-                    )
-                    if document.rtf_source is not None
-                    else None,
                     "\n\n",
                     "}",
                 ]
                 if item is not None
             ]
         )
+
+        # 3. Standard Pipeline
+        color_service.set_document_context(document)
+
+        page_rtf_chunks = self._encode_body_section(
+            document, document.df, document.rtf_body
+        )
+
+        # F. Assembly
+        result = "\n".join(
+            [
+                item
+                for item in [
+                    self.encoding_service.encode_document_start(),
+                    self.encoding_service.encode_font_table(),
+                    self.encoding_service.encode_color_table(document),
+                    "\n",
+                    self.encoding_service.encode_page_header(
+                        document.rtf_page_header, method="line"
+                    ),
+                    self.encoding_service.encode_page_footer(
+                        document.rtf_page_footer, method="line"
+                    ),
+                    self.encoding_service.encode_page_settings(document.rtf_page),
+                    "\n".join(page_rtf_chunks),
+                    "\n\n",
+                    "}",
+                ]
+                if item is not None
+            ]
+        )
+
+        color_service.clear_document_context()
+        return result

@@ -1,3 +1,5 @@
+from typing import cast
+
 from ..core import PageBreakCalculator, RTFPagination
 from .base import PageContext, PaginationContext, PaginationStrategy
 
@@ -22,30 +24,51 @@ class DefaultPaginationStrategy(PaginationStrategy):
         )
         calculator = PageBreakCalculator(pagination=pagination_config)
 
-        # Calculate breaks
-        page_breaks = calculator.find_page_breaks(
+        # Calculate metadata
+        metadata = calculator.calculate_row_metadata(
             df=context.df,
             col_widths=context.col_widths,
-            page_by=None,
-            new_page=False,
             table_attrs=context.table_attrs,
+            removed_column_indices=context.removed_column_indices,
             additional_rows_per_page=context.additional_rows_per_page,
         )
 
         # Create PageContext objects
         pages = []
-        for page_num, (start_row, end_row) in enumerate(page_breaks):
+        import polars as pl
+
+        # Get unique pages and sort them
+        unique_pages = metadata["page"].unique().sort()
+        total_pages = len(unique_pages)
+
+        for page_num in unique_pages:
+            # Filter metadata for this page
+            page_rows = metadata.filter(pl.col("page") == page_num)
+
+            if page_rows.height == 0:
+                continue
+
+            start_row = cast(int, page_rows["row_index"].min())
+            end_row = cast(int, page_rows["row_index"].max())
+
+            # Slice the original dataframe
+            # Note: end_row is inclusive index, slice takes length
             page_df = context.df.slice(start_row, end_row - start_row + 1)
+
+            # 1-based page number for display
+            display_page_num = int(page_num)
 
             pages.append(
                 PageContext(
-                    page_number=page_num + 1,
-                    total_pages=len(page_breaks),
+                    page_number=display_page_num,
+                    total_pages=total_pages,
                     data=page_df,
-                    is_first_page=(page_num == 0),
-                    is_last_page=(page_num == len(page_breaks) - 1),
+                    is_first_page=(display_page_num == 1),
+                    is_last_page=(display_page_num == total_pages),
                     col_widths=context.col_widths,
-                    needs_header=(context.rtf_body.pageby_header or page_num == 0),
+                    needs_header=(
+                        context.rtf_body.pageby_header or display_page_num == 1
+                    ),
                     table_attrs=context.table_attrs,
                 )
             )

@@ -223,6 +223,8 @@ doc_treatment_separated = rtf.RTFDocument(
             "ASTDY",
         ],  # Suppress duplicates within each treatment page
         col_rel_width=[2, 3, 1, 4, 2],
+        border_top=["single", "", "", "", ""],
+        border_bottom=["single", "", "", "", ""],
         text_justification=["l", "l", "c", "l", "c"],
         pageby_header=True,  # Repeat headers on each treatment page
     ),

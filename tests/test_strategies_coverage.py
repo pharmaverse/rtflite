@@ -385,20 +385,3 @@ class TestStrategyIntegration:
         rtf_output = doc.rtf_encode()
         assert rtf_output
         assert r"{\rtf1" in rtf_output  # Valid RTF document
-
-    def test_force_single_page_parameter(self):
-        """Test force_single_page parameter in encode_body."""
-        from rtflite.services.encoding_service import RTFEncodingService
-
-        service = RTFEncodingService()
-        df = pl.DataFrame({"A": range(100)})  # Large DataFrame
-
-        doc = RTFDocument(
-            df=df,
-            rtf_body=RTFBody(),
-            rtf_page=RTFPage(nrow=10),  # Would normally paginate
-        )
-
-        # Force single page encoding
-        result = service.encode_body(doc, df, doc.rtf_body, force_single_page=True)
-        assert result  # Should produce output without pagination

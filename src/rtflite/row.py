@@ -4,7 +4,6 @@ from pydantic import BaseModel, Field
 
 from .core.constants import RTFConstants, RTFMeasurements
 from .fonts_mapping import FontMapping
-from .text_convert import text_convert
 
 # Import constants from centralized location for backwards compatibility
 FORMAT_CODES = RTFConstants.FORMAT_CODES
@@ -173,12 +172,15 @@ class TextContent(BaseModel):
                 text = text.replace(char, rtf)
 
         # Apply LaTeX to Unicode conversion if enabled
-        converted_text = text_convert(text, self.convert)
+        from .services.text_conversion_service import TextConversionService
+
+        service = TextConversionService()
+        converted_text = service.convert_text_content(text, self.convert)
 
         if converted_text is None:
             return ""
 
-        text = converted_text
+        text = str(converted_text)
 
         converted_text = ""
         for char in text:

@@ -8,7 +8,6 @@ import polars as pl
 
 from rtflite.encode import RTFDocument
 from rtflite.input import RTFBody, RTFColumnHeader, RTFFootnote, RTFPage, RTFTitle
-from rtflite.services.document_service import RTFDocumentService
 from rtflite.services.grouping_service import GroupingService
 
 
@@ -308,26 +307,6 @@ class TestPaginationBoundaryConditions:
 
 class TestServiceLayerIntegration:
     """Test integration of various services in pagination."""
-
-    def test_document_service_pagination_detection(self):
-        """Test DocumentService correctly detects when pagination is needed."""
-        service = RTFDocumentService()
-
-        # Case 1: Small data, no pagination needed
-        df_small = pl.DataFrame({"A": [1, 2], "B": [3, 4]})
-        doc_small = RTFDocument(df=df_small)
-        assert service.needs_pagination(doc_small) is False
-
-        # Case 2: Large data, pagination needed
-        df_large = pl.DataFrame({"A": list(range(100)), "B": list(range(100))})
-        doc_large = RTFDocument(df=df_large, rtf_page=RTFPage(nrow=20))
-        assert service.needs_pagination(doc_large) is True
-
-        # Case 3: page_by specified, pagination needed
-        doc_pageby = RTFDocument(
-            df=df_small, rtf_body=RTFBody(page_by=["A"], new_page=True)
-        )
-        assert service.needs_pagination(doc_pageby) is True
 
     def test_grouping_service_enhance_group_by(self):
         """Test GroupingService correctly applies group_by transformation."""
