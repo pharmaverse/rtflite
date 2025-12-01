@@ -75,22 +75,11 @@ class PageByStrategy(PaginationStrategy):
 
             # Add page_by header info
             if page_by:
-                # We can use the metadata to check if we need a header at the start
-                # of page. But existing logic uses _get_group_headers which is fine.
                 page_ctx.pageby_header_info = self._get_group_headers(
                     context.df, page_by, start_row
                 )
 
                 # Detect group boundaries for spanning rows mid-page
-                # We can use metadata "is_group_start" here!
-                # But let's stick to existing helper for now to minimize risk,
-                # or better, use metadata if we trust it.
-                # Let's use existing helper for now as per plan to migrate gradually,
-                # but plan said "Update pagination logic to use metadata".
-                # The metadata has is_group_start.
-
-                # Let's use the helper for now to be safe and consistent with
-                # previous behavior.
                 group_boundaries = self._detect_group_boundaries(
                     context.df, page_by, start_row, end_row
                 )
@@ -170,16 +159,7 @@ class SublineStrategy(PageByStrategy):
         calculator = PageBreakCalculator(pagination=pagination_config)
 
         # Calculate metadata
-        # Note: SublineStrategy forces new page on subline change.
-        # Our current _assign_pages logic in core.py doesn't strictly enforce
-        # "new page on group change" unless we add that logic.
-        # However, the user asked for "metadata driven".
-        # If we rely on metadata, the metadata calculation MUST handle the page
-        # breaks correctly.
-        # In the core.py implementation I added:
-        # if row["is_subline_start"] and i > 0: force_break = True
-        # So it SHOULD handle subline breaks correctly if subline_by is passed!
-
+        # SublineStrategy forces new page on subline change.
         metadata = calculator.calculate_row_metadata(
             df=context.df,
             col_widths=context.col_widths,

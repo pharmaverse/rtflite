@@ -215,11 +215,7 @@ class UnifiedRTFEncoder(EncodingStrategy):
                 curr += rows
 
     def _encode_figure_only(self, document: RTFDocument):
-        # (Legacy support for figure only)
-        # For brevity, I will rely on the existing FigureService logic if possible
-        # or just reproduce the simple loop.
-        # Matches PaginatedStrategy._encode_figure_only_document_with_pagination.
-        # Since the user wants a WORKING system, I must implement it.
+        """Encode a figure-only document."""
         from copy import deepcopy
 
         from ..figure import rtf_read_figure
@@ -449,18 +445,11 @@ class UnifiedRTFEncoder(EncodingStrategy):
                         section_page_footer.text = None
 
             # Footnote/Source: if "last", only show on last section
-            # For continuous sections, we might want to suppress them in the middle
-            # and only show at the end of the chain?
-            # If we show them, they appear immediately after the section body.
-            # For now, let's suppress them for continuous sections unless it's the
-            # last one.
+            # For continuous sections, suppress them unless it's the last one.
             if i < len(df_list) - 1:
                 should_suppress = not body_list[
                     i + 1
                 ].new_page  # Next section continues
-                # Actually, if THIS section is continuous, it doesn't mean we suppress
-                # its footer. But if the NEXT section continues on the same page, we
-                # probably don't want footnotes in the middle.
 
                 if document.rtf_page.page_footnote == "last" and section_footnote:
                     section_footnote.text = None
