@@ -1,5 +1,44 @@
 # Changelog
 
+## rtflite 2.0.0
+
+### Breaking changes
+
+- Removed legacy pagination/encoding APIs, including `ContentDistributor`,
+  `PageDict`/`AdvancedPaginationService`, and the `SinglePageStrategy`/
+  `PaginatedStrategy` classes; dropped backwards-compatibility helpers
+  such as `text_convert` and `get_color_index` (#138).
+
+### Refactors
+
+- Introduced a unified rendering pipeline (`UnifiedRTFEncoder`) with a strategy
+  registry, page feature processor, and renderer that handle pagination,
+  borders, and page headers consistently, including combined `page_by` and
+  `subline_by` grouping (#138).
+- Simplified public exports by re-exporting `RTFEncodingEngine`,
+  `TableAttributes`, `RTFSubline`, and `get_string_width` from the top-level
+  package while reorganizing core config/constants imports (#138).
+
+### Testing and documentation
+
+- Added regression tests for combined grouping and `page_by` column alignment,
+  and removed obsolete advanced pagination tests; cleaned up RTF doc fixtures
+  and trimmed pagination reference docs to match the new architecture (#138).
+
+## rtflite 1.2.0
+
+### Bug fixes
+
+- Fixed `page_by` pagination when using `RTFPage(orientation="landscape")`,
+  covering single- and multi-page tables and aligning documentation examples
+  (#128, #131, #134).
+
+### Maintenance
+
+- Added GitHub Actions workflow to run `ruff check` for code linting,
+  updated GitHub Actions workflows to use `actions/checkout@v6`,
+  and updated badges in `README.md` (#133).
+
 ## rtflite 1.1.1
 
 ### New features

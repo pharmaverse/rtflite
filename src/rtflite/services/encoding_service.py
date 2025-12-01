@@ -391,7 +391,6 @@ class RTFEncodingService:
             # Add footer content
             # For now, we assume standard document footers are handled outside.
             # But typically footers are page footers handled by RTFPageFooter.
-
             # Get indices of removed columns in the original dataframe
             removed_indices = [
                 original_df.columns.index(col) for col in columns_to_remove
