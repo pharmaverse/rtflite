@@ -52,3 +52,26 @@ The project uses a modular, strategy-based architecture for pagination and rende
 
 ### 3. Feature Isolation
 - Page-specific features (top/bottom borders, spanning rows, footnotes) are calculated and finalized on the `PageContext` object before rendering.
+
+## Recent Updates (Dec 2025): Metadata-Driven Pagination
+
+### Overview
+Pagination logic has been refactored to be **metadata-driven**, centralizing row height and page break calculations into `PageBreakCalculator`.
+
+### Key Components
+- **`RowMetadata`**: A Pydantic model (in `core.py`) defining the structure of each row's pagination data (row index, data rows, header rows, page assignment, group start flags).
+- **`PageBreakCalculator.calculate_row_metadata`**: The core method that generates a Polars DataFrame of `RowMetadata`. It handles:
+    - Content row height calculation (respecting fonts and column widths).
+    - Header row estimation.
+    - Page assignment logic (respecting `nrow`, `additional_rows_per_page`, `new_page`).
+    - Group start detection for `page_by` and `subline_by`.
+
+### Strategy Updates
+- **`DefaultPaginationStrategy`**: Uses `calculate_row_metadata` to determine page breaks based on content height.
+- **`PageByStrategy`**: Uses `calculate_row_metadata` with `page_by` columns to handle grouping and potential page breaks.
+- **`SublineStrategy`**: Uses `calculate_row_metadata` with `subline_by` (passed as `subline_by` arg) and `new_page=True` to enforce page breaks on subline changes.
+
+### Validation Status
+- **Tests**: All 394 tests passed, including regression tests for pagination and grouping.
+- **Linting**: Codebase is clean (`ruff check` passed).
+- **Types**: Type checking passed (`mypy .` passed), with explicit casting used for Polars aggregation results.
