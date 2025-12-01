@@ -338,11 +338,8 @@ class UnifiedRTFEncoder(EncodingStrategy):
             Complete RTF string
         """
 
-        from ..input import RTFColumnHeader
         from ..type_guards import (
-            is_flat_header_list,
             is_nested_header_list,
-            is_single_header,
         )
 
         # Calculate column counts for border management
@@ -393,9 +390,8 @@ class UnifiedRTFEncoder(EncodingStrategy):
             # Determine column headers for this section
             section_headers_obj = None
             if is_nested_headers:
-                if (
-                    isinstance(document.rtf_column_header, list)
-                    and i < len(document.rtf_column_header)
+                if isinstance(document.rtf_column_header, list) and i < len(
+                    document.rtf_column_header
                 ):
                     section_headers_obj = document.rtf_column_header[i]
             else:
@@ -442,7 +438,7 @@ class UnifiedRTFEncoder(EncodingStrategy):
             # Also suppress if this section continues on the same page (new_page=False)
             if i > 0:
                 should_suppress = not section_body.new_page
-                
+
                 if (document.rtf_page.page_title == "first") or should_suppress:
                     if section_title:
                         section_title.text = None
@@ -462,36 +458,34 @@ class UnifiedRTFEncoder(EncodingStrategy):
             # If we show them, they appear immediately after the section body.
             # For now, let's suppress them for continuous sections unless it's the last one.
             if i < len(df_list) - 1:
-                should_suppress = not body_list[i+1].new_page # Next section continues
+                should_suppress = not body_list[
+                    i + 1
+                ].new_page  # Next section continues
                 # Actually, if THIS section is continuous, it doesn't mean we suppress its footer.
-                # But if the NEXT section continues on the same page, we probably don't want 
+                # But if the NEXT section continues on the same page, we probably don't want
                 # footnotes in the middle.
-                
-                if (
-                    document.rtf_page.page_footnote == "last"
-                    and section_footnote
-                ):
+
+                if document.rtf_page.page_footnote == "last" and section_footnote:
                     section_footnote.text = None
-                if (
-                    document.rtf_page.page_source == "last"
-                    and section_source
-                ):
+                if document.rtf_page.page_source == "last" and section_source:
                     section_source.text = None
 
             # Use model_copy to safely create a new instance with updated fields
-            temp_document = document.model_copy(update={
-                "df": section_df,
-                "rtf_body": section_body,
-                "rtf_column_header": section_headers_obj,
-                "rtf_page": section_page,
-                "rtf_title": section_title,
-                "rtf_subline": section_subline,
-                "rtf_page_header": section_page_header,
-                "rtf_page_footer": section_page_footer,
-                "rtf_footnote": section_footnote,
-                "rtf_source": section_source,
-            })
-            
+            temp_document = document.model_copy(
+                update={
+                    "df": section_df,
+                    "rtf_body": section_body,
+                    "rtf_column_header": section_headers_obj,
+                    "rtf_page": section_page,
+                    "rtf_title": section_title,
+                    "rtf_subline": section_subline,
+                    "rtf_page_header": section_page_header,
+                    "rtf_page_footer": section_page_footer,
+                    "rtf_footnote": section_footnote,
+                    "rtf_source": section_source,
+                }
+            )
+
             # Encode section body (headers will be handled by PageRenderer)
             section_body_content = self._encode_body_section(
                 temp_document, section_df, section_body
