@@ -155,9 +155,11 @@ def test_nested_page_by_rtf_structure():
 
     # CRITICAL CHECK: "G1" should NOT be repeated before "Sub2"
     # because "G1" value didn't change.
-    # We search for "G1" AFTER "001". It should NOT be found (or at least not as a header).
+    # We search for "G1" AFTER "001". It should NOT be found
+    # (or at least not as a header).
     # Note: "G1" might appear in the first header, so we need to be careful.
     # We can check the count. "G1" should appear ONCE (for the first group).
     # Unless it's a new page, but here it's a small table.
-    assert rtf_output.count("G1") == 1, "Group1 header should not be repeated when value is unchanged"
-
+    assert rtf_output.count("G1") == 1, (
+        "Group1 header should not be repeated when value is unchanged"
+    )

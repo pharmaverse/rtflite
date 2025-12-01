@@ -91,29 +91,28 @@ class PageRenderer:
                 not document.rtf_body.new_page
                 or document.rtf_body.pageby_row != "column"
             )
+            and "group_values" in page.pageby_header_info
         ):
-            # Iterate over group values to create nested spanning rows
-            if "group_values" in page.pageby_header_info:
-                for col_name, val in page.pageby_header_info["group_values"].items():
-                    if val is None:
-                        continue
-                        
-                    # Find col index for attributes
-                    current_col_idx = 0
-                    if isinstance(document.df, pl.DataFrame):
-                        try:
-                            current_col_idx = document.df.columns.index(col_name)
-                        except ValueError:
-                            current_col_idx = 0
-                            
-                    header_text = str(val)
-                    spanning_row = self.encoding_service.encode_spanning_row(
-                        text=header_text,
-                        page_width=document.rtf_page.col_width or 8.5,
-                        rtf_body_attrs=document.rtf_body,
-                        col_idx=current_col_idx,
-                    )
-                    page_elements.extend(spanning_row)
+            for col_name, val in page.pageby_header_info["group_values"].items():
+                if val is None:
+                    continue
+
+                # Find col index for attributes
+                current_col_idx = 0
+                if isinstance(document.df, pl.DataFrame):
+                    try:
+                        current_col_idx = document.df.columns.index(col_name)
+                    except ValueError:
+                        current_col_idx = 0
+
+                header_text = str(val)
+                spanning_row = self.encoding_service.encode_spanning_row(
+                    text=header_text,
+                    page_width=document.rtf_page.col_width or 8.5,
+                    rtf_body_attrs=document.rtf_body,
+                    col_idx=current_col_idx,
+                )
+                page_elements.extend(spanning_row)
 
         # 8. Body (with potential internal group boundaries)
         body_elements = self._render_body(document, page)
@@ -281,13 +280,11 @@ class PageRenderer:
                 or document.rtf_body.pageby_row != "column"
             )
         ):
-            col_idx = 0
             # Find col idx for spanning
             if document.rtf_body.page_by and isinstance(document.df, pl.DataFrame):
-                try:
-                    col_idx = document.df.columns.index(document.rtf_body.page_by[0])
-                except ValueError:
-                    col_idx = 0
+                # Just check if column exists, index not strictly needed here
+                # as we iterate page_by_cols later
+                pass
 
             # Initialize last_values from page header info to track state
             last_values = {}
@@ -310,27 +307,30 @@ class PageRenderer:
                 if "group_values" in boundary:
                     new_values = boundary["group_values"]
                     force_render = False
-                    
+
                     # Iterate in order of page_by columns to handle hierarchy
                     page_by_cols = document.rtf_body.page_by or []
-                    
+
                     for col_name in page_by_cols:
                         val = new_values.get(col_name)
                         last_val = last_values.get(col_name)
-                        
+
                         if val is None:
                             continue
-                            
+
                         # Check for change
-                        # If a higher level changed (force_render), we must render this level too.
+                        # If a higher level changed (force_render),
+                        # we must render this level too.
                         if str(val) != str(last_val) or force_render:
                             force_render = True
-                            
+
                             # Find col index for attributes
                             current_col_idx = 0
                             if isinstance(document.df, pl.DataFrame):
                                 try:
-                                    current_col_idx = document.df.columns.index(col_name)
+                                    current_col_idx = document.df.columns.index(
+                                        col_name
+                                    )
                                 except ValueError:
                                     current_col_idx = 0
 
@@ -342,7 +342,7 @@ class PageRenderer:
                                 col_idx=current_col_idx,
                             )
                             elements.extend(spanning)
-                    
+
                     # Update state
                     last_values.update(new_values)
 
