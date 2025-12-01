@@ -1,3 +1,5 @@
+from typing import cast
+
 from ..core import PageBreakCalculator, RTFPagination
 from .base import PageContext, PaginationContext, PaginationStrategy
 
@@ -46,8 +48,8 @@ class DefaultPaginationStrategy(PaginationStrategy):
             if page_rows.height == 0:
                 continue
 
-            start_row = page_rows["row_index"].min()
-            end_row = page_rows["row_index"].max()
+            start_row = cast(int, page_rows["row_index"].min())
+            end_row = cast(int, page_rows["row_index"].max())
 
             # Slice the original dataframe
             # Note: end_row is inclusive index, slice takes length

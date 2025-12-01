@@ -249,34 +249,35 @@ class PageBreakCalculator(BaseModel):
         new_page: bool = False,
     ) -> pl.DataFrame:
         """Generate complete row metadata for pagination."""
-        
+
         # 1. Calculate data rows
-        # We can reuse calculate_content_rows but we need to handle removed columns manually
-        # since calculate_content_rows doesn't support excluded_columns yet (in this version)
-        # or we can just implement the logic here.
-        
-        # Let's use the existing calculate_content_rows but we need to pass the correct columns
-        # If removed_column_indices is passed, we should handle that.
-        # However, calculate_content_rows in this file doesn't have excluded_columns support yet
-        # (it was reverted/cancelled in previous turn).
-        # So I will implement the logic here directly or update calculate_content_rows first.
-        # Given the plan, let's implement the logic here to be self-contained and robust.
-        
+        # We can reuse calculate_content_rows but we need to handle removed columns
+        # manually since calculate_content_rows doesn't support excluded_columns yet
+        # (in this version) or we can just implement the logic here.
+
+        # Let's use the existing calculate_content_rows but we need to pass the
+        # correct columns. If removed_column_indices is passed, we should handle that.
+        # However, calculate_content_rows in this file doesn't have excluded_columns
+        # support yet (it was reverted/cancelled in previous turn).
+        # So I will implement the logic here directly or update calculate_content_rows
+        # first. Given the plan, let's implement the logic here to be self-contained
+        # and robust.
+
         row_metadata_list = []
         total_width = sum(col_widths)
-        
+
         # Pre-calculate group changes
         page_by_changes = [True] * df.height
         subline_by_changes = [True] * df.height
-        
+
         if page_by:
             # Calculate changes for page_by
             # We can use polars shift/diff logic or simple iteration
             # Simple iteration is safer for now
             for i in range(1, df.height):
-                prev_row = df.row(i-1, named=True)
+                prev_row = df.row(i - 1, named=True)
                 curr_row = df.row(i, named=True)
-                
+
                 # Check page_by
                 is_diff = False
                 for col in page_by:
@@ -284,12 +285,12 @@ class PageBreakCalculator(BaseModel):
                         is_diff = True
                         break
                 page_by_changes[i] = is_diff
-                
+
         if subline_by:
             for i in range(1, df.height):
-                prev_row = df.row(i-1, named=True)
+                prev_row = df.row(i - 1, named=True)
                 curr_row = df.row(i, named=True)
-                
+
                 # Check subline_by
                 is_diff = False
                 for col in subline_by:
@@ -300,46 +301,48 @@ class PageBreakCalculator(BaseModel):
 
         # Iterate rows
         removed_indices = set(removed_column_indices or [])
-        
+
         for row_idx in range(df.height):
             # 1. Calculate data_rows
             max_lines_in_row = 1
             width_idx = 0
-            
+
             for col_idx in range(df.width):
                 if col_idx in removed_indices:
                     continue
-                    
+
                 if width_idx >= len(col_widths):
                     break
-                    
+
                 col_width = col_widths[width_idx]
                 col_name = df.columns[col_idx]
                 cell_value = str(df[col_name][row_idx])
-                
-                # Font logic (simplified from calculate_content_rows for brevity, 
+
+                # Font logic (simplified from calculate_content_rows for brevity,
                 # but should ideally reuse logic)
-                # For now, let's assume default font size/font unless table_attrs present
+                # For now, let's assume default font size/font unless table_attrs
+                # present
                 actual_font_size = font_size
                 actual_font = 1
-                
+
                 if table_attrs:
-                     # ... (reuse attribute logic if possible, or simplified)
-                     pass
+                    # ... (reuse attribute logic if possible, or simplified)
+                    pass
 
                 text_width = get_string_width(
                     cell_value,
-                    font=actual_font, # type: ignore
-                    font_size=actual_font_size, # type: ignore
+                    font=actual_font,  # type: ignore
+                    font_size=actual_font_size,  # type: ignore
                 )
-                
+
                 effective_width = col_width
-                # Handle spanning if needed (omitted for now as per plan focus on metadata structure)
-                
+                # Handle spanning if needed (omitted for now as per plan focus on
+                # metadata structure)
+
                 lines_needed = max(1, int(text_width / effective_width) + 1)
                 max_lines_in_row = max(max_lines_in_row, lines_needed)
                 width_idx += 1
-            
+
             # 2. Calculate header rows
             pageby_rows = 0
             if page_by and page_by_changes[row_idx]:
@@ -351,11 +354,13 @@ class PageBreakCalculator(BaseModel):
                         header_parts.append(f"{col}: {val}")
                 header_text = " | ".join(header_parts)
                 if header_text:
-                    pageby_rows = self._calculate_header_rows(header_text, total_width, font_size=int(font_size)) # type: ignore
+                    pageby_rows = self._calculate_header_rows(
+                        header_text, total_width, font_size=int(font_size)
+                    )  # type: ignore
 
             subline_rows = 0
             if subline_by and subline_by_changes[row_idx]:
-                 # Construct header text
+                # Construct header text
                 header_parts = []
                 for col in subline_by:
                     val = df[col][row_idx]
@@ -363,22 +368,28 @@ class PageBreakCalculator(BaseModel):
                         header_parts.append(f"{col}: {val}")
                 header_text = " | ".join(header_parts)
                 if header_text:
-                    subline_rows = self._calculate_header_rows(header_text, total_width, font_size=int(font_size)) # type: ignore
+                    subline_rows = self._calculate_header_rows(
+                        header_text, total_width, font_size=int(font_size)
+                    )  # type: ignore
 
             total_rows = max_lines_in_row + pageby_rows + subline_rows
-            
-            row_metadata_list.append({
-                "row_index": row_idx,
-                "data_rows": max_lines_in_row,
-                "pageby_header_rows": pageby_rows,
-                "subline_header_rows": subline_rows,
-                "column_header_rows": 0, # To be filled later or passed in
-                "total_rows": total_rows,
-                "page": 0, # To be assigned
-                "is_group_start": page_by_changes[row_idx] if page_by else False,
-                "is_subline_start": subline_by_changes[row_idx] if subline_by else False,
-            })
-            
+
+            row_metadata_list.append(
+                {
+                    "row_index": row_idx,
+                    "data_rows": max_lines_in_row,
+                    "pageby_header_rows": pageby_rows,
+                    "subline_header_rows": subline_rows,
+                    "column_header_rows": 0,  # To be filled later or passed in
+                    "total_rows": total_rows,
+                    "page": 0,  # To be assigned
+                    "is_group_start": page_by_changes[row_idx] if page_by else False,
+                    "is_subline_start": subline_by_changes[row_idx]
+                    if subline_by
+                    else False,
+                }
+            )
+
         # Create DataFrame with explicit schema to handle empty case
         schema = {
             "row_index": pl.Int64,
@@ -392,7 +403,7 @@ class PageBreakCalculator(BaseModel):
             "is_subline_start": pl.Boolean,
         }
         meta_df = pl.DataFrame(row_metadata_list, schema=schema, orient="row")
-        
+
         # Assign pages
         return self._assign_pages(meta_df, additional_rows_per_page, new_page)
 
@@ -407,61 +418,71 @@ class PageBreakCalculator(BaseModel):
         text_width = get_string_width(header_text, font=font, font_size=font_size)
         return max(1, int(text_width / total_width) + 1)
 
-    def _assign_pages(self, meta_df: pl.DataFrame, additional_rows_per_page: int = 0, new_page: bool = False) -> pl.DataFrame:
+    def _assign_pages(
+        self,
+        meta_df: pl.DataFrame,
+        additional_rows_per_page: int = 0,
+        new_page: bool = False,
+    ) -> pl.DataFrame:
         """Assign page numbers to the metadata DataFrame."""
         if meta_df.height == 0:
             return meta_df
-            
+
         available_rows = max(1, self.pagination.nrow - additional_rows_per_page)
         current_page = 1
         current_rows = 0
-        
+
         # We need to iterate and update 'page' column
-        # Polars doesn't support row-wise update easily in loop, so we might need to convert to dict/list and back
-        # or use a scan/cumulative sum approach if logic was simple.
-        # Given the complexity (resetting on groups), loop is best.
-        
+        # Polars doesn't support row-wise update easily in loop, so we might need to
+        # convert to dict/list and back or use a scan/cumulative sum approach if logic
+        # was simple. Given the complexity (resetting on groups), loop is best.
+
         # Convert to list of dicts for mutable iteration
         rows = meta_df.to_dicts()
-        
+
         for i, row in enumerate(rows):
             row_height = row["total_rows"]
-            
+
             # Check if we need a new page
             # 1. If current rows + this row > limit
-            # 2. If this is a group start (if we want to force new page on group start - logic depends on strategy)
+            # 2. If this is a group start (if we want to force new page on group start
+            #    - logic depends on strategy)
             # For now, let's implement standard flow: fill page until full.
-            # Strategy-specific "force new page" logic might need to be injected or handled via flags.
+            # Strategy-specific "force new page" logic might need to be injected or
+            # handled via flags.
             # But wait, the plan says "Metadata-Driven".
             # If SublineStrategy forces new page, that should be reflected here?
             # Or should _assign_pages take a "force_new_page_on_group" flag?
-            
-            # Let's assume standard flow for now, but if is_subline_start is True, we might want to force break?
+
+            # Let's assume standard flow for now, but if is_subline_start is True,
+            # we might want to force break?
             # The prompt implies we want to support "page_by" and "subline_by" logic.
             # Usually subline_by forces new page.
-            
+
             force_break = False
             # If it's a subline start (and not the very first row of doc), force break?
             if row["is_subline_start"] and i > 0:
-                 force_break = True
-            
+                force_break = True
+
             # If new_page is True, we break on group start
             if new_page and row["is_group_start"] and i > 0:
                 force_break = True
-            
-            if force_break or (current_rows + row_height > available_rows):
-                # If the row itself is larger than available space (and it's the start of page),
-                # we must put it on the page anyway (or split it, but we don't support splitting yet).
+
+            if (
+                force_break or (current_rows + row_height > available_rows)
+            ) and current_rows > 0:
+                # If the row itself is larger than available space (and it's the start
+                # of page), we must put it on the page anyway (or split it, but we
+                # don't support splitting yet).
                 # If current_rows > 0, we break.
-                if current_rows > 0:
-                    current_page += 1
-                    current_rows = 0
-                
+                current_page += 1
+                current_rows = 0
+
                 # If we broke page, we might need to repeat headers?
                 # The "column_header_rows" might need to be added to current_rows?
                 # For now, simplistic implementation.
-            
+
             row["page"] = current_page
             current_rows += row_height
-            
+
         return pl.DataFrame(rows)

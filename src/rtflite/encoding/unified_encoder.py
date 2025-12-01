@@ -349,15 +349,11 @@ class UnifiedRTFEncoder(EncodingStrategy):
             first_section_cols = document.df.shape[1] if document.df is not None else 0
 
         # Document structure components
-        rtf_title = self.encoding_service.encode_title(
-            document.rtf_title, method="line"
-        )
+        # rtf_title is handled per section via temp_document and renderer
+        # so we don't need to pre-calculate it here.
 
         # Handle page borders (use first section for dimensions)
-        doc_border_top_list = BroadcastValue(
-            value=document.rtf_page.border_first, dimension=(1, first_section_cols)
-        ).to_list()
-        doc_border_top = doc_border_top_list[0] if doc_border_top_list else None
+        # doc_border_top is not used in this scope
         doc_border_bottom_list = BroadcastValue(
             value=document.rtf_page.border_last, dimension=(1, first_section_cols)
         ).to_list()
@@ -456,14 +452,15 @@ class UnifiedRTFEncoder(EncodingStrategy):
             # For continuous sections, we might want to suppress them in the middle
             # and only show at the end of the chain?
             # If we show them, they appear immediately after the section body.
-            # For now, let's suppress them for continuous sections unless it's the last one.
+            # For now, let's suppress them for continuous sections unless it's the
+            # last one.
             if i < len(df_list) - 1:
                 should_suppress = not body_list[
                     i + 1
                 ].new_page  # Next section continues
-                # Actually, if THIS section is continuous, it doesn't mean we suppress its footer.
-                # But if the NEXT section continues on the same page, we probably don't want
-                # footnotes in the middle.
+                # Actually, if THIS section is continuous, it doesn't mean we suppress
+                # its footer. But if the NEXT section continues on the same page, we
+                # probably don't want footnotes in the middle.
 
                 if document.rtf_page.page_footnote == "last" and section_footnote:
                     section_footnote.text = None

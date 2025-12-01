@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Any
+from typing import Any, cast
 
 import polars as pl
 
@@ -52,8 +52,8 @@ class PageByStrategy(PaginationStrategy):
             if page_rows.height == 0:
                 continue
 
-            start_row = page_rows["row_index"].min()
-            end_row = page_rows["row_index"].max()
+            start_row = cast(int, page_rows["row_index"].min())
+            end_row = cast(int, page_rows["row_index"].max())
 
             page_df = context.df.slice(start_row, end_row - start_row + 1)
             display_page_num = int(page_num)
@@ -75,8 +75,8 @@ class PageByStrategy(PaginationStrategy):
 
             # Add page_by header info
             if page_by:
-                # We can use the metadata to check if we need a header at the start of page
-                # But existing logic uses _get_group_headers which is fine
+                # We can use the metadata to check if we need a header at the start
+                # of page. But existing logic uses _get_group_headers which is fine.
                 page_ctx.pageby_header_info = self._get_group_headers(
                     context.df, page_by, start_row
                 )
@@ -89,7 +89,8 @@ class PageByStrategy(PaginationStrategy):
                 # but plan said "Update pagination logic to use metadata".
                 # The metadata has is_group_start.
 
-                # Let's use the helper for now to be safe and consistent with previous behavior
+                # Let's use the helper for now to be safe and consistent with
+                # previous behavior.
                 group_boundaries = self._detect_group_boundaries(
                     context.df, page_by, start_row, end_row
                 )
@@ -170,10 +171,11 @@ class SublineStrategy(PageByStrategy):
 
         # Calculate metadata
         # Note: SublineStrategy forces new page on subline change.
-        # Our current _assign_pages logic in core.py doesn't strictly enforce "new page on group change"
-        # unless we add that logic.
+        # Our current _assign_pages logic in core.py doesn't strictly enforce
+        # "new page on group change" unless we add that logic.
         # However, the user asked for "metadata driven".
-        # If we rely on metadata, the metadata calculation MUST handle the page breaks correctly.
+        # If we rely on metadata, the metadata calculation MUST handle the page
+        # breaks correctly.
         # In the core.py implementation I added:
         # if row["is_subline_start"] and i > 0: force_break = True
         # So it SHOULD handle subline breaks correctly if subline_by is passed!
@@ -201,8 +203,8 @@ class SublineStrategy(PageByStrategy):
             if page_rows.height == 0:
                 continue
 
-            start_row = page_rows["row_index"].min()
-            end_row = page_rows["row_index"].max()
+            start_row = cast(int, page_rows["row_index"].min())
+            end_row = cast(int, page_rows["row_index"].max())
 
             page_df = context.df.slice(start_row, end_row - start_row + 1)
             display_page_num = int(page_num)
