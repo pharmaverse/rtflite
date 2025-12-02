@@ -12,11 +12,8 @@ dependencies = [
     "narwhals>=1.0.0",
     "polars>=1.0.0",
 ]
-
-[project.optional-dependencies]
-docx = ["python-docx>=1.0.0"]
 readme = "README.md"
-
+requires-python = ">= 3.10"
 classifiers = [
     "Development Status :: 3 - Alpha",
 
@@ -38,7 +35,8 @@ classifiers = [
     "Programming Language :: Python :: 3.14",
 ]
 
-requires-python = ">= 3.10"
+[project.optional-dependencies]
+docx = ["python-docx>=1.0.0"]
 
 [project.urls]
 Homepage = "https://pharmaverse.github.io/rtflite/"
