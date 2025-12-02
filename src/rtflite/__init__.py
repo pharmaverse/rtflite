@@ -1,6 +1,7 @@
 """rtflite: A Python library for creating RTF documents."""
 
 from .attributes import TableAttributes
+from .assemble import assemble_rtf, assemble_docx
 from .convert import LibreOfficeConverter
 from .core.config import RTFConfiguration
 from .core.constants import RTFConstants
@@ -43,4 +44,6 @@ __all__ = [
     "PageBreakCalculator",
     "get_string_width",
     "LibreOfficeConverter",
+    "assemble_rtf",
+    "assemble_docx",
 ]
