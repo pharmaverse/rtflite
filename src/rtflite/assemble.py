@@ -10,46 +10,48 @@ from .input import RTFPage
 def assemble_rtf(
     input_files: list[str],
     output_file: str,
-    landscape: bool = False,
 ) -> None:
     """Combine multiple RTF files into a single RTF file.
 
     Args:
-        input_files: List of paths to input RTF files.
+        input_files: List of paths to RTF files to combine.
         output_file: Path to the output RTF file.
-        landscape: Whether the output should be landscape. Defaults to False.
-            Note: This argument is currently not used in the RTF assembly logic
-            as it preserves original file content, but kept for API consistency.
     """
     if not input_files:
-        raise ValueError("Input files list cannot be empty")
+        return
 
-    # Check input files exist
+    # Check if files exist
     missing_files = [f for f in input_files if not os.path.exists(f)]
     if missing_files:
         raise FileNotFoundError(f"Missing files: {', '.join(missing_files)}")
 
-    # Read all RTF files
+    # Read all files
     rtf_contents = []
     for f in input_files:
-        with open(f, "r", encoding="utf-8") as file:
+        with open(f, 'r', encoding='utf-8') as file:
             rtf_contents.append(file.readlines())
-
+            
     if not rtf_contents:
         return
 
-    # Process RTF content
-    # 1. Keep the first file's header (up to fcharset/fonttbl)
-    # 2. For all files, extract the body content
-    # 3. Join with page breaks
+    # Process first file
+    # We keep everything from the first file except the last closing brace '}'
+    first_content = rtf_contents[0]
     
-    final_lines = []
+    # Remove last line if it contains only '}' or remove the last '}' char
+    # r2rtf simply removes the last line: end[-n] <- end[-n] - 1
     
     # Helper to find start index based on fcharset
     def find_start_index(lines):
+        last_idx = 0
+        found = False
         for i, line in enumerate(lines):
             if "fcharset" in line:
-                return i + 2
+                last_idx = i
+                found = True
+        
+        if found:
+            return last_idx + 2
         return 0
 
     new_page_cmd = r"\page" + "\n"
@@ -124,6 +126,21 @@ def assemble_docx(
     doc = docx.Document()
     
     for i, (input_file, is_landscape) in enumerate(zip(input_files, landscape_list)):
+        # Set orientation for the current section
+        section = doc.sections[-1]
+        if is_landscape:
+            section.orientation = WD_ORIENT.LANDSCAPE
+            w, h = section.page_width, section.page_height
+            if w < h: # If currently portrait
+                section.page_width = h
+                section.page_height = w
+        else:
+            section.orientation = WD_ORIENT.PORTRAIT
+            w, h = section.page_width, section.page_height
+            if w > h: # If currently landscape
+                section.page_width = h
+                section.page_height = w
+
         # Absolute path needed for fields
         abs_path = os.path.abspath(input_file)
         
@@ -142,24 +159,9 @@ def assemble_docx(
         # Add the INCLUDETEXT field
         _add_field(p, field_code)
         
-        # Handle section breaks and orientation
+        # Handle section breaks
         if i < len(input_files) - 1:
             doc.add_section()
-        
-        # Set orientation for the current section
-        section = doc.sections[-1]
-        if is_landscape:
-            section.orientation = WD_ORIENT.LANDSCAPE
-            w, h = section.page_width, section.page_height
-            if w < h: # If currently portrait
-                section.page_width = h
-                section.page_height = w
-        else:
-            section.orientation = WD_ORIENT.PORTRAIT
-            w, h = section.page_width, section.page_height
-            if w > h: # If currently landscape
-                section.page_width = h
-                section.page_height = w
 
     doc.save(output_file)
 
@@ -188,6 +190,12 @@ def _add_field(paragraph, field_code):
     fldChar = OxmlElement('w:fldChar')
     fldChar.set(qn('w:fldCharType'), 'separate')
     r.append(fldChar)
+
+    # Add placeholder text so the field is visible/clickable
+    if "SEQ" in field_code:
+        run = paragraph.add_run("1")
+    else:
+        run = paragraph.add_run("Error! Reference source not found.")
 
     run = paragraph.add_run()
     r = run._r

@@ -29,6 +29,38 @@ Content of file 2
     
     return [str(file1), str(file2)]
 
+@pytest.fixture
+def complex_rtf_files(tmp_path):
+    """Create RTF files with complex headers."""
+    file1 = tmp_path / "complex1.rtf"
+    file2 = tmp_path / "complex2.rtf"
+    
+    header = r"""{\rtf1\ansi\deff0
+{\fonttbl{\f0\froman\fcharset1\fprq2 Times New Roman;}
+{\f1\froman\fcharset161\fprq2 Times New Roman Greek;}
+}
+"""
+    content1 = header + r"\pard Content 1\par}"
+    content2 = header + r"\pard Content 2\par}"
+    
+    file1.write_text(content1, encoding="utf-8")
+    file2.write_text(content2, encoding="utf-8")
+    
+    return [str(file1), str(file2)]
+
+def test_assemble_rtf_complex(complex_rtf_files, tmp_path):
+    output_file = tmp_path / "combined_complex.rtf"
+    assemble_rtf(complex_rtf_files, str(output_file))
+    
+    assert output_file.exists()
+    content = output_file.read_text(encoding="utf-8")
+    
+    assert "Content 1" in content
+    assert "Content 2" in content
+    # Ensure header from second file is stripped (no double fonttbl)
+    # We expect only one fonttbl block
+    assert content.count(r"{\fonttbl") == 1
+
 def test_assemble_rtf(sample_rtf_files, tmp_path):
     output_file = tmp_path / "combined.rtf"
     assemble_rtf(sample_rtf_files, str(output_file))
