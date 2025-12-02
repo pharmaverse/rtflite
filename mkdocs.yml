@@ -20,6 +20,7 @@ nav:
       - articles/format-page.md
     - Advanced:
       - articles/advanced-group-by.md
+      - articles/assemble.md
     - Developer:
       - articles/pagination.md
       - articles/converter-setup.md
