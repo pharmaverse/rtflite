@@ -25,27 +25,39 @@ input_files = [
 # Assemble into RTF
 
 ```python exec="on" source="above" session="default" workdir="docs/articles/rtf/"
-assemble_rtf(input_files, "combined.rtf")
+assemble_rtf(input_files, "combined-rtf.rtf")
 ```
 
 ```python exec="on" session="default" workdir="docs/articles/rtf/"
-converter.convert("combined.rtf", output_dir="../pdf/", format="pdf", overwrite=True)
+converter.convert("combined-rtf.rtf", output_dir="../pdf/", format="pdf", overwrite=True)
 ```
 
-<embed src="../pdf/combined.pdf" style="width:100%; height:400px" type="application/pdf">
+<embed src="../pdf/combined-rtf.pdf" style="width:100%; height:400px" type="application/pdf">
 
 # Assemble into DOCX
 
 ```python exec="on" source="above" session="default" workdir="docs/articles/rtf/"
-assemble_docx(input_files, "combined.docx")
+assemble_docx(input_files, "combined-docx.docx")
 ```
 
-# Assemble into DOCX with mixed orientation (Portrait, Landscape)
+```python exec="on" session="default" workdir="docs/articles/rtf/"
+converter.convert("combined-docx.docx", output_dir="../pdf/", format="pdf", overwrite=True)
+```
+
+<embed src="../pdf/combined-docx.pdf" style="width:100%; height:400px" type="application/pdf">
+
+# Assemble into DOCX with mixed orientation (portrait, landscape)
 
 ```python exec="on" source="above" session="default" workdir="docs/articles/rtf/"
 assemble_docx(
     input_files,
-    "combined_mixed.docx",
+    "combined-mixed.docx",
     landscape=[False, True]
 )
 ```
+
+```python exec="on" session="default" workdir="docs/articles/rtf/"
+converter.convert("combined-mixed.docx", output_dir="../pdf/", format="pdf", overwrite=True)
+```
+
+<embed src="../pdf/combined-mixed.pdf" style="width:100%; height:400px" type="application/pdf">
