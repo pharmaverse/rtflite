@@ -13,7 +13,7 @@ dependencies = [
     "polars>=1.0.0",
 ]
 readme = "README.md"
-
+requires-python = ">= 3.10"
 classifiers = [
     "Development Status :: 3 - Alpha",
 
@@ -35,7 +35,8 @@ classifiers = [
     "Programming Language :: Python :: 3.14",
 ]
 
-requires-python = ">= 3.10"
+[project.optional-dependencies]
+docx = ["python-docx>=1.0.0"]
 
 [project.urls]
 Homepage = "https://pharmaverse.github.io/rtflite/"
@@ -80,3 +81,8 @@ select = [
     # isort
     "I",
 ]
+
+[tool.mypy]
+[[tool.mypy.overrides]]
+module = ["docx", "docx.*"]
+ignore_missing_imports = true
