@@ -93,7 +93,7 @@ def test_assemble_rtf_empty_list(tmp_path):
 
 def test_assemble_docx(sample_rtf_files, tmp_path):
     try:
-        import docx
+        import docx  # type: ignore
     except ImportError:
         pytest.skip("python-docx not installed")
 
@@ -122,8 +122,8 @@ def test_assemble_docx(sample_rtf_files, tmp_path):
 
 def test_assemble_docx_landscape(sample_rtf_files, tmp_path):
     try:
-        import docx
-        from docx.enum.section import WD_ORIENT
+        import docx  # type: ignore
+        from docx.enum.section import WD_ORIENT  # type: ignore
     except ImportError:
         pytest.skip("python-docx not installed")
 

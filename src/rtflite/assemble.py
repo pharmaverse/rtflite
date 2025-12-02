@@ -91,8 +91,8 @@ def assemble_docx(
             (applies to all) or a list of bools (one per file). Defaults to False.
     """
     try:
-        import docx
-        from docx.enum.section import WD_ORIENT
+        import docx  # type: ignore
+        from docx.enum.section import WD_ORIENT  # type: ignore
     except ImportError as e:
         raise ImportError(
             "python-docx is required for assemble_docx. "
@@ -164,8 +164,8 @@ def assemble_docx(
 def _add_field(paragraph, field_code):
     """Add a complex field to a paragraph."""
     # This is low-level XML manipulation for python-docx to add fields
-    from docx.oxml.ns import qn
-    from docx.oxml.shared import OxmlElement
+    from docx.oxml.ns import qn  # type: ignore
+    from docx.oxml.shared import OxmlElement  # type: ignore
 
     run = paragraph.add_run()
     r = run._r

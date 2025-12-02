@@ -81,3 +81,8 @@ select = [
     # isort
     "I",
 ]
+
+[tool.mypy]
+[[tool.mypy.overrides]]
+module = ["docx", "docx.*"]
+ignore_missing_imports = true
