@@ -1,5 +1,15 @@
 # Changelog
 
+## rtflite 2.1.0
+
+### New features
+
+- Added `assemble_rtf` and `assemble_docx` functions for RTF and DOCX assembly (#142).
+
+### Bug fixes
+
+- Fixed an issue where `RTFPage` orientation was not correctly respected during assembly in certain edge cases (#141).
+
 ## rtflite 2.0.0
 
 ### Breaking changes
