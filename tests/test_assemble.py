@@ -85,9 +85,10 @@ def test_assemble_rtf_missing_file():
         assemble_rtf(["non_existent.rtf"], "output.rtf")
 
 
-def test_assemble_rtf_empty_list():
-    with pytest.raises(ValueError):
-        assemble_rtf([], "output.rtf")
+def test_assemble_rtf_empty_list(tmp_path):
+    output_file = tmp_path / "output.rtf"
+    assemble_rtf([], str(output_file))
+    assert not output_file.exists()
 
 
 def test_assemble_docx(sample_rtf_files, tmp_path):
