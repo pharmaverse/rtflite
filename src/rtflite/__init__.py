@@ -1,7 +1,7 @@
 """rtflite: A Python library for creating RTF documents."""
 
+from .assemble import assemble_docx, assemble_rtf
 from .attributes import TableAttributes
-from .assemble import assemble_rtf, assemble_docx
 from .convert import LibreOfficeConverter
 from .core.config import RTFConfiguration
 from .core.constants import RTFConstants

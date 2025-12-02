@@ -1,10 +1,8 @@
 """Assemble multiple RTF files into a single RTF or DOCX file."""
 
 import os
-from pathlib import Path
-from typing import Union
 
-from .input import RTFPage
+# from .input import RTFPage  # Unused
 
 
 def assemble_rtf(
@@ -28,19 +26,18 @@ def assemble_rtf(
     # Read all files
     rtf_contents = []
     for f in input_files:
-        with open(f, 'r', encoding='utf-8') as file:
+        with open(f, encoding="utf-8") as file:
             rtf_contents.append(file.readlines())
-            
+
     if not rtf_contents:
         return
 
     # Process first file
     # We keep everything from the first file except the last closing brace '}'
-    first_content = rtf_contents[0]
-    
+
     # Remove last line if it contains only '}' or remove the last '}' char
     # r2rtf simply removes the last line: end[-n] <- end[-n] - 1
-    
+
     # Helper to find start index based on fcharset
     def find_start_index(lines):
         last_idx = 0
@@ -49,7 +46,7 @@ def assemble_rtf(
             if "fcharset" in line:
                 last_idx = i
                 found = True
-        
+
         if found:
             return last_idx + 2
         return 0
@@ -57,34 +54,33 @@ def assemble_rtf(
     new_page_cmd = r"\page" + "\n"
 
     processed_parts = []
-    
+
     for i, lines in enumerate(rtf_contents):
         start_idx = 0
         if i > 0:
             # For subsequent files, skip header
             start_idx = find_start_index(lines)
-            
+
         end_idx = len(lines)
-        if i < len(rtf_contents) - 1:
+        if i < len(rtf_contents) - 1 and lines[-1].strip() == "}":
             # Remove last line (closing brace) for all but last file
-            if lines[-1].strip() == "}":
-                end_idx -= 1
-        
+            end_idx -= 1
+
         part = lines[start_idx:end_idx]
         processed_parts.extend(part)
-        
+
         if i < len(rtf_contents) - 1:
             processed_parts.append(new_page_cmd)
 
     # Write output
-    with open(output_file, "w", encoding="utf-8") as f:
-        f.writelines(processed_parts)
+    with open(output_file, "w", encoding="utf-8") as outfile:
+        outfile.writelines(processed_parts)
 
 
 def assemble_docx(
     input_files: list[str],
     output_file: str,
-    landscape: Union[bool, list[bool]] = False,
+    landscape: bool | list[bool] = False,
 ) -> None:
     """Combine multiple RTF files into a single DOCX file.
 
@@ -97,9 +93,6 @@ def assemble_docx(
     try:
         import docx
         from docx.enum.section import WD_ORIENT
-        from docx.oxml import OxmlElement
-        from docx.oxml.ns import qn
-        from docx.shared import Inches
     except ImportError as e:
         raise ImportError(
             "python-docx is required for assemble_docx. "
@@ -124,41 +117,43 @@ def assemble_docx(
 
     # Create new document
     doc = docx.Document()
-    
-    for i, (input_file, is_landscape) in enumerate(zip(input_files, landscape_list)):
+
+    for i, (input_file, is_landscape) in enumerate(
+        zip(input_files, landscape_list, strict=True)
+    ):
         # Set orientation for the current section
         section = doc.sections[-1]
         if is_landscape:
             section.orientation = WD_ORIENT.LANDSCAPE
             w, h = section.page_width, section.page_height
-            if w < h: # If currently portrait
+            if w is not None and h is not None and w < h:  # If currently portrait
                 section.page_width = h
                 section.page_height = w
         else:
             section.orientation = WD_ORIENT.PORTRAIT
             w, h = section.page_width, section.page_height
-            if w > h: # If currently landscape
+            if w is not None and h is not None and w > h:  # If currently landscape
                 section.page_width = h
                 section.page_height = w
 
         # Absolute path needed for fields
         abs_path = os.path.abspath(input_file)
-        
+
         # Escape backslashes for the field code
         path_str = abs_path.replace("\\", "\\\\")
-        
+
         # Create INCLUDETEXT field
         field_code = f'INCLUDETEXT "{path_str}"'
-        
+
         # Add "Table X" caption
         p = doc.add_paragraph()
         p.add_run("Table ")
         _add_field(p, r"SEQ Table \* ARABIC")
-        p.add_run("\n") # Linebreak
-        
+        p.add_run("\n")  # Linebreak
+
         # Add the INCLUDETEXT field
         _add_field(p, field_code)
-        
+
         # Handle section breaks
         if i < len(input_files) - 1:
             doc.add_section()
@@ -169,26 +164,26 @@ def assemble_docx(
 def _add_field(paragraph, field_code):
     """Add a complex field to a paragraph."""
     # This is low-level XML manipulation for python-docx to add fields
-    from docx.oxml.shared import OxmlElement
     from docx.oxml.ns import qn
+    from docx.oxml.shared import OxmlElement
 
     run = paragraph.add_run()
     r = run._r
-    fldChar = OxmlElement('w:fldChar')
-    fldChar.set(qn('w:fldCharType'), 'begin')
+    fldChar = OxmlElement("w:fldChar")
+    fldChar.set(qn("w:fldCharType"), "begin")
     r.append(fldChar)
 
     run = paragraph.add_run()
     r = run._r
-    instrText = OxmlElement('w:instrText')
-    instrText.set(qn('xml:space'), 'preserve')
+    instrText = OxmlElement("w:instrText")
+    instrText.set(qn("xml:space"), "preserve")
     instrText.text = field_code
     r.append(instrText)
 
     run = paragraph.add_run()
     r = run._r
-    fldChar = OxmlElement('w:fldChar')
-    fldChar.set(qn('w:fldCharType'), 'separate')
+    fldChar = OxmlElement("w:fldChar")
+    fldChar.set(qn("w:fldCharType"), "separate")
     r.append(fldChar)
 
     # Add placeholder text so the field is visible/clickable
@@ -199,6 +194,6 @@ def _add_field(paragraph, field_code):
 
     run = paragraph.add_run()
     r = run._r
-    fldChar = OxmlElement('w:fldChar')
-    fldChar.set(qn('w:fldCharType'), 'end')
+    fldChar = OxmlElement("w:fldChar")
+    fldChar.set(qn("w:fldCharType"), "end")
     r.append(fldChar)
