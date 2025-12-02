@@ -52,8 +52,6 @@ class TestMultiSectionEncoding:
         header1 = RTFColumnHeader(text=["Header1"])
         header2 = RTFColumnHeader(text=["HeaderA"])
 
-        # Skip this test - multi-section with custom headers not fully supported
-        pytest.skip("Multi-section documents with custom headers not fully implemented")
 
         doc = RTFDocument(
             df=[df1, df2],
