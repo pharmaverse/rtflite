@@ -334,9 +334,7 @@ class UnifiedRTFEncoder(EncodingStrategy):
             Complete RTF string
         """
 
-        from ..type_guards import (
-            is_nested_header_list,
-        )
+        from ..type_guards import is_nested_header_list
 
         # Calculate column counts for border management
         if isinstance(document.df, list):
