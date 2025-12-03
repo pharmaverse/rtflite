@@ -52,7 +52,6 @@ class TestMultiSectionEncoding:
         header1 = RTFColumnHeader(text=["Header1"])
         header2 = RTFColumnHeader(text=["HeaderA"])
 
-
         doc = RTFDocument(
             df=[df1, df2],
             rtf_body=[RTFBody(col_rel_width=[1, 1]), RTFBody(col_rel_width=[1, 1])],

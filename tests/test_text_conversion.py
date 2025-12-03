@@ -1,7 +1,7 @@
 """
-Comprehensive test cases for the text_conversion module.
+Tests for the text_conversion module.
 
-This module tests all components of the text conversion functionality:
+Tests all components of the text conversion functionality:
 - convert_text function (public interface)
 - TextConverter class
 - LaTeXSymbolMapper class
@@ -18,37 +18,24 @@ from rtflite.text_conversion import LaTeXSymbolMapper, TextConverter, convert_te
 class TestConvertTextFunction:
     """Test the convert_text public interface function."""
 
-    def test_convert_text_enabled_basic_symbols(self):
-        """Test basic LaTeX symbol conversion when enabled."""
-        result = convert_text("\\alpha + \\beta", True)
-        # Check that LaTeX commands were converted (no longer present)
-        assert "\\alpha" not in result
-        assert "\\beta" not in result
-        # Check result is not the same as input (conversion happened)
-        assert result != "\\alpha + \\beta"
-
-    def test_convert_text_enabled_operators(self):
-        """Test mathematical operator conversion when enabled."""
-        result = convert_text("Mean \\pm SD", True)
-        assert "\\pm" not in result  # LaTeX command was converted
-        assert result != "Mean \\pm SD"  # Result changed
-
-        result = convert_text("A \\cdot B", True)
-        assert "\\cdot" not in result  # LaTeX command was converted
-        assert result != "A \\cdot B"  # Result changed
-
-    def test_convert_text_enabled_complex_formula(self):
-        """Test complex formula with multiple symbols."""
-        formula = "\\alpha \\pm \\beta \\cdot \\gamma"
-        result = convert_text(formula, True)
-        # Check that all LaTeX commands were converted
-        assert "\\alpha" not in result
-        assert "\\pm" not in result
-        assert "\\beta" not in result
-        assert "\\cdot" not in result
-        assert "\\gamma" not in result
-        # Check result changed from original
-        assert result != formula
+    @pytest.mark.parametrize(
+        ("text", "expected_missing"),
+        [
+            ("\\alpha + \\beta", ["\\alpha", "\\beta"]),
+            ("Mean \\pm SD", ["\\pm"]),
+            ("A \\cdot B", ["\\cdot"]),
+            (
+                "\\alpha \\pm \\beta \\cdot \\gamma",
+                ["\\alpha", "\\pm", "\\beta", "\\cdot", "\\gamma"],
+            ),
+        ],
+    )
+    def test_convert_text_enabled_removes_commands(self, text, expected_missing):
+        """Ensure LaTeX commands are removed when conversion is enabled."""
+        result = convert_text(text, True)
+        for latex_command in expected_missing:
+            assert latex_command not in result
+        assert result != text
 
     def test_convert_text_disabled(self):
         """Test that conversion is skipped when disabled."""
@@ -57,30 +44,28 @@ class TestConvertTextFunction:
         assert result == text  # Should be unchanged
         assert "\\alpha" in result  # LaTeX commands should remain
 
-    def test_convert_text_with_none_input(self):
-        """Test convert_text with None input."""
-        result = convert_text(None, True)
-        assert result is None
-
-        result = convert_text(None, False)
-        assert result is None
-
-    def test_convert_text_with_empty_string(self):
-        """Test convert_text with empty string."""
-        result = convert_text("", True)
-        assert result == ""
-
-        result = convert_text("", False)
-        assert result == ""
-
-    def test_convert_text_with_no_latex_commands(self):
-        """Test convert_text with text containing no LaTeX commands."""
-        text = "This is plain text with no symbols"
-        result = convert_text(text, True)
-        assert result == text
-
-        result = convert_text(text, False)
-        assert result == text
+    @pytest.mark.parametrize(
+        ("text", "enable_conversion", "expected"),
+        [
+            (None, True, None),
+            (None, False, None),
+            ("", True, ""),
+            ("", False, ""),
+            (
+                "This is plain text with no symbols",
+                True,
+                "This is plain text with no symbols",
+            ),
+            (
+                "This is plain text with no symbols",
+                False,
+                "This is plain text with no symbols",
+            ),
+        ],
+    )
+    def test_convert_text_passthrough_inputs(self, text, enable_conversion, expected):
+        """Inputs without LaTeX commands or content should be returned unchanged."""
+        assert convert_text(text, enable_conversion) == expected
 
     def test_convert_text_with_unknown_commands(self):
         """Test convert_text with unknown LaTeX commands."""
@@ -120,20 +105,11 @@ class TestTextConverter:
         assert hasattr(self.converter, "symbol_mapper")
         assert hasattr(self.converter, "_latex_pattern")
 
-    def test_convert_latex_to_unicode_basic(self):
+    @pytest.mark.parametrize("latex_command", ["\\alpha", "\\beta", "\\pm"])
+    def test_convert_latex_to_unicode_basic(self, latex_command):
         """Test basic LaTeX to Unicode conversion."""
-        result = self.converter.convert_latex_to_unicode("\\alpha")
-        assert result != "\\alpha"  # Should be converted
-        assert len(result) == 1  # Should be single character
-        assert ord(result) > 127  # Should be Unicode character
-
-        result = self.converter.convert_latex_to_unicode("\\beta")
-        assert result != "\\beta"  # Should be converted
-        assert len(result) == 1  # Should be single character
-        assert ord(result) > 127  # Should be Unicode character
-
-        result = self.converter.convert_latex_to_unicode("\\pm")
-        assert result != "\\pm"  # Should be converted
+        result = self.converter.convert_latex_to_unicode(latex_command)
+        assert result != latex_command  # Should be converted
         assert len(result) == 1  # Should be single character
         assert ord(result) > 127  # Should be Unicode character
 
@@ -159,13 +135,16 @@ class TestTextConverter:
         # Either converted (different) or unchanged (same)
         assert len(result) >= 1
 
-    def test_convert_latex_to_unicode_empty_input(self):
-        """Test conversion with empty input."""
-        result = self.converter.convert_latex_to_unicode("")
-        assert result == ""
-
-        result = self.converter.convert_latex_to_unicode(None)
-        assert result is None
+    @pytest.mark.parametrize(
+        ("text", "expected"),
+        [
+            ("", ""),
+            (None, None),
+        ],
+    )
+    def test_convert_latex_to_unicode_empty_input(self, text, expected):
+        """Test conversion with empty or None input."""
+        assert self.converter.convert_latex_to_unicode(text) == expected
 
     def test_convert_latex_to_unicode_no_commands(self):
         """Test conversion with text containing no LaTeX commands."""
@@ -240,26 +219,11 @@ class TestLaTeXSymbolMapper:
         assert hasattr(self.mapper, "unicode_to_int")
         assert hasattr(self.mapper, "latex_to_char")
 
-    def test_get_unicode_char_known_symbols(self):
+    @pytest.mark.parametrize("latex_command", ["\\alpha", "\\beta", "\\pm", "\\cdot"])
+    def test_get_unicode_char_known_symbols(self, latex_command):
         """Test getting Unicode characters for known LaTeX commands."""
-        # Test that known symbols return non-ASCII characters
-        result = self.mapper.get_unicode_char("\\alpha")
-        assert result != "\\alpha"  # Should be converted
-        assert len(result) == 1  # Single character
-        assert ord(result) > 127  # Unicode character
-
-        result = self.mapper.get_unicode_char("\\beta")
-        assert result != "\\beta"  # Should be converted
-        assert len(result) == 1  # Single character
-        assert ord(result) > 127  # Unicode character
-
-        result = self.mapper.get_unicode_char("\\pm")
-        assert result != "\\pm"  # Should be converted
-        assert len(result) == 1  # Single character
-        assert ord(result) > 127  # Unicode character
-
-        result = self.mapper.get_unicode_char("\\cdot")
-        assert result != "\\cdot"  # Should be converted
+        result = self.mapper.get_unicode_char(latex_command)
+        assert result != latex_command  # Should be converted
         assert len(result) == 1  # Single character
         assert ord(result) > 127  # Unicode character
 
@@ -488,7 +452,3 @@ class TestIntegrationScenarios:
         assert "\\anothercmd" in result
         # Result should be different from input
         assert result != mixed_text
-
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])

@@ -1,5 +1,4 @@
 import polars as pl
-import pytest
 
 import rtflite as rtf
 
@@ -72,7 +71,3 @@ def test_pagination_basic_with_headers():
     assert_rtf_equals_semantic(
         rtf_output, expected, "test_pagination_basic_with_headers"
     )
-
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
