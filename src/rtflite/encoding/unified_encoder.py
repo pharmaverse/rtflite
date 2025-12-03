@@ -114,7 +114,7 @@ class UnifiedRTFEncoder(EncodingStrategy):
             # Should not happen given is_single_body checks usually
             pagination_ctx = PaginationContext(
                 df=processed_df,
-                rtf_body=processed_attrs, # Best effort fallback
+                rtf_body=processed_attrs,  # Best effort fallback
                 rtf_page=document.rtf_page,
                 col_widths=col_widths,
                 table_attrs=processed_attrs,
