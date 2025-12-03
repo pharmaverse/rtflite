@@ -71,7 +71,7 @@ class RTFEncodingService:
         border_top = get_attr("border_top", "single")
         border_bottom = get_attr("border_bottom", "single")
 
-        v_just = get_attr("cell_vertical_justification", "b")
+        v_just = get_attr("cell_vertical_justification", "bottom")
         cell_just = get_attr("cell_justification", "c")
         cell_height = get_attr("cell_height", 0.15)
 

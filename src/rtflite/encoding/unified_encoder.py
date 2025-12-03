@@ -83,13 +83,25 @@ class UnifiedRTFEncoder(EncodingStrategy):
             document
         )
 
+        # Calculate removed column indices
+        removed_column_indices = []
+        if processed_df.shape[1] < document.df.shape[1]:
+            # Find indices of columns that were removed
+            # We assume columns are removed, not reordered significantly enough to break this
+            # simple check for the purpose of pagination context
+            processed_cols = set(processed_df.columns)
+            for i, col in enumerate(document.df.columns):
+                if col not in processed_cols:
+                    removed_column_indices.append(i)
+
         pagination_ctx = PaginationContext(
-            df=original_df if is_single_body(rtf_body) else processed_df,
-            rtf_body=rtf_body,
+            df=document.df,  # Use original DF for context
+            rtf_body=document.rtf_body,
             rtf_page=document.rtf_page,
             col_widths=col_widths,
             table_attrs=processed_attrs,
             additional_rows_per_page=additional_rows,
+            removed_column_indices=removed_column_indices,
         )
 
         # D. Paginate
