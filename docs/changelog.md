@@ -1,5 +1,12 @@
 # Changelog
 
+## rtflite 2.1.1
+
+### Bug fixes 
+
+- Reduce packging files size by excluding unnecessary files and directories (#152).
+- Fixed an issue when paginating tables with `page_by` and `subline_by` (#152).
+
 ## rtflite 2.1.0
 
 ### New features
