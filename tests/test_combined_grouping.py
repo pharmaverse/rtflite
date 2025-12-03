@@ -39,7 +39,7 @@ class TestCombinedGrouping:
             df=data,
             rtf_body=rtf_body,
             rtf_page=rtf_page,
-            col_widths=[1.0] * 4,
+            col_widths=[1.0, 2.0, 3.0, 4.0],
             table_attrs=rtf_body,
             additional_rows_per_page=0,
         )

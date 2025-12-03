@@ -211,39 +211,44 @@ def test_page_break_calculator_cumulative_width_fix():
     # print(f"Width: {width_pts}")
     
     # If logic is correct (using individual width 2.0), lines should be > 1.
-    # If logic is buggy (using cumulative width 4.0), lines might be 1 (if text fits in 4.0).
-    
+    # If logic is buggy (using cumulative width 4.0), lines might be 1 (if text
+    # fits in 4.0).
+
     lines = meta["data_rows"][0]
-    
+
     # We expect lines > 1 because 2.0 inches is narrow.
-    assert lines > 1, f"Expected wrapping for narrow column. Got {lines} lines. Text width: {width_pts}"
-    
-    # Also verify that if we make text short enough to fit in 4.0 but not 2.0, we can distinguish.
+    assert lines > 1, (
+        f"Expected wrapping for narrow column. Got {lines} lines. "
+        f"Text width: {width_pts}"
+    )
+
+    # Also verify that if we make text short enough to fit in 4.0 but not 2.0,
+    # we can distinguish.
     # But "A"*100 is likely wide enough to wrap even in 4.0?
     # Let's try "A"*40.
-    # 40 * 6 = 240 points.
-    # Fits in 288 (4.0).
-    # Wraps in 144 (2.0).
-    
+
     medium_text = "A" * 40
     df_medium = pl.DataFrame({
         "Col1": ["Short"],
         "Col2": [medium_text]
     })
-    
+
     meta_medium = calculator.calculate_row_metadata(
         df=df_medium,
         col_widths=col_widths,
         removed_column_indices=[],
         additional_rows_per_page=0
     )
-    
+
     lines_medium = meta_medium["data_rows"][0]
-    
+
     # With fix: uses width 2.0 (144 pts). 240 > 144. Should wrap. Lines >= 2.
     # Without fix: uses width 4.0 (288 pts). 240 < 288. Should fit. Lines = 1.
-    
-    assert lines_medium >= 2, "Regression: PageBreakCalculator using cumulative width instead of individual!"
+
+    assert lines_medium >= 2, (
+        "Regression: PageBreakCalculator using cumulative width instead of "
+        "individual!"
+    )
 
 
 def test_data_row_width_redistribution():
