@@ -1,9 +1,10 @@
-import pytest
 import polars as pl
-from rtflite.row import Utils
-from rtflite.services.encoding_service import RTFEncodingService
+
 from rtflite.input import RTFBody
 from rtflite.pagination.core import PageBreakCalculator, RTFPagination
+from rtflite.row import Utils
+from rtflite.services.encoding_service import RTFEncodingService
+
 
 def test_col_widths_proportionality():
     """Test that Utils._col_widths distributes width proportionally."""
@@ -26,6 +27,7 @@ def test_col_widths_proportionality():
     assert widths[0] == 2.5
     assert widths[1] == 10.0
 
+
 def test_prepare_dataframe_slices_col_rel_width():
     """Test that prepare_dataframe_for_body_encoding correctly slices col_rel_width."""
     service = RTFEncodingService()
@@ -42,7 +44,9 @@ def test_prepare_dataframe_slices_col_rel_width():
         page_by="B"
     )
     
-    processed_df, original_df, processed_attrs = service.prepare_dataframe_for_body_encoding(df, rtf_body)
+    processed_df, _, processed_attrs = service.prepare_dataframe_for_body_encoding(
+        df, rtf_body
+    )
     
     # Check processed dataframe columns
     assert processed_df.columns == ["A", "C"]
@@ -51,6 +55,7 @@ def test_prepare_dataframe_slices_col_rel_width():
     # Should remove the middle element (index 1)
     # [1, 1, 3] -> [1, 3]
     assert processed_attrs.col_rel_width == [1, 3]
+
 
 def test_page_break_calculator_skips_removed_columns():
     """Test that PageBreakCalculator correctly skips removed columns."""
@@ -61,97 +66,67 @@ def test_page_break_calculator_skips_removed_columns():
     # col_rel_width was [1, 1, 3] -> [1, 3]
     # col_total_width = 10
     # col_widths (cumulative) for [1, 3] -> [2.5, 10.0]
-    # But PageBreakCalculator expects absolute widths for calculation?
-    # Wait, Utils._col_widths returns cumulative widths.
-    # Let's check PageBreakCalculator.calculate_content_rows
-    
-    # In PageBreakCalculator.calculate_content_rows:
-    # effective_width = col_width
-    # lines_needed = max(1, int(text_width / effective_width) + 1)
-    
-    # Wait, if col_widths passed to calculator are cumulative, then `effective_width` calculation is wrong?
-    # Let's check PageBreakCalculator usage in UnifiedRTFEncoder.
-    # col_widths = Utils._col_widths(...)
-    # pagination_ctx = PaginationContext(..., col_widths=col_widths, ...)
-    # calculator.calculate_row_metadata(..., col_widths=context.col_widths, ...)
-    
-    # In calculate_row_metadata:
-    # col_width = col_widths[width_idx]
-    
-    # If col_widths are cumulative, then `col_width` is the cumulative width, not the individual column width!
-    # This looks like a potential bug or I'm misunderstanding Utils._col_widths return value.
-    
-    # Let's check Utils._col_widths implementation again.
-    # return [cumulative_sum := cumulative_sum + (width * col_width / total_width) for width in rel_widths]
-    # Yes, it returns cumulative widths.
-    
-    # Now check PageBreakCalculator.calculate_row_metadata
-    # col_width = col_widths[width_idx]
-    # effective_width = col_width
-    # lines_needed = max(1, int(text_width / effective_width) + 1)
-    
-    # If col_widths are cumulative, then the first column width is correct.
-    # But the second column width would be (width1 + width2).
-    # This means the second column gets a much larger width than it should!
-    # This seems to be a BUG in PageBreakCalculator or UnifiedRTFEncoder!
-    
-    # Wait, let's verify this hypothesis with a test.
-    pass
-
-def test_verify_col_widths_usage_in_calculator():
-    """Verify if PageBreakCalculator expects absolute or cumulative widths."""
-    # If I pass cumulative widths [2.5, 10.0]
-    # Col 1: width 2.5. Correct.
-    # Col 2: width 10.0. Incorrect! Should be 7.5.
-    
-    # Let's check how Renderer uses col_widths.
-    # In Renderer:
-    # cell_width = col_widths[col_idx] - (col_widths[col_idx - 1] if col_idx > 0 else 0)
-    # So Renderer expects cumulative widths and calculates diffs.
-    
-    # Does PageBreakCalculator do the same?
-    # In PageBreakCalculator.calculate_row_metadata:
-    # col_width = col_widths[width_idx]
-    # text_width = get_string_width(...)
-    # effective_width = col_width
-    # lines_needed = max(1, int(text_width / effective_width) + 1)
-    
-    # It uses `col_width` directly as `effective_width`.
-    # It does NOT calculate the diff.
-    # So PageBreakCalculator is using cumulative widths as absolute widths!
-    # This means it drastically underestimates line wrapping for subsequent columns!
-    
-    # This is a MAJOR BUG I just discovered.
-    # But wait, why did my previous fix work?
-    # My previous fix was about skipping the removed column.
-    
-    # If PageBreakCalculator is indeed buggy, I should fix it too.
-    # But first let's confirm this behavior.
     
     pagination = RTFPagination(
-        page_width=11, page_height=8.5, margin=[1]*6, nrow=24, orientation="landscape"
+        page_width=11,
+        page_height=8.5,
+        margin=[1]*6,
+        nrow=24,
+        orientation="landscape"
     )
     calculator = PageBreakCalculator(pagination=pagination)
     
     # Mock data
-    df = pl.DataFrame({"A": ["A"], "B": ["B"]})
-    # Cumulative widths: [2.5, 10.0] (for 1:3 split of 10)
-    col_widths = [2.5, 10.0] 
+    df = pl.DataFrame({
+        "A": ["Long text " * 10],
+        "B": ["Page By Val"],
+        "C": ["Short"]
+    })
     
-    # Calculate rows
-    # We need to inspect how it calculates.
-    # Since I can't easily spy on internal variables, I'll rely on code analysis for now
-    # and maybe add a test that fails if width is interpreted as 10.0 instead of 7.5.
+    # If B is NOT skipped, it uses width 2.5 (from A) for B.
+    # If B IS skipped, it uses width 2.5 for A, and width 7.5 for C.
     
-    # If width is 10.0, a string of width 8.0 fits in 1 line.
-    # If width is 7.5, a string of width 8.0 needs 2 lines.
+    # We can check calculate_row_metadata
+    # But we need to pass removed_column_indices
     
-    # Let's create a string that is 8.0 inches wide.
-    # 8 inches * 72 dpi = 576 pixels/points?
-    # get_string_width uses font size.
-    # Let's assume standard font.
+    col_widths = [2.5, 10.0]
+    removed_indices = [1] # B is removed
     
-    pass
+    meta = calculator.calculate_row_metadata(
+        df=df,
+        col_widths=col_widths,
+        removed_column_indices=removed_indices,
+        additional_rows_per_page=0
+    )
+    
+    # If logic is correct, it should process A (idx 0) and C (idx 2).
+    # A uses col_widths[0] = 2.5
+    # C uses col_widths[1] = 10.0 (cumulative) -> effective width 10.0?
+    # Wait, if PageBreakCalculator uses cumulative widths as absolute, that's a bug
+    # I suspected earlier.
+    # But let's assume for now we are testing that it SKIPS index 1.
+    
+    # If it didn't skip index 1, it would try to calculate rows for B using
+    # col_widths[1]?
+    # Or it would run out of col_widths?
+    
+    # The loop in calculate_row_metadata iterates over df.width (3 columns).
+    # width_idx starts at 0.
+    # Col 0 (A): not removed. Uses col_widths[0]. width_idx -> 1.
+    # Col 1 (B): removed. Should continue. width_idx stays 1.
+    # Col 2 (C): not removed. Uses col_widths[1]. width_idx -> 2.
+    
+    # If removed_indices was None:
+    # Col 0 (A): Uses col_widths[0]. width_idx -> 1.
+    # Col 1 (B): Uses col_widths[1]. width_idx -> 2.
+    # Col 2 (C): Breaks because width_idx 2 >= len(col_widths) (2).
+    
+    # So if we pass removed_indices, we should get results for all rows.
+    # If we don't, we might get incomplete results or different behavior.
+    
+    assert meta.height == 1
+    # We just verify it runs without error and produces metadata
+    assert meta["data_rows"][0] > 0
 
 def test_spanning_row_width():
     """Test that spanning rows (page_by/subline_by) use the full page width."""
@@ -176,6 +151,101 @@ def test_spanning_row_width():
     assert expected_cellx in rtf_output
 
 
+def test_page_break_calculator_cumulative_width_fix():
+    """
+    Test that PageBreakCalculator correctly decodes cumulative widths
+    to calculate individual column widths for row height estimation.
+    """
+    # Setup
+    pagination = RTFPagination(
+        page_width=11,
+        page_height=8.5,
+        margin=[1]*6,
+        nrow=24,
+        orientation="landscape"
+    )
+    calculator = PageBreakCalculator(pagination=pagination)
+    
+    # 2 columns.
+    # Col 1: width 2.0. Cumulative: 2.0.
+    # Col 2: width 2.0. Cumulative: 4.0.
+    col_widths = [2.0, 4.0]
+    
+    # Text that fits in 4.0 inches but NOT in 2.0 inches.
+    # 2.0 inches = 144 points.
+    # 4.0 inches = 288 points.
+    # Assume font size 9 (default).
+    # "A" is approx 5-6 points? 
+    # Let's use a string length that we know wraps.
+    # get_string_width uses rough estimation.
+    # Let's say 100 chars.
+    long_text = "A" * 100 
+    
+    df = pl.DataFrame({
+        "Col1": ["Short"],
+        "Col2": [long_text]
+    })
+    
+    meta = calculator.calculate_row_metadata(
+        df=df,
+        col_widths=col_widths,
+        removed_column_indices=[],
+        additional_rows_per_page=0
+    )
+    
+    # Check row height (lines)
+    # If using cumulative width (4.0) for Col 2:
+    # Text width for 100 chars ~ 500-600 points?
+    # 4.0 inches = 288 points? Wait.
+    # 1 inch = 72 points.
+    # 4.0 inches = 288 points.
+    # 2.0 inches = 144 points.
+    
+    # If text width is e.g. 200 points.
+    # Fits in 4.0 (288). Lines = 1.
+    # Wraps in 2.0 (144). Lines = 2.
+    
+    # Let's verify what get_string_width returns for "A"*100.
+    from rtflite.strwidth import get_string_width
+    width_pts = get_string_width(long_text, font_size=9)
+    # print(f"Width: {width_pts}")
+    
+    # If logic is correct (using individual width 2.0), lines should be > 1.
+    # If logic is buggy (using cumulative width 4.0), lines might be 1 (if text fits in 4.0).
+    
+    lines = meta["data_rows"][0]
+    
+    # We expect lines > 1 because 2.0 inches is narrow.
+    assert lines > 1, f"Expected wrapping for narrow column. Got {lines} lines. Text width: {width_pts}"
+    
+    # Also verify that if we make text short enough to fit in 4.0 but not 2.0, we can distinguish.
+    # But "A"*100 is likely wide enough to wrap even in 4.0?
+    # Let's try "A"*40.
+    # 40 * 6 = 240 points.
+    # Fits in 288 (4.0).
+    # Wraps in 144 (2.0).
+    
+    medium_text = "A" * 40
+    df_medium = pl.DataFrame({
+        "Col1": ["Short"],
+        "Col2": [medium_text]
+    })
+    
+    meta_medium = calculator.calculate_row_metadata(
+        df=df_medium,
+        col_widths=col_widths,
+        removed_column_indices=[],
+        additional_rows_per_page=0
+    )
+    
+    lines_medium = meta_medium["data_rows"][0]
+    
+    # With fix: uses width 2.0 (144 pts). 240 > 144. Should wrap. Lines >= 2.
+    # Without fix: uses width 4.0 (288 pts). 240 < 288. Should fit. Lines = 1.
+    
+    assert lines_medium >= 2, "Regression: PageBreakCalculator using cumulative width instead of individual!"
+
+
 def test_data_row_width_redistribution():
     """
     Test that data column widths are redistributed proportionally 
@@ -198,7 +268,9 @@ def test_data_row_width_redistribution():
     )
     
     # 1. Prepare dataframe (simulate UnifiedRTFEncoder step)
-    processed_df, _, processed_attrs = service.prepare_dataframe_for_body_encoding(df, rtf_body)
+    processed_df, _, processed_attrs = service.prepare_dataframe_for_body_encoding(
+        df, rtf_body
+    )
     
     # Verify B is removed and col_rel_width is sliced
     assert processed_df.columns == ["A", "C"]

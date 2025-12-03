@@ -303,7 +303,11 @@ class PageBreakCalculator(BaseModel):
                 if width_idx >= len(col_widths):
                     break
 
-                col_width = col_widths[width_idx]
+                # Calculate individual column width from cumulative widths
+                # col_widths contains cumulative widths (right boundaries)
+                current_cumulative = col_widths[width_idx]
+                prev_cumulative = col_widths[width_idx - 1] if width_idx > 0 else 0
+                col_width = current_cumulative - prev_cumulative
                 col_name = df.columns[col_idx]
                 cell_value = str(df[col_name][row_idx])
 
