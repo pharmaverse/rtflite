@@ -2,9 +2,12 @@ from __future__ import annotations
 
 from typing import Any
 
+import polars as pl
+
 from rtflite import RTFDocument
 
 from ..attributes import BroadcastValue
+from ..input import RTFBody
 from ..pagination.processor import PageFeatureProcessor
 from ..pagination.strategies import PageContext, PaginationContext, StrategyRegistry
 from ..pagination.strategies.defaults import DefaultPaginationStrategy
@@ -83,14 +86,40 @@ class UnifiedRTFEncoder(EncodingStrategy):
             document
         )
 
-        pagination_ctx = PaginationContext(
-            df=original_df if is_single_body(rtf_body) else processed_df,
-            rtf_body=rtf_body,
-            rtf_page=document.rtf_page,
-            col_widths=col_widths,
-            table_attrs=processed_attrs,
-            additional_rows_per_page=additional_rows,
-        )
+        # Calculate removed column indices
+        # Calculate removed column indices
+        removed_column_indices = []
+        # Ensure we are working with a DataFrame and RTFBody for single section encoding
+        if isinstance(original_df, pl.DataFrame) and isinstance(rtf_body, RTFBody):
+            if processed_df.shape[1] < original_df.shape[1]:
+                # Find indices of columns that were removed
+                # We assume columns are removed, not reordered significantly enough to
+                # break this simple check for the purpose of pagination context
+                processed_cols = set(processed_df.columns)
+                for i, col in enumerate(original_df.columns):
+                    if col not in processed_cols:
+                        removed_column_indices.append(i)
+
+            pagination_ctx = PaginationContext(
+                df=original_df,  # Use original DF for context
+                rtf_body=rtf_body,
+                rtf_page=document.rtf_page,
+                col_widths=col_widths,
+                table_attrs=processed_attrs,
+                additional_rows_per_page=additional_rows,
+                removed_column_indices=removed_column_indices,
+            )
+        else:
+            # Fallback or error for unexpected types in this context
+            # Should not happen given is_single_body checks usually
+            pagination_ctx = PaginationContext(
+                df=processed_df,
+                rtf_body=processed_attrs,  # Best effort fallback
+                rtf_page=document.rtf_page,
+                col_widths=col_widths,
+                table_attrs=processed_attrs,
+                additional_rows_per_page=additional_rows,
+            )
 
         # D. Paginate
 
