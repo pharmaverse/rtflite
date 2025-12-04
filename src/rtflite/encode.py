@@ -4,11 +4,15 @@ This module provides the RTFDocument class with a clean, service-oriented archit
 All complex logic has been delegated to specialized services and strategies.
 """
 
+import shutil
+import tempfile
 from collections.abc import Sequence
+from pathlib import Path
 
 import polars as pl
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from .convert import LibreOfficeConverter
 from .input import (
     RTFBody,
     RTFColumnHeader,
@@ -416,15 +420,16 @@ class RTFDocument(BaseModel):
         engine = RTFEncodingEngine()
         return engine.encode_document(self)
 
-    def write_rtf(self, file_path: str) -> None:
+    def write_rtf(self, file_path: str | Path) -> None:
         """Write the RTF document to a file.
 
         Generates the complete RTF document and writes it to the specified file path.
-        The file is written in UTF-8 encoding and will have the .rtf extension.
+        The file is written in UTF-8 encoding and will have the `.rtf` extension.
 
         Args:
-            file_path: Path where the RTF file should be saved. Can be absolute
-                or relative path. Directory must exist.
+            file_path: Path where the RTF file should be saved.
+                Accepts string or Path input. Can be absolute or relative.
+                Directories are created if they do not already exist.
 
         Examples:
             ```python
@@ -434,9 +439,51 @@ class RTFDocument(BaseModel):
 
         Note:
             The method prints the file path to stdout for confirmation.
-            Ensure the directory exists before calling this method.
         """
-        print(file_path)
+        target_path = Path(file_path).expanduser()
+        target_path.parent.mkdir(parents=True, exist_ok=True)
+        print(target_path)
         rtf_code = self.rtf_encode()
-        with open(file_path, "w", encoding="utf-8") as f:
-            f.write(rtf_code)
+        target_path.write_text(rtf_code, encoding="utf-8")
+
+    def write_docx(self, file_path: str | Path) -> None:
+        """Write the document as a DOCX file.
+
+        Writes the document to a temporary RTF file first, and then converts
+        it to DOCX with LibreOffice. Temporary directories are used for
+        all intermediate files to avoid placing artifacts alongside the
+        requested output path.
+
+        Args:
+            file_path: Destination path for the DOCX file.
+                Accepts string or Path input. Can be absolute or relative.
+                Directories are created if they do not already exist.
+
+        Examples:
+            ```python
+            doc = RTFDocument(df=data, rtf_title=RTFTitle(text="Report"))
+            doc.write_docx("output/report.docx")
+            ```
+
+        Note:
+            The method prints the file path to stdout for confirmation.
+        """
+        target_path = Path(file_path).expanduser()
+        target_path.parent.mkdir(parents=True, exist_ok=True)
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rtf_path = Path(tmpdir) / f"{target_path.stem}.rtf"
+            rtf_code = self.rtf_encode()
+            rtf_path.write_text(rtf_code, encoding="utf-8")
+
+            converter = LibreOfficeConverter()
+            with tempfile.TemporaryDirectory() as convert_tmpdir:
+                docx_path = converter.convert(
+                    input_files=rtf_path,
+                    output_dir=Path(convert_tmpdir),
+                    format="docx",
+                    overwrite=True,
+                )
+                shutil.move(str(docx_path), target_path)
+
+        print(target_path)
