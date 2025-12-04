@@ -4,11 +4,15 @@ This module provides the RTFDocument class with a clean, service-oriented archit
 All complex logic has been delegated to specialized services and strategies.
 """
 
+import shutil
+import tempfile
 from collections.abc import Sequence
+from pathlib import Path
 
 import polars as pl
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from .convert import LibreOfficeConverter
 from .input import (
     RTFBody,
     RTFColumnHeader,
@@ -440,3 +444,35 @@ class RTFDocument(BaseModel):
         rtf_code = self.rtf_encode()
         with open(file_path, "w", encoding="utf-8") as f:
             f.write(rtf_code)
+
+    def write_docx(self, file_path: str) -> None:
+        """Write the document as a DOCX file.
+
+        Writes the document to a temporary RTF file first, and then converts
+        it to DOCX with LibreOffice. Temporary directories are used for
+        all intermediate files to avoid placing artifacts alongside the
+        requested output path.
+
+        Args:
+            file_path: Destination path for the DOCX file. Directories are
+                created if they do not already exist.
+        """
+        target_path = Path(file_path).expanduser()
+        target_path.parent.mkdir(parents=True, exist_ok=True)
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rtf_path = Path(tmpdir) / f"{target_path.stem}.rtf"
+            rtf_code = self.rtf_encode()
+            rtf_path.write_text(rtf_code, encoding="utf-8")
+
+            converter = LibreOfficeConverter()
+            with tempfile.TemporaryDirectory() as convert_tmpdir:
+                docx_path = converter.convert(
+                    input_files=rtf_path,
+                    output_dir=Path(convert_tmpdir),
+                    format="docx",
+                    overwrite=True,
+                )
+                shutil.move(str(docx_path), target_path)
+
+        print(target_path)
