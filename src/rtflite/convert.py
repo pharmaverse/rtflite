@@ -101,14 +101,15 @@ class LibreOfficeConverter:
             output_dir: Directory where converted files will be saved. Created
                 if it doesn't exist. Can be string or Path object.
             format: Target format for conversion. Supported formats:
-                - 'pdf': Portable Document Format (default)
-                - 'docx': Microsoft Word (Office Open XML)
-                - 'doc': Microsoft Word 97-2003
-                - 'html': HTML Document
-                - 'odt': OpenDocument Text
-                - 'txt': Plain Text
-            overwrite: If True, overwrites existing files in output directory.
-                If False, raises error if output file already exists.
+
+                - `'pdf'`: Portable Document Format (default)
+                - `'docx'`: Microsoft Word (Office Open XML)
+                - `'doc'`: Microsoft Word 97-2003
+                - `'html'`: HTML Document
+                - `'odt'`: OpenDocument Text
+                - `'txt'`: Plain Text
+            overwrite: If `True`, overwrites existing files in output directory.
+                If `False`, raises error if output file already exists.
 
         Returns:
             Path | Sequence[Path]: For single file input, returns Path to the
