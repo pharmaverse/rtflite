@@ -29,9 +29,24 @@ cd rtflite
 python3 -m pip install -e .
 ```
 
-### Install LibreOffice (optional)
+### Optional dependencies - DOCX support
 
-rtflite can convert RTF documents to PDF using LibreOffice.
+Some features in rtflite require additional dependencies. To install rtflite
+with DOCX assembly support:
+
+```bash
+pip install rtflite[docx]
+```
+
+For rtflite developers, sync optional dependencies with:
+
+```bash
+uv sync --extra docx
+```
+
+### Optional dependencies - LibreOffice
+
+rtflite can convert RTF documents to PDF and DOCX using LibreOffice.
 To enable this feature, install LibreOffice (free and open source, MPL license).
 
 See the [converter setup
