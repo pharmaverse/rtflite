@@ -176,17 +176,56 @@ converter.convert("combined-docxcompose.docx", output_dir="../pdf/", format="pdf
 
 <embed src="../pdf/combined-docxcompose.pdf" style="width:100%; height:400px" type="application/pdf">
 
-Concatenate portrait + landscape DOCX files:
+## Assemble into DOCX with mixed orientation (python-docx)
+
+`docxcompose` may drop section settings such as landscape orientation.
+When you need to guarantee page orientation is preserved, concatenate with
+`python-docx` directly and set the section orientation for each appended file.
+Start from the first DOCX (avoids a blank leading page), then add a new
+section per file so each starts on its own page with the correct orientation.
+
+```python exec="on" source="above" session="default"
+from copy import deepcopy
+
+from docx import Document
+from docx.enum.section import WD_ORIENT, WD_SECTION
+
+def set_orientation(section, landscape=False):
+    section.orientation = WD_ORIENT.LANDSCAPE if landscape else WD_ORIENT.PORTRAIT
+    w, h = section.page_width, section.page_height
+    if landscape and w < h:
+        section.page_width, section.page_height = h, w
+    if not landscape and w > h:
+        section.page_width, section.page_height = h, w
+
+def append_doc(target, source):
+    """Copy body elements from source into target, skipping section properties."""
+    for element in list(source.element.body):
+        if element.tag.endswith("}sectPr"):
+            continue
+        target.element.body.append(deepcopy(element))
+```
 
 ```python exec="on" source="above" session="default" workdir="docs/articles/rtf/"
-composer_mixed = Composer(Document("portrait-ae-1.docx"))
-composer_mixed.doc.add_page_break()
-composer_mixed.append(Document("landscape-ae.docx"))
-composer_mixed.save("combined-docxcompose-mixed.docx")
+files_with_orientation = [
+    ("portrait-ae-1.docx", False),
+    ("landscape-ae.docx", True),
+]
+
+base_path, base_landscape = files_with_orientation[0]
+combined = Document(base_path)  # Use the first document as the base to avoid a leading blank page
+set_orientation(combined.sections[0], base_landscape)
+
+for path, is_landscape in files_with_orientation[1:]:
+    combined.add_section(WD_SECTION.NEW_PAGE)  # Explicit page break before the next file
+    set_orientation(combined.sections[-1], is_landscape)
+    append_doc(combined, Document(path))
+
+combined.save("combined-python-docx.docx")
 ```
 
 ```python exec="on" session="default" workdir="docs/articles/rtf/"
-converter.convert("combined-docxcompose-mixed.docx", output_dir="../pdf/", format="pdf", overwrite=True)
+converter.convert("combined-python-docx.docx", output_dir="../pdf/", format="pdf", overwrite=True)
 ```
 
-<embed src="../pdf/combined-docxcompose-mixed.pdf" style="width:100%; height:400px" type="application/pdf">
+<embed src="../pdf/combined-python-docx.pdf" style="width:100%; height:400px" type="application/pdf">
