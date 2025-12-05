@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 from rtflite.convert import LibreOfficeConverter
-from rtflite.dictionary.libreoffice import MIN_VERSION
+from tests.conftest import skip_if_no_libreoffice
 
 
 @pytest.fixture
@@ -47,19 +47,7 @@ def output_dir(tmp_path) -> Path:
     return out_dir
 
 
-def has_libreoffice():
-    """Check if LibreOffice is available on the system."""
-    try:
-        LibreOfficeConverter()
-        return True
-    except (FileNotFoundError, RuntimeError):
-        return False
-
-
-# Mark all tests in this module to be skipped if LibreOffice isn't available
-pytestmark = pytest.mark.skipif(
-    not has_libreoffice(), reason=f"LibreOffice (>= {MIN_VERSION}) not found on system"
-)
+pytestmark = skip_if_no_libreoffice
 
 
 class TestLibreOfficeConverter:

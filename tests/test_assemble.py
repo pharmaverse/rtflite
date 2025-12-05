@@ -1,7 +1,7 @@
 import pytest
 
 from rtflite import assemble_docx, assemble_rtf, concatenate_docx
-from tests.skip_conditions import skip_if_no_python_docx
+from tests.conftest import skip_if_no_python_docx
 
 
 @pytest.fixture
