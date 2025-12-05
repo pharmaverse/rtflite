@@ -83,6 +83,8 @@ Use `concatenate_docx` (added in rtflite 2.3.0, powered by `python-docx`)
 to concatenate the DOCX outputs when you need final files without manual
 field refreshes, similar to `assemble_rtf`.
 
+Generate example DOCX tables:
+
 ```python exec="on" source="above" session="default"
 from importlib.resources import files
 
@@ -99,8 +101,6 @@ ae_summary = (
     .sort("AEDECOD")
 )
 ```
-
-Generate example DOCX tables:
 
 ```python exec="on" source="above" session="default" workdir="docs/articles/rtf/"
 # Two portrait tables
@@ -157,13 +157,11 @@ landscape_doc = rtf.RTFDocument(
 landscape_doc.write_docx("landscape-ae.docx")
 ```
 
-### Concatenate DOCX files
+### Concatenate two portrait DOCX files
 
 Use `concatenate_docx` to start from the first DOCX (avoids a blank leading
 page) and add a new section per file so each starts on its own page with the
 correct orientation.
-
-### Concatenate two portrait DOCX files
 
 ```python exec="on" source="above" session="default" workdir="docs/articles/rtf/"
 portrait_files = [
