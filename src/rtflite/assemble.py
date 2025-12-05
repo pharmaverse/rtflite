@@ -242,7 +242,7 @@ def concatenate_docx(
             "Install it with: pip install 'rtflite[docx]'"
         ) from exc
 
-    paths = [Path(path) for path in input_files]
+    paths = [Path(path).expanduser() for path in input_files]
     if not paths:
         raise ValueError("Input files list cannot be empty")
 
@@ -260,7 +260,7 @@ def concatenate_docx(
         _set_section_orientation(combined_doc.sections[-1], is_landscape)
         _append_document_body(combined_doc, Document(str(source_path)))
 
-    output_path = Path(output_file)
+    output_path = Path(output_file).expanduser()
     output_path.parent.mkdir(parents=True, exist_ok=True)
     combined_doc.save(str(output_path))
 
