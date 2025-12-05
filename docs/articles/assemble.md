@@ -42,7 +42,7 @@ converter.convert("combined-rtf.rtf", output_dir="../pdf/", format="pdf", overwr
 
 <embed src="../pdf/combined-rtf.pdf" style="width:100%; height:400px" type="application/pdf">
 
-## Assemble into DOCX
+## Assemble into DOCX with toggle fields
 
 ```python exec="on" source="above" session="default" workdir="docs/articles/rtf/"
 assemble_docx(input_files, "combined-docx.docx")
@@ -61,7 +61,7 @@ because `python-docx` does not evaluate those fields.
     This hybrid approach, which relies on Word's field codes, is documented
     in the [r4csr book](https://r4csr.org/tlf-assemble.html).
 
-## Assemble into DOCX with mixed orientation (portrait, landscape)
+Another example to assemble into DOCX with mixed orientation pages (portrait, landscape):
 
 ```python exec="on" source="above" session="default" workdir="docs/articles/rtf/"
 assemble_docx(
@@ -75,11 +75,11 @@ Open `combined-mixed.docx` in Word and update fields to pull in the portrait
 and landscape tables. Until the fields are refreshed, you will see the same
 `Error! Reference source not found.` placeholders.
 
-## Assemble DOCX without toggle fields (docxcompose)
+## Assemble into DOCX without toggle fields
 
-`RTFDocument.write_docx` (added in rtflite 2.2.0) creates DOCX file for
+`RTFDocument.write_docx` (added in rtflite 2.2.0) creates DOCX files for
 individual rtflite tables directly.
-Pair it with the `docxcompose` package when you need final DOCX outputs
+Use `python-docx` to concatenate the DOCX outputs when you need final files
 without manual field refreshes, similar to `assemble_rtf`.
 
 ```python exec="on" source="above" session="default"
@@ -156,31 +156,8 @@ landscape_doc = rtf.RTFDocument(
 landscape_doc.write_docx("landscape-ae.docx")
 ```
 
-Concatenate two portrait DOCX files:
+### Helper functions for concatenation
 
-```python exec="on" source="above" session="default"
-from docx import Document
-from docxcompose.composer import Composer
-```
-
-```python exec="on" source="above" session="default" workdir="docs/articles/rtf/"
-composer = Composer(Document("portrait-ae-1.docx"))
-composer.doc.add_page_break()
-composer.append(Document("portrait-ae-2.docx"))
-composer.save("combined-docxcompose.docx")
-```
-
-```python exec="on" session="default" workdir="docs/articles/rtf/"
-converter.convert("combined-docxcompose.docx", output_dir="../pdf/", format="pdf", overwrite=True)
-```
-
-<embed src="../pdf/combined-docxcompose.pdf" style="width:100%; height:400px" type="application/pdf">
-
-## Assemble into DOCX with mixed orientation (python-docx)
-
-`docxcompose` may drop section settings such as landscape orientation.
-When you need to guarantee page orientation is preserved, concatenate with
-`python-docx` directly and set the section orientation for each appended file.
 Start from the first DOCX (avoids a blank leading page), then add a new
 section per file so each starts on its own page with the correct orientation.
 
@@ -206,6 +183,34 @@ def append_doc(target, source):
         target.element.body.append(deepcopy(element))
 ```
 
+### Concatenate two portrait DOCX files
+
+```python exec="on" source="above" session="default" workdir="docs/articles/rtf/"
+portrait_files = [
+    ("portrait-ae-1.docx", False),
+    ("portrait-ae-2.docx", False),
+]
+
+base_path, base_landscape = portrait_files[0]
+combined_portrait = Document(base_path)
+set_orientation(combined_portrait.sections[0], base_landscape)
+
+for path, is_landscape in portrait_files[1:]:
+    combined_portrait.add_section(WD_SECTION.NEW_PAGE)
+    set_orientation(combined_portrait.sections[-1], is_landscape)
+    append_doc(combined_portrait, Document(path))
+
+combined_portrait.save("combined-python-docx.docx")
+```
+
+```python exec="on" session="default" workdir="docs/articles/rtf/"
+converter.convert("combined-python-docx.docx", output_dir="../pdf/", format="pdf", overwrite=True)
+```
+
+<embed src="../pdf/combined-python-docx.pdf" style="width:100%; height:400px" type="application/pdf">
+
+### Concatenate portrait + landscape DOCX files
+
 ```python exec="on" source="above" session="default" workdir="docs/articles/rtf/"
 files_with_orientation = [
     ("portrait-ae-1.docx", False),
@@ -221,11 +226,11 @@ for path, is_landscape in files_with_orientation[1:]:
     set_orientation(combined.sections[-1], is_landscape)
     append_doc(combined, Document(path))
 
-combined.save("combined-python-docx.docx")
+combined.save("combined-python-docx-mixed.docx")
 ```
 
 ```python exec="on" session="default" workdir="docs/articles/rtf/"
-converter.convert("combined-python-docx.docx", output_dir="../pdf/", format="pdf", overwrite=True)
+converter.convert("combined-python-docx-mixed.docx", output_dir="../pdf/", format="pdf", overwrite=True)
 ```
 
-<embed src="../pdf/combined-python-docx.pdf" style="width:100%; height:400px" type="application/pdf">
+<embed src="../pdf/combined-python-docx-mixed.pdf" style="width:100%; height:400px" type="application/pdf">
