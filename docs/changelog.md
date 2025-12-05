@@ -1,5 +1,23 @@
 # Changelog
 
+## rtflite 2.3.0
+
+### New features
+
+- Added `concatenate_docx` function to merge DOCX outputs without manual
+  field refreshes, preserving per-section orientation (#160).
+
+### Testing
+
+- Added DOCX concatenation coverage and centralized optional dependency
+  skip markers for `python-docx` and LibreOffice to keep tests gated
+  appropriately (#160).
+
+### Documentation
+
+- Updated the assembly article to use `concatenate_docx` in code examples and
+  added a reference page for assemble function to the mkdocs site (#160).
+
 ## rtflite 2.2.0
 
 ### New features
