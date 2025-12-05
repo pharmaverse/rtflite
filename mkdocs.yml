@@ -36,6 +36,7 @@ nav:
       - String width: reference/strwidth.md
     - Advanced:
       - Pagination: reference/pagination.md
+      - Assemble: reference/assemble.md
       - Low-level API: reference/low-level.md
   - Changelog: changelog.md
   - Coverage: coverage/
