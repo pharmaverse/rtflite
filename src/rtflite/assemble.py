@@ -252,17 +252,17 @@ def concatenate_docx(
 
     orientation_flags = _coerce_landscape_flags(landscape, len(paths))
 
-    combined_doc = Document(paths[0])
+    combined_doc = Document(str(paths[0]))
     _set_section_orientation(combined_doc.sections[0], orientation_flags[0])
 
     for source_path, is_landscape in zip(paths[1:], orientation_flags[1:], strict=True):
         combined_doc.add_section(WD_SECTION.NEW_PAGE)
         _set_section_orientation(combined_doc.sections[-1], is_landscape)
-        _append_document_body(combined_doc, Document(source_path))
+        _append_document_body(combined_doc, Document(str(source_path)))
 
     output_path = Path(output_file)
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    combined_doc.save(output_path)
+    combined_doc.save(str(output_path))
 
 
 def _coerce_landscape_flags(
