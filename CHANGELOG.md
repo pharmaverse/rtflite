@@ -1,10 +1,26 @@
 # Changelog
 
+## rtflite 2.2.0
+
+### New features
+
+- Added `RTFDocument.write_docx` to export tables as DOCX via LibreOffice,
+  with `str`/`Path` input support and automatic parent directory creation (#156).
+- Improved `write_rtf` to accept `Path` inputs and create missing output
+  directories (#156).
+
+### Documentation
+
+- Expanded DOCX assembly guidance with toggle field caveats and `python-docx`
+  concatenation examples (#157).
+- Documented installing the `docx` extra in the README and assemble article,
+  including `uv sync --extra docx` for developers (#155).
+
 ## rtflite 2.1.1
 
 ### Bug fixes
 
-- Reduce packaging files size by excluding unnecessary files and directories (#152).
+- Reduced packaging files size by excluding unnecessary files and directories (#152).
 - Fixed an issue when paginating tables with `page_by` and `subline_by` (#152).
 
 ## rtflite 2.1.0
