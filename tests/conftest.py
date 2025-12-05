@@ -26,6 +26,7 @@ def has_libreoffice() -> bool:
 
 PYTHON_DOCX_INSTALLED = has_python_docx()
 PYTHON_DOCX_REASON = "python-docx is required for DOCX assembly tests"
+LIBREOFFICE_INSTALLED = has_libreoffice()
 LIBREOFFICE_REASON = f"LibreOffice (>= {MIN_VERSION}) not found on system"
 
 skip_if_no_python_docx = pytest.mark.skipif(
@@ -34,11 +35,11 @@ skip_if_no_python_docx = pytest.mark.skipif(
 )
 
 skip_if_no_libreoffice = pytest.mark.skipif(
-    not has_libreoffice(),
+    not LIBREOFFICE_INSTALLED,
     reason=LIBREOFFICE_REASON,
 )
 
 skip_if_no_libreoffice_and_python_docx = pytest.mark.skipif(
-    not (has_libreoffice() and PYTHON_DOCX_INSTALLED),
+    not (LIBREOFFICE_INSTALLED and PYTHON_DOCX_INSTALLED),
     reason=(f"LibreOffice (>= {MIN_VERSION}) and python-docx are required"),
 )

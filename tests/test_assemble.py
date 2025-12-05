@@ -189,6 +189,12 @@ def test_concatenate_docx_validates_landscape_length(sample_docx_files, tmp_path
 
 
 @skip_if_no_python_docx
+def test_concatenate_docx_empty_list(tmp_path):
+    with pytest.raises(ValueError, match="Input files list cannot be empty"):
+        concatenate_docx([], tmp_path / "out.docx")
+
+
+@skip_if_no_python_docx
 def test_concatenate_docx_missing_file(tmp_path):
     with pytest.raises(FileNotFoundError):
         concatenate_docx([tmp_path / "missing.docx"], tmp_path / "out.docx")

@@ -289,7 +289,7 @@ def _set_section_orientation(section: "Section", landscape: bool) -> None:
     if width is None or height is None:
         return
 
-    if landscape and width < height or not landscape and width > height:
+    if (landscape and width < height) or (not landscape and width > height):
         section.page_width, section.page_height = height, width
 
 
