@@ -1,6 +1,7 @@
 import pytest
 
-from rtflite import assemble_docx, assemble_rtf
+from rtflite import assemble_docx, assemble_rtf, concatenate_docx
+from tests.conftest import skip_if_no_python_docx
 
 
 @pytest.fixture
@@ -51,6 +52,31 @@ def complex_rtf_files(tmp_path):
     return [str(file1), str(file2)]
 
 
+@pytest.fixture
+def sample_docx_files(tmp_path):
+    """Create DOCX files for testing DOCX concatenation."""
+    import docx
+    from docx.enum.section import WD_ORIENT
+
+    portrait_path = tmp_path / "portrait.docx"
+    landscape_path = tmp_path / "landscape.docx"
+
+    portrait_doc = docx.Document()
+    portrait_doc.add_paragraph("Portrait content")
+    portrait_doc.save(portrait_path)
+
+    landscape_doc = docx.Document()
+    landscape_doc.add_paragraph("Landscape content")
+    section = landscape_doc.sections[0]
+    section.orientation = WD_ORIENT.LANDSCAPE
+    width, height = section.page_width, section.page_height
+    if width is not None and height is not None and width < height:
+        section.page_width, section.page_height = height, width
+    landscape_doc.save(landscape_path)
+
+    return [portrait_path, landscape_path]
+
+
 def test_assemble_rtf_complex(complex_rtf_files, tmp_path):
     output_file = tmp_path / "combined_complex.rtf"
     assemble_rtf(complex_rtf_files, str(output_file))
@@ -91,75 +117,84 @@ def test_assemble_rtf_empty_list(tmp_path):
     assert not output_file.exists()
 
 
+@skip_if_no_python_docx
 def test_assemble_docx(sample_rtf_files, tmp_path):
-    try:
-        import docx  # type: ignore
-    except ImportError:
-        pytest.skip("python-docx not installed")
+    import docx
 
     output_file = tmp_path / "combined.docx"
     assemble_docx(sample_rtf_files, str(output_file))
 
     assert output_file.exists()
 
-    # Verify content using python-docx
     doc = docx.Document(str(output_file))
-
-    # We expect INCLUDETEXT fields
-    # python-docx doesn't easily expose field codes in paragraphs directly
-    # without inspecting XML, but we can check if paragraphs exist.
     assert len(doc.paragraphs) > 0
-
-    # Check for "Table " text which we added
-    found_table_caption = False
-    for p in doc.paragraphs:
-        if "Table " in p.text:
-            found_table_caption = True
-            break
-
-    assert found_table_caption
+    assert any("Table " in p.text for p in doc.paragraphs)
 
 
+@skip_if_no_python_docx
 def test_assemble_docx_landscape(sample_rtf_files, tmp_path):
-    try:
-        import docx  # type: ignore
-        from docx.enum.section import WD_ORIENT  # type: ignore
-    except ImportError:
-        pytest.skip("python-docx not installed")
+    import docx
+    from docx.enum.section import WD_ORIENT
 
     output_file = tmp_path / "combined_landscape.docx"
-    # Test with mixed orientation
     assemble_docx(sample_rtf_files, str(output_file), landscape=[False, True])
 
     assert output_file.exists()
+
     doc = docx.Document(str(output_file))
-
-    # Check sections
-    # We expect at least 2 sections (or 1 if no section break needed for last one,
-    # but our code adds section breaks)
-    # Our code adds a section break for all but the last file,
-    # so for 2 files, we have 2 sections (one for first file, one for second).
-    # Wait, code:
-    # if i < len(input_files) - 1: doc.add_section()
-    # So for 2 files:
-    # i=0: add content, add section break.
-    # i=1: add content.
-    # Total sections: 2.
-
     assert len(doc.sections) == 2
-
-    # First section should be portrait (default)
     assert doc.sections[0].orientation == WD_ORIENT.PORTRAIT
-
-    # Second section should be landscape
     assert doc.sections[1].orientation == WD_ORIENT.LANDSCAPE
 
 
+@skip_if_no_python_docx
 def test_assemble_docx_missing_file():
-    try:
-        import docx  # noqa: F401
-    except ImportError:
-        pytest.skip("python-docx not installed")
-
     with pytest.raises(FileNotFoundError):
         assemble_docx(["non_existent.rtf"], "output.docx")
+
+
+@skip_if_no_python_docx
+def test_concatenate_docx(sample_docx_files, tmp_path):
+    import docx
+    from docx.enum.section import WD_ORIENT
+
+    output_file = tmp_path / "combined-docx.docx"
+    concatenate_docx(
+        [str(path) for path in sample_docx_files],
+        output_file,
+        landscape=[False, True],
+    )
+
+    assert output_file.exists()
+
+    doc = docx.Document(str(output_file))
+    assert len(doc.sections) == 2
+    assert doc.sections[0].orientation == WD_ORIENT.PORTRAIT
+    assert doc.sections[1].orientation == WD_ORIENT.LANDSCAPE
+
+    combined_text = " ".join(paragraph.text for paragraph in doc.paragraphs)
+    assert "Portrait content" in combined_text
+    assert "Landscape content" in combined_text
+
+
+@skip_if_no_python_docx
+def test_concatenate_docx_validates_landscape_length(sample_docx_files, tmp_path):
+    output_file = tmp_path / "should-not-exist.docx"
+    with pytest.raises(ValueError):
+        concatenate_docx(
+            [str(path) for path in sample_docx_files],
+            output_file,
+            landscape=[True],
+        )
+
+
+@skip_if_no_python_docx
+def test_concatenate_docx_empty_list(tmp_path):
+    with pytest.raises(ValueError, match="Input files list cannot be empty"):
+        concatenate_docx([], tmp_path / "out.docx")
+
+
+@skip_if_no_python_docx
+def test_concatenate_docx_missing_file(tmp_path):
+    with pytest.raises(FileNotFoundError):
+        concatenate_docx([tmp_path / "missing.docx"], tmp_path / "out.docx")

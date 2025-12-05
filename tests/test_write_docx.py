@@ -1,38 +1,11 @@
 import polars as pl
 import pytest
 
-from rtflite.convert import LibreOfficeConverter
-from rtflite.dictionary.libreoffice import MIN_VERSION
 from rtflite.encode import RTFDocument
 from rtflite.input import RTFBody, RTFColumnHeader, RTFTitle
+from tests.conftest import skip_if_no_libreoffice_and_python_docx
 
-
-def has_libreoffice() -> bool:
-    """Check if LibreOffice is available on the system."""
-    try:
-        LibreOfficeConverter()
-        return True
-    except (FileNotFoundError, RuntimeError):
-        return False
-
-
-def has_python_docx() -> bool:
-    """Check if python-docx is installed."""
-    try:
-        import docx  # noqa: F401
-
-        return True
-    except ImportError:
-        return False
-
-
-pytestmark = pytest.mark.skipif(
-    not (has_libreoffice() and has_python_docx()),
-    reason=(
-        f"LibreOffice (>= {MIN_VERSION}) and python-docx are required for "
-        "DOCX export tests"
-    ),
-)
+pytestmark = skip_if_no_libreoffice_and_python_docx
 
 
 @pytest.fixture

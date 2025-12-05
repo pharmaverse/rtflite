@@ -1,6 +1,14 @@
 """Assemble multiple RTF files into a single RTF or DOCX file."""
 
 import os
+from collections.abc import Sequence
+from copy import deepcopy
+from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:  # pragma: no cover
+    from docx.document import Document as DocxDocument
+    from docx.section import Section
 
 # from .input import RTFPage  # Unused
 
@@ -197,3 +205,97 @@ def _add_field(paragraph, field_code):
     fldChar = OxmlElement("w:fldChar")
     fldChar.set(qn("w:fldCharType"), "end")
     r.append(fldChar)
+
+
+def concatenate_docx(
+    input_files: Sequence[str | os.PathLike[str]],
+    output_file: str | os.PathLike[str],
+    landscape: bool | Sequence[bool] = False,
+) -> None:
+    """Concatenate DOCX files without relying on Word field toggles.
+
+    This helper is useful when `RTFDocument.write_docx` already produced DOCX
+    files and you need to stitch them together into a single document that can
+    be distributed without refreshing fields in Microsoft Word.
+
+    Args:
+        input_files: Ordered collection of DOCX file paths to combine. The
+            first document becomes the base; subsequent documents are appended
+            as new sections.
+        output_file: Path to the combined DOCX file.
+        landscape: Whether each appended section should be landscape. Accepts
+            a single boolean applied to every section or a list/tuple matching
+            ``input_files``.
+
+    Raises:
+        ImportError: If ``python-docx`` is not installed.
+        ValueError: If ``input_files`` is empty or the ``landscape`` list length
+            does not match ``input_files``.
+        FileNotFoundError: If any input file is missing.
+    """
+    try:
+        from docx import Document  # type: ignore
+        from docx.enum.section import WD_SECTION  # type: ignore
+    except ImportError as exc:
+        raise ImportError(
+            "python-docx is required for concatenate_docx. "
+            "Install it with: pip install 'rtflite[docx]'"
+        ) from exc
+
+    paths = [Path(path).expanduser() for path in input_files]
+    if not paths:
+        raise ValueError("Input files list cannot be empty")
+
+    missing_files = [str(path) for path in paths if not path.exists()]
+    if missing_files:
+        raise FileNotFoundError(f"Missing files: {', '.join(missing_files)}")
+
+    orientation_flags = _coerce_landscape_flags(landscape, len(paths))
+
+    combined_doc = Document(str(paths[0]))
+    _set_section_orientation(combined_doc.sections[0], orientation_flags[0])
+
+    for source_path, is_landscape in zip(paths[1:], orientation_flags[1:], strict=True):
+        combined_doc.add_section(WD_SECTION.NEW_PAGE)
+        _set_section_orientation(combined_doc.sections[-1], is_landscape)
+        _append_document_body(combined_doc, Document(str(source_path)))
+
+    output_path = Path(output_file).expanduser()
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    combined_doc.save(str(output_path))
+
+
+def _coerce_landscape_flags(
+    landscape: bool | Sequence[bool],
+    expected_length: int,
+) -> list[bool]:
+    """Normalize the ``landscape`` argument to a list and validate its length."""
+    if isinstance(landscape, bool):
+        return [landscape] * expected_length
+
+    flags = list(landscape)
+    if len(flags) != expected_length:
+        raise ValueError("Length of landscape list must match input files")
+
+    return flags
+
+
+def _set_section_orientation(section: "Section", landscape: bool) -> None:
+    """Set section orientation and swap dimensions if needed."""
+    from docx.enum.section import WD_ORIENT  # type: ignore
+
+    section.orientation = WD_ORIENT.LANDSCAPE if landscape else WD_ORIENT.PORTRAIT
+    width, height = section.page_width, section.page_height
+    if width is None or height is None:
+        return
+
+    if (landscape and width < height) or (not landscape and width > height):
+        section.page_width, section.page_height = height, width
+
+
+def _append_document_body(target: "DocxDocument", source: "DocxDocument") -> None:
+    """Copy body content from ``source`` into ``target`` without section props."""
+    for element in list(source.element.body):
+        if element.tag.endswith("}sectPr"):
+            continue
+        target.element.body.append(deepcopy(element))

@@ -1,6 +1,6 @@
 """rtflite: A Python library for creating RTF documents."""
 
-from .assemble import assemble_docx, assemble_rtf
+from .assemble import assemble_docx, assemble_rtf, concatenate_docx
 from .attributes import TableAttributes
 from .convert import LibreOfficeConverter
 from .core.config import RTFConfiguration
@@ -46,4 +46,5 @@ __all__ = [
     "LibreOfficeConverter",
     "assemble_rtf",
     "assemble_docx",
+    "concatenate_docx",
 ]
