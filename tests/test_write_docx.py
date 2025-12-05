@@ -5,6 +5,7 @@ from rtflite.convert import LibreOfficeConverter
 from rtflite.dictionary.libreoffice import MIN_VERSION
 from rtflite.encode import RTFDocument
 from rtflite.input import RTFBody, RTFColumnHeader, RTFTitle
+from tests.skip_conditions import has_python_docx
 
 
 def has_libreoffice() -> bool:
@@ -13,16 +14,6 @@ def has_libreoffice() -> bool:
         LibreOfficeConverter()
         return True
     except (FileNotFoundError, RuntimeError):
-        return False
-
-
-def has_python_docx() -> bool:
-    """Check if python-docx is installed."""
-    try:
-        import docx  # noqa: F401
-
-        return True
-    except ImportError:
         return False
 
 

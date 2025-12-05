@@ -20,7 +20,7 @@ pip install rtflite[docx]
 
 ```python exec="on" source="above" session="default"
 from pathlib import Path
-from rtflite import assemble_rtf, assemble_docx
+from rtflite import assemble_docx, assemble_rtf, concatenate_docx
 ```
 
 ```python exec="on" source="above" session="default" workdir="docs/articles/rtf/"
@@ -79,8 +79,9 @@ and landscape tables. Until the fields are refreshed, you will see the same
 
 `RTFDocument.write_docx` (added in rtflite 2.2.0) creates DOCX files for
 individual rtflite tables directly.
-Use `python-docx` to concatenate the DOCX outputs when you need final files
-without manual field refreshes, similar to `assemble_rtf`.
+Use `concatenate_docx` (added in rtflite 2.3.0, powered by `python-docx`)
+to concatenate the DOCX outputs when you need final files without manual
+field refreshes, similar to `assemble_rtf`.
 
 ```python exec="on" source="above" session="default"
 from importlib.resources import files
@@ -156,51 +157,24 @@ landscape_doc = rtf.RTFDocument(
 landscape_doc.write_docx("landscape-ae.docx")
 ```
 
-### Helper functions for concatenation
+### Concatenate DOCX files
 
-Start from the first DOCX (avoids a blank leading page), then add a new
-section per file so each starts on its own page with the correct orientation.
-
-```python exec="on" source="above" session="default"
-from copy import deepcopy
-
-from docx import Document
-from docx.enum.section import WD_ORIENT, WD_SECTION
-
-def set_orientation(section, landscape=False):
-    section.orientation = WD_ORIENT.LANDSCAPE if landscape else WD_ORIENT.PORTRAIT
-    w, h = section.page_width, section.page_height
-    if landscape and w < h:
-        section.page_width, section.page_height = h, w
-    if not landscape and w > h:
-        section.page_width, section.page_height = h, w
-
-def append_doc(target, source):
-    """Copy body elements from source into target, skipping section properties."""
-    for element in list(source.element.body):
-        if element.tag.endswith("}sectPr"):
-            continue
-        target.element.body.append(deepcopy(element))
-```
+Use `concatenate_docx` to start from the first DOCX (avoids a blank leading
+page) and add a new section per file so each starts on its own page with the
+correct orientation.
 
 ### Concatenate two portrait DOCX files
 
 ```python exec="on" source="above" session="default" workdir="docs/articles/rtf/"
 portrait_files = [
-    ("portrait-ae-1.docx", False),
-    ("portrait-ae-2.docx", False),
+    "portrait-ae-1.docx",
+    "portrait-ae-2.docx",
 ]
 
-base_path, base_landscape = portrait_files[0]
-combined_portrait = Document(base_path)
-set_orientation(combined_portrait.sections[0], base_landscape)
-
-for path, is_landscape in portrait_files[1:]:
-    combined_portrait.add_section(WD_SECTION.NEW_PAGE)
-    set_orientation(combined_portrait.sections[-1], is_landscape)
-    append_doc(combined_portrait, Document(path))
-
-combined_portrait.save("combined-python-docx.docx")
+concatenate_docx(
+    portrait_files,
+    "combined-python-docx.docx",
+)
 ```
 
 ```python exec="on" session="default" workdir="docs/articles/rtf/"
@@ -217,16 +191,11 @@ files_with_orientation = [
     ("landscape-ae.docx", True),
 ]
 
-base_path, base_landscape = files_with_orientation[0]
-combined = Document(base_path)  # Use the first document as the base to avoid a leading blank page
-set_orientation(combined.sections[0], base_landscape)
-
-for path, is_landscape in files_with_orientation[1:]:
-    combined.add_section(WD_SECTION.NEW_PAGE)  # Explicit page break before the next file
-    set_orientation(combined.sections[-1], is_landscape)
-    append_doc(combined, Document(path))
-
-combined.save("combined-python-docx-mixed.docx")
+concatenate_docx(
+    [path for path, _ in files_with_orientation],
+    "combined-python-docx-mixed.docx",
+    landscape=[is_landscape for _, is_landscape in files_with_orientation],
+)
 ```
 
 ```python exec="on" session="default" workdir="docs/articles/rtf/"
