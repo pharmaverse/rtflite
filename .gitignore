@@ -23,3 +23,6 @@ Rplots.pdf
 # markdown-exec artifacts
 /docs/articles/pdf/
 /docs/articles/images/
+
+# Generated docx artifacts (not bitwise deterministic)
+/docs/articles/rtf/*.docx
