@@ -31,11 +31,17 @@ python3 -m pip install -e .
 
 ### Optional dependencies - DOCX support
 
-Some features in rtflite require additional dependencies. To install rtflite
-with DOCX assembly support:
+Some features in rtflite require additional dependencies.
+To install rtflite with DOCX assembly support:
 
 ```bash
 pip install rtflite[docx]
+```
+
+To add rtflite as a dependency with DOCX support for projects using uv:
+
+```bash
+uv add rtflite --extra docx
 ```
 
 For rtflite developers, sync optional dependencies with:
