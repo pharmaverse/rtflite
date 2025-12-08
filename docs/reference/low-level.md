@@ -2,7 +2,7 @@
 
 Low-level components for configuring defaults and working with assets.
 
-## Configuration and constants
+## Configuration & constants
 
 ::: rtflite.core.RTFConfiguration
     options:
