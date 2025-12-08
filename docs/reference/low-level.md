@@ -1,12 +1,15 @@
-# Low-level API
+# Core utilities
 
-Lower-level components and utilities for advanced users who need fine-grained control.
+Low-level components for configuring defaults and working with assets.
 
-## Configuration
-
-Core configuration and constants.
+## Configuration and constants
 
 ::: rtflite.core.RTFConfiguration
+    options:
+      show_root_heading: false
+      show_source: false
+
+::: rtflite.core.RTFDefaults
     options:
       show_root_heading: false
       show_source: false
@@ -16,9 +19,7 @@ Core configuration and constants.
       show_root_heading: false
       show_source: false
 
-## Figure Utilities
-
-Utilities for reading and processing figures.
+## Figure utilities
 
 ::: rtflite.figure.rtf_read_figure
     options:

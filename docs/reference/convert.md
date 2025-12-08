@@ -1,8 +1,8 @@
-# Convert
+# Format conversion
 
-::: rtflite.convert
+Convert generated RTF files to other document formats using LibreOffice.
+
+::: rtflite.convert.LibreOfficeConverter
     options:
-      members:
-        - LibreOfficeConverter
-      show_root_heading: true
+      show_root_heading: false
       show_source: false

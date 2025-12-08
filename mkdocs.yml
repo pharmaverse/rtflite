@@ -27,17 +27,18 @@ nav:
   - API reference:
     - Core:
       - RTFDocument: reference/rtf-document.md
+      - Encoding pipeline: reference/encoding.md
+      - Configuration & constants: reference/low-level.md
     - Components:
       - Page layout: reference/page-layout.md
       - Tables: reference/tables.md
       - Text & formatting: reference/text-formatting.md
     - Utilities:
       - Format conversion: reference/convert.md
+      - Assembly helpers: reference/assemble.md
       - String width: reference/strwidth.md
     - Advanced:
       - Pagination: reference/pagination.md
-      - Assemble: reference/assemble.md
-      - Low-level API: reference/low-level.md
   - Changelog: changelog.md
   - Coverage: coverage/
   - Contributing: contributing.md

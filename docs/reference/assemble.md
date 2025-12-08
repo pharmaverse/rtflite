@@ -1,10 +1,18 @@
-# Assemble
+# Assembly helpers
 
-::: rtflite.assemble
+Utilities for combining existing RTF or DOCX outputs.
+
+::: rtflite.assemble.assemble_rtf
     options:
-      members:
-        - assemble_rtf
-        - assemble_docx
-        - concatenate_docx
-      show_root_heading: true
+      show_root_heading: false
+      show_source: false
+
+::: rtflite.assemble.assemble_docx
+    options:
+      show_root_heading: false
+      show_source: false
+
+::: rtflite.assemble.concatenate_docx
+    options:
+      show_root_heading: false
       show_source: false

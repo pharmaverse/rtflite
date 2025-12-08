@@ -1,8 +1,8 @@
 # String width
 
-::: rtflite.strwidth
+Measure string widths using the metric-compatible fonts bundled with rtflite.
+
+::: rtflite.strwidth.get_string_width
     options:
-      members:
-        - get_string_width
-      show_root_heading: true
+      show_root_heading: false
       show_source: false
