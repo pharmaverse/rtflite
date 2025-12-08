@@ -1,10 +1,10 @@
-# Page Layout Components
+# Page layout components
 
-Components for defining page structure, headers, footers, and overall document layout.
+Components for defining page structure, headers, footers, and supporting text blocks.
 
 ## RTFPage
 
-Defines page dimensions, margins, and layout settings.
+Defines page dimensions, margins, orientation, and pagination settings.
 
 ::: rtflite.input.RTFPage
     options:
@@ -13,16 +13,16 @@ Defines page dimensions, margins, and layout settings.
 
 ## RTFPageHeader
 
-Creates headers that appear at the top of pages.
+Header text that appears at the top of pages. Supports field codes for page numbering.
 
 ::: rtflite.input.RTFPageHeader
     options:
       show_root_heading: false
       show_source: false
 
-## RTFPageFooter  
+## RTFPageFooter
 
-Creates footers that appear at the bottom of pages.
+Footer text that appears at the bottom of pages.
 
 ::: rtflite.input.RTFPageFooter
     options:
@@ -31,16 +31,25 @@ Creates footers that appear at the bottom of pages.
 
 ## RTFTitle
 
-Defines document and table titles.
+Document and table titles displayed above the main content.
 
 ::: rtflite.input.RTFTitle
     options:
       show_root_heading: false
       show_source: false
 
+## RTFSubline
+
+Subject lines that sit beneath the title and above the table body.
+
+::: rtflite.input.RTFSubline
+    options:
+      show_root_heading: false
+      show_source: false
+
 ## RTFFootnote
 
-Creates footnotes for tables and documents.
+Footnote text displayed after the table content.
 
 ::: rtflite.input.RTFFootnote
     options:
@@ -49,7 +58,7 @@ Creates footnotes for tables and documents.
 
 ## RTFSource
 
-Adds source information to documents.
+Source information displayed at the bottom of the document.
 
 ::: rtflite.input.RTFSource
     options:

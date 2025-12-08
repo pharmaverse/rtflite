@@ -1,10 +1,10 @@
-# Table Components
+# Table components
 
-Components for creating and formatting tables in RTF documents.
+Components for creating table structures, spanning rows, and embedded figures.
 
 ## RTFBody
 
-Defines the main table body with data and formatting options.
+Configures table bodies, including grouping, spanning rows, and metadata-driven pagination.
 
 ::: rtflite.input.RTFBody
     options:
@@ -13,7 +13,7 @@ Defines the main table body with data and formatting options.
 
 ## RTFColumnHeader
 
-Creates column headers for tables.
+Column header definitions. Supports multi-row headers via nested sequences.
 
 ::: rtflite.input.RTFColumnHeader
     options:
@@ -22,16 +22,16 @@ Creates column headers for tables.
 
 ## RTFFigure
 
-Embeds figures and images in RTF documents.
+Embeds figures and images alongside or in place of tabular content.
 
 ::: rtflite.input.RTFFigure
     options:
       show_root_heading: false
       show_source: false
 
-## Row Components
+## Row components
 
-Lower-level components for row construction.
+Lower-level components for constructing rows and cells manually when needed.
 
 ### Row
 

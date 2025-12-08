@@ -1,6 +1,6 @@
 # RTFDocument
 
-The `RTFDocument` class is the main entry point for creating RTF documents with rtflite. It orchestrates all components to generate properly formatted RTF output.
+Main entry point for creating complete RTF documents using the unified encoding pipeline. Use this class to combine pages, headers/footers, titles, tables, and figures into production-ready output.
 
 ::: rtflite.encode.RTFDocument
     options:

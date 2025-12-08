@@ -1,39 +1,39 @@
-# Text & Formatting
+# Text & formatting
 
-Components and utilities for text styling and formatting in RTF documents.
+Base attribute models and utilities for styling text and table cells.
 
-## Text Attributes
+## Text attributes
 
-Base attributes for text formatting.
+Shared text styling options consumed by headers, footers, titles, and table cells.
 
 ::: rtflite.attributes.TextAttributes
     options:
       show_root_heading: false
       show_source: false
 
-## Table Attributes
+## Table attributes
 
-Attributes specific to table formatting.
+Table-specific attributes layered on top of text styling (borders, column widths, pagination flags).
 
 ::: rtflite.attributes.TableAttributes
     options:
       show_root_heading: false
       show_source: false
 
-## Text Content
+## Broadcast value
 
-Component for handling text content in cells.
+Utility for broadcasting scalar or vector values across table dimensions.
 
-::: rtflite.row.TextContent
+::: rtflite.attributes.BroadcastValue
     options:
       show_root_heading: false
       show_source: false
 
-## Broadcast Value
+## Text content
 
-Utility for broadcasting values across rows and columns.
+Low-level text container used inside custom rows and cells.
 
-::: rtflite.attributes.BroadcastValue
+::: rtflite.row.TextContent
     options:
       show_root_heading: false
       show_source: false
