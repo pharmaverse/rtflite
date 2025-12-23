@@ -1,5 +1,12 @@
 # Changelog
 
+## rtflite 2.3.1
+
+### New features
+
+- Added `executable_path` parameter to write_docx() method.
+- Added `/tmp/soffice` and `/tmp/libreoffice` paths for Linux.
+
 ## rtflite 2.3.0
 
 ### New features

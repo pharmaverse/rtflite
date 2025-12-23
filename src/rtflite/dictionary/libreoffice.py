@@ -7,6 +7,8 @@ DEFAULT_PATHS = {
         "/Applications/LibreOffice.app/Contents/MacOS/soffice",
     ],
     "Linux": [
+        "/tmp/soffice",
+        "/tmp/libreoffice",
         "/usr/bin/soffice",
         "/usr/bin/libreoffice",
         "/snap/bin/libreoffice",
