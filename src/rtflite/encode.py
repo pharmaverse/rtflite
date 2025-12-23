@@ -446,7 +446,7 @@ class RTFDocument(BaseModel):
         rtf_code = self.rtf_encode()
         target_path.write_text(rtf_code, encoding="utf-8")
 
-    def write_docx(self, file_path: str | Path) -> None:
+    def write_docx(self, file_path: str | Path, executable_path: str | None = None) -> None:
         """Write the document as a DOCX file.
 
         Writes the document to a temporary RTF file first, and then converts
@@ -476,7 +476,7 @@ class RTFDocument(BaseModel):
             rtf_code = self.rtf_encode()
             rtf_path.write_text(rtf_code, encoding="utf-8")
 
-            converter = LibreOfficeConverter()
+            converter = LibreOfficeConverter(executable_path = executable_path)
             with tempfile.TemporaryDirectory() as convert_tmpdir:
                 docx_path = converter.convert(
                     input_files=rtf_path,
