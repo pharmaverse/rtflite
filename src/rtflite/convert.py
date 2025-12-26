@@ -1,6 +1,7 @@
 import os
 import platform
 import re
+import shutil
 import subprocess
 from collections.abc import Sequence
 from pathlib import Path
@@ -17,7 +18,7 @@ class LibreOfficeConverter:
     using LibreOffice in headless mode.
 
     Requirements:
-        - LibreOffice 7.3 or later must be installed.
+        - LibreOffice 7.1 or later must be installed.
         - Automatically finds LibreOffice in standard installation paths.
         - For custom installations, provide `executable_path` parameter.
 
@@ -26,39 +27,71 @@ class LibreOfficeConverter:
         This makes it suitable for server environments and automated workflows.
     """
 
-    def __init__(self, executable_path: str | None = None):
+    def __init__(self, executable_path: str | Path | None = None):
         """Initialize converter with optional executable path.
 
         Args:
-            executable_path: Path to LibreOffice executable. If None, searches
-                standard installation locations for each platform.
+            executable_path: Path (or executable name) to LibreOffice. If None,
+                searches standard installation locations for each platform.
 
         Raises:
             FileNotFoundError: If LibreOffice executable cannot be found.
             ValueError: If LibreOffice version is below minimum requirement.
         """
-        self.executable_path = executable_path or self._find_executable()
-        if not self.executable_path:
-            raise FileNotFoundError("Can't find LibreOffice executable.")
+        self.executable_path = self._resolve_executable_path(executable_path)
 
         self._verify_version()
 
-    def _find_executable(self) -> str | None:
+    def _resolve_executable_path(self, executable_path: str | Path | None) -> Path:
+        """Resolve the LibreOffice executable path."""
+        if executable_path is None:
+            found_executable = self._find_executable()
+            if found_executable is None:
+                raise FileNotFoundError("Can't find LibreOffice executable.")
+            return found_executable
+
+        executable = os.fspath(executable_path)
+        expanded = os.path.expanduser(executable)
+        candidate = Path(expanded)
+        looks_like_path = (
+            candidate.is_absolute()
+            or os.sep in expanded
+            or (os.altsep is not None and os.altsep in expanded)
+        )
+        if looks_like_path:
+            if candidate.is_file():
+                return candidate
+            raise FileNotFoundError(
+                f"LibreOffice executable not found at: {candidate}."
+            )
+
+        resolved_executable = shutil.which(executable)
+        if resolved_executable is None:
+            raise FileNotFoundError(f"Can't find LibreOffice executable: {executable}.")
+        return Path(resolved_executable)
+
+    def _find_executable(self) -> Path | None:
         """Find LibreOffice executable in default locations."""
+        for name in ("soffice", "libreoffice"):
+            resolved = shutil.which(name)
+            if resolved is not None:
+                return Path(resolved)
+
         system = platform.system()
         if system not in DEFAULT_PATHS:
             raise RuntimeError(f"Unsupported operating system: {system}.")
 
         for path in DEFAULT_PATHS[system]:
-            if os.path.isfile(path):
-                return path
+            candidate = Path(path)
+            if candidate.is_file():
+                return candidate
         return None
 
     def _verify_version(self):
         """Verify LibreOffice version meets minimum requirement."""
         try:
             result = subprocess.run(
-                [self.executable_path, "--version"],
+                [str(self.executable_path), "--version"],
                 capture_output=True,
                 text=True,
                 check=True,
@@ -178,10 +211,8 @@ class LibreOfficeConverter:
                 "Use overwrite=True to force."
             )
 
-        # executable_path is guaranteed to be non-None after __init__
-        assert self.executable_path is not None
         cmd = [
-            self.executable_path,
+            str(self.executable_path),
             "--invisible",
             "--headless",
             "--nologo",
