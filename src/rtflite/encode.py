@@ -505,8 +505,9 @@ class RTFDocument(BaseModel):
                 )
                 if not isinstance(converted, Path):
                     raise TypeError(
-                        "LibreOffice conversion returned multiple outputs for a single "
-                        "input file."
+                        "LibreOffice conversion returned an unexpected output for a "
+                        "single input file; expected `Path`, got object of type "
+                        f"{type(converted)!r} with value {converted!r}."
                     )
                 docx_path = converted
                 shutil.move(str(docx_path), target_path)
@@ -568,8 +569,9 @@ class RTFDocument(BaseModel):
                 )
                 if not isinstance(converted, Path):
                     raise TypeError(
-                        "LibreOffice conversion returned multiple outputs for a single "
-                        "input file."
+                        "LibreOffice conversion returned an unexpected output for a "
+                        "single input file; expected `Path`, got object of type "
+                        f"{type(converted)!r} with value {converted!r}."
                     )
                 html_path = converted
                 resources_dir = html_path.with_name(f"{html_path.name}_files")
@@ -631,8 +633,9 @@ class RTFDocument(BaseModel):
                 )
                 if not isinstance(converted, Path):
                     raise TypeError(
-                        "LibreOffice conversion returned multiple outputs for a single "
-                        "input file."
+                        "LibreOffice conversion returned an unexpected output for a "
+                        "single input file; expected `Path`, got object of type "
+                        f"{type(converted)!r} with value {converted!r}."
                     )
                 pdf_path = converted
                 shutil.move(str(pdf_path), target_path)
