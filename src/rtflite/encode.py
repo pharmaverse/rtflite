@@ -466,7 +466,10 @@ class RTFDocument(BaseModel):
             converter: Optional LibreOffice converter instance.
                 Pass a configured instance (for example with a custom
                 `executable_path`) to control how LibreOffice is invoked and to
-                reuse the same LibreOffice process across multiple conversions.
+                avoid re-initializing and re-verifying the executable path across
+                multiple conversions. Note that each call to ``convert()`` still
+                starts a new LibreOffice process in headless mode; the process is
+                not kept alive between conversions.
 
         Examples:
             ```python
