@@ -1,5 +1,19 @@
 # Changelog
 
+## rtflite 2.5.0
+
+### New features
+
+- Added `RTFDocument.write_html` and `RTFDocument.write_pdf` for exporting RTF
+  documents to HTML and PDF via LibreOffice, matching the `write_docx`
+  conversion workflow.
+
+### Testing
+
+- Added parameterized tests covering DOCX, HTML, and PDF exports, with a
+  new `pdf` extra (`pypdf`) for PDF text extraction. Improved LibreOffice
+  availability checks to skip integration tests when conversion is not working.
+
 ## rtflite 2.4.0
 
 ### Breaking changes
