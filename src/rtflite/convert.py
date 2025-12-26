@@ -53,10 +53,11 @@ class LibreOfficeConverter:
         executable = os.fspath(executable_path)
         expanded = os.path.expanduser(executable)
         candidate = Path(expanded)
+        candidate_str = str(candidate)
         looks_like_path = (
             candidate.is_absolute()
-            or os.sep in expanded
-            or (os.altsep is not None and os.altsep in expanded)
+            or os.sep in candidate_str
+            or (os.altsep is not None and os.altsep in candidate_str)
         )
         if looks_like_path:
             if candidate.is_file():
