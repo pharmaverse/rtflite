@@ -497,12 +497,144 @@ class RTFDocument(BaseModel):
             rtf_path.write_text(rtf_code, encoding="utf-8")
 
             with tempfile.TemporaryDirectory() as convert_tmpdir:
-                docx_path = converter.convert(
+                converted = converter.convert(
                     input_files=rtf_path,
                     output_dir=Path(convert_tmpdir),
                     format="docx",
                     overwrite=True,
                 )
+                if not isinstance(converted, Path):
+                    raise TypeError(
+                        "LibreOffice conversion returned multiple outputs for a single "
+                        "input file."
+                    )
+                docx_path = converted
                 shutil.move(str(docx_path), target_path)
+
+        print(target_path)
+
+    def write_html(
+        self,
+        file_path: str | Path,
+        *,
+        converter: LibreOfficeConverter | None = None,
+    ) -> None:
+        """Write the document as an HTML file.
+
+        Writes the document to a temporary RTF file first, and then converts
+        it to HTML with LibreOffice. Temporary directories are used for
+        all intermediate files to avoid placing artifacts alongside the
+        requested output path.
+
+        Args:
+            file_path: Destination path for the HTML file.
+                Accepts string or Path input. Can be absolute or relative.
+                Directories are created if they do not already exist.
+            converter: Optional LibreOffice converter instance.
+                Pass a configured instance (for example with a custom
+                `executable_path`) to control how LibreOffice is invoked and to
+                avoid re-initializing and re-verifying the executable path across
+                multiple conversions. Note that each call to ``convert()`` still
+                starts a new LibreOffice process in headless mode; the process is
+                not kept alive between conversions.
+
+        Examples:
+            ```python
+            doc = RTFDocument(df=data, rtf_title=RTFTitle(text="Report"))
+            doc.write_html("output/report.html")
+            ```
+
+        Note:
+            LibreOffice may create a companion directory (for example
+            `report.html_files`) for embedded resources. When present, it is moved
+            alongside the requested output path.
+        """
+        target_path = Path(file_path).expanduser()
+        target_path.parent.mkdir(parents=True, exist_ok=True)
+
+        if converter is None:
+            converter = LibreOfficeConverter()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rtf_path = Path(tmpdir) / f"{target_path.stem}.rtf"
+            rtf_code = self.rtf_encode()
+            rtf_path.write_text(rtf_code, encoding="utf-8")
+
+            with tempfile.TemporaryDirectory() as convert_tmpdir:
+                converted = converter.convert(
+                    input_files=rtf_path,
+                    output_dir=Path(convert_tmpdir),
+                    format="html",
+                    overwrite=True,
+                )
+                if not isinstance(converted, Path):
+                    raise TypeError(
+                        "LibreOffice conversion returned multiple outputs for a single "
+                        "input file."
+                    )
+                html_path = converted
+                resources_dir = html_path.with_name(f"{html_path.name}_files")
+                shutil.move(str(html_path), target_path)
+                if resources_dir.is_dir():
+                    shutil.move(
+                        str(resources_dir), target_path.parent / resources_dir.name
+                    )
+
+        print(target_path)
+
+    def write_pdf(
+        self,
+        file_path: str | Path,
+        *,
+        converter: LibreOfficeConverter | None = None,
+    ) -> None:
+        """Write the document as a PDF file.
+
+        Writes the document to a temporary RTF file first, and then converts
+        it to PDF with LibreOffice. Temporary directories are used for
+        all intermediate files to avoid placing artifacts alongside the
+        requested output path.
+
+        Args:
+            file_path: Destination path for the PDF file.
+                Accepts string or Path input. Can be absolute or relative.
+                Directories are created if they do not already exist.
+            converter: Optional LibreOffice converter instance.
+                Pass a configured instance (for example with a custom
+                `executable_path`) to control how LibreOffice is invoked and to
+                avoid re-initializing and re-verifying the executable path across
+                multiple conversions. Note that each call to ``convert()`` still
+                starts a new LibreOffice process in headless mode; the process is
+                not kept alive between conversions.
+
+        Examples:
+            ```python
+            doc = RTFDocument(df=data, rtf_title=RTFTitle(text="Report"))
+            doc.write_pdf("output/report.pdf")
+            ```
+        """
+        target_path = Path(file_path).expanduser()
+        target_path.parent.mkdir(parents=True, exist_ok=True)
+
+        if converter is None:
+            converter = LibreOfficeConverter()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rtf_path = Path(tmpdir) / f"{target_path.stem}.rtf"
+            rtf_code = self.rtf_encode()
+            rtf_path.write_text(rtf_code, encoding="utf-8")
+
+            with tempfile.TemporaryDirectory() as convert_tmpdir:
+                converted = converter.convert(
+                    input_files=rtf_path,
+                    output_dir=Path(convert_tmpdir),
+                    format="pdf",
+                    overwrite=True,
+                )
+                if not isinstance(converted, Path):
+                    raise TypeError(
+                        "LibreOffice conversion returned multiple outputs for a single "
+                        "input file."
+                    )
+                pdf_path = converted
+                shutil.move(str(pdf_path), target_path)
 
         print(target_path)
