@@ -447,7 +447,10 @@ class RTFDocument(BaseModel):
         target_path.write_text(rtf_code, encoding="utf-8")
 
     def write_docx(
-        self, file_path: str | Path, executable_path: str | None = None
+        self,
+        file_path: str | Path,
+        *,
+        converter: LibreOfficeConverter | None = None,
     ) -> None:
         """Write the document as a DOCX file.
 
@@ -460,13 +463,21 @@ class RTFDocument(BaseModel):
             file_path: Destination path for the DOCX file.
                 Accepts string or Path input. Can be absolute or relative.
                 Directories are created if they do not already exist.
-            executable_path: Optional path to the LibreOffice executable.
-                If not provided, the default system path will be used.
+            converter: Optional LibreOffice converter instance.
+                Pass a configured instance (for example with a custom
+                `executable_path`) to control how LibreOffice is invoked and to
+                reuse the same LibreOffice process across multiple conversions.
 
         Examples:
             ```python
             doc = RTFDocument(df=data, rtf_title=RTFTitle(text="Report"))
             doc.write_docx("output/report.docx")
+            ```
+
+            Custom LibreOffice executable:
+            ```python
+            converter = LibreOfficeConverter(executable_path="/custom/path/to/soffice")
+            doc.write_docx("output/report.docx", converter=converter)
             ```
 
         Note:
@@ -475,12 +486,13 @@ class RTFDocument(BaseModel):
         target_path = Path(file_path).expanduser()
         target_path.parent.mkdir(parents=True, exist_ok=True)
 
+        if converter is None:
+            converter = LibreOfficeConverter()
         with tempfile.TemporaryDirectory() as tmpdir:
             rtf_path = Path(tmpdir) / f"{target_path.stem}.rtf"
             rtf_code = self.rtf_encode()
             rtf_path.write_text(rtf_code, encoding="utf-8")
 
-            converter = LibreOfficeConverter(executable_path=executable_path)
             with tempfile.TemporaryDirectory() as convert_tmpdir:
                 docx_path = converter.convert(
                     input_files=rtf_path,
