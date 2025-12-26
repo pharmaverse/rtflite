@@ -44,10 +44,10 @@ To add rtflite as a dependency with DOCX support for projects using uv:
 uv add rtflite --extra docx
 ```
 
-For rtflite developers, sync optional dependencies with:
+For rtflite developers, sync all optional dependencies with:
 
 ```bash
-uv sync --extra docx
+uv sync --all-extras
 ```
 
 ### Optional dependencies - LibreOffice
