@@ -6,13 +6,14 @@
 
 - Added `RTFDocument.write_html` and `RTFDocument.write_pdf` for exporting RTF
   documents to HTML and PDF via LibreOffice, matching the `write_docx`
-  conversion workflow.
+  conversion workflow (#176).
 
 ### Testing
 
 - Added parameterized tests covering DOCX, HTML, and PDF exports, with a
-  new `pdf` extra (`pypdf`) for PDF text extraction. Improved LibreOffice
-  availability checks to skip integration tests when conversion is not working.
+  new `pdf` extra (`pypdf`) for PDF text extraction.
+  Improved LibreOffice availability checks to skip integration tests
+  when conversion is not working (#176).
 
 ## rtflite 2.4.0
 
@@ -35,10 +36,10 @@
 
 ## rtflite 2.3.1
 
-### New features
+### Improvements
 
-- Added `executable_path` parameter to write_docx() method.
-- Added `/tmp/soffice` and `/tmp/libreoffice` paths for Linux.
+- Added `executable_path` parameter to `write_docx()` method (#170).
+- Added `/tmp/soffice` and `/tmp/libreoffice` paths for Linux (#170).
 
 ## rtflite 2.3.0
 
