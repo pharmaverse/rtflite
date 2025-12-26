@@ -1,5 +1,24 @@
 # Changelog
 
+## rtflite 2.4.0
+
+### Breaking changes
+
+- Removed the `executable_path` argument from `RTFDocument.write_docx`; pass
+  `converter=LibreOfficeConverter(executable_path=...)` instead (#172).
+
+### Improvements
+
+- `RTFDocument.write_docx` now accepts a `converter=` instance to configure
+  LibreOffice invocation (including custom executable paths) and to enable
+  reusing a converter across multiple conversions (#172).
+
+### Converters
+
+- `LibreOfficeConverter(executable_path=...)` now accepts `Path` objects
+  and resolves executable names via `PATH` when given
+  (for example, `"soffice"`) (#172).
+
 ## rtflite 2.3.1
 
 ### New features

@@ -1,5 +1,5 @@
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import ANY, MagicMock, patch
 
 import polars as pl
 import pytest
@@ -20,28 +20,52 @@ def sample_document() -> RTFDocument:
 
 
 @patch("rtflite.encode.LibreOfficeConverter")
-def test_write_docx_passes_executable_path(
+def test_write_docx_uses_provided_converter(
     mock_converter_cls, sample_document, tmp_path
 ):
-    """Verify that executable_path is correctly passed to LibreOfficeConverter."""
-    # Setup mock
+    """Verify that `write_docx` uses a provided converter instance."""
+    converter = MagicMock()
+    converter.convert.return_value = Path("dummy.docx")
+
+    output_path = tmp_path / "output.docx"
+
+    with patch("rtflite.encode.shutil.move"):
+        sample_document.write_docx(output_path, converter=converter)
+
+    mock_converter_cls.assert_not_called()
+    converter.convert.assert_called_once_with(
+        input_files=ANY,
+        output_dir=ANY,
+        format="docx",
+        overwrite=True,
+    )
+    kwargs = converter.convert.call_args.kwargs
+    assert isinstance(kwargs["output_dir"], Path)
+    assert isinstance(kwargs["input_files"], Path)
+    assert kwargs["input_files"].name == f"{output_path.stem}.rtf"
+
+
+@patch("rtflite.encode.LibreOfficeConverter")
+def test_write_docx_creates_default_converter(
+    mock_converter_cls, sample_document, tmp_path
+):
+    """Verify that `write_docx` creates a default converter when omitted."""
     mock_instance = mock_converter_cls.return_value
     mock_instance.convert.return_value = Path("dummy.docx")
 
-    # Create dummy docx file that would be moved
     output_path = tmp_path / "output.docx"
 
-    # We need to mock shutil.move as well since the converter is mocked
-    # and won't actually create files
-    with patch("shutil.move"):
-        sample_document.write_docx(
-            output_path, executable_path="/custom/path/to/soffice"
-        )
+    with patch("rtflite.encode.shutil.move"):
+        sample_document.write_docx(output_path)
 
-    # Verify LibreOfficeConverter was initialized with the correct path
-    mock_converter_cls.assert_called_once_with(
-        executable_path="/custom/path/to/soffice"
+    mock_converter_cls.assert_called_once_with()
+    mock_instance.convert.assert_called_once_with(
+        input_files=ANY,
+        output_dir=ANY,
+        format="docx",
+        overwrite=True,
     )
-
-    # Verify convert was called
-    mock_instance.convert.assert_called_once()
+    kwargs = mock_instance.convert.call_args.kwargs
+    assert isinstance(kwargs["output_dir"], Path)
+    assert isinstance(kwargs["input_files"], Path)
+    assert kwargs["input_files"].name == f"{output_path.stem}.rtf"
