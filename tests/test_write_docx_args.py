@@ -1,5 +1,5 @@
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import ANY, MagicMock, patch
 
 import polars as pl
 import pytest
@@ -33,7 +33,16 @@ def test_write_docx_uses_provided_converter(
         sample_document.write_docx(output_path, converter=converter)
 
     mock_converter_cls.assert_not_called()
-    converter.convert.assert_called_once()
+    converter.convert.assert_called_once_with(
+        input_files=ANY,
+        output_dir=ANY,
+        format="docx",
+        overwrite=True,
+    )
+    kwargs = converter.convert.call_args.kwargs
+    assert isinstance(kwargs["output_dir"], Path)
+    assert isinstance(kwargs["input_files"], Path)
+    assert kwargs["input_files"].name == f"{output_path.stem}.rtf"
 
 
 @patch("rtflite.encode.LibreOfficeConverter")
@@ -50,4 +59,13 @@ def test_write_docx_creates_default_converter(
         sample_document.write_docx(output_path)
 
     mock_converter_cls.assert_called_once_with()
-    mock_instance.convert.assert_called_once()
+    mock_instance.convert.assert_called_once_with(
+        input_files=ANY,
+        output_dir=ANY,
+        format="docx",
+        overwrite=True,
+    )
+    kwargs = mock_instance.convert.call_args.kwargs
+    assert isinstance(kwargs["output_dir"], Path)
+    assert isinstance(kwargs["input_files"], Path)
+    assert kwargs["input_files"].name == f"{output_path.stem}.rtf"
