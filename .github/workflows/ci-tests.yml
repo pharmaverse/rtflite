@@ -30,7 +30,7 @@ jobs:
           pip install -e '.[all]'
       - name: Test with pytest
         run: |
-          pip install pytest pytest-cov
+          pip install pytest pytest-cov pytest-r-snapshot
           pytest --cov=rtflite --cov-report=xml
 
       # - name: Upload coverage reports to Codecov
@@ -52,5 +52,5 @@ jobs:
           pip install -e '.[all]'
       - name: Test with pytest
         run: |
-          pip install pytest pytest-cov
+          pip install pytest pytest-cov pytest-r-snapshot
           pytest --cov=rtflite --cov-report=xml
