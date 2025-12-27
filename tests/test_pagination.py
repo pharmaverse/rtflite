@@ -2,10 +2,7 @@ import polars as pl
 
 import rtflite as rtf
 
-from .utils import ROutputReader
-from .utils_snapshot import assert_rtf_equals_semantic
-
-r_output = ROutputReader("test_pagination")
+from .utils_snapshot import normalize_rtf_semantic
 
 
 class TestPaginationData:
@@ -27,7 +24,7 @@ class TestPaginationData:
         return pl.DataFrame({"Col1": ["Row1", "Row2"], "Col2": ["A", "B"]})
 
 
-def test_pagination_basic_with_headers():
+def test_pagination_basic_with_headers(r_snapshot):
     """Test basic pagination with column headers, no footnote/source."""
     df = TestPaginationData.df_6_rows()
 
@@ -64,10 +61,12 @@ def test_pagination_basic_with_headers():
     # ```
 
     rtf_output = doc.rtf_encode()
-    expected = r_output.read("basic_with_headers")
 
     # Use exact assertion with semantic normalization (handles font tables,
     # page breaks, border styles, etc.)
-    assert_rtf_equals_semantic(
-        rtf_output, expected, "test_pagination_basic_with_headers"
+    r_snapshot.assert_match_text(
+        rtf_output,
+        name="basic_with_headers",
+        ext=".rtf",
+        normalize=normalize_rtf_semantic,
     )

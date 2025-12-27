@@ -2,10 +2,7 @@ import pytest
 
 from rtflite.row import Border, Cell, Row, TextContent, Utils
 
-from .utils import ROutputReader
-from .utils_snapshot import assert_rtf_equals_semantic
-
-r_output = ROutputReader("test_row")
+from .utils_snapshot import normalize_rtf_semantic
 
 
 # Test Utils class
@@ -35,7 +32,7 @@ def test_get_color_index():
 
 
 # Test Text class
-def test_text_initialization():
+def test_text_initialization(r_snapshot):
     text = TextContent(text="title")
 
     # ```{r, rtf_cell}
@@ -48,8 +45,11 @@ def test_text_initialization():
     # )[1, 1] |> cat(sep = "\n")
     # ```
     # Use semantic comparison for RTF content
-    assert_rtf_equals_semantic(
-        text._as_rtf(method="cell"), r_output.read("rtf_cell"), "test_text_cell_format"
+    r_snapshot.assert_match_text(
+        text._as_rtf(method="cell"),
+        name="rtf_cell",
+        ext=".rtf",
+        normalize=normalize_rtf_semantic,
     )
     # ```{r, rtf_paragraph}
     # r2rtf:::rtf_paragraph(
@@ -61,10 +61,11 @@ def test_text_initialization():
     # )[1, 1] |> cat(sep = "\n")
     # ```
     # Use semantic comparison for RTF content
-    assert_rtf_equals_semantic(
+    r_snapshot.assert_match_text(
         text._as_rtf(method="paragraph"),
-        r_output.read("rtf_paragraph"),
-        "test_text_paragraph_format",
+        name="rtf_paragraph",
+        ext=".rtf",
+        normalize=normalize_rtf_semantic,
     )
 
 
@@ -82,7 +83,7 @@ def test_cell_initialization():
 
 
 # Test default cell RTF string
-def test_row_initialization():
+def test_row_initialization(r_snapshot):
     # Create a simple row with one cell
     row = Row(
         row_cells=[
@@ -112,8 +113,11 @@ def test_row_initialization():
     # r2rtf:::rtf_encode_table(tbl, verbose = TRUE)$colheader |> cat(sep = "\n")
     # ```
     # Use semantic comparison for complex RTF structures
-    assert_rtf_equals_semantic(
-        "\n".join(row._as_rtf()), r_output.read("rtf_row"), "test_row_rtf_generation"
+    r_snapshot.assert_match_text(
+        "\n".join(row._as_rtf()),
+        name="rtf_row",
+        ext=".rtf",
+        normalize=normalize_rtf_semantic,
     )
 
 

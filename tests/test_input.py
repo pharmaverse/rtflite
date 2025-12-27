@@ -11,13 +11,11 @@ from rtflite.input import (
     TextAttributes,
 )
 
-from .utils import ROutputReader, TestData
-from .utils_snapshot import assert_rtf_equals_semantic
-
-r_output = ROutputReader("test_input")
+from .utils import TestData
+from .utils_snapshot import normalize_rtf_semantic
 
 
-def test_rtf_encode_minimal():
+def test_rtf_encode_minimal(r_snapshot):
     # ```{r, rtf_minimal}
     # tbl <- data.frame(
     #   `Column1` = c("Data 1.1", "Data 2.1"),
@@ -42,11 +40,15 @@ def test_rtf_encode_minimal():
     )
 
     rtf_output = rtf_doc.rtf_encode()
-    expected = r_output.read("rtf_minimal")
 
     # Use semantic RTF comparison (handles font tables, borders, whitespace,
     # and page breaks)
-    assert_rtf_equals_semantic(rtf_output, expected, "test_rtf_encode_minimal")
+    r_snapshot.assert_match_text(
+        rtf_output,
+        name="rtf_minimal",
+        ext=".rtf",
+        normalize=normalize_rtf_semantic,
+    )
 
 
 def test_rtf_encode_with_title():
@@ -171,6 +173,70 @@ def test_text_attributes_encode():
         attrs._encode_text(text, method="invalid")
 
 
+# ```{r, footnote_as_table_true}
+# library(r2rtf)
+# tbl <- data.frame(
+#   Column1 = c("Data 1.1", "Data 2.1"),
+#   Column2 = c("Data 1.2", "Data 2.2")
+# )
+#
+# tbl |>
+#   rtf_page() |>
+#   rtf_body() |>
+#   rtf_footnote("Footnote as table", as_table = TRUE) |>
+#   rtf_encode() |>
+#   write_rtf(tempfile()) |>
+#   readLines() |>
+#   cat(sep = "\n")
+# ```
+# ```{r, footnote_as_table_false}
+# library(r2rtf)
+# tbl <- data.frame(
+#   Column1 = c("Data 1.1", "Data 2.1"),
+#   Column2 = c("Data 1.2", "Data 2.2")
+# )
+#
+# tbl |>
+#   rtf_page() |>
+#   rtf_body() |>
+#   rtf_footnote("Footnote as plain text", as_table = FALSE) |>
+#   rtf_encode() |>
+#   write_rtf(tempfile()) |>
+#   readLines() |>
+#   cat(sep = "\n")
+# ```
+# ```{r, source_as_table_true}
+# library(r2rtf)
+# tbl <- data.frame(
+#   Column1 = c("Data 1.1", "Data 2.1"),
+#   Column2 = c("Data 1.2", "Data 2.2")
+# )
+#
+# tbl |>
+#   rtf_page() |>
+#   rtf_body() |>
+#   rtf_source("Source as table", as_table = TRUE) |>
+#   rtf_encode() |>
+#   write_rtf(tempfile()) |>
+#   readLines() |>
+#   cat(sep = "\n")
+# ```
+# ```{r, source_as_table_false}
+# library(r2rtf)
+# tbl <- data.frame(
+#   Column1 = c("Data 1.1", "Data 2.1"),
+#   Column2 = c("Data 1.2", "Data 2.2")
+# )
+#
+# tbl |>
+#   rtf_page() |>
+#   rtf_body() |>
+#   rtf_source("Source as plain text", as_table = FALSE) |>
+#   rtf_encode() |>
+#   write_rtf(tempfile()) |>
+#   readLines() |>
+#   cat(sep = "\n")
+# ```
 @pytest.mark.parametrize(
     "component_type,as_table,text_content,fixture_name",
     [
@@ -181,14 +247,14 @@ def test_text_attributes_encode():
     ],
 )
 def test_rtf_footnote_source_as_table(
-    component_type, as_table, text_content, fixture_name
+    r_snapshot, component_type, as_table, text_content, fixture_name
 ):
     """Test RTFFootnote and RTFSource with as_table parameter.
 
     This parameterized test consolidates 4 similar tests into one,
     testing both footnote and source components with as_table True/False.
 
-    R code fixtures are generated for each combination:
+    R snapshot chunks are defined for each combination:
     - footnote with as_table=TRUE
     - footnote with as_table=FALSE
     - source with as_table=TRUE
@@ -214,11 +280,14 @@ def test_rtf_footnote_source_as_table(
         )
 
     rtf_output = doc.rtf_encode()
-    expected = r_output.read(fixture_name)
 
     # Use semantic RTF comparison
-    test_name = f"test_rtf_{component_type}_as_table_{as_table}"
-    assert_rtf_equals_semantic(rtf_output, expected, test_name)
+    r_snapshot.assert_match_text(
+        rtf_output,
+        name=fixture_name,
+        ext=".rtf",
+        normalize=normalize_rtf_semantic,
+    )
 
 
 def test_rtf_footnote_as_table_boolean_storage():

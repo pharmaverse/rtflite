@@ -296,6 +296,24 @@ def normalize_column_widths(rtf_content: str) -> str:
     return re.sub(r"\\cellx(\d+)", normalize_cellx, rtf_content)
 
 
+def normalize_rtf_semantic(rtf_text: str) -> str:
+    """Normalize RTF output for semantic snapshot comparisons.
+
+    This handles:
+    - Font table removal
+    - Page break and page setup ordering differences
+    - Whitespace normalization
+    - Border style semantic equivalence
+    - Hyphenation normalization
+    - Column width rounding differences
+    """
+    normalized = normalize_rtf_structure(rtf_text)
+    normalized = normalize_rtf_borders(normalized)
+    normalized = normalize_rtf_hyphenation(normalized)
+    normalized = normalize_column_widths(normalized)
+    return normalized
+
+
 def assert_rtf_equals_semantic(rtf_output: str, expected: str, test_name: str = ""):
     """Compare RTF outputs after semantic normalization.
 
@@ -312,16 +330,8 @@ def assert_rtf_equals_semantic(rtf_output: str, expected: str, test_name: str = 
         expected: Expected RTF output from r2rtf
         test_name: Optional test name for better error messages
     """
-    # Apply all normalizations
-    rtf_normalized = normalize_rtf_structure(rtf_output)
-    rtf_normalized = normalize_rtf_borders(rtf_normalized)
-    rtf_normalized = normalize_rtf_hyphenation(rtf_normalized)
-    rtf_normalized = normalize_column_widths(rtf_normalized)
-
-    expected_normalized = normalize_rtf_structure(expected)
-    expected_normalized = normalize_rtf_borders(expected_normalized)
-    expected_normalized = normalize_rtf_hyphenation(expected_normalized)
-    expected_normalized = normalize_column_widths(expected_normalized)
+    rtf_normalized = normalize_rtf_semantic(rtf_output)
+    expected_normalized = normalize_rtf_semantic(expected)
 
     # Add test name to assertion message if provided
     message = "RTF content should match after semantic normalization"
