@@ -4,16 +4,13 @@ import polars as pl
 
 import rtflite as rtf
 
-from .utils import ROutputReader
-from .utils_snapshot import assert_rtf_equals_semantic
-
-r_output = ROutputReader("test_single_page_rtf")
+from .utils_snapshot import normalize_rtf_semantic
 
 
 class TestSinglePageColumnHeaders:
     """Test column header variations for single-page documents."""
 
-    def test_multi_level_header_with_borders(self):
+    def test_multi_level_header_with_borders(self, r_snapshot):
         """Test multi-level column headers with custom borders."""
         # ```{r, multi_level_header_borders}
         # library(r2rtf)
@@ -69,12 +66,14 @@ class TestSinglePageColumnHeaders:
         )
 
         rtf_output = doc.rtf_encode()
-        expected = r_output.read("multi_level_header_borders")
-        assert_rtf_equals_semantic(
-            rtf_output, expected, "test_multi_level_header_borders"
+        r_snapshot.assert_match_text(
+            rtf_output,
+            name="multi_level_header_borders",
+            ext=".rtf",
+            normalize=normalize_rtf_semantic,
         )
 
-    def test_header_text_justification(self):
+    def test_header_text_justification(self, r_snapshot):
         """Test column headers with different text justifications."""
         # ```{r, header_text_justification}
         # library(r2rtf)
@@ -123,12 +122,14 @@ class TestSinglePageColumnHeaders:
         )
 
         rtf_output = doc.rtf_encode()
-        expected = r_output.read("header_text_justification")
-        assert_rtf_equals_semantic(
-            rtf_output, expected, "test_header_text_justification"
+        r_snapshot.assert_match_text(
+            rtf_output,
+            name="header_text_justification",
+            ext=".rtf",
+            normalize=normalize_rtf_semantic,
         )
 
-    def test_header_font_formatting(self):
+    def test_header_font_formatting(self, r_snapshot):
         """Test column headers with font formatting."""
         # ```{r, header_font_formatting}
         # library(r2rtf)
@@ -170,14 +171,18 @@ class TestSinglePageColumnHeaders:
         )
 
         rtf_output = doc.rtf_encode()
-        expected = r_output.read("header_font_formatting")
-        assert_rtf_equals_semantic(rtf_output, expected, "test_header_font_formatting")
+        r_snapshot.assert_match_text(
+            rtf_output,
+            name="header_font_formatting",
+            ext=".rtf",
+            normalize=normalize_rtf_semantic,
+        )
 
 
 class TestSinglePageBody:
     """Test body formatting variations for single-page documents."""
 
-    def test_body_border_combinations(self):
+    def test_body_border_combinations(self, r_snapshot):
         """Test body with various border combinations."""
         # ```{r, body_border_combinations}
         # library(r2rtf)
@@ -226,12 +231,14 @@ class TestSinglePageBody:
         )
 
         rtf_output = doc.rtf_encode()
-        expected = r_output.read("body_border_combinations")
-        assert_rtf_equals_semantic(
-            rtf_output, expected, "test_body_border_combinations"
+        r_snapshot.assert_match_text(
+            rtf_output,
+            name="body_border_combinations",
+            ext=".rtf",
+            normalize=normalize_rtf_semantic,
         )
 
-    def test_body_cell_height_variations(self):
+    def test_body_cell_height_variations(self, r_snapshot):
         """Test body with different cell heights."""
         # ```{r, body_cell_height_variations}
         # library(r2rtf)
@@ -276,12 +283,14 @@ class TestSinglePageBody:
         )
 
         rtf_output = doc.rtf_encode()
-        expected = r_output.read("body_cell_height_variations")
-        assert_rtf_equals_semantic(
-            rtf_output, expected, "test_body_cell_height_variations"
+        r_snapshot.assert_match_text(
+            rtf_output,
+            name="body_cell_height_variations",
+            ext=".rtf",
+            normalize=normalize_rtf_semantic,
         )
 
-    def test_body_font_size_per_column(self):
+    def test_body_font_size_per_column(self, r_snapshot):
         """Test body with different font sizes per column."""
         # ```{r, body_font_size_per_column}
         # library(r2rtf)
@@ -326,16 +335,18 @@ class TestSinglePageBody:
         )
 
         rtf_output = doc.rtf_encode()
-        expected = r_output.read("body_font_size_per_column")
-        assert_rtf_equals_semantic(
-            rtf_output, expected, "test_body_font_size_per_column"
+        r_snapshot.assert_match_text(
+            rtf_output,
+            name="body_font_size_per_column",
+            ext=".rtf",
+            normalize=normalize_rtf_semantic,
         )
 
 
 class TestSinglePageComplete:
     """Test complete single-page documents with all components."""
 
-    def test_minimal_document(self):
+    def test_minimal_document(self, r_snapshot):
         """Test minimal RTF document with just data."""
         # ```{r, minimal_document}
         # library(r2rtf)
@@ -357,10 +368,14 @@ class TestSinglePageComplete:
         doc = rtf.RTFDocument(df=df)
 
         rtf_output = doc.rtf_encode()
-        expected = r_output.read("minimal_document")
-        assert_rtf_equals_semantic(rtf_output, expected, "test_minimal_document")
+        r_snapshot.assert_match_text(
+            rtf_output,
+            name="minimal_document",
+            ext=".rtf",
+            normalize=normalize_rtf_semantic,
+        )
 
-    def test_title_header_body(self):
+    def test_title_header_body(self, r_snapshot):
         """Test document with title, column header, and body."""
         # ```{r, title_header_body}
         # library(r2rtf)
@@ -409,10 +424,14 @@ class TestSinglePageComplete:
         )
 
         rtf_output = doc.rtf_encode()
-        expected = r_output.read("title_header_body")
-        assert_rtf_equals_semantic(rtf_output, expected, "test_title_header_body")
+        r_snapshot.assert_match_text(
+            rtf_output,
+            name="title_header_body",
+            ext=".rtf",
+            normalize=normalize_rtf_semantic,
+        )
 
-    def test_all_components_basic(self):
+    def test_all_components_basic(self, r_snapshot):
         """Test document with all components: title, header, body, footnote, source."""
         # ```{r, all_components_basic}
         # library(r2rtf)
@@ -459,10 +478,14 @@ class TestSinglePageComplete:
         )
 
         rtf_output = doc.rtf_encode()
-        expected = r_output.read("all_components_basic")
-        assert_rtf_equals_semantic(rtf_output, expected, "test_all_components_basic")
+        r_snapshot.assert_match_text(
+            rtf_output,
+            name="all_components_basic",
+            ext=".rtf",
+            normalize=normalize_rtf_semantic,
+        )
 
-    def test_single_row_table(self):
+    def test_single_row_table(self, r_snapshot):
         """Test handling of single row table."""
         # ```{r, single_row_table}
         # library(r2rtf)
@@ -496,14 +519,18 @@ class TestSinglePageComplete:
         )
 
         rtf_output = doc.rtf_encode()
-        expected = r_output.read("single_row_table")
-        assert_rtf_equals_semantic(rtf_output, expected, "test_single_row_table")
+        r_snapshot.assert_match_text(
+            rtf_output,
+            name="single_row_table",
+            ext=".rtf",
+            normalize=normalize_rtf_semantic,
+        )
 
 
 class TestSinglePageTextConversion:
     """Test text conversion features in single-page documents."""
 
-    def test_latex_in_body_cells(self):
+    def test_latex_in_body_cells(self, r_snapshot):
         """Test LaTeX symbols in body cells with conversion enabled."""
         # ```{r, latex_in_body_cells}
         # library(r2rtf)
@@ -547,10 +574,14 @@ class TestSinglePageTextConversion:
         )
 
         rtf_output = doc.rtf_encode()
-        expected = r_output.read("latex_in_body_cells")
-        assert_rtf_equals_semantic(rtf_output, expected, "test_latex_in_body_cells")
+        r_snapshot.assert_match_text(
+            rtf_output,
+            name="latex_in_body_cells",
+            ext=".rtf",
+            normalize=normalize_rtf_semantic,
+        )
 
-    def test_special_chars_in_headers(self):
+    def test_special_chars_in_headers(self, r_snapshot):
         """Test special characters in column headers."""
         # ```{r, special_chars_in_headers}
         # library(r2rtf)
@@ -588,12 +619,14 @@ class TestSinglePageTextConversion:
         )
 
         rtf_output = doc.rtf_encode()
-        expected = r_output.read("special_chars_in_headers")
-        assert_rtf_equals_semantic(
-            rtf_output, expected, "test_special_chars_in_headers"
+        r_snapshot.assert_match_text(
+            rtf_output,
+            name="special_chars_in_headers",
+            ext=".rtf",
+            normalize=normalize_rtf_semantic,
         )
 
-    def test_conversion_toggle(self):
+    def test_conversion_toggle(self, r_snapshot):
         """Test toggling text conversion on/off for different components."""
         # ```{r, conversion_toggle}
         # library(r2rtf)
@@ -639,14 +672,18 @@ class TestSinglePageTextConversion:
         )
 
         rtf_output = doc.rtf_encode()
-        expected = r_output.read("conversion_toggle")
-        assert_rtf_equals_semantic(rtf_output, expected, "test_conversion_toggle")
+        r_snapshot.assert_match_text(
+            rtf_output,
+            name="conversion_toggle",
+            ext=".rtf",
+            normalize=normalize_rtf_semantic,
+        )
 
 
 class TestSinglePageEdgeCases:
     """Test edge cases for single-page documents."""
 
-    def test_single_column_table(self):
+    def test_single_column_table(self, r_snapshot):
         """Test table with only one column."""
         # ```{r, single_column_table}
         # library(r2rtf)
@@ -679,20 +716,28 @@ class TestSinglePageEdgeCases:
         )
 
         rtf_output = doc.rtf_encode()
-        expected = r_output.read("single_column_table")
-        assert_rtf_equals_semantic(rtf_output, expected, "test_single_column_table")
+        r_snapshot.assert_match_text(
+            rtf_output,
+            name="single_column_table",
+            ext=".rtf",
+            normalize=normalize_rtf_semantic,
+        )
 
-    def test_long_cell_content(self):
+    def test_long_cell_content(self, r_snapshot):
         """Test handling of very long cell content."""
         # ```{r, long_cell_content}
         # library(r2rtf)
         # df <- data.frame(
         #   Short = c("A", "B"),
         #   Long = c(
-        #     "This is a very long text that might wrap to multiple lines in "
-        #     "the RTF cell",
-        #     "Another long piece of text that demonstrates how the RTF "
-        #     "handles wrapping"
+        #     paste0(
+        #       "This is a very long text that might wrap to multiple ",
+        #       "lines in the RTF cell"
+        #     ),
+        #     paste0(
+        #       "Another long piece of text that demonstrates how the ",
+        #       "RTF handles wrapping"
+        #     )
         #   )
         # )
         #
@@ -735,5 +780,9 @@ class TestSinglePageEdgeCases:
         )
 
         rtf_output = doc.rtf_encode()
-        expected = r_output.read("long_cell_content")
-        assert_rtf_equals_semantic(rtf_output, expected, "test_long_cell_content")
+        r_snapshot.assert_match_text(
+            rtf_output,
+            name="long_cell_content",
+            ext=".rtf",
+            normalize=normalize_rtf_semantic,
+        )
