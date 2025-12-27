@@ -102,6 +102,7 @@ exclude = [
 dev = [
     "pytest>=8.3.3",
     "pytest-cov>=6.0.0",
+    "pytest-r-snapshot>=0.1.0",
     "mkdocs>=1.6.1",
     "mkdocs-material>=9.5.45",
     "mkdocstrings-python>=1.12.2",

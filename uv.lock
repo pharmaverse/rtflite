@@ -1898,6 +1898,18 @@ wheels = [
 ]
 
 [[package]]
+name = "pytest-r-snapshot"
+version = "0.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pytest" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/20/eb/d16ef71a10887f755130e79bc61470b1bf7c660e510e1db97929695eb7b2/pytest_r_snapshot-0.1.0.tar.gz", hash = "sha256:b1e0daf44ce22ba97e9d96c48aaaccd4fe24368cfb6e8d02176f3b508ce4d269", size = 13492, upload-time = "2025-12-14T00:23:45.222Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/46/c2/492415805c5b9f8ff781fffed2a0ab792dc3681e3e17dcb84d4865fa8f36/pytest_r_snapshot-0.1.0-py3-none-any.whl", hash = "sha256:1ec18e1ed6e77419ee394e2a64487edf616e02a5c2c45e5baea35d157be16e19", size = 13759, upload-time = "2025-12-14T00:23:43.953Z" },
+]
+
+[[package]]
 name = "python-dateutil"
 version = "2.9.0.post0"
 source = { registry = "https://pypi.org/simple" }
@@ -2054,6 +2066,7 @@ dev = [
     { name = "pyarrow" },
     { name = "pytest" },
     { name = "pytest-cov" },
+    { name = "pytest-r-snapshot" },
     { name = "ruff" },
 ]
 
@@ -2082,6 +2095,7 @@ dev = [
     { name = "pyarrow", marker = "python_full_version >= '3.14'", specifier = ">=22.0.0" },
     { name = "pytest", specifier = ">=8.3.3" },
     { name = "pytest-cov", specifier = ">=6.0.0" },
+    { name = "pytest-r-snapshot", specifier = ">=0.1.0" },
     { name = "ruff", specifier = ">=0.7.4" },
 ]
 
