@@ -1,5 +1,14 @@
 # Changelog
 
+## rtflite 2.5.1
+
+### Testing
+
+- Migrated the RTF snapshot tests implementation to a proper solution
+  `pytest-r-snapshot` to reduce boilerplate code and improve maintainability.
+  The legacy fixture generation workflow is removed and the snapshots are
+  stored under the standard location `tests/__r_snapshots__/` (#181).
+
 ## rtflite 2.5.0
 
 ### New features
