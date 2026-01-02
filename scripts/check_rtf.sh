@@ -1,4 +1,4 @@
 #!/bin/bash
 
 zensical build --clean
-cp site/articles/rtf/*.rtf tests/fixtures/mkdocs_outputs
+cp site/articles/rtf/*.rtf tests/fixtures/docs_outputs
