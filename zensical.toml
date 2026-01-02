@@ -1,0 +1,142 @@
+[project]
+site_name = "rtflite"
+site_description = "Lightweight RTF composer for Python. Specializes in precise formatting of production-quality tables and figures."
+site_author = "rtflite authors"
+site_url = "http://pharmaverse.github.io/rtflite/"
+repo_url = "https://github.com/pharmaverse/rtflite"
+repo_name = "pharmaverse/rtflite"
+edit_uri = "edit/main/docs/"
+copyright = """
+Copyright &copy; 2026 rtflite authors
+"""
+
+nav = [
+    { "Home" = "index.md" },
+    { "Quickstart" = "articles/quickstart.md" },
+    { "Articles" = [
+        { "Examples" = [
+            "articles/example-baseline.md",
+            "articles/example-ae.md",
+            "articles/example-efficacy.md",
+            "articles/example-figure.md",
+        ] },
+        { "Formatting" = [
+            "articles/format-row.md",
+            "articles/format-text.md",
+            "articles/format-page.md",
+        ] },
+        { "Advanced" = [
+            "articles/advanced-group-by.md",
+            "articles/assemble.md",
+        ] },
+        { "Developer" = [
+            "articles/pagination.md",
+            "articles/converter-setup.md",
+        ] },
+    ] },
+    { "API reference" = [
+        { "Core" = [
+            { "RTFDocument" = "reference/rtf-document.md" },
+            { "Encoding pipeline" = "reference/encoding.md" },
+            { "Configuration & constants" = "reference/low-level.md" },
+        ] },
+        { "Components" = [
+            { "Page layout" = "reference/page-layout.md" },
+            { "Tables" = "reference/tables.md" },
+            { "Text & formatting" = "reference/text-formatting.md" },
+        ] },
+        { "Utilities" = [
+            { "Format conversion" = "reference/convert.md" },
+            { "Assembly helpers" = "reference/assemble.md" },
+            { "String width" = "reference/strwidth.md" },
+        ] },
+        { "Advanced" = [
+            { "Pagination" = "reference/pagination.md" },
+        ] },
+    ] },
+    { "Changelog" = "changelog.md" },
+    { "Coverage" = "coverage/" },
+    { "Contributing" = "contributing.md" },
+]
+
+extra_css = ["stylesheets/extra.css"]
+
+# ----------------------------------------------------------------------------
+# Section for configuring theme options
+# ----------------------------------------------------------------------------
+[project.theme]
+logo = "assets/logo.png"
+favicon = "assets/favicon.png"
+language = "en"
+font = false
+custom_dir = "docs/overrides"
+
+features = [
+    "announce.dismiss",
+    "content.action.edit",
+    "content.action.view",
+    "content.code.annotate",
+    "content.code.copy",
+    "content.code.select",
+    "content.footnote.tooltips",
+    "content.tabs.link",
+    "content.tooltips",
+    "header.autohide",
+    #"navigation.expand",
+    "navigation.footer",
+    "navigation.indexes",
+    "navigation.instant",
+    "navigation.instant.prefetch",
+    #"navigation.instant.progress",
+    "navigation.path",
+    #"navigation.prune",
+    "navigation.sections",
+    #"navigation.tabs",
+    #"navigation.tabs.sticky",
+    "navigation.top",
+    "navigation.tracking",
+    "search.highlight",
+    #"toc.follow",
+    #"toc.integrate",
+]
+
+[[project.theme.palette]]
+scheme = "default"
+toggle.icon = "lucide/sun"
+toggle.name = "Switch to dark mode"
+
+[[project.theme.palette]]
+scheme = "slate"
+toggle.icon = "lucide/moon"
+toggle.name = "Switch to light mode"
+
+[project.theme.icon]
+repo = "fontawesome/brands/github"
+
+# ----------------------------------------------------------------------------
+# Section for configuring mkdocstrings plugin
+# ----------------------------------------------------------------------------
+[project.plugins.mkdocstrings]
+default_handler = "python"
+
+[project.plugins.mkdocstrings.handlers.python]
+paths = ["src"]
+
+[project.plugins.mkdocstrings.handlers.python.options]
+inherited_members = true
+show_root_heading = true
+show_source = false
+
+# ----------------------------------------------------------------------------
+# Section for configuring markdown-exec plugin
+# ----------------------------------------------------------------------------
+[project.markdown_extensions.pymdownx.superfences]
+custom_fences = [
+    { name = "python", class = "python", validator = "markdown_exec.validator", format = "markdown_exec.formatter" },
+]
+
+# ----------------------------------------------------------------------------
+# Section for configuring admonition extension
+# ----------------------------------------------------------------------------
+[project.markdown_extensions.admonition]
+[project.markdown_extensions.pymdownx.details]
