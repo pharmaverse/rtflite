@@ -39,7 +39,7 @@ This will restore the exact versions of Python and dependency packages
 under the project's `.venv/` directory:
 
 ```bash
-uv sync
+uv sync --all-extras
 ```
 
 ### Development
@@ -72,25 +72,25 @@ pytest --cov=rtflite --cov-report=html:docs/coverage/
 
 ### Documentation
 
-To preview the mkdocs website locally:
+To preview the Zensical website locally:
 
 ```bash
-mkdocs serve
+zensical serve
 ```
 
-To build the mkdocs website locally into `site/`, run:
+To build the Zensical website locally into `site/`, run:
 
 ```bash
-mkdocs build
+zensical build --clean
 ```
 
 rtflite renders vignette-like articles under `docs/articles `using markdown-exec.
-This allows mkdocs to render Python code chunks and their outputs when building the site.
+This allows Zensical to render Python code chunks and their outputs when building the site.
 Check the [markdown-exec documentation](https://pawamoy.github.io/markdown-exec/usage/)
 for possible code chunk options.
 
 If you made changes to the `.md` files in the root directory,
-make sure to synchronize them to the mkdocs website:
+make sure to synchronize them to the Zensical website:
 
 ```bash
 sh docs/scripts/sync.sh
@@ -128,9 +128,8 @@ uv self update
 Update `uv.lock` file regularly:
 
 ```bash
-uv sync --quiet
 uv lock --upgrade
-uv sync
+uv sync --all-extras
 ```
 
 ### Python version

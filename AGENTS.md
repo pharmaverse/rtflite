@@ -11,7 +11,7 @@
 - **Composition logic**: Modules such as `encode.py`, `pagination/`, `row.py`, `attributes.py`, and `services/` transform structured data into final RTF output. They make heavy use of Pydantic validators, typed helper classes, and string-building utilities.
 - **Font and color utilities**: `fonts/`, `fonts_mapping.py`, `text_convert.py`, `text_conversion/`, and `services/color_service.py` manage font metrics, color lookup, and text normalization.
 - **Conversion helpers**: `convert.py` provides integration with LibreOffice for PDF conversion, while shell/python scripts in `scripts/` (e.g., `check_rtf.sh`, `verify_ascii.py`) support validation workflows.
-- **Documentation**: `docs/` hosts the MkDocs site. Markdown articles may execute Python snippets via `markdown-exec` during site builds.
+- **Documentation**: `docs/` hosts the Zensical site. Markdown articles may execute Python snippets via `markdown-exec` during site builds.
 
 ## Development workflow expectations
 - Use [uv](https://docs.astral.sh/uv/) for environment management. Run `uv sync` to create/refresh the local virtual environment before developing.
@@ -22,7 +22,7 @@
 
 ## Testing & quality gates
 - Execute `pytest` (or targeted subsets) before committing. Snapshot-style tests compare normalized RTF output; update fixtures thoughtfully and document rationale when expectations change.
-- If functionality affects documentation examples, rebuild the docs locally with `mkdocs build` (or preview via `mkdocs serve`) to confirm rendered outputs.
+- If functionality affects documentation examples, rebuild the docs locally with `zensical build --clean` (or preview via `zensical serve`) to confirm rendered outputs.
 - Keep dependency metadata (`uv.lock`) in sync when upgrading libraries; use `uv lock --upgrade` followed by `uv sync` if dependency changes are intentional.
 
 ## Additional tips

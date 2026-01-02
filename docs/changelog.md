@@ -66,7 +66,7 @@
 ### Documentation
 
 - Updated the assembly article to use `concatenate_docx` in code examples and
-  added a reference page for assemble function to the mkdocs site (#160).
+  added a reference page for assemble function to the documentation site (#160).
 
 ## rtflite 2.2.0
 
@@ -190,7 +190,7 @@
 ### Testing
 
 - Added a developer script to compare current RTF outputs with snapshots
-  generated from mkdocs site articles (#102).
+  generated from documentation site articles (#102).
 
 ### Documentation
 
