@@ -112,7 +112,7 @@ h4 code {
 /* Banner */
 
 .md-banner {
-    color: var(--md-typeset-color);
+    color: #000000DE;
     background-color: oklch(96.2% 0.059 95.617);
 }
 
