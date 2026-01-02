@@ -1,5 +1,11 @@
 # Changelog
 
+## rtflite 2.5.2
+
+### Documentation
+
+- Migrated documentation site to use Zensical (#184, #185).
+
 ## rtflite 2.5.1
 
 ### Testing
