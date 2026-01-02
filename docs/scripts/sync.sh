@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "Sync root-level docs into mkdocs..."
+echo "Sync root-level docs into Zensical site..."
 
 # Sync README.md with modified image path for docs/index.md
 awk '{gsub("https://github.com/pharmaverse/rtflite/raw/main/docs/assets/logo.png", "assets/logo.png"); print}' README.md >docs/index.md

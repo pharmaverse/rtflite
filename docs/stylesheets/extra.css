@@ -1,23 +1,20 @@
-/* Color scheme */
+/* Typography */
 
-/*
- * Color palette from: https://coolors.co/palette/0d1b2a-1b263b-415a77-778da9-e0e1dd
- */
-
-:root {
-    --md-primary-fg-color: #415A77;
-    --md-primary-fg-color--light: #0D1B2A;
-    --md-primary-fg-color--dark: #1B263B;
-    --md-primary-bg-color: hsla(0, 0%, 100%, 1);
-    --md-primary-bg-color--light: hsla(0, 0%, 100%, 0.7);
-    --md-accent-fg-color: #778DA9;
-    --md-accent-fg-color--transparent: #E0E1DD;
-    --md-accent-bg-color: hsla(0, 0%, 100%, 1);
-    --md-accent-bg-color--light: hsla(0, 0%, 100%, 0.7);
-    --md-code-font: "JetBrains Mono";
+@font-face {
+    font-display: swap;
+    font-family: "Source Sans 3";
+    src: url("../assets/SourceSans3-Variable.woff2") format("woff2");
+    font-weight: 200 900;
+    font-style: normal;
 }
 
-/* Typography */
+@font-face {
+    font-display: swap;
+    font-family: "Source Sans 3";
+    src: url("../assets/SourceSans3-Variable-Italic.woff2") format("woff2");
+    font-weight: 200 900;
+    font-style: italic;
+}
 
 @font-face {
     font-display: swap;
@@ -35,44 +32,94 @@
     font-style: italic;
 }
 
+:root {
+    --md-text-font: "Source Sans 3", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    --md-code-font: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+}
+
 body {
     -webkit-font-smoothing: auto;
 }
 
+/* Header */
+
+.md-header__topic:first-child {
+    font-weight: 400;
+}
+
+.md-header__title {
+    letter-spacing: normal;
+}
+
+/* Navigation */
+
 .md-nav {
-    font-size: 0.9rem;
+    font-size: 1rem;
+}
+
+.md-nav__item--section>.md-nav__link {
+    font-weight: 600;
+}
+
+.md-nav--secondary .md-nav__title {
+    font-weight: 600;
+}
+
+.md-nav__item--nested .md-nav__icon::after {
+    height: 150%;
+}
+
+/* Content */
+
+.md-typeset {
+    font-size: 1rem;
+    letter-spacing: normal;
+}
+
+.md-path {
+    font-size: 1rem;
 }
 
 .md-typeset h1,
 .md-typeset h2,
 .md-typeset h3 {
-    color: var(--md-default-fg-color--dark);
-    font-weight: 600;
+    font-weight: 500;
 }
 
-h2 h3,
-code {
+h2 code,
+h3 code,
+h4 code {
     font-weight: 400;
 }
 
-.md-typeset {
-    font-size: 0.85rem;
+.md-typeset h1 {
+    font-size: 2.4rem;
+}
+
+.md-typeset .admonition,
+.md-typeset details {
+    font-size: 0.9rem;
 }
 
 .md-typeset code {
-    font-size: 0.85em;
+    font-size: 0.8em;
 }
 
 .md-typeset table:not([class]) {
     font-size: 0.8rem;
 }
 
-.md-typeset .admonition,
-.md-typeset details {
-    font-size: 0.85rem;
-}
+/* Banner */
 
 .md-banner {
-    color: var(--md-primary-fg-color--light);
+    color: var(--md-typeset-color);
     background-color: oklch(96.2% 0.059 95.617);
+}
+
+.md-banner .md-banner__inner {
+    font-size: 0.9rem;
+}
+
+.md-banner .md-banner__inner a {
+    text-decoration: none;
 }

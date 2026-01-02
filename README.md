@@ -6,7 +6,7 @@
 [![CI tests](https://github.com/pharmaverse/rtflite/actions/workflows/ci-tests.yml/badge.svg)](https://github.com/pharmaverse/rtflite/actions/workflows/ci-tests.yml)
 [![Mypy check](https://github.com/pharmaverse/rtflite/actions/workflows/mypy.yml/badge.svg)](https://github.com/pharmaverse/rtflite/actions/workflows/mypy.yml)
 [![Ruff check](https://github.com/pharmaverse/rtflite/actions/workflows/ruff-check.yml/badge.svg)](https://github.com/pharmaverse/rtflite/actions/workflows/ruff-check.yml)
-[![mkdocs](https://github.com/pharmaverse/rtflite/actions/workflows/mkdocs.yml/badge.svg)](https://pharmaverse.github.io/rtflite/)
+[![Documentation](https://github.com/pharmaverse/rtflite/actions/workflows/docs.yml/badge.svg)](https://pharmaverse.github.io/rtflite/)
 ![License](https://img.shields.io/pypi/l/rtflite)
 
 Lightweight RTF composer for Python.

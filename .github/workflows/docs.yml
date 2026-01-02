@@ -1,4 +1,4 @@
-name: mkdocs
+name: Documentation
 
 on:
   push:
@@ -6,29 +6,22 @@ on:
       - main
 
 permissions:
-  contents: write
+  contents: read
+  pages: write
+  id-token: write
 
 jobs:
   deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/configure-pages@v5
       - uses: actions/checkout@v6
-      - name: Configure Git Credentials
-        run: |
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-
       - uses: actions/setup-python@v6
         with:
           python-version: 3.x
-      - run: echo "cache_id=$(date --utc '+%V')" >> $GITHUB_ENV
-
-      - uses: actions/cache@v4
-        with:
-          key: mkdocs-material-${{ env.cache_id }}
-          path: .cache
-          restore-keys: |
-            mkdocs-material-
 
       - name: Install ttf-mscorefonts-installer
         run: |
@@ -40,17 +33,16 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install mkdocs-material mkdocstrings-python markdown-exec[ansi] matplotlib
+          pip install zensical mkdocstrings-python markdown-exec[ansi]
           pip install pytest pytest-cov pytest-r-snapshot
-          pip install python-docx pypdf
+          pip install matplotlib python-docx pypdf
           pip install -e '.[all]'
-          pip install --force-reinstall "click<8.2.2" # Workaround for https://github.com/squidfunk/mkdocs-material/issues/8375
 
-      - name: Generate coverage report and deploy mkdocs site
+      - name: Generate coverage report and deploy site
         run: |
           pytest --cov=rtflite --cov-report=html:docs/coverage/
           # Build the site first to generate all artifacts
-          mkdocs build
+          zensical build --clean
           # Ensure generated artifacts are included
           if [ -d "docs/articles/rtf" ]; then
             cp -r docs/articles/rtf site/articles/
@@ -58,5 +50,9 @@ jobs:
           if [ -d "docs/articles/pdf" ]; then
             cp -r docs/articles/pdf site/articles/
           fi
-          # Deploy the built site
-          mkdocs gh-deploy --force
+
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+      - uses: actions/deploy-pages@v4
+        id: deployment
