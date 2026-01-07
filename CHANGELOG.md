@@ -1,5 +1,12 @@
 # Changelog
 
+## rtflite (development version)
+
+### Documentation
+
+- Update Zensical mkdocstrings settings to render Pydantic field metadata
+  (via `griffe-pydantic` with forced inspection) in API docs (#189).
+
 ## rtflite 2.5.2
 
 ### Documentation
