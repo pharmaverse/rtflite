@@ -411,6 +411,18 @@ wheels = [
 ]
 
 [[package]]
+name = "griffe-pydantic"
+version = "1.1.8"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "griffe" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/99/52/b05f582287f887f58a1738183d6dd0e799842b83f6f60d65c77ba90cee31/griffe_pydantic-1.1.8.tar.gz", hash = "sha256:72cde69c74c70f3dc0385a7a5243c736cd6bf6fcf8a41cae497383defe107041", size = 43425, upload-time = "2025-10-14T09:12:37.693Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/78/e3/94b2e39d841a1c07b586903177d3ee802c8ae87567449a541d14028eb657/griffe_pydantic-1.1.8-py3-none-any.whl", hash = "sha256:22212c94216e03bf43d30ff3bc79cd53fb973ae2fe81d8b7510242232a1e6764", size = 12852, upload-time = "2025-10-14T09:12:36.23Z" },
+]
+
+[[package]]
 name = "iniconfig"
 version = "2.3.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1879,6 +1891,7 @@ pdf = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "griffe-pydantic" },
     { name = "isort" },
     { name = "markdown-exec", extra = ["ansi"] },
     { name = "matplotlib" },
@@ -1906,6 +1919,7 @@ provides-extras = ["docx", "pdf"]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "griffe-pydantic", specifier = ">=1.1.8" },
     { name = "isort", specifier = ">=5.13.2" },
     { name = "markdown-exec", extras = ["ansi"], specifier = ">=1.11.0" },
     { name = "matplotlib", specifier = ">=3.10.5" },
