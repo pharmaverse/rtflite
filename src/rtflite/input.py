@@ -247,7 +247,7 @@ class RTFPage(BaseModel):
             Defaults to "double" for closure.
 
     Note:
-        The nrow parameter represents the total row capacity of a page,
+        The `nrow` parameter represents the total row capacity of a page,
         not just data rows. Plan accordingly when setting this value.
     """
 
@@ -717,8 +717,8 @@ class RTFColumnHeader(TableAttributes):
 
     Note:
         - Headers automatically repeat on each page in multi-page documents
-        - Use col_rel_width to create spanning headers
-        - Border styles from RTFPage are applied to the first row
+        - Use `col_rel_width` to create spanning headers
+        - Border styles from `RTFPage` are applied to the first row
     """
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
@@ -833,10 +833,11 @@ class RTFBody(TableAttributes):
         ```
 
     Note:
-        When using subline_by:
+        When using `subline_by`:
+
         - The specified columns are removed from the table display
         - Values appear as paragraph headers before each section
-        - Pagination is automatically enabled (new_page=True)
+        - Pagination is automatically enabled (`new_page=True`)
         - Formatting attributes apply uniformly to the entire table
     """
 
