@@ -7,10 +7,10 @@ authors = [
     { name = "Nan Xiao", email = "me@nanx.me" },
 ]
 dependencies = [
-    "pydantic>=2.0.0",
-    "pillow>=8.0.0",
     "narwhals>=1.0.0",
+    "pillow>=8.0.0",
     "polars>=1.0.0",
+    "pydantic>=2.0.0",
 ]
 readme = "README.md"
 requires-python = ">= 3.10"
@@ -100,20 +100,20 @@ exclude = [
 
 [dependency-groups]
 dev = [
+    "griffe-pydantic>=1.1.8",
+    "isort>=5.13.2",
+    "markdown-exec[ansi]>=1.11.0",
+    "matplotlib>=3.10.5",
+    "mkdocstrings-python>=1.12.2",
+    "mypy>=1.17.1",
+    "pandas>=2.2.3",
+    "pyarrow>=21.0.0 ; python_full_version < '3.14'",
+    "pyarrow>=22.0.0 ; python_full_version >= '3.14'",
     "pytest>=8.3.3",
     "pytest-cov>=6.0.0",
     "pytest-r-snapshot>=0.1.0",
-    "zensical>=0.0.15",
-    "mkdocstrings-python>=1.12.2",
-    "markdown-exec[ansi]>=1.11.0",
-    "griffe-pydantic>=1.1.8",
     "ruff>=0.7.4",
-    "isort>=5.13.2",
-    "mypy>=1.17.1",
-    "matplotlib>=3.10.5",
-    "pandas>=2.2.3",
-    "pyarrow >= 21.0.0; python_version < '3.14'",
-    "pyarrow >= 22.0.0; python_version >= '3.14'",
+    "zensical>=0.0.15",
 ]
 
 [tool.ruff.lint]
