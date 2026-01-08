@@ -16,25 +16,9 @@
     font-style: italic;
 }
 
-@font-face {
-    font-display: swap;
-    font-family: "JetBrains Mono";
-    src: url("../assets/JetBrainsMono-Variable.woff2") format("woff2");
-    font-weight: 100 800;
-    font-style: normal;
-}
-
-@font-face {
-    font-display: swap;
-    font-family: "JetBrains Mono";
-    src: url("../assets/JetBrainsMono-Italic-Variable.woff2") format("woff2");
-    font-weight: 100 800;
-    font-style: italic;
-}
-
 :root {
     --md-text-font: "Source Sans 3", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-    --md-code-font: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    --md-code-font: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
 }
 
 body {
@@ -55,6 +39,7 @@ body {
 
 .md-nav {
     font-size: 1rem;
+    line-height: 1.15;
 }
 
 .md-nav__item--section>.md-nav__link {
@@ -67,6 +52,10 @@ body {
 
 .md-nav__item--nested .md-nav__icon::after {
     height: 150%;
+}
+
+.md-ellipsis:has(.doc-symbol) {
+    font-size: 0.7em;
 }
 
 /* Content */
@@ -107,6 +96,18 @@ h4 code {
 
 .md-typeset table:not([class]) {
     font-size: 0.8rem;
+}
+
+h2.doc-heading {
+    font-size: 1rem;
+}
+
+h3.doc-heading {
+    font-size: 0.9rem;
+}
+
+.doc-contents.first>details>summary {
+    line-height: 1.5;
 }
 
 /* Banner */

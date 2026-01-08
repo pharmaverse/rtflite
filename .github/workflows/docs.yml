@@ -33,7 +33,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install zensical mkdocstrings-python markdown-exec[ansi]
+          pip install zensical mkdocstrings-python markdown-exec[ansi] griffe-pydantic
           pip install pytest pytest-cov pytest-r-snapshot
           pip install matplotlib python-docx pypdf
           pip install -e '.[all]'

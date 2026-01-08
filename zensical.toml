@@ -123,9 +123,30 @@ default_handler = "python"
 paths = ["src"]
 
 [project.plugins.mkdocstrings.handlers.python.options]
+extensions = [{ griffe_pydantic = { schema = true } }]
+filters = ["!^_"]
+# Important for griffe_pydantic to render Pydantic models
+force_inspection = false
 inherited_members = true
+members_order = "source"
+merge_init_into_class = true
+separate_signature = true
 show_root_heading = true
+show_signature_annotations = true
 show_source = false
+signature_crossrefs = true
+show_symbol_type_heading = true
+show_symbol_type_toc = true
+
+[project.plugins.mkdocstrings.handlers.python.options.docstring_options]
+ignore_init_summary = true
+
+[[project.plugins.mkdocstrings.handlers.python.import]]
+url = "https://docs.python.org/3/objects.inv"
+domains = ["py", "std"]
+
+[[project.plugins.mkdocstrings.handlers.python.import]]
+url = "https://typing-extensions.readthedocs.io/en/latest/objects.inv"
 
 # ----------------------------------------------------------------------------
 # Section for configuring markdown-exec plugin
