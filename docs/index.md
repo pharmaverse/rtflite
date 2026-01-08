@@ -8,6 +8,7 @@
 [![Ruff check](https://github.com/pharmaverse/rtflite/actions/workflows/ruff-check.yml/badge.svg)](https://github.com/pharmaverse/rtflite/actions/workflows/ruff-check.yml)
 [![Documentation](https://github.com/pharmaverse/rtflite/actions/workflows/docs.yml/badge.svg)](https://pharmaverse.github.io/rtflite/)
 ![License](https://img.shields.io/pypi/l/rtflite)
+[![View Code Wiki](https://www.gstatic.com/_/boq-sdlc-agents-ui/_/r/ytWqxKl5yfM.svg)](https://codewiki.google/github.com/pharmaverse/rtflite)
 
 Lightweight RTF composer for Python.
 

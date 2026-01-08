@@ -13,6 +13,7 @@ Copyright &copy; 2026 rtflite authors
 nav = [
     { "Home" = "index.md" },
     { "Quickstart" = "articles/quickstart.md" },
+    { "Code Wiki" = "https://codewiki.google/github.com/pharmaverse/rtflite" },
     { "Articles" = [
         { "Examples" = [
             "articles/example-baseline.md",

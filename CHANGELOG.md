@@ -8,6 +8,7 @@
   via `griffe-pydantic` in API reference docs (#189).
 - Declare `RTFDocument._table_space` as a Pydantic private attribute to
   prevent mkdocstrings render errors in static mode (#189).
+- Add Code Wiki link as README badge and site navigation link (#191).
 
 ## rtflite 2.5.2
 
