@@ -51,7 +51,7 @@ body {
 }
 
 .md-nav__item--nested .md-nav__icon::after {
-    height: 1.5;
+    height: 150%;
 }
 
 .md-ellipsis:has(.doc-symbol) {
