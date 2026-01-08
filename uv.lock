@@ -1872,7 +1872,7 @@ wheels = [
 
 [[package]]
 name = "rtflite"
-version = "2.5.2"
+version = "2.5.3"
 source = { editable = "." }
 dependencies = [
     { name = "narwhals" },
