@@ -4,8 +4,10 @@
 
 ### Documentation
 
-- Update Zensical mkdocstrings settings to render Pydantic field metadata
-  (via `griffe-pydantic` with forced inspection) in API docs (#189).
+- Update mkdocstrings settings to render Pydantic field metadata
+  via `griffe-pydantic` in API reference docs (#189).
+- Declare `RTFDocument._table_space` as a Pydantic private attribute to
+  prevent mkdocstrings render errors in static mode (#189).
 
 ## rtflite 2.5.2
 

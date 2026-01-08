@@ -125,7 +125,8 @@ paths = ["src"]
 [project.plugins.mkdocstrings.handlers.python.options]
 extensions = [{ griffe_pydantic = { schema = true } }]
 filters = ["!^_"]
-force_inspection = true
+# Important for griffe_pydantic to render Pydantic models
+force_inspection = false
 inherited_members = true
 members_order = "source"
 merge_init_into_class = true

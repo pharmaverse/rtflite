@@ -10,7 +10,14 @@ from collections.abc import Sequence
 from pathlib import Path
 
 import polars as pl
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    PrivateAttr,
+    field_validator,
+    model_validator,
+)
 
 from .convert import LibreOfficeConverter
 from .input import (
@@ -122,6 +129,7 @@ class RTFDocument(BaseModel):
     """
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
+    _table_space: int = PrivateAttr(default=0)
 
     # Core data
     df: pl.DataFrame | list[pl.DataFrame] | None = Field(
