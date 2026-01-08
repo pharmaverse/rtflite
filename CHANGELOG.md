@@ -1,5 +1,12 @@
 # Changelog
 
+## rtflite (development version)
+
+### Maintenance
+
+- Add a script to automate sorting dependencies in `pyproject.toml` and
+  re-sort pyproject dependencies using the script (#193).
+
 ## rtflite 2.5.3
 
 ### Documentation
