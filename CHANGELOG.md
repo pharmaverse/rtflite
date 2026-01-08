@@ -1,6 +1,6 @@
 # Changelog
 
-## rtflite (development version)
+## rtflite 2.5.3
 
 ### Documentation
 
@@ -8,7 +8,9 @@
   via `griffe-pydantic` in API reference docs (#189).
 - Declare `RTFDocument._table_space` as a Pydantic private attribute to
   prevent mkdocstrings render errors in static mode (#189).
-- Add Code Wiki link as README badge and site navigation link (#191).
+- Add Code Wiki link as README badge and site navigation link.
+  This is a useful resource that helps developers and AI agents
+  understand the codebase fast (#191).
 
 ## rtflite 2.5.2
 
