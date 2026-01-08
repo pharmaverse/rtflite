@@ -105,7 +105,14 @@ def extract_name(requirement: str) -> str:
 
 
 def unique_in_order(items: list[str]) -> list[str]:
-    """Return unique items while preserving first-seen order."""
+    """Return unique items while preserving first-seen order.
+
+    Args:
+        items: Items to de-duplicate.
+
+    Returns:
+        Unique items in their original order.
+    """
     seen: set[str] = set()
     result: list[str] = []
     for item in items:
@@ -117,7 +124,13 @@ def unique_in_order(items: list[str]) -> list[str]:
 
 
 def run_uv(command: list[str], cwd: Path, dry_run: bool) -> None:
-    """Run a uv command, or print it when in dry-run mode."""
+    """Run a uv command, or print it when in dry-run mode.
+
+    Args:
+        command: Command and arguments to execute.
+        cwd: Working directory for the uv invocation.
+        dry_run: When true, print the command without executing it.
+    """
     printable = shlex.join(command)
     if dry_run:
         print(f"[dry-run] {printable}")
@@ -155,6 +168,23 @@ def remove_and_add(
         cwd=cwd,
         dry_run=dry_run,
     )
+
+
+def reset_python_version_markers(path: Path, *, dry_run: bool) -> None:
+    """Replace python_full_version markers with python_version in pyproject.toml.
+
+    Args:
+        path: Path to pyproject.toml.
+        dry_run: When true, print the change without writing the file.
+    """
+    content = path.read_text(encoding="utf-8")
+    updated = content.replace("python_full_version", "python_version")
+    if updated == content:
+        return
+    if dry_run:
+        print(f"[dry-run] replace python_full_version markers in {path}")
+        return
+    path.write_text(updated, encoding="utf-8")
 
 
 def parse_args() -> argparse.Namespace:
@@ -213,10 +243,11 @@ def main() -> int:
     )
 
     for group, requirements in dependency_groups.items():
+        add_suffix: list[str]
         if group == "dev":
             remove_flags = [*no_sync, "--dev"]
             add_prefix = [*no_sync, "--dev"]
-            add_suffix: list[str] = []
+            add_suffix = []
         else:
             remove_flags = [*no_sync, "--group", group]
             add_prefix = [*no_sync, "--group", group]
@@ -242,6 +273,8 @@ def main() -> int:
             cwd=root,
             dry_run=args.dry_run,
         )
+
+    reset_python_version_markers(pyproject_path, dry_run=args.dry_run)
 
     return 0
 
