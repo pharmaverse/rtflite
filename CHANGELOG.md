@@ -2,6 +2,10 @@
 
 ## rtflite (development version)
 
+### Dependencies
+
+- Remove pandas and pyarrow from development dependencies (#194).
+
 ### Maintenance
 
 - Add a script to automate sorting dependencies in `pyproject.toml` and
