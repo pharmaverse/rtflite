@@ -92,7 +92,7 @@ rtflite provides dedicated classes for each table component. Commonly used class
 
 These component classes work together to build complete RTF documents.
 A full list of all classes and their parameters can be found in the
-[API reference](https://merck.github.io/rtflite/reference/).
+[API reference](https://pharmaverse.github.io/rtflite/reference/).
 
 ## Simple example
 
