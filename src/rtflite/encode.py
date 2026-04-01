@@ -168,7 +168,7 @@ class RTFDocument(BaseModel):
             "header for that section."
         ),
     )
-    rtf_body: RTFBody | Sequence[RTFBody] | None = Field(
+    rtf_body: RTFBody | list[RTFBody] | None = Field(
         default_factory=lambda: RTFBody(),
         description=(
             "Table body section settings including column widths and "
@@ -194,6 +194,17 @@ class RTFDocument(BaseModel):
         """Convert single RTFColumnHeader to list or handle nested list format"""
         if v is not None and isinstance(v, RTFColumnHeader):
             return [v]
+        return v
+
+    @field_validator("rtf_body", mode="before")
+    def normalize_rtf_body_sequence(cls, v):
+        """Convert non-list body sequences to lists before validation."""
+        if (
+            v is not None
+            and not isinstance(v, (RTFBody, list, str, bytes, bytearray))
+            and isinstance(v, Sequence)
+        ):
+            return list(v)
         return v
 
     @model_validator(mode="before")
@@ -301,6 +312,15 @@ class RTFDocument(BaseModel):
             ):
                 self._validate_section_columns(section_df, section_body, i)
         else:
+            if self.rtf_body is None:
+                raise ValueError("When df is a single DataFrame, rtf_body is required")
+            if isinstance(self.rtf_body, list):
+                if len(self.rtf_body) != 1:
+                    raise ValueError(
+                        "When df is a single DataFrame, rtf_body must be a "
+                        "single RTFBody"
+                    )
+                self.rtf_body = self.rtf_body[0]
             # Single section validation (existing logic)
             self._validate_section_columns(self.df, self.rtf_body, 0)
 
