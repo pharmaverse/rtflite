@@ -1,6 +1,6 @@
 [project]
 name = "rtflite"
-version = "2.5.3"
+version = "2.5.4"
 description = "Lightweight RTF composer for Python"
 authors = [
     { name = "Yilong Zhang", email = "elong0527@gmail.com" },
