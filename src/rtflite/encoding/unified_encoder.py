@@ -18,7 +18,7 @@ from ..services.color_service import color_service
 from ..services.document_service import RTFDocumentService
 from ..services.figure_service import RTFFigureService
 from ..services.grouping_service import grouping_service
-from ..type_guards import is_single_body
+from ..type_guards import is_list_body, is_single_body
 from .base import EncodingStrategy
 from .renderer import PageRenderer
 
@@ -395,11 +395,11 @@ class UnifiedRTFEncoder(EncodingStrategy):
             if document.df is not None
             else []
         )
-        body_list = (
-            document.rtf_body
-            if isinstance(document.rtf_body, list)
+        body_list: list[RTFBody] = (
+            list(document.rtf_body)
+            if is_list_body(document.rtf_body)
             else [document.rtf_body]
-            if document.rtf_body is not None
+            if is_single_body(document.rtf_body)
             else []
         )
 
@@ -512,7 +512,7 @@ class UnifiedRTFEncoder(EncodingStrategy):
             ).update_row(0, [doc_border_bottom[0]])
         else:
             # Apply bottom border to last section's last row
-            if isinstance(document.rtf_body, list) and isinstance(document.df, list):
+            if is_list_body(document.rtf_body) and isinstance(document.df, list):
                 last_section_body = document.rtf_body[-1]
                 last_section_dim = document.df[-1].shape
                 if last_section_dim[0] > 0 and doc_border_bottom is not None:

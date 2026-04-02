@@ -1,3 +1,6 @@
+from collections.abc import Sequence
+from typing import overload
+
 import polars as pl
 import pytest
 
@@ -13,6 +16,23 @@ from rtflite.input import (
 
 from .utils import TestData
 from .utils_snapshot import normalize_rtf_semantic
+
+
+class BodySequence(Sequence[RTFBody]):
+    def __init__(self, bodies: list[RTFBody]):
+        self._bodies = bodies
+
+    @overload
+    def __getitem__(self, index: int) -> RTFBody: ...
+
+    @overload
+    def __getitem__(self, index: slice) -> Sequence[RTFBody]: ...
+
+    def __getitem__(self, index: int | slice) -> RTFBody | Sequence[RTFBody]:
+        return self._bodies[index]
+
+    def __len__(self) -> int:
+        return len(self._bodies)
 
 
 def test_rtf_encode_minimal(r_snapshot):
@@ -738,3 +758,23 @@ def test_rtf_multipage_pagination_with_as_table():
 
     # Both table should have more borders than both plain
     assert border_count_both_table > border_count_both_plain
+
+
+def test_rtf_body_custom_sequence_normalized_for_multi_section():
+    """Multi-section body sequences are normalized to lists."""
+    doc = RTFDocument(
+        df=[TestData.df1(), TestData.df1()],
+        rtf_body=BodySequence([RTFBody(), RTFBody(page_by=["Column1"], new_page=True)]),
+    )
+
+    assert isinstance(doc.rtf_body, list)
+    assert all(isinstance(body, RTFBody) for body in doc.rtf_body)
+
+
+def test_rtf_body_multiple_entries_rejected_for_single_dataframe():
+    """Single-section documents reject multiple body entries cleanly."""
+    with pytest.raises(
+        ValueError,
+        match="When df is a single DataFrame, rtf_body must be a single RTFBody",
+    ):
+        RTFDocument(df=TestData.df1(), rtf_body=BodySequence([RTFBody(), RTFBody()]))

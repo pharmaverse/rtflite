@@ -13,9 +13,9 @@ def is_single_header(
     return header is not None and not isinstance(header, (list, tuple))
 
 
-def is_single_body(body: RTFBody | Sequence[RTFBody] | None) -> TypeGuard[RTFBody]:
+def is_single_body(body: RTFBody | list[RTFBody] | None) -> TypeGuard[RTFBody]:
     """Check if body is a single RTFBody instance."""
-    return body is not None and not isinstance(body, (list, tuple))
+    return isinstance(body, RTFBody)
 
 
 def is_list_header(
@@ -25,11 +25,9 @@ def is_list_header(
     return isinstance(header, (list, tuple))
 
 
-def is_list_body(
-    body: RTFBody | Sequence[RTFBody] | None,
-) -> TypeGuard[Sequence[RTFBody]]:
-    """Check if body is a sequence of RTFBody instances."""
-    return isinstance(body, (list, tuple))
+def is_list_body(body: RTFBody | list[RTFBody] | None) -> TypeGuard[list[RTFBody]]:
+    """Check if body is a list of RTFBody instances."""
+    return isinstance(body, list)
 
 
 def is_nested_header_list(
