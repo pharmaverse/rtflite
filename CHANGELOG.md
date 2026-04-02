@@ -1,6 +1,16 @@
 # Changelog
 
-## rtflite (development version)
+## rtflite 2.5.4
+
+### Bug fixes
+
+- Normalize `rtf_body` sequences at the document boundary and fix mypy
+  type narrowing for multi-section `rtf_body` handling (#202).
+  `RTFDocument.rtf_body` is now typed as `RTFBody | list[RTFBody] | None`,
+  with a field validator that converts non-list `Sequence[RTFBody]` inputs
+  to `list[RTFBody]`. Single-section documents now reject multi-body
+  containers with a clear error instead of failing with attribute access
+  errors downstream.
 
 ### Dependencies
 
