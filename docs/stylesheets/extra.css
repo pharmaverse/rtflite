@@ -38,7 +38,7 @@ body {
 /* Navigation */
 
 .md-nav {
-    font-size: 1rem;
+    font-size: 0.90909rem;
     line-height: 1.15;
 }
 
@@ -61,12 +61,12 @@ body {
 /* Content */
 
 .md-typeset {
-    font-size: 1rem;
+    font-size: 0.90909rem;
     letter-spacing: normal;
 }
 
 .md-path {
-    font-size: 1rem;
+    font-size: 0.90909rem;
 }
 
 .md-typeset h1,
@@ -82,12 +82,12 @@ h4 code {
 }
 
 .md-typeset h1 {
-    font-size: 2.4rem;
+    font-size: 2.18182rem;
 }
 
 .md-typeset .admonition,
 .md-typeset details {
-    font-size: 0.9rem;
+    font-size: 0.81818rem;
 }
 
 .md-typeset code {
@@ -95,15 +95,15 @@ h4 code {
 }
 
 .md-typeset table:not([class]) {
-    font-size: 0.8rem;
+    font-size: 0.72727rem;
 }
 
 h2.doc-heading {
-    font-size: 1rem;
+    font-size: 0.90909rem;
 }
 
 h3.doc-heading {
-    font-size: 0.9rem;
+    font-size: 0.81818rem;
 }
 
 .doc-contents.first>details>summary {
@@ -118,7 +118,7 @@ h3.doc-heading {
 }
 
 .md-banner .md-banner__inner {
-    font-size: 0.9rem;
+    font-size: 0.81818rem;
 }
 
 .md-banner .md-banner__inner a {
