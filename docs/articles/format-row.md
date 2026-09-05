@@ -55,7 +55,9 @@ doc_borders.write_rtf("row-border-styles.rtf")
 ```
 
 ```python exec="on" session="default" workdir="docs/articles/rtf/"
-converter.convert("row-border-styles.rtf", output_dir="../pdf/", format="pdf", overwrite=True)
+converter.convert(
+    "row-border-styles.rtf", output_dir="../pdf/", format="pdf", overwrite=True
+)
 ```
 
 <embed src="../pdf/row-border-styles.pdf" style="width:100%; height:400px" type="application/pdf">
@@ -86,7 +88,9 @@ doc_widths.write_rtf("row-column-widths.rtf")
 ```
 
 ```python exec="on" session="default" workdir="docs/articles/rtf/"
-converter.convert("row-column-widths.rtf", output_dir="../pdf/", format="pdf", overwrite=True)
+converter.convert(
+    "row-column-widths.rtf", output_dir="../pdf/", format="pdf", overwrite=True
+)
 ```
 
 <embed src="../pdf/row-column-widths.pdf" style="width:100%; height:400px" type="application/pdf">

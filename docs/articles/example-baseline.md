@@ -67,7 +67,9 @@ doc.write_rtf("example-baseline-char.rtf")
 ```
 
 ```python exec="on" session="default" workdir="docs/articles/rtf/"
-converter.convert("example-baseline-char.rtf", output_dir="../pdf/", format="pdf", overwrite=True)
+converter.convert(
+    "example-baseline-char.rtf", output_dir="../pdf/", format="pdf", overwrite=True
+)
 ```
 
 <embed src="../pdf/example-baseline-char.pdf" style="width:100%; height:400px" type="application/pdf">

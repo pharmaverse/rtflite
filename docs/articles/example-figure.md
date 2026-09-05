@@ -58,9 +58,7 @@ for i, treatment in enumerate(treatment_groups):
 
     # Save figure
     plt.savefig(
-        f"../images/age-histogram-treatment-{i}.png",
-        dpi=300,
-        bbox_inches="tight"
+        f"../images/age-histogram-treatment-{i}.png", dpi=300, bbox_inches="tight"
     )
     plt.close()
 ```
@@ -85,7 +83,9 @@ doc_age.write_rtf("example-figure-age.rtf")
 ```
 
 ```python exec="on" session="default" workdir="docs/articles/rtf/"
-converter.convert("example-figure-age.rtf", output_dir="../pdf/", format="pdf", overwrite=True)
+converter.convert(
+    "example-figure-age.rtf", output_dir="../pdf/", format="pdf", overwrite=True
+)
 ```
 
 <embed src="../pdf/example-figure-age.pdf" style="width:100%; height:400px" type="application/pdf">
@@ -128,7 +128,9 @@ doc_multi_page.write_rtf("example-figure-multipage.rtf")
 ```
 
 ```python exec="on" session="default" workdir="docs/articles/rtf/"
-converter.convert("example-figure-multipage.rtf", output_dir="../pdf/", format="pdf", overwrite=True)
+converter.convert(
+    "example-figure-multipage.rtf", output_dir="../pdf/", format="pdf", overwrite=True
+)
 ```
 
 <embed src="../pdf/example-figure-multipage.pdf" style="width:100%; height:400px" type="application/pdf">

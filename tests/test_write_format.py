@@ -1,11 +1,13 @@
 from html.parser import HTMLParser
 from pathlib import Path
+from urllib.parse import unquote
 
 import polars as pl
 import pytest
+from PIL import Image
 
 from rtflite.encode import RTFDocument
-from rtflite.input import RTFBody, RTFColumnHeader, RTFTitle
+from rtflite.input import RTFBody, RTFColumnHeader, RTFFigure, RTFTitle
 from tests.conftest import (
     skip_if_no_libreoffice,
     skip_if_no_libreoffice_and_pypdf,
@@ -125,3 +127,30 @@ def test_write_export_creates_output_with_expected_content(
     assert "Sample Title" in extracted_text
     assert "alpha" in extracted_text
     assert "beta" in extracted_text
+
+
+@skip_if_no_libreoffice
+def test_write_html_retains_figure_images(tmp_path: Path):
+    image_path = tmp_path / "figure.png"
+    Image.new("RGB", (20, 20), "red").save(image_path)
+    document = RTFDocument(
+        rtf_figure=RTFFigure(figures=[str(image_path)], fig_width=1, fig_height=1)
+    )
+    output_path = tmp_path / "reports" / "figure report.html"
+    document.write_html(output_path)
+
+    class ImageSources(HTMLParser):
+        def __init__(self) -> None:
+            super().__init__()
+            self.sources: list[str] = []
+
+        def handle_starttag(self, tag, attrs) -> None:
+            if tag == "img":
+                self.sources.extend(value for name, value in attrs if name == "src")
+
+    parser = ImageSources()
+    parser.feed(output_path.read_text(encoding="utf-8"))
+    assert parser.sources
+    for source in parser.sources:
+        with Image.open(output_path.parent / unquote(source)) as image:
+            assert image.size == (20, 20)

@@ -68,7 +68,9 @@ def _rtf_page_break_encode(self) -> str:
 #### 3. Border logic application
 
 ```python
-def _apply_pagination_borders(self, rtf_attrs, page_info, total_pages) -> TableAttributes:
+def _apply_pagination_borders(
+    self, rtf_attrs, page_info, total_pages
+) -> TableAttributes:
     """Apply proper borders for paginated context following r2rtf design"""
     # Implements the three-tier border hierarchy
 ```
@@ -117,10 +119,8 @@ df = pl.DataFrame({"col1": range(100), "col2": range(100, 200)})
 doc = rtf.RTFDocument(
     df=df,
     # rtf_page uses defaults: portrait, nrow=40
-    rtf_column_header=[
-        rtf.RTFColumnHeader(text=["Column 1", "Column 2"])
-    ],
-    rtf_body=rtf.RTFBody()
+    rtf_column_header=[rtf.RTFColumnHeader(text=["Column 1", "Column 2"])],
+    rtf_body=rtf.RTFBody(),
 )
 
 doc.write_rtf("paginated_table.rtf")  # Automatically creates ~3 pages
@@ -133,13 +133,13 @@ doc = rtf.RTFDocument(
     df=df,
     rtf_page=rtf.RTFPage(
         orientation="landscape",  # nrow=24 by default
-        border_first="double",    # Entire table start border
-        border_last="double"      # Entire table end border
+        border_first="double",  # Entire table start border
+        border_last="double",  # Entire table end border
     ),
     rtf_body=rtf.RTFBody(
         border_first=[["single"]],  # Each page start border
-        border_last=[["single"]],   # Each page end border
-    )
+        border_last=[["single"]],  # Each page end border
+    ),
 )
 ```
 
@@ -149,7 +149,7 @@ doc = rtf.RTFDocument(
 doc = rtf.RTFDocument(
     df=small_df,  # Even small datasets can be paginated
     rtf_page=rtf.RTFPage(nrow=10),  # Force 10 rows per page
-    rtf_body=rtf.RTFBody()
+    rtf_body=rtf.RTFBody(),
 )
 ```
 

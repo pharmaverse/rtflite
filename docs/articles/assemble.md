@@ -37,7 +37,9 @@ assemble_rtf(input_files, "combined-rtf.rtf")
 ```
 
 ```python exec="on" session="default" workdir="docs/articles/rtf/"
-converter.convert("combined-rtf.rtf", output_dir="../pdf/", format="pdf", overwrite=True)
+converter.convert(
+    "combined-rtf.rtf", output_dir="../pdf/", format="pdf", overwrite=True
+)
 ```
 
 <embed src="../pdf/combined-rtf.pdf" style="width:100%; height:400px" type="application/pdf">
@@ -64,11 +66,7 @@ because `python-docx` does not evaluate those fields.
 Another example to assemble into DOCX with mixed orientation pages (portrait, landscape):
 
 ```python exec="on" source="above" session="default" workdir="docs/articles/rtf/"
-assemble_docx(
-    input_files,
-    "combined-mixed.docx",
-    landscape=[False, True]
-)
+assemble_docx(input_files, "combined-mixed.docx", landscape=[False, True])
 ```
 
 Open `combined-mixed.docx` in Word and update fields to pull in the portrait
@@ -176,7 +174,9 @@ concatenate_docx(
 ```
 
 ```python exec="on" session="default" workdir="docs/articles/rtf/"
-converter.convert("combined-python-docx.docx", output_dir="../pdf/", format="pdf", overwrite=True)
+converter.convert(
+    "combined-python-docx.docx", output_dir="../pdf/", format="pdf", overwrite=True
+)
 ```
 
 <embed src="../pdf/combined-python-docx.pdf" style="width:100%; height:400px" type="application/pdf">
@@ -197,7 +197,12 @@ concatenate_docx(
 ```
 
 ```python exec="on" session="default" workdir="docs/articles/rtf/"
-converter.convert("combined-python-docx-mixed.docx", output_dir="../pdf/", format="pdf", overwrite=True)
+converter.convert(
+    "combined-python-docx-mixed.docx",
+    output_dir="../pdf/",
+    format="pdf",
+    overwrite=True,
+)
 ```
 
 <embed src="../pdf/combined-python-docx-mixed.pdf" style="width:100%; height:400px" type="application/pdf">

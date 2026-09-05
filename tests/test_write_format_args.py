@@ -108,6 +108,7 @@ def test_write_export_uses_temp_files(
             resources_dir = out_path.with_name(f"{out_path.name}_files")
             resources_dir.mkdir()
             (resources_dir / "resource.txt").write_text("resource", encoding="utf-8")
+            (out_path.parent / "report_html_image.png").write_bytes(b"image")
         return out_path
 
     mock_instance.convert.side_effect = convert_side_effect
@@ -121,6 +122,12 @@ def test_write_export_uses_temp_files(
     assert not any(path.suffix == ".rtf" for path in output_dir.iterdir())
     if output_format == "html":
         assert (output_dir / f"{output_path.name}_files").is_dir()
+        assert (output_dir / "report_html_image.png").read_bytes() == b"image"
+
+        # Repeated writes update companion directories without nesting them.
+        getattr(sample_document, method_name)(output_path)
+        resources_dir = output_dir / f"{output_path.name}_files"
+        assert list(resources_dir.iterdir()) == [resources_dir / "resource.txt"]
 
     kwargs = mock_instance.convert.call_args.kwargs
     assert kwargs["input_files"].parent != output_dir

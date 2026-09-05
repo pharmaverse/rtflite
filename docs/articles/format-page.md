@@ -63,7 +63,9 @@ doc_default.write_rtf("format-page-default.rtf")
 ```
 
 ```python exec="on" session="default" workdir="docs/articles/rtf/"
-converter.convert("format-page-default.rtf", output_dir="../pdf/", format="pdf", overwrite=True)
+converter.convert(
+    "format-page-default.rtf", output_dir="../pdf/", format="pdf", overwrite=True
+)
 ```
 
 <embed src="../pdf/format-page-default.pdf" style="width:100%; height:400px" type="application/pdf">
@@ -92,7 +94,9 @@ doc_title_first.write_rtf("format-page-title-first.rtf")
 ```
 
 ```python exec="on" session="default" workdir="docs/articles/rtf/"
-converter.convert("format-page-title-first.rtf", output_dir="../pdf/", format="pdf", overwrite=True)
+converter.convert(
+    "format-page-title-first.rtf", output_dir="../pdf/", format="pdf", overwrite=True
+)
 ```
 
 <embed src="../pdf/format-page-title-first.pdf" style="width:100%; height:400px" type="application/pdf">
@@ -121,7 +125,9 @@ doc_footnote_first.write_rtf("format-page-footnote-first.rtf")
 ```
 
 ```python exec="on" session="default" workdir="docs/articles/rtf/"
-converter.convert("format-page-footnote-first.rtf", output_dir="../pdf/", format="pdf", overwrite=True)
+converter.convert(
+    "format-page-footnote-first.rtf", output_dir="../pdf/", format="pdf", overwrite=True
+)
 ```
 
 <embed src="../pdf/format-page-footnote-first.pdf" style="width:100%; height:400px" type="application/pdf">
@@ -150,7 +156,9 @@ doc_all_pages.write_rtf("format-page-all-pages.rtf")
 ```
 
 ```python exec="on" session="default" workdir="docs/articles/rtf/"
-converter.convert("format-page-all-pages.rtf", output_dir="../pdf/", format="pdf", overwrite=True)
+converter.convert(
+    "format-page-all-pages.rtf", output_dir="../pdf/", format="pdf", overwrite=True
+)
 ```
 
 <embed src="../pdf/format-page-all-pages.pdf" style="width:100%; height:400px" type="application/pdf">
@@ -179,7 +187,9 @@ doc_custom.write_rtf("format-page-custom.rtf")
 ```
 
 ```python exec="on" session="default" workdir="docs/articles/rtf/"
-converter.convert("format-page-custom.rtf", output_dir="../pdf/", format="pdf", overwrite=True)
+converter.convert(
+    "format-page-custom.rtf", output_dir="../pdf/", format="pdf", overwrite=True
+)
 ```
 
 <embed src="../pdf/format-page-custom.pdf" style="width:100%; height:400px" type="application/pdf">

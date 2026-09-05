@@ -574,9 +574,9 @@ class RTFDocument(BaseModel):
             ```
 
         Note:
-            LibreOffice may create a companion directory (for example
-            `report.html_files`) for embedded resources. When present, it is moved
-            alongside the requested output path.
+            LibreOffice may create companion image files or directories for
+            embedded resources. These are saved alongside the requested output
+            path and must be kept with the HTML file.
         """
         target_path = Path(file_path).expanduser()
         target_path.parent.mkdir(parents=True, exist_ok=True)
@@ -602,12 +602,13 @@ class RTFDocument(BaseModel):
                         f"{type(converted)!r} with value {converted!r}."
                     )
                 html_path = converted
-                resources_dir = html_path.with_name(f"{html_path.name}_files")
                 shutil.move(str(html_path), target_path)
-                if resources_dir.is_dir():
-                    shutil.move(
-                        str(resources_dir), target_path.parent / resources_dir.name
-                    )
+                for resource in Path(convert_tmpdir).iterdir():
+                    destination = target_path.parent / resource.name
+                    if resource.is_dir():
+                        shutil.copytree(resource, destination, dirs_exist_ok=True)
+                    else:
+                        shutil.move(str(resource), destination)
 
         print(target_path)
 

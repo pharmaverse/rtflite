@@ -135,7 +135,9 @@ doc.write_rtf("example-ae-summary.rtf")
 ```
 
 ```python exec="on" session="default" workdir="docs/articles/rtf/"
-converter.convert("example-ae-summary.rtf", output_dir="../pdf/", format="pdf", overwrite=True)
+converter.convert(
+    "example-ae-summary.rtf", output_dir="../pdf/", format="pdf", overwrite=True
+)
 ```
 
 <embed src="../pdf/example-ae-summary.pdf" style="width:100%; height:400px" type="application/pdf">
