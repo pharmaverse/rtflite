@@ -1,5 +1,20 @@
 # Changelog
 
+## rtflite (development version)
+
+### Converters
+
+- Verify compatibility with the current release version of LibreOffice (26.8.0.3).
+  Isolate conversion profiles, add a configurable process timeout
+  (120 seconds by default), and preserve existing output files when
+  conversion fails (#214).
+- Support LibreOffice's `extension:filter[:options]` syntax with correct output
+  filenames. Fix `write_html()` dropping embedded images saved as sibling files
+  by LibreOffice, and retain companion resources during conversion (#214).
+- Fix relative executable paths, prefer the Windows console launcher during
+  discovery, and remove the undeclared `packaging` dependency from
+  version checks (#214).
+
 ## rtflite 2.5.4
 
 ### Bug fixes
