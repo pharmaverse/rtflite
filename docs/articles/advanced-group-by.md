@@ -134,7 +134,9 @@ doc_single.write_rtf("advanced-group-by-single.rtf")
 ```
 
 ```python exec="on" session="default" workdir="docs/articles/rtf/"
-converter.convert("advanced-group-by-single.rtf", output_dir="../pdf/", format="pdf", overwrite=True)
+converter.convert(
+    "advanced-group-by-single.rtf", output_dir="../pdf/", format="pdf", overwrite=True
+)
 ```
 
 <embed src="../pdf/advanced-group-by-single.pdf" style="width:100%; height:400px" type="application/pdf">
@@ -180,7 +182,12 @@ doc_multipage.write_rtf("advanced-group-by-multipage.rtf")
 ```
 
 ```python exec="on" session="default" workdir="docs/articles/rtf/"
-converter.convert("advanced-group-by-multipage.rtf", output_dir="../pdf/", format="pdf", overwrite=True)
+converter.convert(
+    "advanced-group-by-multipage.rtf",
+    output_dir="../pdf/",
+    format="pdf",
+    overwrite=True,
+)
 ```
 
 <embed src="../pdf/advanced-group-by-multipage.pdf" style="width:100%; height:400px" type="application/pdf">
@@ -244,7 +251,12 @@ doc_treatment_separated.write_rtf("advanced-group-by-group-newpage.rtf")
 ```
 
 ```python exec="on" session="default" workdir="docs/articles/rtf/"
-converter.convert("advanced-group-by-group-newpage.rtf", output_dir="../pdf/", format="pdf", overwrite=True)
+converter.convert(
+    "advanced-group-by-group-newpage.rtf",
+    output_dir="../pdf/",
+    format="pdf",
+    overwrite=True,
+)
 ```
 
 <embed src="../pdf/advanced-group-by-group-newpage.pdf" style="width:100%; height:400px" type="application/pdf">
@@ -279,13 +291,23 @@ doc_subline = rtf.RTFDocument(
             "Severity",
             "Serious",
         ],  # Headers for remaining columns after SUBLINEBY removal
-        col_rel_width=[3, 2, 4, 2,],  
+        col_rel_width=[
+            3,
+            2,
+            4,
+            2,
+        ],
         text_format="b",
         text_justification=["l", "l", "c", "c"],
     ),
     rtf_body=rtf.RTFBody(
         subline_by=["SUBLINEBY"],  # Creates subheader rows from SUBLINEBY values
-        col_rel_width=[3, 2, 4, 2,],  
+        col_rel_width=[
+            3,
+            2,
+            4,
+            2,
+        ],
         text_justification=["l", "l", "l", "c", "c"],
     ),
     rtf_footnote=rtf.RTFFootnote(
@@ -304,7 +326,9 @@ doc_subline.write_rtf("advanced-group-by-subline.rtf")
 ```
 
 ```python exec="on" session="default" workdir="docs/articles/rtf/"
-converter.convert("advanced-group-by-subline.rtf", output_dir="../pdf/", format="pdf", overwrite=True)
+converter.convert(
+    "advanced-group-by-subline.rtf", output_dir="../pdf/", format="pdf", overwrite=True
+)
 ```
 
 <embed src="../pdf/advanced-group-by-subline.pdf" style="width:100%; height:400px" type="application/pdf">
@@ -348,14 +372,24 @@ doc_comprehensive = rtf.RTFDocument(
             "Adverse Event",
             "Severity",
         ],  # Headers for remaining columns after SUBLINEBY removal
-        col_rel_width=[3, 2, 4, 2,],  
+        col_rel_width=[
+            3,
+            2,
+            4,
+            2,
+        ],
         text_format="b",
         text_justification=["l", "c", "l", "c"],
     ),
     rtf_body=rtf.RTFBody(
         subline_by=["SUBLINEBY"],  # Creates trial/site subheaders
         group_by=["USUBJID"],  # Suppresses duplicate subject IDs
-        col_rel_width=[3, 2, 4, 2,],  
+        col_rel_width=[
+            3,
+            2,
+            4,
+            2,
+        ],
         text_justification=["l", "l", "c", "l", "c"],
     ),
     rtf_footnote=rtf.RTFFootnote(
@@ -374,7 +408,12 @@ doc_comprehensive.write_rtf("advanced-group-by-comprehensive.rtf")
 ```
 
 ```python exec="on" session="default" workdir="docs/articles/rtf/"
-converter.convert("advanced-group-by-comprehensive.rtf", output_dir="../pdf/", format="pdf", overwrite=True)
+converter.convert(
+    "advanced-group-by-comprehensive.rtf",
+    output_dir="../pdf/",
+    format="pdf",
+    overwrite=True,
+)
 ```
 
 <embed src="../pdf/advanced-group-by-comprehensive.pdf" style="width:100%; height:400px" type="application/pdf">
@@ -388,11 +427,13 @@ The page_by feature automatically filters these divider rows to create clean out
 
 ```python exec="on" source="above" session="default" workdir="docs/articles/rtf/"
 # Create example data with divider rows
-df = pl.DataFrame({
-    "section": ["-----", "Age", "Age"],
-    "item": ["Participant in Population", "    <60", "    >=60"],
-    "value": [55, 25, 30],
-})
+df = pl.DataFrame(
+    {
+        "section": ["-----", "Age", "Age"],
+        "item": ["Participant in Population", "    <60", "    >=60"],
+        "value": [55, 25, 30],
+    }
+)
 
 df
 ```
@@ -406,8 +447,8 @@ doc_divider = rtf.RTFDocument(
         page_by="section",
         col_rel_width=[1, 1],
         text_justification=["l", "l", "c"],
-        border_top = ["single", "", ""],
-        border_bottom = ["single", "", ""]
+        border_top=["single", "", ""],
+        border_bottom=["single", "", ""],
     ),
 )
 
@@ -416,7 +457,12 @@ doc_divider.write_rtf("advanced-group-by-divider-filtering.rtf")
 ```
 
 ```python exec="on" session="default" workdir="docs/articles/rtf/"
-converter.convert("advanced-group-by-divider-filtering.rtf", output_dir="../pdf/", format="pdf", overwrite=True)
+converter.convert(
+    "advanced-group-by-divider-filtering.rtf",
+    output_dir="../pdf/",
+    format="pdf",
+    overwrite=True,
+)
 ```
 
 <embed src="../pdf/advanced-group-by-divider-filtering.pdf" style="width:100%; height:400px" type="application/pdf">

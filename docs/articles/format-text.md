@@ -71,7 +71,9 @@ doc_formats.write_rtf("text-format-styles.rtf")
 ```
 
 ```python exec="on" session="default" workdir="docs/articles/rtf/"
-converter.convert("text-format-styles.rtf", output_dir="../pdf/", format="pdf", overwrite=True)
+converter.convert(
+    "text-format-styles.rtf", output_dir="../pdf/", format="pdf", overwrite=True
+)
 ```
 
 <embed src="../pdf/text-format-styles.pdf" style="width:100%; height:400px" type="application/pdf">
@@ -109,7 +111,9 @@ doc_font_align.write_rtf("text-font-size-alignment.rtf")
 ```
 
 ```python exec="on" session="default" workdir="docs/articles/rtf/"
-converter.convert("text-font-size-alignment.rtf", output_dir="../pdf/", format="pdf", overwrite=True)
+converter.convert(
+    "text-font-size-alignment.rtf", output_dir="../pdf/", format="pdf", overwrite=True
+)
 ```
 
 <embed src="../pdf/text-font-size-alignment.pdf" style="width:100%; height:400px" type="application/pdf">
@@ -180,7 +184,9 @@ doc_indent.write_rtf("text-indentation.rtf")
 ```
 
 ```python exec="on" session="default" workdir="docs/articles/rtf/"
-converter.convert("text-indentation.rtf", output_dir="../pdf/", format="pdf", overwrite=True)
+converter.convert(
+    "text-indentation.rtf", output_dir="../pdf/", format="pdf", overwrite=True
+)
 ```
 
 <embed src="../pdf/text-indentation.pdf" style="width:100%; height:400px" type="application/pdf">

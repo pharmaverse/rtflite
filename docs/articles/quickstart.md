@@ -346,7 +346,9 @@ doc_converted.write_rtf("text-convert.rtf")
 ```
 
 ```python exec="on" session="default" workdir="docs/articles/rtf/"
-converter.convert("text-convert.rtf", output_dir="../pdf/", format="pdf", overwrite=True)
+converter.convert(
+    "text-convert.rtf", output_dir="../pdf/", format="pdf", overwrite=True
+)
 ```
 
 <embed src="../pdf/text-convert.pdf" style="width:100%; height:400px" type="application/pdf">

@@ -121,7 +121,9 @@ doc.write_rtf("example-efficacy.rtf")
 ```
 
 ```python exec="on" session="default" workdir="docs/articles/rtf/"
-converter.convert("example-efficacy.rtf", output_dir="../pdf/", format="pdf", overwrite=True)
+converter.convert(
+    "example-efficacy.rtf", output_dir="../pdf/", format="pdf", overwrite=True
+)
 ```
 
 <embed src="../pdf/example-efficacy.pdf" style="width:100%; height:400px" type="application/pdf">
