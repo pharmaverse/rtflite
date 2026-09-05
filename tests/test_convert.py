@@ -1,5 +1,7 @@
 import os
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from zipfile import ZipFile
 
 import pytest
 
@@ -195,3 +197,54 @@ class TestLibreOfficeConverter:
         output_file = converter.convert(input_files=sample_rtf, output_dir=output_dir)
         assert output_dir.exists()
         assert output_file.exists()
+
+    @pytest.mark.parametrize(
+        "output_format",
+        [
+            "pdf:writer_pdf_Export",
+            'pdf:writer_pdf_Export:{"PageRange":{"type":"string","value":"1"}}',
+            "docx:Office Open XML Text",
+            "doc",
+            "odt",
+            "txt",
+            "txt:Text (encoded):UTF8",
+        ],
+    )
+    def test_export_filters_and_formats(self, sample_rtf, output_dir, output_format):
+        converter = LibreOfficeConverter()
+        output = converter.convert(sample_rtf, output_dir, format=output_format)
+        extension = output_format.split(":", 1)[0]
+        assert output == output_dir / f"test.{extension}"
+        content = output.read_bytes()
+        if extension == "pdf":
+            assert content.startswith(b"%PDF-")
+        elif extension == "doc":
+            assert content.startswith(bytes.fromhex("D0CF11E0A1B11AE1"))
+        elif extension in {"docx", "odt"}:
+            with ZipFile(output) as archive:
+                xml_file = "word/document.xml" if extension == "docx" else "content.xml"
+                assert b"This is a test RTF document." in archive.read(xml_file)
+        else:
+            assert "This is a test RTF document." in content.decode("utf-8-sig")
+
+    def test_concurrent_conversions(self, multiple_rtf_files, output_dir):
+        converter = LibreOfficeConverter()
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            futures = [
+                executor.submit(converter.convert, path, output_dir)
+                for path in multiple_rtf_files[:2]
+            ]
+            outputs = [future.result() for future in futures]
+        assert len(set(outputs)) == 2
+        for output in outputs:
+            assert output.read_bytes().startswith(b"%PDF-")
+
+    def test_invalid_filter_preserves_existing_output(self, sample_rtf, output_dir):
+        converter = LibreOfficeConverter()
+        output = output_dir / "test.pdf"
+        output.write_bytes(b"existing output")
+        with pytest.raises(RuntimeError):
+            converter.convert(
+                sample_rtf, output_dir, format="pdf:NoSuchFilter", overwrite=True
+            )
+        assert output.read_bytes() == b"existing output"

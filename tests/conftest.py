@@ -31,7 +31,7 @@ def has_libreoffice() -> bool:
     """Return True when LibreOffice is available and can convert documents."""
     try:
         converter = LibreOfficeConverter()
-    except (FileNotFoundError, RuntimeError):
+    except (FileNotFoundError, ValueError, RuntimeError):
         return False
 
     # LibreOffice can report a valid version while still failing in headless
