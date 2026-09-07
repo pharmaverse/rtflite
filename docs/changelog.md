@@ -15,6 +15,12 @@
   discovery, and remove the undeclared `packaging` dependency from
   version checks (#214).
 
+### Maintenance
+
+- Replace `hatchling` with `uv_build` as the build backend and declare the MIT
+  license using the PEP 639 `license` field to eliminate the `uv build`
+  warning (#215).
+
 ## rtflite 2.5.4
 
 ### Bug fixes
