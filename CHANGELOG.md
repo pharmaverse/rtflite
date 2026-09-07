@@ -1,6 +1,6 @@
 # Changelog
 
-## rtflite (development version)
+## rtflite 2.6.0
 
 ### Converters
 
