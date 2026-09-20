@@ -1,4 +1,5 @@
 from collections.abc import Mapping, MutableSequence, Sequence
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -89,6 +90,13 @@ class TextContent(BaseModel):
         default=True, description="Enable LaTeX to Unicode conversion"
     )
     hyphenation: bool = Field(default=True, description="Enable hyphenation")
+    rich_text: Any = Field(
+        default=None,
+        description=(
+            "RichText object with inline formatting markers; when set, the "
+            "cell renders each marked span with its own RTF formatting"
+        ),
+    )
 
     def _get_paragraph_formatting(self) -> str:
         """Get RTF paragraph formatting codes."""
@@ -160,10 +168,11 @@ class TextContent(BaseModel):
 
         return "".join(rtf)
 
-    def _convert_special_chars(self) -> str:
-        """Convert special characters to RTF codes."""
-        text = self.text
+    def _convert_text(self, text: str) -> str:
+        """Convert special characters in ``text`` to RTF codes.
 
+        Shared by plain cell text and rich-text spans.
+        """
         # Basic RTF character conversion (matching r2rtf char_rtf mapping)
         # Only apply character conversions if text conversion is enabled
         if self.convert:
@@ -195,9 +204,17 @@ class TextContent(BaseModel):
 
         return text
 
+    def _convert_special_chars(self) -> str:
+        """Convert special characters to RTF codes."""
+        return self._convert_text(self.text)
+
     def _as_rtf(self, method: str) -> str:
         """Format source as RTF."""
-        formatted_text = self._convert_special_chars()
+        formatted_text = (
+            self.rich_text.render_spans(self)
+            if self.rich_text is not None and method in {"cell", "plain", "paragraph"}
+            else self._convert_special_chars()
+        )
         if method == "paragraph":
             return (
                 "{\\pard"

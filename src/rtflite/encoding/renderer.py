@@ -5,6 +5,8 @@ import polars as pl
 
 from ..attributes import BroadcastValue
 from ..pagination.strategies.base import PageContext
+from ..rich_text import RichText
+from ..row import TextContent
 from ..services import RTFEncodingService
 from ..services.document_service import RTFDocumentService
 from ..services.figure_service import RTFFigureService
@@ -105,7 +107,7 @@ class PageRenderer:
                     except ValueError:
                         current_col_idx = 0
 
-                header_text = str(val)
+                header_text = val if isinstance(val, RichText) else str(val)
                 spanning_row = self.encoding_service.encode_spanning_row(
                     text=header_text,
                     page_width=document.rtf_page.col_width or 8.5,
@@ -183,6 +185,19 @@ class PageRenderer:
         return ""
 
     def _generate_subline_header(self, info: dict) -> str:
+        values = [v for v in info.get("group_values", {}).values() if v is not None]
+        if any(isinstance(value, RichText) for value in values):
+            # Preserve rich spans and their literal escapes when a data value
+            # becomes a paragraph heading instead of a table cell.
+            parts = [
+                TextContent(
+                    text=str(value),
+                    rich_text=value if isinstance(value, RichText) else None,
+                )._as_rtf("plain")
+                for value in values
+            ]
+            text = ", ".join(parts)
+            return rf"{{\pard\hyphpar\fi0\li0\ri0\ql\fs18{{\f0 {text}}}\par}}"
         text = self._format_group_header(info)
         if not text:
             return ""
@@ -334,7 +349,7 @@ class PageRenderer:
                                 except ValueError:
                                     current_col_idx = 0
 
-                            header_text = str(val)
+                            header_text = val if isinstance(val, RichText) else str(val)
                             spanning = self.encoding_service.encode_spanning_row(
                                 text=header_text,
                                 page_width=document.rtf_page.col_width or 8.5,

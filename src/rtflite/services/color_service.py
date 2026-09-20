@@ -393,6 +393,39 @@ class ColorService:
                             getattr(header, "text_background_color", None)
                         )
 
+        # Collect colors from RichText spans embedded in table data.
+        # RichText values live in Object-dtype DataFrame columns, so the
+        # component-attribute scan above never sees them. A local import
+        # avoids a module cycle (rich_text imports this service).
+        from ..rich_text import RichText
+
+        dataframes = []
+        df = getattr(document, "df", None)
+        if df is not None:
+            dataframes = df if isinstance(df, list) else [df]
+        for frame in dataframes:
+            if frame is None or not hasattr(frame, "columns"):
+                continue
+            try:
+                import polars as pl
+
+                is_polars = isinstance(frame, pl.DataFrame)
+            except ImportError:
+                is_polars = False
+            if not is_polars:
+                continue
+            for col in frame.columns:
+                series = frame[col]
+                if series.dtype != pl.Object or series.is_empty():
+                    continue
+                for value in series.to_list():
+                    if isinstance(value, RichText):
+                        for span in value.spans:
+                            if span.color:
+                                used_colors.add(span.color)
+                            if span.background_color:
+                                used_colors.add(span.background_color)
+
         return list(used_colors)
 
     def set_document_context(

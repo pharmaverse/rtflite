@@ -20,6 +20,7 @@ from .input import (
     RTFTitle,
 )
 from .pagination import PageBreakCalculator, RTFPagination
+from .rich_text import RichText, rich_text
 from .strwidth import get_string_width
 
 __version__ = "0.0.1"
@@ -42,6 +43,8 @@ __all__ = [
     "TableAttributes",
     "RTFPagination",
     "PageBreakCalculator",
+    "RichText",
+    "rich_text",
     "get_string_width",
     "LibreOfficeConverter",
     "assemble_rtf",
