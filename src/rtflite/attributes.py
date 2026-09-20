@@ -355,13 +355,18 @@ class TextAttributes(BaseModel):
         raise ValueError(f"Invalid method: {method}")
 
     def calculate_lines(
-        self, text: str, available_width: float, row_idx: int = 0, col_idx: int = 0
+        self,
+        text: str | RichText,
+        available_width: float,
+        row_idx: int = 0,
+        col_idx: int = 0,
     ) -> int:
-        """
-        Calculate number of lines needed for text given available width.
+        """Calculate number of lines needed for text given available width.
 
         Args:
-            text: Text content to measure
+            text: Text content to measure (a plain string or a
+                :class:`RichText`, which is measured span by span so inline
+                font/size overrides count toward the width)
             available_width: Available width in inches
             row_idx: Row index for attribute lookup (default: 0)
             col_idx: Column index for attribute lookup (default: 0)
@@ -369,7 +374,9 @@ class TextAttributes(BaseModel):
         Returns:
             Number of lines needed (minimum 1)
         """
-        if not text or available_width <= 0:
+        if available_width <= 0:
+            return 1
+        if not isinstance(text, RichText) and not text:
             return 1
 
         # Create a dummy dimension for broadcast lookup
@@ -386,10 +393,14 @@ class TextAttributes(BaseModel):
         size_broadcast = BroadcastValue(value=self.text_font_size, dimension=dim)
         font_size = size_broadcast.iloc(row_idx, col_idx)
 
-        # Calculate total text width
-        total_width = get_string_width(
-            text=text, font=font_number, font_size=font_size, unit="in"
-        )
+        # Calculate total text width; RichText is measured per span so
+        # inline font/size overrides affect the estimate.
+        if isinstance(text, RichText):
+            total_width = text.measured_width(font=font_number, font_size=font_size)
+        else:
+            total_width = get_string_width(
+                text=text, font=font_number, font_size=font_size, unit="in"
+            )
 
         # Simple approximation: divide total width by available width and round up
         return max(1, int(math.ceil(total_width / available_width)))
@@ -646,14 +657,14 @@ class TableAttributes(TextAttributes):
 
             for i in range(dim[0]):
                 for j in range(dim[1]):
-                    text = str(BroadcastValue(value=df, dimension=dim).iloc(i, j))
+                    raw_text = BroadcastValue(value=df, dimension=dim).iloc(i, j)
                     col_width = BroadcastValue(value=col_widths, dimension=dim).iloc(
                         i, j
                     )
 
                     # Enhanced: Use calculate_lines method for better text wrapping
                     self.cell_nrow[i][j] = self.calculate_lines(
-                        text=text,
+                        text=raw_text,
                         available_width=col_width,
                         row_idx=i + row_offset,
                         col_idx=j,

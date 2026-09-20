@@ -1,11 +1,40 @@
 from collections.abc import Mapping, Sequence
+from typing import cast
 
 import polars as pl
 from pydantic import BaseModel, ConfigDict, Field
 
 from ..attributes import TableAttributes
-from ..fonts_mapping import FontName, FontNumber
+from ..fonts_mapping import FontMapping, FontName, FontNumber
 from ..strwidth import get_string_width
+
+
+def _measure_cell_width(
+    raw_value: object,
+    cell_value: str,
+    font: FontName | FontNumber,
+    font_size: float,
+) -> float:
+    """Measure a cell's rendered width in inches.
+
+    RichText values are measured span by span so inline font/size
+    overrides affect line and page-break estimation; all other values
+    are measured as plain strings.
+    """
+    # Local import: rich_text imports services, which must not pull in
+    # pagination at module load time.
+    from ..rich_text import RichText
+
+    if isinstance(raw_value, RichText):
+        if isinstance(font, int):
+            font_number: FontNumber = cast(FontNumber, font)
+        else:
+            font_number = cast(
+                FontNumber,
+                FontMapping.get_font_name_to_number_mapping().get(font, 1),
+            )
+        return raw_value.measured_width(font=font_number, font_size=font_size)
+    return get_string_width(cell_value, font=font, font_size=font_size)
 
 
 class RTFPagination(BaseModel):
@@ -105,7 +134,8 @@ class PageBreakCalculator(BaseModel):
                 if col_idx < len(df.columns):
                     # Use proper polars column access - df[column_name][row_idx]
                     col_name = df.columns[col_idx]
-                    cell_value = str(df[col_name][row_idx])
+                    raw_value = df[col_name][row_idx]
+                    cell_value = str(raw_value)
 
                     # Get actual font size from table attributes if available
                     actual_font_size = font_size
@@ -134,8 +164,11 @@ class PageBreakCalculator(BaseModel):
                             actual_font = font_value  # type: ignore[assignment]
 
                     # Calculate how many lines this text will need
-                    # Use the actual font from table attributes with actual font size
-                    text_width = get_string_width(
+                    # Use the actual font from table attributes with actual font size.
+                    # RichText cells are measured per span so inline font/size
+                    # overrides count toward the rendered width.
+                    text_width = _measure_cell_width(
+                        raw_value,
                         cell_value,
                         font=actual_font,
                         font_size=actual_font_size,  # type: ignore[arg-type]
@@ -309,7 +342,8 @@ class PageBreakCalculator(BaseModel):
                 prev_cumulative = col_widths[width_idx - 1] if width_idx > 0 else 0
                 col_width = current_cumulative - prev_cumulative
                 col_name = df.columns[col_idx]
-                cell_value = str(df[col_name][row_idx])
+                raw_value = df[col_name][row_idx]
+                cell_value = str(raw_value)
 
                 # Font logic
                 actual_font_size = font_size
@@ -318,7 +352,10 @@ class PageBreakCalculator(BaseModel):
                 if table_attrs:
                     pass
 
-                text_width = get_string_width(
+                # RichText cells are measured per span so inline font/size
+                # overrides count toward the rendered width.
+                text_width = _measure_cell_width(
+                    raw_value,
                     cell_value,
                     font=actual_font,  # type: ignore
                     font_size=actual_font_size,  # type: ignore

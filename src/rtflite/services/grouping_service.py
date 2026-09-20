@@ -12,6 +12,27 @@ from typing import Any
 import polars as pl
 
 
+def _grouping_key(value: Any) -> Any:
+    """Hashable comparison key for grouping logic.
+
+    RichText values (stored in Object-dtype columns) compare by their
+    visible plain text. The original objects stay in the DataFrame so
+    rendering still sees the rich formatting.
+    """
+    # Local import: rich_text imports services.color_service, so a
+    # module-level import here would be circular.
+    from ..rich_text import RichText
+
+    if isinstance(value, RichText):
+        return value.plain_text
+    return value
+
+
+def _is_object_column(df: pl.DataFrame, col: str) -> bool:
+    """Whether a column holds arbitrary Python objects (e.g. RichText)."""
+    return df[col].dtype == pl.Object
+
+
 class GroupingService:
     """Service for handling group_by functionality with value suppression"""
 
@@ -67,6 +88,17 @@ class GroupingService:
         Returns:
             DataFrame with duplicate values replaced with null
         """
+        if _is_object_column(df, column):
+            # Polars cannot compare Object-dtype values in expressions;
+            # compare grouping keys in Python and keep original objects.
+            values = df[column].to_list()
+            keys = [_grouping_key(v) for v in values]
+            is_first = [i == 0 or keys[i] != keys[i - 1] for i in range(len(keys))]
+            suppressed = [
+                v if show else None for v, show in zip(values, is_first, strict=True)
+            ]
+            return df.with_columns(pl.Series(column, suppressed, dtype=pl.Object))
+
         # Create a mask for rows where the value is different from the previous row
         is_first_occurrence = (df[column] != df[column].shift(1)) | (
             pl.int_range(df.height) == 0
@@ -100,6 +132,38 @@ class GroupingService:
             DataFrame with hierarchical value suppression
         """
         result_df = df.clone()
+
+        if any(_is_object_column(df, col) for col in group_by):
+            # Polars cannot compare Object-dtype values in expressions;
+            # evaluate the hierarchical show/hide logic on grouping keys
+            # in Python and keep the original objects for rendering.
+            key_map = {
+                col: [_grouping_key(v) for v in df[col].to_list()] for col in group_by
+            }
+            for i, column in enumerate(group_by):
+                keys = key_map[column]
+                show_flags = []
+                for row in range(df.height):
+                    if row == 0:
+                        show_flags.append(True)
+                        continue
+                    show = keys[row] != keys[row - 1]
+                    if not show:
+                        for higher_col in group_by[:i]:
+                            higher_keys = key_map[higher_col]
+                            if higher_keys[row] != higher_keys[row - 1]:
+                                show = True
+                                break
+                    show_flags.append(show)
+                values = df[column].to_list()
+                suppressed = [
+                    v if show else None
+                    for v, show in zip(values, show_flags, strict=True)
+                ]
+                result_df = result_df.with_columns(
+                    pl.Series(column, suppressed, dtype=df[column].dtype)
+                )
+            return result_df
 
         for i, column in enumerate(group_by):
             # For hierarchical grouping, a value should be shown if:
@@ -171,12 +235,17 @@ class GroupingService:
                     # Create a mask for this specific row
                     mask = pl.int_range(len(result_df)) == page_start_idx
 
+                    # Object-dtype values (e.g. RichText) need an explicit
+                    # object literal; the original object is restored so
+                    # rendering keeps its formatting.
+                    if _is_object_column(result_df, col):
+                        literal = pl.lit(original_value, allow_object=True)
+                    else:
+                        literal = pl.lit(original_value)
+
                     # Update the column value where the mask is true
                     result_df = result_df.with_columns(
-                        pl.when(mask)
-                        .then(pl.lit(original_value))
-                        .otherwise(pl.col(col))
-                        .alias(col)
+                        pl.when(mask).then(literal).otherwise(pl.col(col)).alias(col)
                     )
 
         return result_df
@@ -201,14 +270,33 @@ class GroupingService:
 
         for i, _col in enumerate(group_by):
             level_cols = group_by[: i + 1]
-            unique_combinations = df.select(level_cols).unique().height
+            if any(_is_object_column(df, col) for col in level_cols):
+                # Polars cannot hash Object-dtype values; count distinct
+                # grouping keys in Python instead.
+                col_values = [df[col].to_list() for col in level_cols]
+                seen = {
+                    tuple(_grouping_key(v) for v in row_vals)
+                    for row_vals in zip(*col_values, strict=True)
+                }
+                unique_count = len(seen)
+            else:
+                unique_count = df.select(level_cols).unique().height
             structure[f"level_{i + 1}"] = {
                 "columns": level_cols,
-                "unique_combinations": unique_combinations,
+                "unique_combinations": unique_count,
             }
 
         # Overall statistics
-        total_groups = df.select(group_by).unique().height
+        if any(_is_object_column(df, col) for col in group_by):
+            col_values = [df[col].to_list() for col in group_by]
+            total_groups = len(
+                {
+                    tuple(_grouping_key(v) for v in row_vals)
+                    for row_vals in zip(*col_values, strict=True)
+                }
+            )
+        else:
+            total_groups = df.select(group_by).unique().height
 
         return {
             "total_groups": total_groups,
@@ -316,14 +404,17 @@ class GroupingService:
 
             # Create a key for each row based on grouping columns up to this level
             if i == 0:
-                # For the first variable, just check if its values are contiguous
+                # For the first variable, just check if its values are contiguous.
+                # Values are compared via grouping keys so RichText (unhashable)
+                # and other object values work.
                 values = df[var].to_list()
-                current_value = values[0]
-                seen_values = {current_value}
+                keys = [_grouping_key(v) for v in values]
+                current_key = keys[0]
+                seen_keys = {current_key}
 
-                for j in range(1, len(values)):
-                    if values[j] != current_value:
-                        if values[j] in seen_values:
+                for j in range(1, len(keys)):
+                    if keys[j] != current_key:
+                        if keys[j] in seen_keys:
                             # Found a value that appeared before but with
                             # different values in between
                             raise ValueError(
@@ -335,29 +426,43 @@ class GroupingService:
                                 f"that all rows with the same '{var}' are "
                                 "together."
                             )
-                        current_value = values[j]
-                        seen_values.add(current_value)
+                        current_key = keys[j]
+                        seen_keys.add(current_key)
             else:
                 # For subsequent variables, check contiguity within parent groups
                 # Create a composite key from all grouping variables up to this level
                 # Handle null values by first converting to string with null handling
-                df_with_key = df.with_columns(
-                    [
-                        pl.col(col)
-                        .cast(pl.Utf8)
-                        .fill_null("__NULL__")
-                        .alias(f"_str_{col}")
-                        for col in group_cols
+                if any(_is_object_column(df, col) for col in group_cols):
+                    # Object columns (e.g. RichText) cannot be cast or hashed
+                    # in polars; build composite keys in Python instead.
+                    key_columns = []
+                    for col in group_cols:
+                        col_keys = []
+                        for v in df[col].to_list():
+                            k = _grouping_key(v)
+                            col_keys.append("__NULL__" if k is None else str(k))
+                        key_columns.append(col_keys)
+                    group_keys = [
+                        "|".join(parts) for parts in zip(*key_columns, strict=True)
                     ]
-                )
+                else:
+                    df_with_key = df.with_columns(
+                        [
+                            pl.col(col)
+                            .cast(pl.Utf8)
+                            .fill_null("__NULL__")
+                            .alias(f"_str_{col}")
+                            for col in group_cols
+                        ]
+                    )
 
-                # Create the group key from the string columns
-                str_cols = [f"_str_{col}" for col in group_cols]
-                df_with_key = df_with_key.with_columns(
-                    pl.concat_str(str_cols, separator="|").alias("_group_key")
-                )
+                    # Create the group key from the string columns
+                    str_cols = [f"_str_{col}" for col in group_cols]
+                    df_with_key = df_with_key.with_columns(
+                        pl.concat_str(str_cols, separator="|").alias("_group_key")
+                    )
 
-                group_keys = df_with_key["_group_key"].to_list()
+                    group_keys = df_with_key["_group_key"].to_list()
                 current_key = group_keys[0]
                 seen_keys = {current_key}
 
