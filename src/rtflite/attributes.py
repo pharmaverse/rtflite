@@ -6,6 +6,7 @@ import narwhals as nw
 import polars as pl
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from rtflite.rich_text import RichText
 from rtflite.row import (
     BORDER_CODES,
     FORMAT_CODES,
@@ -675,11 +676,13 @@ class TableAttributes(TextAttributes):
 
                 # Handle null values - display as empty string instead of "None"
                 raw_value = row[j]
+                rich_text_value = raw_value if isinstance(raw_value, RichText) else None
                 cell_value = "" if raw_value is None else str(raw_value)
 
                 cell = Cell(
                     text=TextContent(
                         text=cell_value,
+                        rich_text=rich_text_value,
                         font=get_broadcast_value("text_font", i, j),
                         size=get_broadcast_value("text_font_size", i, j),
                         format=get_broadcast_value("text_format", i, j),

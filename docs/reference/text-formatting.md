@@ -25,3 +25,12 @@ Utility for broadcasting scalar or vector values across table dimensions.
 Low-level text container used inside custom rows and cells.
 
 ::: rtflite.row.TextContent
+
+## Rich text
+
+Inline formatting within a single table cell, using `{tag ...}` markers
+(inspired by `r2rtf::rtf_rich_text()`).
+
+::: rtflite.rich_text.rich_text
+
+::: rtflite.rich_text.RichText
