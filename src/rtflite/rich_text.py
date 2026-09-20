@@ -114,13 +114,13 @@ def _validate_theme_font(font: Any, *, tag: str) -> FontNumber:
         raise ValueError(f"Invalid font {font!r} in {where}. Must be an integer 1-10.")
     try:
         number = int(font)
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, OverflowError):
         raise ValueError(
             f"Invalid font {font!r} in {where}. Must be an integer 1-10."
         ) from None
     try:
         integral = float(font) == number
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, OverflowError):
         integral = False
     if not integral or number not in _VALID_FONT_NUMBERS:
         valid = ", ".join(str(n) for n in sorted(_VALID_FONT_NUMBERS))
@@ -131,17 +131,24 @@ def _validate_theme_font(font: Any, *, tag: str) -> FontNumber:
 
 
 def _validate_theme_font_size(size: Any, *, tag: str) -> float:
-    """Validate a theme font size is finite and positive."""
+    """Validate a positive font size representable in RTF half-points."""
     where = f"theme tag '{tag}'"
     try:
         value = float(size)
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, OverflowError):
         raise ValueError(
             f"Invalid font_size {size!r} in {where}. Must be a number."
         ) from None
-    if not math.isfinite(value) or value <= 0:
+    half_points = value * 2
+    if (
+        isinstance(size, bool)
+        or not math.isfinite(half_points)
+        or half_points < 1
+        or not half_points.is_integer()
+    ):
         raise ValueError(
-            f"Invalid font_size {size!r} in {where}. Must be a finite positive number."
+            f"Invalid font_size {size!r} in {where}. Must be a finite positive "
+            "multiple of 0.5 points."
         )
     return value
 
@@ -391,7 +398,7 @@ class RichText:
         return "".join(parts)
 
     def measured_width(self, font: FontNumber = 1, font_size: float = 9) -> float:
-        """Total rendered width in inches, honoring per-span font/size.
+        """Width of the widest explicit line, honoring per-span font/size.
 
         Each span is measured with its own font and font size (falling back
         to the given cell defaults), so pagination and line estimation can
@@ -402,16 +409,56 @@ class RichText:
             font_size: Default font size in points for spans without an
                 override.
         """
+        return max(width for width, _ in self._line_metrics(font, font_size))
+
+    def _line_metrics(
+        self, font: FontNumber, font_size: float
+    ) -> list[tuple[float, float]]:
+        """Measure each explicit line's width and maximum font size."""
         from .strwidth import get_string_width
 
-        total = 0.0
+        lines: list[tuple[float, float]] = []
+        width, height = 0.0, font_size
         for span in self.spans:
-            total += get_string_width(
-                span.text,
-                font=span.font if span.font is not None else font,
-                font_size=span.font_size if span.font_size is not None else font_size,
-            )
-        return total
+            span_font = span.font if span.font is not None else font
+            size = span.font_size if span.font_size is not None else font_size
+            for index, text in enumerate(span.text.split("\n")):
+                if index:
+                    lines.append((width, height))
+                    width, height = 0.0, font_size
+                height = max(height, size)
+                if text:
+                    # FreeType cannot measure sub-pixel font sizes. Measure
+                    # the smallest RTF size (0.5pt) at 1pt and scale it down.
+                    metric_size = max(1.0, size)
+                    width += get_string_width(
+                        text, font=span_font, font_size=metric_size
+                    ) * (size / metric_size)
+        lines.append((width, height))
+        return lines
+
+    def estimated_rows(
+        self,
+        available_width: float,
+        font: FontNumber = 1,
+        font_size: float = 9,
+        line_font_size: float | None = None,
+    ) -> int:
+        """Estimate wrapped lines, optionally in base-font row units.
+
+        When ``line_font_size`` is supplied, each line reserves space for
+        its largest font relative to that base size. This conservatively
+        accounts for tall spans as well as their width. As with ordinary
+        cells, wrapping is an approximation based on total text width.
+        """
+        if available_width <= 0:
+            return 1
+        rows = 0
+        for width, height in self._line_metrics(font, font_size):
+            lines = max(1, math.ceil(width / available_width))
+            scale = max(1.0, height / line_font_size) if line_font_size else 1.0
+            rows += math.ceil(lines * scale)
+        return max(1, rows)
 
 
 def rich_text(text: str, theme: dict[str, Any] | None = None) -> RichText:
@@ -438,7 +485,7 @@ def rich_text(text: str, theme: dict[str, Any] | None = None) -> RichText:
             ``format``, ``color``, ``background_color``, ``font`` and
             ``font_size`` keys. ``font`` must be an integer font id from 1
             to 10 (matching the document font table); ``font_size`` must
-            be a finite positive number of points. The default theme
+            be a finite positive multiple of 0.5 points. The default theme
             provides ``.emph`` (italic) and ``.strong`` (bold), matching
             r2rtf.
 

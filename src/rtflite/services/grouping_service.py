@@ -223,11 +223,25 @@ class GroupingService:
 
         result_df = suppressed_df.clone()
 
+        # A Python string/number inside an Object column is still an Object
+        # value. pl.lit(..., allow_object=True) infers its scalar dtype and
+        # makes Polars try to cast the entire column. Rebuild these columns
+        # once, preserving both the dtype and original rich-text objects.
+        object_columns = {col for col in group_by if _is_object_column(result_df, col)}
+        for col in object_columns:
+            values = result_df[col].to_list()
+            for index in page_start_indices:
+                if 0 <= index < len(original_df):
+                    values[index] = original_df[col][index]
+            result_df = result_df.with_columns(pl.Series(col, values, dtype=pl.Object))
+
         # For each page start, restore the group values from original data
         for page_start_idx in page_start_indices:
             if page_start_idx < len(original_df):
                 # Create updates for each group column
                 for col in group_by:
+                    if col in object_columns:
+                        continue
                     # Get the original value for this row
                     original_value = original_df[col][page_start_idx]
 
@@ -235,17 +249,12 @@ class GroupingService:
                     # Create a mask for this specific row
                     mask = pl.int_range(len(result_df)) == page_start_idx
 
-                    # Object-dtype values (e.g. RichText) need an explicit
-                    # object literal; the original object is restored so
-                    # rendering keeps its formatting.
-                    if _is_object_column(result_df, col):
-                        literal = pl.lit(original_value, allow_object=True)
-                    else:
-                        literal = pl.lit(original_value)
-
                     # Update the column value where the mask is true
                     result_df = result_df.with_columns(
-                        pl.when(mask).then(literal).otherwise(pl.col(col)).alias(col)
+                        pl.when(mask)
+                        .then(pl.lit(original_value))
+                        .otherwise(pl.col(col))
+                        .alias(col)
                     )
 
         return result_df
@@ -435,15 +444,12 @@ class GroupingService:
                 if any(_is_object_column(df, col) for col in group_cols):
                     # Object columns (e.g. RichText) cannot be cast or hashed
                     # in polars; build composite keys in Python instead.
-                    key_columns = []
-                    for col in group_cols:
-                        col_keys = []
-                        for v in df[col].to_list():
-                            k = _grouping_key(v)
-                            col_keys.append("__NULL__" if k is None else str(k))
-                        key_columns.append(col_keys)
+                    key_columns = [
+                        [_grouping_key(v) for v in df[col].to_list()]
+                        for col in group_cols
+                    ]
                     group_keys = [
-                        "|".join(parts) for parts in zip(*key_columns, strict=True)
+                        tuple(parts) for parts in zip(*key_columns, strict=True)
                     ]
                 else:
                     df_with_key = df.with_columns(

@@ -1,6 +1,12 @@
 """RTF encoding service that handles document component encoding."""
 
+from __future__ import annotations
+
 from collections.abc import Sequence
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ..rich_text import RichText
 
 
 class RTFEncodingService:
@@ -17,7 +23,7 @@ class RTFEncodingService:
 
     def encode_spanning_row(
         self,
-        text: str,
+        text: str | RichText,
         page_width: float,
         rtf_body_attrs=None,
         col_idx: int = 0,
@@ -37,6 +43,7 @@ class RTFEncodingService:
             List of RTF strings for the spanning row
         """
         from ..attributes import BroadcastValue
+        from ..rich_text import RichText
         from ..row import Border, Cell, Row, TextContent
 
         def get_attr(attr_name, default_val):
@@ -78,7 +85,8 @@ class RTFEncodingService:
         # Create spanning cell
         cell = Cell(
             text=TextContent(
-                text=text,
+                text=str(text),
+                rich_text=text if isinstance(text, RichText) else None,
                 font=font,
                 size=size,
                 format=text_format,

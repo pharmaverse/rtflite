@@ -423,6 +423,55 @@ class TestRichTextGrouping:
         assert r"\b Group" in content
         assert r"\b Other" in content
 
+    @pytest.mark.parametrize("value", ["Group", 1, None])
+    def test_restore_mixed_object_values_at_page_start(self, value):
+        from rtflite.services.grouping_service import GroupingService
+
+        rich = rich_text("{b Group}")
+        df = pl.DataFrame({"A": pl.Series([rich, value, value], dtype=pl.Object)})
+        service = GroupingService()
+        suppressed = service.enhance_group_by(df, ["A"])
+        restored = service.restore_page_context(suppressed, df, ["A"], [2])
+        assert restored["A"].dtype == pl.Object
+        assert restored["A"][0] is rich
+        assert restored["A"][2] == value
+
+    def test_mixed_string_group_survives_document_page_break(self):
+        df = pl.DataFrame(
+            {
+                "A": pl.Series(
+                    [rich_text("{b Group}")] + ["Group"] * 5, dtype=pl.Object
+                ),
+                "B": list(range(6)),
+            }
+        )
+        content = rtf.RTFDocument(
+            df=df,
+            rtf_body=rtf.RTFBody(group_by=["A"]),
+            rtf_page=rtf.RTFPage(nrow=3),
+        ).rtf_encode()
+        assert content.count("Group") >= 2
+
+    @pytest.mark.parametrize("grouping", ["page_by", "subline_by"])
+    def test_group_header_preserves_formatting_and_literal_braces(self, grouping):
+        df = pl.DataFrame({"A": [rich_text(r"{b Group \{one\}}")], "B": ["data"]})
+        content = rtf.RTFDocument(
+            df=df, rtf_body=rtf.RTFBody(**{grouping: ["A"]})
+        ).rtf_encode()
+        assert r"\b Group \{one\}" in content
+
+    def test_plain_text_sentinel_does_not_hide_a_split_null_group(self):
+        from rtflite.services.grouping_service import GroupingService
+
+        df = pl.DataFrame(
+            {
+                "A": ["same"] * 3,
+                "B": pl.Series([None, rich_text("__NULL__"), None], dtype=pl.Object),
+            }
+        )
+        with pytest.raises(ValueError, match="not properly grouped"):
+            GroupingService().validate_data_sorting(df, ["A", "B"])
+
 
 class TestSupSubNesting:
     """P2-4: inner superscript/subscript overrides the outer one."""
@@ -511,6 +560,21 @@ class TestFontValidation:
         assert r"\f3" in content
         assert r"\fs28" in content
 
+    @pytest.mark.parametrize("font", [float("inf"), float("-inf")])
+    def test_nonfinite_font_raises_value_error(self, font):
+        with pytest.raises(ValueError, match="Invalid font"):
+            rich_text("{.f x}", theme={".f": {"font": font}})
+
+    @pytest.mark.parametrize("size", [0.1, 9.25, True, 1e308])
+    def test_unrepresentable_font_size_rejected(self, size):
+        with pytest.raises(ValueError, match="font_size"):
+            rich_text("{.f x}", theme={".f": {"font_size": size}})
+
+    def test_half_point_size_can_be_measured_and_rendered(self):
+        value = rich_text("{.f x}", theme={".f": {"font_size": 0.5}})
+        content = rtf.RTFDocument(df=pl.DataFrame({"A": [value]})).rtf_encode()
+        assert r"\fs1 x}" in content
+
 
 class TestPaginationMetrics:
     """P2-6: inline font/size metrics feed pagination estimates."""
@@ -574,3 +638,48 @@ class TestPaginationMetrics:
             col_idx=0,
         )
         assert rich_lines > plain_lines
+
+    def test_large_single_character_reserves_vertical_space(self):
+        value = rich_text("{.big X}", {".big": {"font_size": 36}})
+        metadata = self._calculator().calculate_row_metadata(
+            pl.DataFrame({"A": [value]}), col_widths=[6], font_size=9
+        )
+        assert metadata["data_rows"][0] >= 4
+
+    @pytest.mark.parametrize("grouping", ["page_by", "subline_by"])
+    def test_large_group_header_reserves_vertical_space(self, grouping):
+        value = rich_text("{.big X}", {".big": {"font_size": 36}})
+        metadata = self._calculator().calculate_row_metadata(
+            pl.DataFrame({"A": [value], "B": ["data"]}),
+            col_widths=[6],
+            removed_column_indices=[0],
+            **{grouping: ["A"]},
+        )
+        field = "pageby_header_rows" if grouping == "page_by" else "subline_header_rows"
+        assert metadata[field][0] >= 4
+
+    def test_newlines_across_spans_count_as_separate_lines(self):
+        value = rich_text("{b one\n}{i two\n}three")
+        attrs = rtf.TableAttributes(text_font=1, text_font_size=9)
+        assert attrs.calculate_lines(value, available_width=6) == 3
+        metadata = self._calculator().calculate_row_metadata(
+            pl.DataFrame({"A": [value]}), col_widths=[6]
+        )
+        assert metadata["data_rows"][0] == 3
+
+    def test_rich_text_inherits_cell_font_size_during_pagination(self):
+        value = rich_text("X")
+        attrs = rtf.TableAttributes(text_font=1, text_font_size=36)
+        metadata = self._calculator().calculate_row_metadata(
+            pl.DataFrame({"A": [value]}), col_widths=[6], table_attrs=attrs
+        )
+        assert metadata["data_rows"][0] >= 4
+
+    def test_oversized_rows_trigger_document_page_breaks(self):
+        import re
+
+        values = [rich_text("{.big X}", {".big": {"font_size": 36}})] * 3
+        content = rtf.RTFDocument(
+            df=pl.DataFrame({"A": values}), rtf_page=rtf.RTFPage(nrow=8)
+        ).rtf_encode()
+        assert re.search(r"\\page\b", content)

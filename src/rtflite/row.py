@@ -210,7 +210,11 @@ class TextContent(BaseModel):
 
     def _as_rtf(self, method: str) -> str:
         """Format source as RTF."""
-        formatted_text = self._convert_special_chars()
+        formatted_text = (
+            self.rich_text.render_spans(self)
+            if self.rich_text is not None and method in {"cell", "plain", "paragraph"}
+            else self._convert_special_chars()
+        )
         if method == "paragraph":
             return (
                 "{\\pard"
@@ -219,15 +223,6 @@ class TextContent(BaseModel):
                 f"{formatted_text}}}\\par}}"
             )
         if method == "cell":
-            if self.rich_text is not None:
-                # Inline formatting: keep the cell-level paragraph and text
-                # formatting, then render one RTF group per marked span.
-                return (
-                    "\\pard"
-                    f"{self._get_paragraph_formatting()}"
-                    f"{self._get_text_formatting()} "
-                    f"{self.rich_text.render_spans(self)}}}\\cell"
-                )
             return (
                 "\\pard"
                 f"{self._get_paragraph_formatting()}"

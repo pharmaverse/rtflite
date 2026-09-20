@@ -396,7 +396,9 @@ class TextAttributes(BaseModel):
         # Calculate total text width; RichText is measured per span so
         # inline font/size overrides affect the estimate.
         if isinstance(text, RichText):
-            total_width = text.measured_width(font=font_number, font_size=font_size)
+            return text.estimated_rows(
+                available_width, font=font_number, font_size=font_size
+            )
         else:
             total_width = get_string_width(
                 text=text, font=font_number, font_size=font_size, unit="in"
@@ -664,7 +666,9 @@ class TableAttributes(TextAttributes):
 
                     # Enhanced: Use calculate_lines method for better text wrapping
                     self.cell_nrow[i][j] = self.calculate_lines(
-                        text=raw_text,
+                        text=raw_text
+                        if isinstance(raw_text, RichText)
+                        else str(raw_text),
                         available_width=col_width,
                         row_idx=i + row_offset,
                         col_idx=j,

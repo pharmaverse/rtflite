@@ -9,13 +9,14 @@ from ..fonts_mapping import FontMapping, FontName, FontNumber
 from ..strwidth import get_string_width
 
 
-def _measure_cell_width(
+def _measure_cell_rows(
     raw_value: object,
     cell_value: str,
     font: FontName | FontNumber,
     font_size: float,
-) -> float:
-    """Measure a cell's rendered width in inches.
+    available_width: float,
+) -> int:
+    """Estimate occupied rows, including inline font height and newlines.
 
     RichText values are measured span by span so inline font/size
     overrides affect line and page-break estimation; all other values
@@ -33,8 +34,11 @@ def _measure_cell_width(
                 FontNumber,
                 FontMapping.get_font_name_to_number_mapping().get(font, 1),
             )
-        return raw_value.measured_width(font=font_number, font_size=font_size)
-    return get_string_width(cell_value, font=font, font_size=font_size)
+        return raw_value.estimated_rows(
+            available_width, font=font_number, font_size=font_size, line_font_size=9
+        )
+    width = get_string_width(cell_value, font=font, font_size=font_size)
+    return max(1, int(width / available_width) + 1)
 
 
 class RTFPagination(BaseModel):
@@ -163,24 +167,19 @@ class PageBreakCalculator(BaseModel):
                             # If it's a string, use it directly
                             actual_font = font_value  # type: ignore[assignment]
 
-                    # Calculate how many lines this text will need
-                    # Use the actual font from table attributes with actual font size.
-                    # RichText cells are measured per span so inline font/size
-                    # overrides count toward the rendered width.
-                    text_width = _measure_cell_width(
-                        raw_value,
-                        cell_value,
-                        font=actual_font,
-                        font_size=actual_font_size,  # type: ignore[arg-type]
-                    )
-
                     # Determine effective width for wrapping
                     # If column is a spanning column, use total table width
                     effective_width = (
                         total_width if col_name in spanning_columns else col_width
                     )
 
-                    lines_needed = max(1, int(text_width / effective_width) + 1)
+                    lines_needed = _measure_cell_rows(
+                        raw_value,
+                        cell_value,
+                        font=actual_font,
+                        font_size=actual_font_size,  # type: ignore[arg-type]
+                        available_width=effective_width,
+                    )
                     max_lines_in_row = max(max_lines_in_row, lines_needed)
 
             # Account for cell height if specified in table attributes
@@ -282,6 +281,8 @@ class PageBreakCalculator(BaseModel):
         new_page: bool = False,
     ) -> pl.DataFrame:
         """Generate complete row metadata for pagination."""
+        from ..attributes import BroadcastValue
+        from ..rich_text import RichText
 
         # 1. Calculate data rows
         # Use existing calculation logic but handle removed columns manually
@@ -349,20 +350,28 @@ class PageBreakCalculator(BaseModel):
                 actual_font_size = font_size
                 actual_font = 1
 
-                if table_attrs:
-                    pass
+                # Processed attributes already exclude the removed columns;
+                # use the displayed index, not the original DataFrame index.
+                if isinstance(raw_value, RichText) and table_attrs:
+                    dim = (df.height, len(col_widths))
+                    if table_attrs.text_font is not None:
+                        actual_font = BroadcastValue(
+                            value=table_attrs.text_font, dimension=dim
+                        ).iloc(row_idx, width_idx)
+                    if table_attrs.text_font_size is not None:
+                        actual_font_size = BroadcastValue(
+                            value=table_attrs.text_font_size, dimension=dim
+                        ).iloc(row_idx, width_idx)
 
                 # RichText cells are measured per span so inline font/size
                 # overrides count toward the rendered width.
-                text_width = _measure_cell_width(
+                lines_needed = _measure_cell_rows(
                     raw_value,
                     cell_value,
                     font=actual_font,  # type: ignore
                     font_size=actual_font_size,  # type: ignore
+                    available_width=col_width,
                 )
-
-                effective_width = col_width
-                lines_needed = max(1, int(text_width / effective_width) + 1)
                 max_lines_in_row = max(max_lines_in_row, lines_needed)
                 width_idx += 1
 
@@ -380,6 +389,12 @@ class PageBreakCalculator(BaseModel):
                     pageby_rows = self._calculate_header_rows(
                         header_text, total_width, font_size=int(font_size)
                     )  # type: ignore
+                    pageby_rows = max(
+                        pageby_rows,
+                        self._rich_header_rows(
+                            df, row_idx, page_by, col_widths[-1], font_size
+                        ),
+                    )
 
             subline_rows = 0
             if subline_by and subline_by_changes[row_idx]:
@@ -394,6 +409,12 @@ class PageBreakCalculator(BaseModel):
                     subline_rows = self._calculate_header_rows(
                         header_text, total_width, font_size=int(font_size)
                     )  # type: ignore
+                    subline_rows = max(
+                        subline_rows,
+                        self._rich_header_rows(
+                            df, row_idx, subline_by, col_widths[-1], font_size
+                        ),
+                    )
 
             total_rows = max_lines_in_row + pageby_rows + subline_rows
 
@@ -429,6 +450,26 @@ class PageBreakCalculator(BaseModel):
 
         # Assign pages
         return self._assign_pages(meta_df, additional_rows_per_page, new_page)
+
+    @staticmethod
+    def _rich_header_rows(
+        df: pl.DataFrame,
+        row_idx: int,
+        columns: Sequence[str],
+        width: float,
+        font_size: float,
+    ) -> int:
+        """Conservative height estimate for headings containing rich values."""
+        from ..rich_text import RichText
+
+        values = [df[col][row_idx] for col in columns]
+        if not any(isinstance(value, RichText) for value in values):
+            return 0
+        return sum(
+            _measure_cell_rows(value, str(value), 1, font_size, width)
+            for value in values
+            if value is not None and str(value) != "-----"
+        )
 
     def _calculate_header_rows(
         self,
